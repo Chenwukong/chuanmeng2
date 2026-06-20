@@ -1,0 +1,257 @@
+[gd_scene format=3 uid="uid://cd6v276pgxuhv"]
+
+[ext_resource type="Script" uid="uid://b83kpj0b881o0" path="res://Script/WASViewer.gd" id="1_ef3ca"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_preview"]
+bg_color = Color(0.0980392, 0.0980392, 0.117647, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.278431, 0.278431, 0.309804, 1)
+
+[node name="WASViewer" type="Control" unique_id=1842086574]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ef3ca")
+
+[node name="Root" type="VBoxContainer" parent="." unique_id=405344610]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BrowserPage" type="Control" parent="Root" unique_id=1556525126]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BrowserVBox" type="VBoxContainer" parent="Root/BrowserPage" unique_id=1113414945]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="TopRow" type="HBoxContainer" parent="Root/BrowserPage/BrowserVBox" unique_id=1228559965]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FolderEdit" type="LineEdit" parent="Root/BrowserPage/BrowserVBox/TopRow" unique_id=1382420273]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "选择 assets 目录（会扫描所有子目录的 .was）"
+
+[node name="BrowseFolderButton" type="Button" parent="Root/BrowserPage/BrowserVBox/TopRow" unique_id=1919860756]
+layout_mode = 2
+text = "浏览目录..."
+
+[node name="LoadFolderButton" type="Button" parent="Root/BrowserPage/BrowserVBox/TopRow" unique_id=344696820]
+layout_mode = 2
+text = "加载目录"
+
+[node name="PageRow" type="HBoxContainer" parent="Root/BrowserPage/BrowserVBox" unique_id=659684896]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PrevPageButton" type="Button" parent="Root/BrowserPage/BrowserVBox/PageRow" unique_id=1992705188]
+layout_mode = 2
+text = "上一页"
+
+[node name="PageLabel" type="Label" parent="Root/BrowserPage/BrowserVBox/PageRow" unique_id=139070026]
+layout_mode = 2
+text = "页码: -"
+
+[node name="NextPageButton" type="Button" parent="Root/BrowserPage/BrowserVBox/PageRow" unique_id=1491532265]
+layout_mode = 2
+text = "下一页"
+
+[node name="TotalLabel" type="Label" parent="Root/BrowserPage/BrowserVBox/PageRow" unique_id=601878940]
+layout_mode = 2
+text = "总数: 0"
+
+[node name="GridZoomSlider" type="HSlider" parent="Root/BrowserPage/BrowserVBox/PageRow" unique_id=1597373895]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.5
+max_value = 2.0
+step = 0.05
+value = 1.0
+
+[node name="GridZoomLabel" type="Label" parent="Root/BrowserPage/BrowserVBox/PageRow" unique_id=450211893]
+layout_mode = 2
+text = "网格缩放: 1.00x"
+
+[node name="FileList" type="ItemList" parent="Root/BrowserPage/BrowserVBox" unique_id=2074282492]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PreviewPage" type="Control" parent="Root" unique_id=433222185]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PreviewVBox" type="VBoxContainer" parent="Root/PreviewPage" unique_id=14889974]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="TopRow" type="HBoxContainer" parent="Root/PreviewPage/PreviewVBox" unique_id=593850226]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BackToBrowserButton" type="Button" parent="Root/PreviewPage/PreviewVBox/TopRow" unique_id=102104443]
+layout_mode = 2
+text = "返回网格"
+
+[node name="PrevResourceButton" type="Button" parent="Root/PreviewPage/PreviewVBox/TopRow" unique_id=981437029]
+layout_mode = 2
+text = "上一个资源"
+
+[node name="NextResourceButton" type="Button" parent="Root/PreviewPage/PreviewVBox/TopRow" unique_id=575178662]
+layout_mode = 2
+text = "下一个资源"
+
+[node name="SelectedFileLabel" type="Label" parent="Root/PreviewPage/PreviewVBox/TopRow" unique_id=585381261]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "未选择"
+autowrap_mode = 2
+
+[node name="PreviewPanel" type="PanelContainer" parent="Root/PreviewPage/PreviewVBox" unique_id=164514738]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_preview")
+
+[node name="PreviewCanvas" type="Control" parent="Root/PreviewPage/PreviewVBox/PreviewPanel" unique_id=418187227]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PreviewSprite" type="Sprite2D" parent="Root/PreviewPage/PreviewVBox/PreviewPanel/PreviewCanvas" unique_id=890562947]
+
+[node name="TransformRow" type="HBoxContainer" parent="Root/PreviewPage/PreviewVBox" unique_id=1305513129]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ZoomLabel" type="Label" parent="Root/PreviewPage/PreviewVBox/TransformRow" unique_id=668940148]
+layout_mode = 2
+text = "缩放: 1.00x"
+
+[node name="ZoomSlider" type="HSlider" parent="Root/PreviewPage/PreviewVBox/TransformRow" unique_id=1950497608]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.25
+max_value = 5.0
+step = 0.05
+value = 1.0
+
+[node name="OffsetXLabel" type="Label" parent="Root/PreviewPage/PreviewVBox/TransformRow" unique_id=613344354]
+layout_mode = 2
+text = "X"
+
+[node name="OffsetXSpin" type="SpinBox" parent="Root/PreviewPage/PreviewVBox/TransformRow" unique_id=265139724]
+layout_mode = 2
+min_value = -5000.0
+max_value = 5000.0
+
+[node name="OffsetYLabel" type="Label" parent="Root/PreviewPage/PreviewVBox/TransformRow" unique_id=871806125]
+layout_mode = 2
+text = "Y"
+
+[node name="OffsetYSpin" type="SpinBox" parent="Root/PreviewPage/PreviewVBox/TransformRow" unique_id=1068591518]
+layout_mode = 2
+min_value = -5000.0
+max_value = 5000.0
+
+[node name="DirectionRow" type="HBoxContainer" parent="Root/PreviewPage/PreviewVBox" unique_id=1799857421]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DirectionLabel" type="Label" parent="Root/PreviewPage/PreviewVBox/DirectionRow" unique_id=2131831025]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+text = "方向: -"
+
+[node name="DirectionSlider" type="HSlider" parent="Root/PreviewPage/PreviewVBox/DirectionRow" unique_id=12211238]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FrameRow" type="HBoxContainer" parent="Root/PreviewPage/PreviewVBox" unique_id=2073021053]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FrameLabel" type="Label" parent="Root/PreviewPage/PreviewVBox/FrameRow" unique_id=222421421]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+text = "帧: -"
+
+[node name="FrameSlider" type="HSlider" parent="Root/PreviewPage/PreviewVBox/FrameRow" unique_id=1390620865]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BottomRow" type="HBoxContainer" parent="Root/PreviewPage/PreviewVBox" unique_id=1456219686]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="PrevFrameButton" type="Button" parent="Root/PreviewPage/PreviewVBox/BottomRow" unique_id=612814484]
+layout_mode = 2
+text = "上一帧"
+
+[node name="PlayButton" type="Button" parent="Root/PreviewPage/PreviewVBox/BottomRow" unique_id=328026865]
+layout_mode = 2
+toggle_mode = true
+text = "播放"
+
+[node name="NextFrameButton" type="Button" parent="Root/PreviewPage/PreviewVBox/BottomRow" unique_id=1845525794]
+layout_mode = 2
+text = "下一帧"
+
+[node name="InfoLabel" type="Label" parent="Root/PreviewPage/PreviewVBox" unique_id=680244896]
+layout_mode = 2
+text = "Info"
+autowrap_mode = 2
+
+[node name="PlayTimer" type="Timer" parent="." unique_id=1563990987]
+wait_time = 0.08
+
+[node name="DirDialog" type="FileDialog" parent="." unique_id=120623701]
+title = "选择素材目录"
+size = Vector2i(1000, 650)
+
+[connection signal="pressed" from="Root/BrowserPage/BrowserVBox/TopRow/BrowseFolderButton" to="." method="_on_browse_folder_button_pressed"]
+[connection signal="pressed" from="Root/BrowserPage/BrowserVBox/TopRow/LoadFolderButton" to="." method="_on_load_folder_button_pressed"]
+[connection signal="pressed" from="Root/BrowserPage/BrowserVBox/PageRow/PrevPageButton" to="." method="_on_prev_page_button_pressed"]
+[connection signal="pressed" from="Root/BrowserPage/BrowserVBox/PageRow/NextPageButton" to="." method="_on_next_page_button_pressed"]
+[connection signal="value_changed" from="Root/BrowserPage/BrowserVBox/PageRow/GridZoomSlider" to="." method="_on_grid_zoom_slider_value_changed"]
+[connection signal="item_selected" from="Root/BrowserPage/BrowserVBox/FileList" to="." method="_on_file_list_item_selected"]
+[connection signal="pressed" from="Root/PreviewPage/PreviewVBox/TopRow/BackToBrowserButton" to="." method="_on_back_to_browser_button_pressed"]
+[connection signal="pressed" from="Root/PreviewPage/PreviewVBox/TopRow/PrevResourceButton" to="." method="_on_prev_resource_button_pressed"]
+[connection signal="pressed" from="Root/PreviewPage/PreviewVBox/TopRow/NextResourceButton" to="." method="_on_next_resource_button_pressed"]
+[connection signal="value_changed" from="Root/PreviewPage/PreviewVBox/TransformRow/ZoomSlider" to="." method="_on_zoom_slider_value_changed"]
+[connection signal="value_changed" from="Root/PreviewPage/PreviewVBox/TransformRow/OffsetXSpin" to="." method="_on_offset_x_spin_value_changed"]
+[connection signal="value_changed" from="Root/PreviewPage/PreviewVBox/TransformRow/OffsetYSpin" to="." method="_on_offset_y_spin_value_changed"]
+[connection signal="value_changed" from="Root/PreviewPage/PreviewVBox/DirectionRow/DirectionSlider" to="." method="_on_direction_slider_value_changed"]
+[connection signal="value_changed" from="Root/PreviewPage/PreviewVBox/FrameRow/FrameSlider" to="." method="_on_frame_slider_value_changed"]
+[connection signal="pressed" from="Root/PreviewPage/PreviewVBox/BottomRow/PrevFrameButton" to="." method="_on_prev_frame_button_pressed"]
+[connection signal="toggled" from="Root/PreviewPage/PreviewVBox/BottomRow/PlayButton" to="." method="_on_play_button_toggled"]
+[connection signal="pressed" from="Root/PreviewPage/PreviewVBox/BottomRow/NextFrameButton" to="." method="_on_next_frame_button_pressed"]
+[connection signal="timeout" from="PlayTimer" to="." method="_on_play_timer_timeout"]
+[connection signal="dir_selected" from="DirDialog" to="." method="_on_dir_dialog_dir_selected"]

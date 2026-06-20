@@ -1,0 +1,102 @@
+[gd_scene format=3 uid="uid://bep002hkcsj2x"]
+
+[ext_resource type="Script" uid="uid://c616qcfedxpqd" path="res://Script/Class/HeroNode.gd" id="1_15wyq"]
+[ext_resource type="Script" uid="uid://b42w8puhl8lo4" path="res://Script/Class/BattleCharacter.gd" id="2_em3j7"]
+[ext_resource type="Script" uid="uid://bvynqpeueed4w" path="res://Script/Class/WASAnimationPlayer.gd" id="3_i42p"]
+[ext_resource type="Texture2D" uid="uid://vxkfu1c2q0hu" path="res://Graphic/UI/hp_back.png" id="4_1k10l"]
+[ext_resource type="Texture2D" uid="uid://w2j8b7eulj4b" path="res://Graphic/UI/hp.png" id="5_8fkw8"]
+[ext_resource type="Texture2D" uid="uid://by25ea6vqmjpw" path="res://Graphic/UI/sp.png" id="6_1qp50"]
+[ext_resource type="Texture2D" uid="uid://c8bjxm2witu1x" path="res://Graphic/UI/np.png" id="7_vr8dx"]
+[ext_resource type="Texture2D" uid="uid://dhv7omnogu1d4" path="res://Graphic/RANDOM/Mouse_DOWN.png" id="8_mouse"]
+[ext_resource type="Texture2D" uid="uid://ci1e7r1d47pma" path="res://Graphic/RANDOM/shadow (2).png" id="9_shadow"]
+
+[sub_resource type="RectangleShape2D" id="Rect_click"]
+size = Vector2(100, 120)
+
+[node name="fightScenePlayer" type="Node2D" unique_id=350880952]
+script = ExtResource("1_15wyq")
+
+[node name="BattleCharacter" type="Node" parent="." unique_id=498177364]
+script = ExtResource("2_em3j7")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=512131770]
+
+[node name="WASAnimationPlayer" type="Node" parent="." unique_id=213234730]
+script = ExtResource("3_i42p")
+target_sprite = NodePath("../Sprite2D")
+
+[node name="Area2D" type="Area2D" parent="." unique_id=503895841]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=64339134]
+shape = SubResource("Rect_click")
+
+[node name="WorldUI" type="Node2D" parent="." unique_id=338968377]
+position = Vector2(0, -81)
+
+[node name="HPBar" type="TextureProgressBar" parent="WorldUI" unique_id=409554679]
+offset_left = -31.0
+offset_top = -52.0
+offset_right = 641.0
+offset_bottom = 6.0
+value = 50.0
+texture_under = ExtResource("4_1k10l")
+texture_progress = ExtResource("5_8fkw8")
+texture_progress_offset = Vector2(4, 3)
+
+[node name="MPBar" type="TextureProgressBar" parent="WorldUI" unique_id=205529736]
+offset_left = -31.0
+offset_top = -38.0
+offset_right = 641.0
+offset_bottom = 18.0
+value = 100.0
+texture_under = ExtResource("4_1k10l")
+texture_progress = ExtResource("6_1qp50")
+texture_progress_offset = Vector2(4, 3)
+
+[node name="SPBar" type="TextureProgressBar" parent="WorldUI" unique_id=397977917]
+offset_left = -31.0
+offset_top = -23.0
+offset_right = 639.0
+offset_bottom = 35.0
+value = 100.0
+texture_under = ExtResource("4_1k10l")
+texture_progress = ExtResource("7_vr8dx")
+texture_progress_offset = Vector2(4, 3)
+
+[node name="NameLabel" type="Label" parent="WorldUI" unique_id=295820338]
+offset_left = -35.0
+offset_top = -76.0
+offset_right = 35.0
+offset_bottom = -53.0
+horizontal_alignment = 1
+
+[node name="Audio_Attack" type="AudioStreamPlayer" parent="." unique_id=119556943]
+
+[node name="Audio_Cast" type="AudioStreamPlayer" parent="." unique_id=119556944]
+
+[node name="Audio_Die" type="AudioStreamPlayer2D" parent="." unique_id=119556945]
+
+[node name="SelectIndicator" type="Sprite2D" parent="." unique_id=1432266179]
+visible = false
+position = Vector2(0, -95)
+texture = ExtResource("8_mouse")
+
+[node name="Shadow" type="Sprite2D" parent="." unique_id=1433789078]
+z_index = -2
+position = Vector2(1, 6)
+scale = Vector2(1, 0.5)
+texture = ExtResource("9_shadow")
+
+[node name="DebuffSprite" type="AnimatedSprite2D" parent="." unique_id=889026762]
+visible = false
+position = Vector2(1, 2)
+scale = Vector2(0.6, 0.6)
+
+[node name="BuffSprite" type="AnimatedSprite2D" parent="." unique_id=614160310]
+visible = false
+position = Vector2(-1, 2)
+scale = Vector2(0.6, 0.6)
+
+[node name="Animation" type="AnimatedSprite2D" parent="." unique_id=217638345]
+visible = false
+position = Vector2(0, -15)

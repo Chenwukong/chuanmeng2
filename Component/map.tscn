@@ -1,0 +1,95 @@
+[gd_scene format=3 uid="uid://bhwomruyunx4g"]
+
+[ext_resource type="Script" uid="uid://bel6jgbo5b861" path="res://Script/Only/map_container.gd" id="1_ey548"]
+[ext_resource type="Script" uid="uid://foiahoesyehg" path="res://Script/Only/text_map_content.gd" id="2_qm5gk"]
+[ext_resource type="Script" uid="uid://cb0m5sb236tus" path="res://Script/Only/map_connection.gd" id="3_03t57"]
+[ext_resource type="Texture2D" uid="uid://oya8wpn6jmc8" path="res://icon.svg" id="3_bgf2m"]
+
+[sub_resource type="Resource" id="Connection_Changan_Jianye"]
+script = ExtResource("3_03t57")
+from_place = NodePath("长安")
+to_place = NodePath("建邺")
+
+[sub_resource type="Resource" id="Connection_Jianye_Donghai"]
+script = ExtResource("3_03t57")
+from_place = NodePath("建邺")
+to_place = NodePath("东海湾")
+
+[sub_resource type="Resource" id="Connection_Donghai_Longgong"]
+script = ExtResource("3_03t57")
+from_place = NodePath("东海湾")
+to_place = NodePath("龙宫")
+
+[node name="MapPanel" type="ColorRect" unique_id=1978496414]
+modulate = Color(1, 1, 0, 1)
+offset_left = 277.0
+offset_top = 187.0
+offset_right = 497.0
+offset_bottom = 331.0
+
+[node name="MapContainer" type="SubViewportContainer" parent="." unique_id=559140743]
+layout_mode = 0
+offset_left = -274.0
+offset_top = -191.0
+offset_right = 926.0
+offset_bottom = 609.0
+script = ExtResource("1_ey548")
+
+[node name="MapViewport" type="SubViewport" parent="MapContainer" unique_id=79077987]
+handle_input_locally = false
+size = Vector2i(1200, 800)
+render_target_update_mode = 4
+
+[node name="MapContent" type="Node2D" parent="MapContainer/MapViewport" unique_id=1554904066]
+position = Vector2(427, 259)
+script = ExtResource("2_qm5gk")
+background_texture = ExtResource("3_bgf2m")
+connections = Array[Resource]([SubResource("Connection_Changan_Jianye"), SubResource("Connection_Jianye_Donghai"), SubResource("Connection_Donghai_Longgong")])
+
+[node name="MapBounds" type="ColorRect" parent="MapContainer/MapViewport/MapContent" unique_id=969886368]
+visible = false
+z_index = -1
+offset_left = -300.0
+offset_top = -240.0
+offset_right = 900.0
+offset_bottom = 720.0
+
+[node name="长安" type="Label" parent="MapContainer/MapViewport/MapContent" unique_id=858676275]
+modulate = Color(0, 0, 0, 1)
+offset_left = -137.0
+offset_top = -153.0
+offset_right = -34.0
+offset_bottom = -84.0
+scale = Vector2(0.5919065, 0.5919065)
+theme_override_font_sizes/font_size = 50
+text = "长安"
+
+[node name="建邺" type="Label" parent="MapContainer/MapViewport/MapContent" unique_id=1994144913]
+modulate = Color(0, 0, 0, 1)
+offset_left = -83.99999
+offset_top = 74.0
+offset_right = 19.000008
+offset_bottom = 143.0
+scale = Vector2(0.5919065, 0.5919065)
+theme_override_font_sizes/font_size = 50
+text = "建邺"
+
+[node name="东海湾" type="Label" parent="MapContainer/MapViewport/MapContent" unique_id=530341610]
+modulate = Color(0, 0, 0, 1)
+offset_left = 87.00001
+offset_top = -36.000008
+offset_right = 237.0
+offset_bottom = 32.999992
+scale = Vector2(0.5919065, 0.5919065)
+theme_override_font_sizes/font_size = 50
+text = "东海湾"
+
+[node name="龙宫" type="Label" parent="MapContainer/MapViewport/MapContent" unique_id=451771250]
+modulate = Color(0, 0, 0, 1)
+offset_left = 264.0
+offset_top = -148.00002
+offset_right = 414.0
+offset_bottom = -79.000015
+scale = Vector2(0.5919065, 0.5919065)
+theme_override_font_sizes/font_size = 50
+text = "龙宫"

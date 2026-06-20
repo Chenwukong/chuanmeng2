@@ -1,0 +1,124 @@
+[gd_scene format=3 uid="uid://dlsgplg72v7jg"]
+
+[ext_resource type="Script" uid="uid://dm7rivfqw71m7" path="res://Script/Class/BountyPopup.gd" id="1_root"]
+[ext_resource type="Texture2D" uid="uid://dogla7dqe8t0c" path="res://Graphic/UI/法术道具顶图.png" id="2_dposg"]
+[ext_resource type="Texture2D" uid="uid://cmb56qejeq2li" path="res://Graphic/UI/法术道具底图.png" id="3_q1kg6"]
+
+[node name="BountyPopup" type="CanvasLayer" unique_id=1509096698]
+layer = 5
+script = ExtResource("1_root")
+
+[node name="法术道具顶图" type="Sprite2D" parent="." unique_id=1929513694]
+visible = false
+position = Vector2(703, 337)
+scale = Vector2(0.7693896, 1.3822714)
+texture = ExtResource("2_dposg")
+
+[node name="法术道具底图" type="Sprite2D" parent="." unique_id=1629393740]
+position = Vector2(574.62964, 322.25)
+scale = Vector2(0.6201696, 0.7926683)
+texture = ExtResource("3_q1kg6")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1115526085]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.02, 0.04, 0.12, 0.75)
+
+[node name="Panel" type="Control" parent="." unique_id=1490961015]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 188.0
+offset_top = 39.0
+offset_right = 988.0
+offset_bottom = 601.0
+mouse_filter = 2
+
+[node name="PanelBg" type="ColorRect" parent="Panel" unique_id=880692002]
+visible = false
+layout_mode = 0
+offset_right = 800.0
+offset_bottom = 580.0
+mouse_filter = 2
+color = Color(0.03, 0.08, 0.2, 0.94)
+
+[node name="TitleBar" type="ColorRect" parent="Panel" unique_id=1249497700]
+layout_mode = 0
+offset_right = 800.0
+offset_bottom = 40.0
+color = Color(0.06, 0.15, 0.35, 0.6)
+
+[node name="TitleLabel" type="Label" parent="Panel" unique_id=654976912]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 8.0
+offset_right = 300.0
+offset_bottom = 36.0
+text = "◆ 悬赏任务 ◆"
+
+[node name="CloseBtn" type="Button" parent="Panel" unique_id=1107894427]
+layout_mode = 0
+offset_left = 760.0
+offset_top = 5.0
+offset_right = 795.0
+offset_bottom = 35.0
+text = "✕"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel" unique_id=1017890460]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 43.0
+offset_right = 800.0
+offset_bottom = 533.0
+
+[node name="BountyGrid" type="GridContainer" parent="Panel/ScrollContainer" unique_id=1075620076]
+layout_mode = 2
+mouse_filter = 2
+columns = 4
+
+[node name="ConfirmDialog" type="Control" parent="Panel" unique_id=1450726972]
+visible = false
+anchors_preset = 0
+offset_left = 80.0
+offset_top = 120.0
+offset_right = 720.0
+offset_bottom = 380.0
+
+[node name="ConfirmBg" type="ColorRect" parent="Panel/ConfirmDialog" unique_id=4743550]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.02, 0.06, 0.18, 0.97)
+
+[node name="ConfirmTitle" type="Label" parent="Panel/ConfirmDialog" unique_id=1278384968]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 620.0
+offset_bottom = 50.0
+
+[node name="Desc" type="Label" parent="Panel/ConfirmDialog" unique_id=1611156294]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 60.0
+offset_right = 620.0
+offset_bottom = 200.0
+autowrap_mode = 2
+
+[node name="BtnYes" type="Button" parent="Panel/ConfirmDialog" unique_id=1299172158]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 215.0
+offset_right = 280.0
+offset_bottom = 250.0
+text = "接受"
+
+[node name="BtnNo" type="Button" parent="Panel/ConfirmDialog" unique_id=1029121271]
+layout_mode = 0
+offset_left = 340.0
+offset_top = 215.0
+offset_right = 420.0
+offset_bottom = 250.0
+text = "取消"

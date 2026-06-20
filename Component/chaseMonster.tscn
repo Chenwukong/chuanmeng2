@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://bb5qsrcuq3clv"]
+
+[ext_resource type="Script" uid="uid://bvynqpeueed4w" path="res://Script/Class/WASAnimationPlayer.gd" id="1_3td8t"]
+[ext_resource type="Script" uid="uid://diw3kc6gfv6y" path="res://Script/Only/chase_monster.gd" id="1_esn6t"]
+
+[node name="monster" type="Node2D" unique_id=1592361119]
+script = ExtResource("1_esn6t")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1502951044]
+
+[node name="WASAnimationPlayer" type="Node" parent="." unique_id=1014651680]
+script = ExtResource("1_3td8t")
+target_sprite = NodePath("../Sprite2D")

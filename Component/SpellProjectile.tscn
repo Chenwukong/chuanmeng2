@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://btggccgg2xra3"]
+
+[ext_resource type="Script" uid="uid://dproj000000002" path="res://Script/Class/SpellProjectile.gd" id="1_spr"]
+
+[node name="SpellProjectile" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -30)
+
+[node name="Hitbox" type="Area2D" parent="."]
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("Rect")

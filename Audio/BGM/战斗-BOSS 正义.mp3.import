@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://c1a0f52k44uje"
+path="res://.godot/imported/战斗-BOSS 正义.mp3-c985bbab97aae9f7429a78fffc15c44e.mp3str"
+
+[deps]
+
+source_file="res://Audio/BGM/战斗-BOSS 正义.mp3"
+dest_files=["res://.godot/imported/战斗-BOSS 正义.mp3-c985bbab97aae9f7429a78fffc15c44e.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

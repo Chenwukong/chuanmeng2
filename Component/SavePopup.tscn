@@ -1,0 +1,597 @@
+[gd_scene format=3 uid="uid://tpb42vke363x"]
+
+[ext_resource type="Script" uid="uid://bg6a54wunr7uo" path="res://Script/Class/SavePopup.gd" id="1_root"]
+[ext_resource type="Texture2D" uid="uid://b8pueh3ocaw52" path="res://Graphic/UI/存档.png" id="2_0gsru"]
+[ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="3_ipkfc"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ipkfc"]
+atlas = ExtResource("3_ipkfc")
+region = Rect2(0, 0, 42.200043, 21.399994)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iabk2"]
+atlas = ExtResource("3_ipkfc")
+region = Rect2(84.65245, 0, 41.34755, 21.511547)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u8gsm"]
+atlas = ExtResource("3_ipkfc")
+region = Rect2(42.56493, 0, 40.23701, 21.74393)
+
+[node name="SavePopup" type="CanvasLayer" unique_id=1316028097]
+layer = 5
+script = ExtResource("1_root")
+
+[node name="Background" type="TextureRect" parent="." unique_id=307790109]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 464.0
+offset_top = 56.0
+offset_right = -348.0
+offset_bottom = -103.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_0gsru")
+
+[node name="CloseBtn" type="TextureButton" parent="." unique_id=247819807]
+offset_left = 807.0
+offset_top = 38.0
+offset_right = 849.0
+offset_bottom = 59.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="CloseBtn" unique_id=66434673]
+layout_mode = 0
+offset_top = -4.0
+offset_right = 42.0
+offset_bottom = 23.0
+text = "x"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot_0" type="Control" parent="." unique_id=1770242835]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -95.0
+offset_top = 132.0
+offset_right = 211.0
+offset_bottom = 219.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="Slot_0" unique_id=1250875445]
+visible = false
+layout_mode = 0
+offset_left = 9.0
+offset_top = -3.0
+offset_right = 361.0
+offset_bottom = 20.0
+text = "自动存档"
+
+[node name="TimeVal" type="Label" parent="Slot_0" unique_id=107272608]
+layout_mode = 0
+offset_left = 116.0
+offset_top = 4.0
+offset_right = 228.0
+offset_bottom = 27.0
+
+[node name="GoldVal" type="Label" parent="Slot_0" unique_id=1036899056]
+visible = false
+layout_mode = 0
+offset_left = 130.0
+offset_top = 30.0
+offset_right = 220.0
+offset_bottom = 50.0
+
+[node name="ChVal" type="Label" parent="Slot_0" unique_id=126647167]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 5.0
+offset_right = 138.0
+offset_bottom = 28.0
+
+[node name="Portraits" type="Control" parent="Slot_0" unique_id=1670584601]
+anchors_preset = 0
+offset_left = 1.0
+offset_top = 41.0
+offset_right = 231.0
+offset_bottom = 92.0
+scale = Vector2(0.7, 0.7)
+mouse_filter = 2
+
+[node name="LoadBtn" type="TextureButton" parent="Slot_0" unique_id=2143503821]
+layout_mode = 0
+offset_left = 261.0
+offset_top = 20.0
+offset_right = 303.0
+offset_bottom = 41.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_0/LoadBtn" unique_id=375001322]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "读取"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SaveBtn" type="TextureButton" parent="Slot_0" unique_id=576979900]
+layout_mode = 0
+offset_left = 261.0
+offset_top = 43.0
+offset_right = 303.0
+offset_bottom = 64.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_0/SaveBtn" unique_id=1978218978]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "保存"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DelBtn" type="TextureButton" parent="Slot_0" unique_id=114028953]
+layout_mode = 0
+offset_left = 261.0
+offset_top = 66.0
+offset_right = 303.0
+offset_bottom = 87.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_0/DelBtn" unique_id=1948444084]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "删除"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot_1" type="Control" parent="." unique_id=1114246211]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -94.0
+offset_top = 64.0
+offset_right = 211.0
+offset_bottom = 131.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="Slot_1" unique_id=337890377]
+visible = false
+layout_mode = 0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 360.0
+offset_bottom = 26.0
+text = "存档 1"
+
+[node name="TimeVal" type="Label" parent="Slot_1" unique_id=1916150235]
+layout_mode = 0
+offset_left = 113.0
+offset_top = -26.0
+offset_right = 225.0
+offset_bottom = -3.0
+
+[node name="GoldVal" type="Label" parent="Slot_1" unique_id=1773685845]
+visible = false
+layout_mode = 0
+offset_left = 130.0
+offset_top = 30.0
+offset_right = 220.0
+offset_bottom = 50.0
+
+[node name="ChVal" type="Label" parent="Slot_1" unique_id=211474348]
+layout_mode = 0
+offset_left = 6.0
+offset_top = -24.0
+offset_right = 136.0
+offset_bottom = -1.0
+
+[node name="Portraits" type="Control" parent="Slot_1" unique_id=1510393425]
+anchors_preset = 0
+offset_left = 1.0000002
+offset_top = 11.000001
+offset_right = 171.0
+offset_bottom = 58.0
+scale = Vector2(0.7, 0.7)
+mouse_filter = 2
+
+[node name="LoadBtn" type="TextureButton" parent="Slot_1" unique_id=2120969638]
+layout_mode = 0
+offset_left = 260.0
+offset_top = -12.0
+offset_right = 302.0
+offset_bottom = 9.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_1/LoadBtn" unique_id=1485314546]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "读取"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SaveBtn" type="TextureButton" parent="Slot_1" unique_id=1248638311]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 11.0
+offset_right = 302.0
+offset_bottom = 32.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_1/SaveBtn" unique_id=332299257]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "保存"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DelBtn" type="TextureButton" parent="Slot_1" unique_id=788787491]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 34.0
+offset_right = 302.0
+offset_bottom = 55.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_1/DelBtn" unique_id=207577630]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "删除"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot_2" type="Control" parent="." unique_id=1503908086]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -93.0
+offset_top = -33.0
+offset_right = 212.0
+offset_bottom = 34.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="Slot_2" unique_id=2045193242]
+visible = false
+layout_mode = 0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 360.0
+offset_bottom = 26.0
+text = "存档 1"
+
+[node name="TimeVal" type="Label" parent="Slot_2" unique_id=277892784]
+layout_mode = 0
+offset_left = 113.0
+offset_top = -26.0
+offset_right = 225.0
+offset_bottom = -3.0
+
+[node name="GoldVal" type="Label" parent="Slot_2" unique_id=1053702391]
+visible = false
+layout_mode = 0
+offset_left = 130.0
+offset_top = 30.0
+offset_right = 220.0
+offset_bottom = 50.0
+
+[node name="ChVal" type="Label" parent="Slot_2" unique_id=1749234708]
+layout_mode = 0
+offset_left = 6.0
+offset_top = -24.0
+offset_right = 136.0
+offset_bottom = -1.0
+
+[node name="Portraits" type="Control" parent="Slot_2" unique_id=1775914267]
+anchors_preset = 0
+offset_left = 1.0000002
+offset_top = 11.000001
+offset_right = 171.0
+offset_bottom = 58.0
+scale = Vector2(0.7, 0.7)
+mouse_filter = 2
+
+[node name="LoadBtn" type="TextureButton" parent="Slot_2" unique_id=1506801506]
+layout_mode = 0
+offset_left = 260.0
+offset_top = -12.0
+offset_right = 302.0
+offset_bottom = 9.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_2/LoadBtn" unique_id=1951590713]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "读取"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SaveBtn" type="TextureButton" parent="Slot_2" unique_id=411672055]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 11.0
+offset_right = 302.0
+offset_bottom = 32.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_2/SaveBtn" unique_id=337771644]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "保存"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DelBtn" type="TextureButton" parent="Slot_2" unique_id=986419408]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 34.0
+offset_right = 302.0
+offset_bottom = 55.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_2/DelBtn" unique_id=599402958]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "删除"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot_3" type="Control" parent="." unique_id=842863179]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -92.0
+offset_top = -128.0
+offset_right = 213.0
+offset_bottom = -61.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="Slot_3" unique_id=1459793077]
+visible = false
+layout_mode = 0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 360.0
+offset_bottom = 26.0
+text = "存档 1"
+
+[node name="TimeVal" type="Label" parent="Slot_3" unique_id=1635251620]
+layout_mode = 0
+offset_left = 113.0
+offset_top = -26.0
+offset_right = 225.0
+offset_bottom = -3.0
+
+[node name="GoldVal" type="Label" parent="Slot_3" unique_id=1977246796]
+visible = false
+layout_mode = 0
+offset_left = 130.0
+offset_top = 30.0
+offset_right = 220.0
+offset_bottom = 50.0
+
+[node name="ChVal" type="Label" parent="Slot_3" unique_id=978338441]
+layout_mode = 0
+offset_left = 6.0
+offset_top = -24.0
+offset_right = 136.0
+offset_bottom = -1.0
+
+[node name="Portraits" type="Control" parent="Slot_3" unique_id=540909073]
+anchors_preset = 0
+offset_left = 1.0000002
+offset_top = 11.000001
+offset_right = 171.0
+offset_bottom = 58.0
+scale = Vector2(0.7, 0.7)
+mouse_filter = 2
+
+[node name="LoadBtn" type="TextureButton" parent="Slot_3" unique_id=1145228885]
+layout_mode = 0
+offset_left = 260.0
+offset_top = -12.0
+offset_right = 302.0
+offset_bottom = 9.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_3/LoadBtn" unique_id=1482655049]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "读取"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SaveBtn" type="TextureButton" parent="Slot_3" unique_id=1999094912]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 11.0
+offset_right = 302.0
+offset_bottom = 32.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_3/SaveBtn" unique_id=643251795]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "保存"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DelBtn" type="TextureButton" parent="Slot_3" unique_id=1113180192]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 34.0
+offset_right = 302.0
+offset_bottom = 55.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_3/DelBtn" unique_id=673607184]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "删除"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot_4" type="Control" parent="." unique_id=556321084]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -93.0
+offset_top = -226.0
+offset_right = 212.0
+offset_bottom = -159.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="Slot_4" unique_id=1721305784]
+visible = false
+layout_mode = 0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 360.0
+offset_bottom = 26.0
+text = "存档 1"
+
+[node name="TimeVal" type="Label" parent="Slot_4" unique_id=46619270]
+layout_mode = 0
+offset_left = 113.0
+offset_top = -26.0
+offset_right = 225.0
+offset_bottom = -3.0
+
+[node name="GoldVal" type="Label" parent="Slot_4" unique_id=1785209493]
+visible = false
+layout_mode = 0
+offset_left = 130.0
+offset_top = 30.0
+offset_right = 220.0
+offset_bottom = 50.0
+
+[node name="ChVal" type="Label" parent="Slot_4" unique_id=505817629]
+layout_mode = 0
+offset_left = 6.0
+offset_top = -24.0
+offset_right = 136.0
+offset_bottom = -1.0
+
+[node name="Portraits" type="Control" parent="Slot_4" unique_id=722990182]
+anchors_preset = 0
+offset_left = 1.0000002
+offset_top = 11.000001
+offset_right = 171.0
+offset_bottom = 58.0
+scale = Vector2(0.7, 0.7)
+mouse_filter = 2
+
+[node name="LoadBtn" type="TextureButton" parent="Slot_4" unique_id=1420585723]
+layout_mode = 0
+offset_left = 260.0
+offset_top = -12.0
+offset_right = 302.0
+offset_bottom = 9.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_4/LoadBtn" unique_id=1203524389]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "读取"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SaveBtn" type="TextureButton" parent="Slot_4" unique_id=1679891650]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 11.0
+offset_right = 302.0
+offset_bottom = 32.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_4/SaveBtn" unique_id=1177255384]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "保存"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DelBtn" type="TextureButton" parent="Slot_4" unique_id=303867031]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 34.0
+offset_right = 302.0
+offset_bottom = 55.0
+texture_normal = SubResource("AtlasTexture_ipkfc")
+texture_pressed = SubResource("AtlasTexture_iabk2")
+texture_hover = SubResource("AtlasTexture_u8gsm")
+
+[node name="Label" type="Label" parent="Slot_4/DelBtn" unique_id=209312252]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "删除"
+horizontal_alignment = 1
+vertical_alignment = 1

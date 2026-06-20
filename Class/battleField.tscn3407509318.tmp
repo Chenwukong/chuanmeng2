@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://d2wh8kwqnqhv1"]
+
+[ext_resource type="Script" uid="uid://dkcvekv7lv7d2" path="res://Script/Only/BattleUI.gd" id="1_ppvnj"]
+
+[node name="BattleScene" type="Node2D" unique_id=70454207]
+
+[node name="BattleManager" type="Node" parent="." unique_id=975353491]
+
+[node name="BattleUI" type="CanvasLayer" parent="." unique_id=544801338]
+script = ExtResource("1_ppvnj")

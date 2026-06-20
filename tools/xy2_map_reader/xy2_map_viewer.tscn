@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://d716wts182jp"]
+
+[ext_resource type="Script" uid="uid://c5lgooyoopil0" path="res://tools/xy2_map_reader/xy2_map_viewer.gd" id="1_viewer"]
+[ext_resource type="PackedScene" uid="uid://cy17bv76hqnbf" path="res://Player.tscn" id="2_rpje2"]
+
+[node name="XY2MapViewer" type="Node2D" unique_id=247153422]
+script = ExtResource("1_viewer")
+map_path = "res://MAP/1001.map"
+
+[node name="Tiles" type="Node2D" parent="." unique_id=2063490601]
+
+[node name="Cells" type="Node2D" parent="." unique_id=25427586]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=134681191]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=215513307]
+
+[node name="Status" type="Label" parent="CanvasLayer" unique_id=962626292]
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 760.0
+offset_bottom = 34.0
+theme_override_colors/font_color = Color(0.95, 0.95, 0.9, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+text = "XY2 map viewer"
+
+[node name="Player" parent="." unique_id=376344963 instance=ExtResource("2_rpje2")]
+position = Vector2(825, 379)

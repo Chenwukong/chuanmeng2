@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://b7jjf3vtauaqn"
+path="res://.godot/imported/大话三国 (1).ogg-b6073c0ae03490ec3b06cedc0f764fee.oggvorbisstr"
+
+[deps]
+
+source_file="res://Audio/BGM/大话三国 (1).ogg"
+dest_files=["res://.godot/imported/大话三国 (1).ogg-b6073c0ae03490ec3b06cedc0f764fee.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

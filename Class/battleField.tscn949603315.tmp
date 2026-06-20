@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://d2wh8kwqnqhv1"]
+
+[ext_resource type="Script" uid="uid://cp1go806q0ylk" path="res://Script/Only/BattleManager.gd" id="1_10qib"]
+[ext_resource type="Script" uid="uid://b147uhmli1tmm" path="res://Script/battleUI.gd" id="1_ppvnj"]
+
+[node name="BattleScene" type="Node2D" unique_id=70454207]
+
+[node name="BattleManager" type="Node" parent="." unique_id=975353491]
+script = ExtResource("1_10qib")
+
+[node name="BattleUI" type="CanvasLayer" parent="." unique_id=544801338]
+script = ExtResource("1_ppvnj")

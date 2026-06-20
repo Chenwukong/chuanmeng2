@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://b0ofe3kgfmgwf"]
+
+[ext_resource type="PackedScene" path="res://Component/Mount.tscn" id="1_mount"]
+[ext_resource type="Script" uid="uid://bvynqpeueed4w" path="res://Script/Class/WASAnimationPlayer.gd" id="1_wasp"]
+[ext_resource type="Script" uid="uid://r3ackngc0pwo" path="res://Script/Only/TestMount.gd" id="2_test"]
+
+[node name="TestMount" type="Node2D" unique_id=818578557]
+position = Vector2(315, 142)
+script = ExtResource("2_test")
+
+[node name="Mount" parent="." unique_id=2127054506 instance=ExtResource("1_mount")]
+
+[node name="二郎神" type="Node2D" parent="." unique_id=1656983328]
+
+[node name="Sprite2D" type="Sprite2D" parent="二郎神" unique_id=1034224478]
+
+[node name="WASAnimationPlayer" type="Node" parent="二郎神" unique_id=1867386975]
+script = ExtResource("1_wasp")
+target_sprite = NodePath("../Sprite2D")

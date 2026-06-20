@@ -1,0 +1,1081 @@
+[gd_scene format=3 uid="uid://cbb0nphqofovd"]
+
+[ext_resource type="Script" uid="uid://bah7k7h6wtsxl" path="res://Script/Class/EquipPage.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://v42kmg1lkhh2" path="res://Graphic/UI/道具行囊.png" id="2_t4dqs"]
+[ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="3_sqn6u"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yg1gl"]
+atlas = ExtResource("3_sqn6u")
+region = Rect2(0, 0, 42.200043, 21.399994)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g38kl"]
+atlas = ExtResource("3_sqn6u")
+region = Rect2(84.65245, 0, 41.34755, 21.511547)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8cftm"]
+atlas = ExtResource("3_sqn6u")
+region = Rect2(42.56493, 0, 40.23701, 21.74393)
+
+[node name="EquipPage" type="Panel" unique_id=92677951]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_script")
+
+[node name="道具行囊" type="Sprite2D" parent="." unique_id=643242025]
+position = Vector2(560, 332)
+texture = ExtResource("2_t4dqs")
+
+[node name="TitleLabel" type="Label" parent="." unique_id=1756298854]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 40.0
+offset_top = 16.0
+offset_right = 300.0
+offset_bottom = 48.0
+theme_override_font_sizes/font_size = 26
+text = "装备 & 道具"
+
+[node name="RightArea" type="Control" parent="." unique_id=157082940]
+unique_name_in_owner = true
+anchors_preset = 0
+offset_left = 300.0
+offset_top = 60.0
+offset_right = 300.0
+offset_bottom = 60.0
+
+[node name="Tab_Equip" type="TextureButton" parent="RightArea" unique_id=1232248213]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 146.0
+offset_top = 471.0
+offset_right = 188.0
+offset_bottom = 492.0
+texture_normal = SubResource("AtlasTexture_yg1gl")
+texture_pressed = SubResource("AtlasTexture_g38kl")
+texture_hover = SubResource("AtlasTexture_8cftm")
+
+[node name="Label" type="Label" parent="RightArea/Tab_Equip" unique_id=871393601]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "装备"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Tab_Consumable" type="TextureButton" parent="RightArea" unique_id=1782178692]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 203.0
+offset_top = 471.0
+offset_right = 245.0
+offset_bottom = 492.0
+texture_normal = SubResource("AtlasTexture_yg1gl")
+texture_pressed = SubResource("AtlasTexture_g38kl")
+texture_hover = SubResource("AtlasTexture_8cftm")
+
+[node name="Label" type="Label" parent="RightArea/Tab_Consumable" unique_id=164816357]
+layout_mode = 0
+offset_left = 2.0
+offset_top = -1.0
+offset_right = 42.0
+offset_bottom = 22.0
+text = "药品"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Tab_KeyItem" type="TextureButton" parent="RightArea" unique_id=1482943306]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 259.0
+offset_top = 471.0
+offset_right = 301.0
+offset_bottom = 492.0
+texture_normal = SubResource("AtlasTexture_yg1gl")
+texture_pressed = SubResource("AtlasTexture_g38kl")
+texture_hover = SubResource("AtlasTexture_8cftm")
+
+[node name="Label" type="Label" parent="RightArea/Tab_KeyItem" unique_id=1422567883]
+layout_mode = 0
+offset_left = 2.0
+offset_top = -1.0
+offset_right = 42.0
+offset_bottom = 22.0
+text = "道具"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Tab_Material" type="TextureButton" parent="RightArea" unique_id=895182440]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 311.0
+offset_top = 471.0
+offset_right = 353.0
+offset_bottom = 492.0
+texture_normal = SubResource("AtlasTexture_yg1gl")
+texture_pressed = SubResource("AtlasTexture_g38kl")
+texture_hover = SubResource("AtlasTexture_8cftm")
+
+[node name="Label" type="Label" parent="RightArea/Tab_Material" unique_id=1321535747]
+layout_mode = 0
+offset_left = 3.0
+offset_top = -1.0
+offset_right = 42.0
+offset_bottom = 22.0
+text = "材料"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ItemGridBG" type="Panel" parent="RightArea" unique_id=1777383716]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_top = 72.0
+offset_right = 600.0
+offset_bottom = 472.0
+
+[node name="ItemSlot_00" type="Panel" parent="RightArea" unique_id=278868890]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 131.0
+offset_top = 245.0
+offset_right = 227.0
+offset_bottom = 329.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_00" unique_id=1619780866]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_01" type="Panel" parent="RightArea" unique_id=355363984]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 183.0
+offset_top = 245.0
+offset_right = 279.0
+offset_bottom = 329.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_01" unique_id=1011070334]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_02" type="Panel" parent="RightArea" unique_id=268985764]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 234.0
+offset_top = 246.0
+offset_right = 330.0
+offset_bottom = 330.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_02" unique_id=1468641006]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_03" type="Panel" parent="RightArea" unique_id=859056803]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 285.0
+offset_top = 246.0
+offset_right = 381.0
+offset_bottom = 330.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_03" unique_id=158119619]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_04" type="Panel" parent="RightArea" unique_id=1950198516]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 335.0
+offset_top = 245.0
+offset_right = 431.0
+offset_bottom = 329.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_04" unique_id=1299455112]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_05" type="Panel" parent="RightArea" unique_id=1722571596]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 131.0
+offset_top = 295.0
+offset_right = 227.0
+offset_bottom = 379.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_05" unique_id=818404686]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_06" type="Panel" parent="RightArea" unique_id=1284760220]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 183.0
+offset_top = 295.0
+offset_right = 279.0
+offset_bottom = 379.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_06" unique_id=443473590]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_07" type="Panel" parent="RightArea" unique_id=623550798]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 234.0
+offset_top = 296.0
+offset_right = 330.0
+offset_bottom = 380.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_07" unique_id=1000013003]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_08" type="Panel" parent="RightArea" unique_id=347592943]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 285.0
+offset_top = 296.0
+offset_right = 381.0
+offset_bottom = 380.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_08" unique_id=331695914]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_09" type="Panel" parent="RightArea" unique_id=784370177]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 335.0
+offset_top = 295.0
+offset_right = 431.0
+offset_bottom = 379.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_09" unique_id=668902612]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_10" type="Panel" parent="RightArea" unique_id=1830344433]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 131.0
+offset_top = 347.0
+offset_right = 227.0
+offset_bottom = 431.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_10" unique_id=808534325]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_11" type="Panel" parent="RightArea" unique_id=1265456895]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 183.0
+offset_top = 347.0
+offset_right = 279.0
+offset_bottom = 431.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_11" unique_id=507727654]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_12" type="Panel" parent="RightArea" unique_id=548763743]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 234.0
+offset_top = 348.0
+offset_right = 330.0
+offset_bottom = 432.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_12" unique_id=1426108381]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_13" type="Panel" parent="RightArea" unique_id=1068018704]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 285.0
+offset_top = 348.0
+offset_right = 381.0
+offset_bottom = 432.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_13" unique_id=153972022]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_14" type="Panel" parent="RightArea" unique_id=805550701]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 335.0
+offset_top = 347.0
+offset_right = 431.0
+offset_bottom = 431.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_14" unique_id=1653006510]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_15" type="Panel" parent="RightArea" unique_id=2144323737]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 131.0
+offset_top = 398.0
+offset_right = 227.0
+offset_bottom = 482.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_15" unique_id=875858767]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_16" type="Panel" parent="RightArea" unique_id=1901768443]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 183.0
+offset_top = 398.0
+offset_right = 279.0
+offset_bottom = 482.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_16" unique_id=745649269]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_17" type="Panel" parent="RightArea" unique_id=192649801]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 234.0
+offset_top = 397.99997
+offset_right = 330.0
+offset_bottom = 481.99997
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_17" unique_id=1426647915]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -1.7208158
+offset_bottom = -1.7208176
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_18" type="Panel" parent="RightArea" unique_id=2115323276]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 285.0
+offset_top = 399.0
+offset_right = 381.0
+offset_bottom = 483.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_18" unique_id=1234781902]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_19" type="Panel" parent="RightArea" unique_id=868635705]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 335.0
+offset_top = 398.0
+offset_right = 431.0
+offset_bottom = 482.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="RightArea/ItemSlot_19" unique_id=283514084]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PageLabel" type="Label" parent="RightArea" unique_id=1008065934]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 217.0
+offset_top = 443.0
+offset_right = 297.0
+offset_bottom = 475.0
+text = "1/1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NextButton" type="TextureButton" parent="RightArea" unique_id=1774645849]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 276.0
+offset_top = 452.0
+offset_right = 318.0
+offset_bottom = 473.0
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_yg1gl")
+texture_pressed = SubResource("AtlasTexture_g38kl")
+texture_hover = SubResource("AtlasTexture_8cftm")
+
+[node name="Label" type="Label" parent="RightArea/NextButton" unique_id=14678586]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = ">"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PrevButton" type="TextureButton" parent="RightArea" unique_id=979990756]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 205.0
+offset_top = 452.0
+offset_right = 247.0
+offset_bottom = 473.0
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_yg1gl")
+texture_pressed = SubResource("AtlasTexture_g38kl")
+texture_hover = SubResource("AtlasTexture_8cftm")
+
+[node name="Label" type="Label" parent="RightArea/PrevButton" unique_id=1387131222]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "<"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LeftArea" type="Control" parent="." unique_id=1382578124]
+unique_name_in_owner = true
+anchors_preset = 0
+offset_left = 40.0
+offset_top = 61.0
+offset_right = 40.0
+offset_bottom = 61.0
+
+[node name="PortraitLabel" type="Label" parent="LeftArea" unique_id=283554649]
+layout_mode = 0
+offset_right = 240.0
+offset_bottom = 26.0
+theme_override_font_sizes/font_size = 18
+text = "人物"
+horizontal_alignment = 1
+
+[node name="PortraitBG" type="Panel" parent="LeftArea" unique_id=1524167275]
+unique_name_in_owner = true
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 0
+offset_left = 30.0
+offset_top = 30.0
+offset_right = 210.0
+offset_bottom = 210.0
+
+[node name="Portrait" type="TextureRect" parent="LeftArea/PortraitBG" unique_id=1694922920]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 374.0
+offset_top = 48.0
+offset_right = 320.0
+offset_bottom = -23.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Slot_Weapon" type="Panel" parent="LeftArea" unique_id=1258425242]
+unique_name_in_owner = true
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 0
+offset_left = 561.0
+offset_top = 126.0
+offset_right = 611.0
+offset_bottom = 175.0
+
+[node name="Icon" type="TextureRect" parent="LeftArea/Slot_Weapon" unique_id=95203088]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 563.0
+offset_top = -102.0
+offset_right = 500.0
+offset_bottom = -175.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotLabel" type="Label" parent="LeftArea/Slot_Weapon" unique_id=1717010021]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -40.0
+offset_right = 50.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="LeftArea/Slot_Weapon" unique_id=1869927132]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "武器"
+horizontal_alignment = 1
+
+[node name="ClickBtn" type="Button" parent="LeftArea/Slot_Weapon" unique_id=300000000]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
+[node name="Slot_Body" type="Panel" parent="LeftArea" unique_id=1661715033]
+unique_name_in_owner = true
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 0
+offset_left = 614.0
+offset_top = 126.0
+offset_right = 664.0
+offset_bottom = 175.0
+
+[node name="Icon" type="TextureRect" parent="LeftArea/Slot_Body" unique_id=1499806524]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 496.0
+offset_top = -102.0
+offset_right = 433.0
+offset_bottom = -175.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="LeftArea/Slot_Body" unique_id=1413806878]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "铠甲/女衣"
+horizontal_alignment = 1
+
+[node name="SlotLabel" type="Label" parent="LeftArea/Slot_Body" unique_id=2120596444]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "铠甲/女衣"
+horizontal_alignment = 1
+
+[node name="SlotLabel2" type="Label" parent="LeftArea/Slot_Body" unique_id=1102362265]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "铠甲/女衣"
+horizontal_alignment = 1
+
+[node name="ClickBtn" type="Button" parent="LeftArea/Slot_Body" unique_id=300000001]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
+[node name="Slot_Head" type="Panel" parent="LeftArea" unique_id=1931433862]
+unique_name_in_owner = true
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 0
+offset_left = 560.0
+offset_top = 71.0
+offset_right = 611.0
+offset_bottom = 123.0
+
+[node name="Icon" type="TextureRect" parent="LeftArea/Slot_Head" unique_id=1757285731]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 563.0
+offset_top = -284.0
+offset_right = 500.0
+offset_bottom = -358.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="LeftArea/Slot_Head" unique_id=301406543]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "头盔/发钗"
+horizontal_alignment = 1
+
+[node name="SlotLabel" type="Label" parent="LeftArea/Slot_Head" unique_id=774773073]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "头盔/发钗"
+horizontal_alignment = 1
+
+[node name="SlotLabel2" type="Label" parent="LeftArea/Slot_Head" unique_id=189151506]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "头盔/发钗"
+horizontal_alignment = 1
+
+[node name="ClickBtn" type="Button" parent="LeftArea/Slot_Head" unique_id=300000002]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
+[node name="Slot_Belt" type="Panel" parent="LeftArea" unique_id=784606659]
+unique_name_in_owner = true
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 0
+offset_left = 561.0
+offset_top = 179.0
+offset_right = 612.0
+offset_bottom = 231.0
+
+[node name="Icon" type="TextureRect" parent="LeftArea/Slot_Belt" unique_id=177223255]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 25.0
+offset_top = 27.0
+offset_right = -26.0
+offset_bottom = -25.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotLabel" type="Label" parent="LeftArea/Slot_Belt" unique_id=1146780401]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -40.0
+offset_right = 50.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="LeftArea/Slot_Belt" unique_id=1918597295]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -33.0
+offset_right = 2.0
+offset_bottom = -11.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "腰带"
+horizontal_alignment = 1
+
+[node name="ClickBtn" type="Button" parent="LeftArea/Slot_Belt" unique_id=300000003]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
+[node name="Slot_Shoes" type="Panel" parent="LeftArea" unique_id=739133865]
+unique_name_in_owner = true
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 0
+offset_left = 613.0
+offset_top = 179.0
+offset_right = 665.0
+offset_bottom = 231.0
+
+[node name="Icon" type="TextureRect" parent="LeftArea/Slot_Shoes" unique_id=1834730043]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 616.0
+offset_top = -308.0
+offset_right = 553.0
+offset_bottom = -381.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotLabel" type="Label" parent="LeftArea/Slot_Shoes" unique_id=1986291170]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -40.0
+offset_right = 50.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="LeftArea/Slot_Shoes" unique_id=1909085379]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "鞋子"
+horizontal_alignment = 1
+
+[node name="ClickBtn" type="Button" parent="LeftArea/Slot_Shoes" unique_id=300000004]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
+[node name="Slot_Necklace" type="Panel" parent="LeftArea" unique_id=539352014]
+unique_name_in_owner = true
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 0
+offset_left = 614.0
+offset_top = 71.0
+offset_right = 664.0
+offset_bottom = 121.96153
+
+[node name="Icon" type="TextureRect" parent="LeftArea/Slot_Necklace" unique_id=435852181]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 370.0
+offset_top = -353.0
+offset_right = 324.0
+offset_bottom = -407.7273
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="LeftArea/Slot_Necklace" unique_id=913348207]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "项链"
+horizontal_alignment = 1
+
+[node name="SlotLabel" type="Label" parent="LeftArea/Slot_Necklace" unique_id=1081030308]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "项链"
+horizontal_alignment = 1
+
+[node name="ClickBtn" type="Button" parent="LeftArea/Slot_Necklace" unique_id=300000005]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
+[node name="RightArea_Tap_Equip#Label" type="Label" parent="." unique_id=1306715836]
+layout_mode = 0
+offset_left = 2.0
+offset_top = -1.0
+offset_right = 42.0
+offset_bottom = 22.0
+text = "装备"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DetailLabel" type="Label" parent="." unique_id=560615060]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 40.0
+offset_top = 590.0
+offset_right = 900.0
+offset_bottom = 620.0
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+
+[node name="CloseBtn" type="TextureButton" parent="." unique_id=310000000]
+layout_mode = 0
+offset_left = 712.0
+offset_top = 108.0
+offset_right = 792.0
+offset_bottom = 138.0
+texture_normal = SubResource("AtlasTexture_yg1gl")
+texture_pressed = SubResource("AtlasTexture_g38kl")
+texture_hover = SubResource("AtlasTexture_8cftm")
+
+[node name="Label" type="Label" parent="CloseBtn" unique_id=310000001]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -3.0
+offset_right = -40.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "x"
+horizontal_alignment = 1
+
+[node name="银两" type="Label" parent="." unique_id=2102782228]
+modulate = Color(1, 1, 0, 1)
+layout_mode = 0
+offset_left = 462.0
+offset_top = 253.0
+offset_right = 502.00003
+offset_bottom = 276.0
+text = "银两:"
+
+[node name="gold" type="Label" parent="." unique_id=280769330]
+layout_mode = 0
+offset_left = 499.0
+offset_top = 256.0
+offset_right = 568.0
+offset_bottom = 279.0
+theme_override_font_sizes/font_size = 14
+text = "0"

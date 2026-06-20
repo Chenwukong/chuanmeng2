@@ -1,0 +1,81 @@
+[gd_scene format=3 uid="uid://d2wh8kwqnqhv1"]
+
+[ext_resource type="Script" uid="uid://cp1go806q0ylk" path="res://Script/Only/BattleManager.gd" id="1_10qib"]
+[ext_resource type="Script" uid="uid://ubxkpohd1lyp" path="res://Script/Only/BattleScene.gd" id="1_bq3b7"]
+[ext_resource type="Script" uid="uid://b147uhmli1tmm" path="res://Script/Only/battleUI.gd" id="1_ppvnj"]
+[ext_resource type="Script" uid="uid://lr274x0nj6wq" path="res://Script/Only/EnemyAI.gd" id="2_i8t6t"]
+[ext_resource type="Script" uid="uid://dxptd2xdcp8o2" path="res://Script/Class/ActionPanel.gd" id="3_g70vi"]
+
+[node name="BattleScene" type="Node2D" unique_id=70454207]
+script = ExtResource("1_bq3b7")
+
+[node name="BattleManager" type="Node" parent="." unique_id=975353491]
+script = ExtResource("1_10qib")
+
+[node name="EnemyAI" type="Node" parent="BattleManager" unique_id=917354286]
+script = ExtResource("2_i8t6t")
+
+[node name="EnemyGroup" type="Node2D" parent="." unique_id=166236877]
+position = Vector2(170, 149)
+
+[node name="PartyGroup" type="Node2D" parent="." unique_id=772363209]
+position = Vector2(811, 382)
+
+[node name="BattleUI" type="CanvasLayer" parent="." unique_id=544801338]
+script = ExtResource("1_ppvnj")
+
+[node name="PartyPanel" type="HBoxContainer" parent="BattleUI" unique_id=833952295]
+visible = false
+offset_right = 1150.0
+offset_bottom = 367.0
+
+[node name="BattleLog" type="RichTextLabel" parent="BattleUI" unique_id=655238185]
+offset_left = 641.0
+offset_right = 1146.0
+offset_bottom = 96.0
+
+[node name="ActionPanel" type="Control" parent="BattleUI" unique_id=2108301612]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 1068.0
+offset_top = 389.0
+offset_right = 1144.0
+offset_bottom = 532.0
+script = ExtResource("3_g70vi")
+
+[node name="MainCommands" type="VBoxContainer" parent="BattleUI/ActionPanel" unique_id=1459547559]
+layout_mode = 0
+offset_right = 69.0
+offset_bottom = 67.0
+
+[node name="BtnAttack" type="Button" parent="BattleUI/ActionPanel/MainCommands" unique_id=1687220761]
+layout_mode = 2
+text = "攻击"
+
+[node name="BtnSkill" type="Button" parent="BattleUI/ActionPanel/MainCommands" unique_id=1010440964]
+layout_mode = 2
+text = "技能"
+
+[node name="BtnItem" type="Button" parent="BattleUI/ActionPanel/MainCommands" unique_id=709521607]
+layout_mode = 2
+text = "道具"
+
+[node name="BtnFlee" type="Button" parent="BattleUI/ActionPanel/MainCommands" unique_id=443518671]
+layout_mode = 2
+text = "逃跑"
+
+[node name="SubMenu" type="PanelContainer" parent="BattleUI/ActionPanel" unique_id=1453051723]
+visible = false
+layout_mode = 0
+offset_right = 1148.0
+offset_bottom = 589.0
+
+[node name="LevelUpOverlay" type="PanelContainer" parent="BattleUI" unique_id=1025294126]
+visible = false
+offset_right = 1153.0
+offset_bottom = 651.0
+
+[node name="ActorIndicator" type="Label" parent="BattleUI" unique_id=442266893]
+visible = false
+offset_right = 1149.0
+offset_bottom = 644.0

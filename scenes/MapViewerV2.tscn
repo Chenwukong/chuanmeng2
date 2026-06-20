@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://cf1eixt5ouu4p"]
+
+[ext_resource type="PackedScene" uid="uid://cy17bv76hqnbf" path="res://Player.tscn" id="2_kjqps"]
+[ext_resource type="Script" uid="uid://c7mh263s3mu1u" path="res://Script/Global/MapViewerV2.gd" id="2_viewer"]
+[ext_resource type="Texture2D" uid="uid://bxdecukcgcmdx" path="res://Graphic/Map/1506.png" id="3_hflso"]
+
+[node name="MapViewerV2" type="Node2D" unique_id=310220899]
+script = ExtResource("2_viewer")
+map_path = "res://MAP/1506.map"
+
+[node name="Player" parent="." unique_id=1867934409 instance=ExtResource("2_kjqps")]
+z_index = 1
+position = Vector2(1124, 959)
+
+[node name="1001" type="Sprite2D" parent="." unique_id=1422431884]
+z_index = 1
+position = Vector2(1200, 1200)
+texture = ExtResource("3_hflso")

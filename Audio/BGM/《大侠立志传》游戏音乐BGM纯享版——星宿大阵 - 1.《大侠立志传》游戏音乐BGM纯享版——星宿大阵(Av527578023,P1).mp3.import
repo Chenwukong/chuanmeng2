@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://ccdhx5xq47n2x"
+path="res://.godot/imported/《大侠立志传》游戏音乐BGM纯享版——星宿大阵 - 1.《大侠立志传》游戏音乐BGM纯享版——星宿大阵(Av527578023,P1).mp3-827cfa7133862b4cab7d67a4a9d05c23.mp3str"
+
+[deps]
+
+source_file="res://Audio/BGM/《大侠立志传》游戏音乐BGM纯享版——星宿大阵 - 1.《大侠立志传》游戏音乐BGM纯享版——星宿大阵(Av527578023,P1).mp3"
+dest_files=["res://.godot/imported/《大侠立志传》游戏音乐BGM纯享版——星宿大阵 - 1.《大侠立志传》游戏音乐BGM纯享版——星宿大阵(Av527578023,P1).mp3-827cfa7133862b4cab7d67a4a9d05c23.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

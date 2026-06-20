@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://dcw0dn1yg8tnq"]
+
+[ext_resource type="Texture2D" uid="uid://dcgs3wdglp6db" path="res://Graphic/UI/人物头像底图.png" id="1_h5i70"]
+
+[node name="TurnOrderEntry" type="VBoxContainer" unique_id=455331480]
+custom_minimum_size = Vector2(52, 64)
+offset_left = -8.0
+offset_top = -1.0
+offset_right = 44.0
+offset_bottom = 63.0
+mouse_filter = 2
+theme_override_constants/separation = 1
+
+[node name="Bg" type="TextureRect" parent="." unique_id=1765321547]
+custom_minimum_size = Vector2(34.667, 36)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("1_h5i70")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Avatar" type="TextureRect" parent="Bg" unique_id=1861910440]
+layout_mode = 1
+offset_left = 11.0
+offset_top = -1.0
+offset_right = 43.0
+offset_bottom = 31.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5

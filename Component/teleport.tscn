@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://d1ftlp001jjk8"]
+
+[ext_resource type="Texture2D" uid="uid://c642k47w8ej1a" path="res://Graphic/RANDOM/传送.png" id="1_7wvx4"]
+[ext_resource type="Script" uid="uid://bsav2g2a71p0a" path="res://Script/Only/teleport.gd" id="1_xph60"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xph60"]
+atlas = ExtResource("1_7wvx4")
+region = Rect2(0, 0, 142, 82)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jvvuk"]
+atlas = ExtResource("1_7wvx4")
+region = Rect2(142, 0, 142, 82)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a6hgh"]
+atlas = ExtResource("1_7wvx4")
+region = Rect2(284, 0, 142, 82)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_emo8l"]
+atlas = ExtResource("1_7wvx4")
+region = Rect2(426, 0, 142, 82)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_dao8g"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xph60")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jvvuk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a6hgh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_emo8l")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="teleport" type="Area2D" unique_id=210668894]
+script = ExtResource("1_xph60")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1029103654]
+sprite_frames = SubResource("SpriteFrames_dao8g")
+autoplay = "default"
+frame_progress = 0.9765323
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="." unique_id=1866626938]
+polygon = PackedVector2Array(-12, -24, 49, -20, 45, 26, -39, 26, -61, -7)
+
+[connection signal="area_entered" from="." to="." method="_on_area_entered"]
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

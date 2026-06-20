@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://d5hx5ua1pfln"]
+
+[ext_resource type="Script" uid="uid://dy3b3dlfq7qdl" path="res://Script/Class/NpcNode.gd" id="1_a2bx4"]
+[ext_resource type="Script" uid="uid://bvynqpeueed4w" path="res://Script/Class/WASAnimationPlayer.gd" id="1_wasp"]
+[ext_resource type="Texture2D" uid="uid://ci1e7r1d47pma" path="res://Graphic/RANDOM/shadow (2).png" id="3_qs3uo"]
+
+[node name="Npc" type="Node2D" unique_id=662570945 groups=["npc"]]
+script = ExtResource("1_a2bx4")
+npc_name = "镖头"
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=312926297]
+
+[node name="WASAnimationPlayer" type="Node" parent="." unique_id=1056879825]
+script = ExtResource("1_wasp")
+target_sprite = NodePath("../Sprite2D")
+
+[node name="Shadow(2)" type="Sprite2D" parent="." unique_id=2036651880]
+position = Vector2(0, 6)
+texture = ExtResource("3_qs3uo")

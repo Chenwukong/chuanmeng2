@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://dno5u7h0tr5vo"]
+
+[ext_resource type="Script" uid="uid://bubqequjnv37x" path="res://Script/tcp_sprite.gd" id="1_script"]
+
+[node name="TcpSprite" type="Sprite2D" unique_id=1866989955]
+position = Vector2(177, 77)
+script = ExtResource("1_script")

@@ -1,0 +1,103 @@
+[gd_scene format=3 uid="uid://u7gb3pw88qct"]
+
+[ext_resource type="Script" uid="uid://cffrs2xsu5s7f" path="res://Script/Class/SkillPopup.gd" id="1_root"]
+[ext_resource type="Texture2D" uid="uid://dogla7dqe8t0c" path="res://Graphic/UI/法术道具顶图.png" id="2_top"]
+[ext_resource type="Texture2D" uid="uid://cmb56qejeq2li" path="res://Graphic/UI/法术道具底图.png" id="3_bottom"]
+
+[node name="SkillPopup" type="CanvasLayer" unique_id=804594648]
+layer = 4
+script = ExtResource("1_root")
+
+[node name="Background" type="ColorRect" parent="." unique_id=153114328]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.55)
+
+[node name="PanelWindow" type="Control" parent="." unique_id=10908420]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 237.0
+offset_top = 56.0
+offset_right = 937.0
+offset_bottom = 596.0
+mouse_filter = 2
+
+[node name="TopBg" type="TextureRect" parent="PanelWindow" unique_id=338300248]
+modulate = Color(1, 1, 1, 0.79607844)
+layout_mode = 0
+offset_right = 700.0
+offset_bottom = 230.0
+mouse_filter = 2
+texture = ExtResource("2_top")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BottomBg" type="TextureRect" parent="PanelWindow" unique_id=1407948301]
+self_modulate = Color(1, 1, 1, 0.79607844)
+layout_mode = 0
+offset_top = 230.0
+offset_right = 700.0
+offset_bottom = 540.0
+mouse_filter = 2
+texture = ExtResource("3_bottom")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TitleLabel" type="Label" parent="PanelWindow" unique_id=1492891695]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 10.0
+offset_right = 200.0
+offset_bottom = 38.0
+text = "✦ 选择仙术"
+
+[node name="CloseBtn" type="Button" parent="PanelWindow" unique_id=914574405]
+layout_mode = 0
+offset_left = 660.0
+offset_top = 8.0
+offset_right = 690.0
+offset_bottom = 36.0
+mouse_filter = 2
+text = "✕"
+
+[node name="SkillName" type="Label" parent="PanelWindow" unique_id=1292028350]
+layout_mode = 0
+offset_left = 45.0
+offset_top = 68.0
+offset_right = 158.0
+offset_bottom = 91.0
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SkillMeta" type="Label" parent="PanelWindow" unique_id=846689316]
+layout_mode = 0
+offset_left = 45.0
+offset_top = 94.0
+offset_right = 608.0
+offset_bottom = 119.0
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SkillDesc" type="Label" parent="PanelWindow" unique_id=634667937]
+layout_mode = 0
+offset_left = 47.0
+offset_top = 98.0
+offset_right = 608.0
+offset_bottom = 153.0
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelWindow" unique_id=886811722]
+layout_mode = 0
+offset_left = 35.0
+offset_top = 259.0
+offset_right = 663.0
+offset_bottom = 512.0
+mouse_filter = 2
+
+[node name="SkillGrid" type="GridContainer" parent="PanelWindow/ScrollContainer" unique_id=232060735]
+layout_mode = 2
+mouse_filter = 2
+columns = 3

@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://cy17bv76hqnbf"]
+
+[ext_resource type="Script" uid="uid://dky546bmxibry" path="res://Script/Class/MapWalker.gd" id="1_walker"]
+[ext_resource type="Script" uid="uid://bvynqpeueed4w" path="res://Script/Class/WASAnimationPlayer.gd" id="2_wasp"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_kpjcp"]
+radius = 36.0
+height = 134.0
+
+[node name="Player" type="CharacterBody2D" unique_id=835626252]
+modulate = Color(0.16062862, 0.16062862, 0.16062862, 1)
+script = ExtResource("1_walker")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="." unique_id=1569821475]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1502951044]
+
+[node name="WASAnimationPlayer" type="Node" parent="." unique_id=1014651680]
+script = ExtResource("2_wasp")
+target_sprite = NodePath("../Sprite2D")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=753654731]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=745644488]
+position = Vector2(0, -40)
+shape = SubResource("CapsuleShape2D_kpjcp")

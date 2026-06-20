@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://dmount00000001"]
+
+[ext_resource type="Script" uid="uid://bvynqpeueed4w" path="res://Script/Class/WASAnimationPlayer.gd" id="1_wasp"]
+
+[node name="Mount" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="WASAnimationPlayer" type="Node" parent="."]
+script = ExtResource("1_wasp")
+target_sprite = NodePath("../Sprite2D")

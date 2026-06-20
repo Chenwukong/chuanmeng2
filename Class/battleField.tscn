@@ -1,0 +1,232 @@
+[gd_scene format=3 uid="uid://d2wh8kwqnqhv1"]
+
+[ext_resource type="Script" uid="uid://cp1go806q0ylk" path="res://Script/Only/BattleManager.gd" id="1_10qib"]
+[ext_resource type="Script" uid="uid://ubxkpohd1lyp" path="res://Script/Only/BattleScene.gd" id="1_bq3b7"]
+[ext_resource type="Script" uid="uid://b147uhmli1tmm" path="res://Script/Only/battleUI.gd" id="1_ppvnj"]
+[ext_resource type="Script" uid="uid://lr274x0nj6wq" path="res://Script/Only/EnemyAI.gd" id="2_i8t6t"]
+[ext_resource type="Texture2D" uid="uid://b1yxsp6x3sk07" path="res://Graphic/UI/战斗覆盖-法阵.png" id="2_sf67d"]
+[ext_resource type="Script" uid="uid://dxptd2xdcp8o2" path="res://Script/Class/ActionPanel.gd" id="3_g70vi"]
+[ext_resource type="Texture2D" uid="uid://cr5jh0g5ktjkj" path="res://Graphic/RANDOM/31c253a61c5946cfd3af114d0ea2de54.png" id="3_uhoi2"]
+[ext_resource type="Texture2D" uid="uid://lj7comk4kyb0" path="res://Graphic/UI/战斗覆盖-背景.png" id="3_ukw3b"]
+[ext_resource type="Texture2D" uid="uid://d2sni8n24yg1t" path="res://Graphic/UI/战斗指令-特技.png" id="4_atk"]
+[ext_resource type="Texture2D" uid="uid://cth0q2lxc1ke1" path="res://Graphic/UI/战斗指令-法术.png" id="5_skl"]
+[ext_resource type="Texture2D" uid="uid://cnpouas7l0r3b" path="res://Graphic/UI/战斗指令-道具.png" id="6_itm"]
+[ext_resource type="Texture2D" uid="uid://klvret4kbyto" path="res://Graphic/UI/d6424c9cd23c9f3c0ebd468010472d92.png" id="7_4pb7y"]
+[ext_resource type="Texture2D" uid="uid://cupihqlkw6a7l" path="res://Graphic/UI/战斗指令-召唤.png" id="7_sum"]
+[ext_resource type="Texture2D" uid="uid://bmvo0cgsa0me6" path="res://Graphic/UI/8dece5d9c2ecb76333ba131541166915.png" id="8_8r2kx"]
+[ext_resource type="Texture2D" uid="uid://fxrpru0cpe1e" path="res://Graphic/UI/战斗指令-保护.png" id="8_grd"]
+[ext_resource type="Texture2D" uid="uid://in57qvq254wu" path="res://Graphic/UI/战斗指令-捕捉.png" id="9_cap"]
+[ext_resource type="Texture2D" uid="uid://bncoelmd25i5d" path="res://Graphic/UI/44098589cff5befc7bb83d669a3c8a02.png" id="9_sf67d"]
+[ext_resource type="Texture2D" uid="uid://dk02silgv4ldf" path="res://Graphic/UI/3ca286469b5327a9855d7d23cb8f4b35.png" id="9_ukw3b"]
+[ext_resource type="Script" uid="uid://o32t76gk48si" path="res://Script/Class/CmdButton.gd" id="10_cmd"]
+[ext_resource type="Texture2D" uid="uid://5duyliwdml6e" path="res://Graphic/UI/进度条.png" id="15_bhsf1"]
+[ext_resource type="Texture2D" uid="uid://4gx7o0j46ltx" path="res://Graphic/UI/命令条S.png" id="16_ved5n"]
+[ext_resource type="Texture2D" uid="uid://b3tfm0m8lvwta" path="res://Graphic/UI/1 (2).png" id="21_8r2kx"]
+
+[node name="BattleScene" type="CanvasLayer" unique_id=1995866063]
+layer = 3
+script = ExtResource("1_bq3b7")
+
+[node name="Black" type="ColorRect" parent="." unique_id=1106428944]
+visible = false
+modulate = Color(1, 1, 1, 0.8352941)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2065543, 0.2065543, 0.20655426, 1)
+
+[node name="BattleBg" type="TextureRect" parent="." unique_id=1547189175]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -114.0
+offset_top = 96.0
+offset_right = 113.32507
+offset_bottom = -75.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_sf67d")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="战斗覆盖背景" type="Sprite2D" parent="." unique_id=1903184315]
+self_modulate = Color(1, 1, 1, 0.69803923)
+position = Vector2(471, 451)
+texture = ExtResource("3_ukw3b")
+
+[node name="31c253a61c5946Cfd3Af114d0Ea2De54" type="Sprite2D" parent="." unique_id=1807515760]
+visible = false
+self_modulate = Color(1, 1, 1, 0.9019608)
+position = Vector2(572, 337)
+texture = ExtResource("3_uhoi2")
+
+[node name="BattleManager" type="Node" parent="." unique_id=975353491]
+script = ExtResource("1_10qib")
+
+[node name="EnemyAI" type="Node" parent="BattleManager" unique_id=917354286]
+script = ExtResource("2_i8t6t")
+
+[node name="EnemyGroup" type="Node2D" parent="." unique_id=166236877]
+position = Vector2(262, 355)
+
+[node name="PartyGroup" type="Node2D" parent="." unique_id=772363209]
+position = Vector2(811, 382)
+
+[node name="BattleUI" type="CanvasLayer" parent="." unique_id=544801338]
+layer = 4
+script = ExtResource("1_ppvnj")
+
+[node name="总血条" type="Sprite2D" parent="BattleUI" unique_id=145720630]
+position = Vector2(236.50003, 451.5)
+texture = ExtResource("8_8r2kx")
+
+[node name="提示" type="Sprite2D" parent="BattleUI" unique_id=1208683508]
+position = Vector2(260, 631)
+texture = ExtResource("9_ukw3b")
+
+[node name="总血条progressbar" type="TextureProgressBar" parent="BattleUI" unique_id=565685681]
+offset_left = 213.0
+offset_top = 440.0
+offset_right = 453.0
+offset_bottom = 480.0
+value = 100.0
+texture_progress = ExtResource("9_sf67d")
+
+[node name="BattleLog" type="RichTextLabel" parent="BattleUI" unique_id=655238185]
+offset_left = 4.0
+offset_top = 467.0
+offset_right = 475.0
+offset_bottom = 624.0
+
+[node name="TurnOrderPanel" type="Control" parent="BattleUI" unique_id=987654321]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 852.0
+offset_top = 37.000008
+offset_right = -12.0
+offset_bottom = -558.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="进度条" type="Sprite2D" parent="BattleUI" unique_id=609545034]
+z_index = 3
+position = Vector2(1001.1236, 24.000002)
+rotation = 1.5707964
+scale = Vector2(1, 1.0741613)
+texture = ExtResource("15_bhsf1")
+
+[node name="ActionPanel" type="Control" parent="BattleUI" unique_id=2108301612]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 956.0
+offset_top = 164.0
+offset_right = 1034.0
+offset_bottom = 300.0
+script = ExtResource("3_g70vi")
+
+[node name="战斗指令召唤兽背景" type="Sprite2D" parent="BattleUI/ActionPanel" unique_id=1331725707]
+position = Vector2(39, 75.25)
+scale = Vector2(1, 1.2939192)
+texture = ExtResource("7_4pb7y")
+
+[node name="BtnAttack" type="TextureButton" parent="BattleUI/ActionPanel" unique_id=1687220761]
+layout_mode = 0
+offset_right = 78.0
+offset_bottom = 34.0
+script = ExtResource("10_cmd")
+spritesheet = ExtResource("4_atk")
+
+[node name="BtnSkill" type="TextureButton" parent="BattleUI/ActionPanel" unique_id=1010440964]
+layout_mode = 0
+offset_top = 25.0
+offset_right = 78.0
+offset_bottom = 59.0
+script = ExtResource("10_cmd")
+spritesheet = ExtResource("5_skl")
+
+[node name="BtnItem" type="TextureButton" parent="BattleUI/ActionPanel" unique_id=709521607]
+layout_mode = 0
+offset_top = 50.0
+offset_right = 78.0
+offset_bottom = 84.0
+script = ExtResource("10_cmd")
+spritesheet = ExtResource("6_itm")
+
+[node name="BtnSummon" type="TextureButton" parent="BattleUI/ActionPanel" unique_id=1687220762]
+layout_mode = 0
+offset_top = 75.0
+offset_right = 78.0
+offset_bottom = 109.0
+script = ExtResource("10_cmd")
+spritesheet = ExtResource("7_sum")
+
+[node name="BtnGuard" type="TextureButton" parent="BattleUI/ActionPanel" unique_id=1010440965]
+layout_mode = 0
+offset_top = 100.0
+offset_right = 78.0
+offset_bottom = 134.0
+script = ExtResource("10_cmd")
+spritesheet = ExtResource("8_grd")
+
+[node name="BtnCapture" type="TextureButton" parent="BattleUI/ActionPanel" unique_id=709521608]
+layout_mode = 0
+offset_top = 125.0
+offset_right = 78.0
+offset_bottom = 159.0
+script = ExtResource("10_cmd")
+spritesheet = ExtResource("9_cap")
+
+[node name="SubMenu" type="PanelContainer" parent="BattleUI/ActionPanel" unique_id=1453051723]
+visible = false
+layout_mode = 0
+offset_right = 1148.0
+offset_bottom = 589.0
+
+[node name="SubGrid" type="GridContainer" parent="BattleUI/ActionPanel/SubMenu" unique_id=1453051823]
+layout_mode = 2
+columns = 3
+
+[node name="ActorIndicator" type="Label" parent="BattleUI" unique_id=442266893]
+visible = false
+offset_right = 1149.0
+offset_bottom = 644.0
+
+[node name="main" type="Marker2D" parent="." unique_id=86344470]
+position = Vector2(1045, 546)
+
+[node name="AllieSlot1" type="Marker2D" parent="." unique_id=1116384823]
+position = Vector2(767, 555)
+
+[node name="AllieSlot2" type="Marker2D" parent="." unique_id=2117312284]
+position = Vector2(840, 500)
+
+[node name="AllieSlot3" type="Marker2D" parent="." unique_id=683828840]
+position = Vector2(910, 439)
+
+[node name="AllieSlot4" type="Marker2D" parent="." unique_id=101417203]
+position = Vector2(976, 374)
+
+[node name="AllieSlot5" type="Marker2D" parent="." unique_id=1396494869]
+position = Vector2(1030, 311)
+
+[node name="PetSlot1" type="Marker2D" parent="." unique_id=704794187]
+position = Vector2(735, 446)
+
+[node name="PetSlot2" type="Marker2D" parent="." unique_id=237034065]
+position = Vector2(843, 347)
+
+[node name="命令条s" type="Sprite2D" parent="." unique_id=800907323]
+visible = false
+position = Vector2(1114, 281)
+texture = ExtResource("16_ved5n")
+
+[node name="信息框" type="Sprite2D" parent="." unique_id=1087242924]
+position = Vector2(238, 553)
+rotation = 3.1415927
+texture = ExtResource("21_8r2kx")
