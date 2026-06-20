@@ -39,7 +39,7 @@ var _pending_action: Callable  = Callable()
 var _quick_cast_held: bool = false
 var _quick_skill_per_char: Dictionary = {}  # character_name/member_id -> skill_id
 
-# ┢�┢� 头像变体缓存 ┢�┢�
+# 🎨 头像变体缓存 🎨
 var _portrait_cache: Dictionary = {}
 
 func _portrait_texture(was_base: String, variant: String) -> Texture2D:
@@ -54,7 +54,7 @@ func _portrait_texture(was_base: String, variant: String) -> Texture2D:
 			if not d.is_empty() and d.has("texture"):
 				_portrait_cache[key] = d.texture
 				return d.texture
-	# 找不到则回���到头�?was
+	# 找不到则回退到头像.was
 	var fallback_key := was_base + "/头像"
 	if _portrait_cache.has(fallback_key):
 		return _portrait_cache[fallback_key]
@@ -82,9 +82,9 @@ func _update_avatar_for(c: BattleCharacter) -> void:
 		e["avatar"].texture = tex
 
 
-# ┢�┢� 敌人总�1�7量条 ┢�┢�
+# 📊 敌人总血量条 📊
 var _enemy_total_hp_tween: Tween = null
-var _enemy_total_hp_prev: float = 0.0  # 上一次���1�7量，棢�测大额伤�?
+var _enemy_total_hp_prev: float = 0.0  # 上一次血量，检测大额伤害
 var _bar_shaking := false
 
 func _refresh_enemy_total_hp() -> void:
@@ -98,12 +98,12 @@ func _refresh_enemy_total_hp() -> void:
 	if _enemy_total_hp_bar == null or not is_instance_valid(_enemy_total_hp_bar):
 		return
 	_enemy_total_hp_bar.max_value = maxi(1, total_max)
-	# 平滑 tween 到新�?	
+	# 平滑 tween 到新值	
 	if _enemy_total_hp_tween and _enemy_total_hp_tween.is_valid():
 		_enemy_total_hp_tween.kill()
 		_enemy_total_hp_tween = create_tween().set_ease(Tween.EASE_OUT)
 		_enemy_total_hp_tween.tween_property(_enemy_total_hp_bar, "value", maxi(0, total_cur), 0.3)
-	# 大�1�7伤�1�7震动
+	# 大额伤害震动
 	var damage := _enemy_total_hp_prev - float(total_cur)
 	if damage > 0 and total_max > 0 and damage / float(total_max) > 0.1:
 		_shake_bar(_enemy_total_hp_bar)
@@ -128,13 +128,13 @@ func _shake_bar(bar: Node) -> void:
 	_bar_shaking = false
 
 
-# ┢�┢� 行动顺序�?┢�┢�
+# 📋 行动顺序条 📋
 var _turn_entries: Dictionary = {}
 var _turn_signal_connected: Array = []
 
-# ┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�┢�
+# ══════════════════════════════════════════════
 func _ready() -> void:
-	# ���� BattleManager �ź�
+	# 连接 BattleManager 信号
 	battle_manager.log_pushed.connect(_on_log_pushed)
 	battle_manager.damage_floated.connect(_on_damage_floated)
 	battle_manager.state_changed.connect(_on_state_changed)
@@ -145,7 +145,7 @@ func _ready() -> void:
 	actor_indicator.text = ""
 	action_panel.set_enabled(false)
 
-	# �ӳٵ���һִ֡�� UI ��ʼ������ʱ BattleScene._ready() �ѵ��� battle_manager.setup()
+	# 延迟到下一帧执行 UI 初始化，确保 BattleScene._ready() 已调用 battle_manager.setup()
 	call_deferred("init_ui")
 
 # ══════════════════════════════════════════════
@@ -159,7 +159,7 @@ func init_ui() -> void:
 		if nd:
 			nd.clicked.connect(_on_enemy_sprite_clicked)
 			nd.hovered.connect(_on_enemy_hovered)
-	# 连接队友点击信号（保护时选目标用�?	
+	# 连接队友点击信号（保护时选目标用）	
 	for ch in battle_manager.party:
 		var nd = ch.get_parent()
 		if nd: nd.clicked.connect(_on_ally_sprite_clicked.bind(ch))
@@ -173,18 +173,18 @@ func init_ui() -> void:
 		func(actor, sid): return battle_manager.get_skill_cooldown(actor, sid),
 		battle_manager.player_inventory
 	)
-	# 连接抢�能弹�?	if _skill_popup == null:
-	_skill_popup = SKILL_POPUP.instantiate()
-	add_child(_skill_popup)
-	_skill_popup.hide()
-	_skill_popup.skill_selected.connect(_on_popup_skill_selected)
-	_skill_popup.item_selected.connect(_on_popup_item_selected)
-	_skill_popup.cancelled.connect(_on_popup_cancelled)
-	action_panel.open_skill_popup.connect(_on_open_skill_popup)
-	action_panel.open_item_popup.connect(_on_open_item_popup)
-	# 连接叄1�7��弹窗
+	# 连接技能弹窗
+	if _skill_popup == null:
+		_skill_popup = SKILL_POPUP.instantiate()
+		add_child(_skill_popup)
+		_skill_popup.hide()
+		_skill_popup.skill_selected.connect(_on_popup_skill_selected)
+		_skill_popup.item_selected.connect(_on_popup_item_selected)
+		_skill_popup.cancelled.connect(_on_popup_cancelled)
+		action_panel.open_skill_popup.connect(_on_open_skill_popup)
+		action_panel.open_item_popup.connect(_on_open_item_popup)
+	# 连接召唤弹窗
 
-	# ┢�┢� 敌人总�1�7量条初�1�7�?┢�┢�
 	_refresh_enemy_total_hp()
 	for ch in battle_manager.enemies:
 		if not ch.hp_changed.is_connected(_on_enemy_hp_changed):
@@ -199,7 +199,7 @@ func init_ui() -> void:
 	_summon_popup.hide()
 	_summon_popup.pet_selected.connect(_on_summon_pet_selected)
 	_summon_popup.cancelled.connect(_on_summon_cancelled)
-	# 连接铁甲叄1�7��弹窗
+	# 连接铁甲召唤弹窗
 	if _mech_summon_popup == null:
 		_mech_summon_popup = MECH_SUMMON_POPUP.instantiate()
 		add_child(_mech_summon_popup)
@@ -207,7 +207,8 @@ func init_ui() -> void:
 	_mech_summon_popup.mech_selected.connect(_on_mech_selected)
 	_mech_summon_popup.cancelled.connect(_on_mech_summon_cancelled)
 
-	# ┢�┢� 行动顺序�?┢�┢�
+	# 📋 行动顺序条 📋
+	_turn_order.visible = true
 	_turn_order.visible = true
 	for c in battle_manager.party + battle_manager.enemies:
 		_make_turn_entry(c)
@@ -223,7 +224,7 @@ func _action_attack() -> void:
 	)
 
 func _action_skill(skill_id: String) -> void:
-	# 记录忄1�7��施法（按角色分开�?
+	# 记录快速施法（按角色分开）
 	var actor := battle_manager.current_actor()
 	if actor != null:
 		var key := actor.member_id if not actor.member_id.is_empty() else actor.stats.character_name
@@ -263,17 +264,17 @@ func _action_item(item_id: String) -> void:
 	if data == null: return
 	match data.item_type:
 		ItemData.ItemType.HP_POTION:
-			# 回�1�7道具：�1�7玩�1�7选择存活队友
+			# 回血道具：让玩家选择存活队友
 			_set_pending_ally(func(ally: BattleCharacter):
 				battle_manager.player_use_item(item_id, ally)
 			)
 		ItemData.ItemType.MP_POTION:
-			# 回蓝道具：�1�7玩�1�7选择存活队友
+			# 回蓝道具：让玩家选择存活队友
 			_set_pending_ally(func(ally: BattleCharacter):
 				battle_manager.player_use_item(item_id, ally)
 			)
 		ItemData.ItemType.REVIVE:
-			# 复活道具：�1�7玩�1�7选择死亡队友
+			# 复活道具：让玩家选择死亡队友
 			_set_pending_dead_ally(func(ally: BattleCharacter):
 				battle_manager.player_use_item(item_id, ally)
 			)
@@ -286,15 +287,15 @@ func _action_flee() -> void:
 	_finish_action()
 
 func _action_summon() -> void:
-	# 宠物不能叄1�7��
+	# 宠物不能召唤
 	if battle_manager.current_actor().is_summoned_pet:
 		battle_manager._push_log("宠物无法使用召唤", "system")
-		# 恢�1�7面板，不能卡�?		
+		# 恢复面板，不能卡住		
 		action_panel.set_enabled(true)
 		action_panel.slide_in()
 		action_panel.btn_attack.grab_focus()
 		return
-	# 叄1�7��叄1�7��角色能召�?	
+	# 只有召唤系角色才能召唤	
 	if battle_manager.current_actor().stats.role != CharacterStats.Role.SUMMON:
 		battle_manager._push_log("只有召唤系角色才能召唤", "system")
 		action_panel.set_enabled(true)
@@ -321,7 +322,7 @@ func _finish_action() -> void:
 	action_panel.refresh(battle_manager.current_actor(), false)
 
 # ══════════════════════════════════════════════
-# 忄1�7��施法（Alt+Q�?# ══════════════════════════════════════════════
+# 快速施法（Alt+Q）# ══════════════════════════════════════════════
 
 func _show_floating_text(text: String, color: Color = Color(1, 0.85, 0.1)) -> void:
 	var lbl := Label.new()
@@ -344,7 +345,7 @@ func _show_floating_text(text: String, color: Color = Color(1, 0.85, 0.1)) -> vo
 
 func _try_quick_cast() -> bool:
 	if battle_manager.state != BattleManager.BattleState.PLAYER_TURN:
-		_show_floating_text("不在玩�1�7回合", Color(0.8, 0.8, 0.8))
+		_show_floating_text("不在玩家回合", Color(0.8, 0.8, 0.8))
 		return false
 
 	var actor := battle_manager.current_actor()
@@ -358,15 +359,15 @@ func _try_quick_cast() -> bool:
 		_show_floating_text("请先使用一次技能", Color(0.8, 0.8, 0.8))
 		return false
 
-	# 棢�查冷�?	
+	# 检查冷却	
 	if battle_manager.get_skill_cooldown(actor, skill_id) > 0:
 		_show_floating_text("技能冷却中", Color(0.8, 0.8, 0.8))
 		return false
 
-	# �?SkillManager 获取抢�能数捄1�7��定目标类�?	
+	# 从 SkillManager 获取技能数据，确定目标类型	
 	var data: SkillData = SkillManager.get_skill(skill_id)
 	if data == null:
-		_show_floating_text("抢�能数捄1�7��存在", Color(0.8, 0.8, 0.8))
+		_show_floating_text("技能数据不存在", Color(0.8, 0.8, 0.8))
 		return false
 
 	var target_type = data.target_type
@@ -386,10 +387,10 @@ func _try_quick_cast() -> bool:
 			if not enemies.is_empty(): target = enemies[0]
 
 	if target == null:
-		_show_floating_text("没有合��的忄1�7��施法盄1�7��", Color(0.8, 0.8, 0.8))
+		_show_floating_text("没有合适的快速施法目标", Color(0.8, 0.8, 0.8))
 		return false
 
-	# 执�1�7 �?先�1�7查技能类型，如果昄1�7��通攻击就放普通攻�?	
+	# 执行。先检查技能类型，如果是普通攻击就放普通攻击	
 	if skill_id == "普通攻击":
 		var enemies = battle_manager.alive_enemies()
 		if not enemies.is_empty():
@@ -397,9 +398,9 @@ func _try_quick_cast() -> bool:
 			battle_manager.player_use_normal_attack(enemies[0])
 		return true
 
-	# 其他抢�能：直接通过 _action_skill 走�1�7常流�?	
+	# 其他技能：直接通过 _action_skill 走正常流程	
 	_action_skill(skill_id)
-	# 臄1�7��选�1�7丢�丄1�7���?	
+	# 自动选择目标丢出去	
 	var data2: SkillData = SkillManager.get_skill(skill_id)
 	if data2:
 		match data2.target_type:
@@ -418,27 +419,29 @@ func _try_quick_cast() -> bool:
 					action_panel.set_enabled(false)
 					cb.call(alive[0])
 			SkillData.TargetType.SELF:
-				pass  # _action_skill 已经处理�?SELF
+				pass  # _action_skill 已经处理了 SELF
 	return true
 
 # ══════════════════════════════════════════════
-# 盄1�7��选择
+# 目标选择
 # ══════════════════════════════════════════════
 
 func _set_pending(callback: Callable) -> void:
 	_pending_action = callback
-	#actor_indicator.text = "👆 点击或按左右方向锄1�7��择敌人（回车确认，ESC取消�?
+	actor_indicator.text = "👆 点击或按左右方向键选择敌人（回车确认，ESC取消）"
 	_enable_enemy_selection(true)
 	_enemy_select_idx = 0
+	action_panel.set_enabled(false)
 	var enemies = battle_manager.alive_enemies()
 	if enemies.size() > 0:
 		_highlight_enemy(enemies[0])
 
 func _set_pending_capture(callback: Callable) -> void:
 	_pending_action = callback
-#	actor_indicator.text = "👆 点击或按左右方向锄1�7��择要捕捉的敌人（回车确认，ESC取消�?
+	actor_indicator.text = "👆 点击或按左右方向键选择要捕捉的敌人（回车确认，ESC取消）"
 	_enable_enemy_selection(true)
 	_enemy_select_idx = 0
+	action_panel.set_enabled(false)
 	var enemies = battle_manager.alive_enemies()
 	if enemies.size() > 0:
 		_highlight_enemy(enemies[0])
@@ -446,7 +449,7 @@ func _set_pending_capture(callback: Callable) -> void:
 func _set_pending_ally(callback: Callable, include_self: bool = true) -> void:
 	_pending_action = callback
 	_ally_select_include_self = include_self
-	#actor_indicator.text = "👆 点击或按方向锄1�7��择队友（回车确认，ESC取消�?
+	actor_indicator.text = "👆 点击或按方向键选择队友（回车确认，ESC取消）"
 	action_panel.set_enabled(false)
 	_enable_ally_selection(true)
 	_ally_select_idx = 0
@@ -454,7 +457,7 @@ func _set_pending_ally(callback: Callable, include_self: bool = true) -> void:
 	if allys.size() > 0:
 		_highlight_ally(allys[0])
 
-# ┢�┢� 复活模式：��择已�1�7亡的队友 ┢�┢�
+# 💀 复活模式：选择已死亡的队友 💀
 var _dead_ally_pick_btns: Array = []
 var _dead_ally_pick_nodes: Array = []
 var _dead_ally_select_idx: int = 0
@@ -471,7 +474,7 @@ func _set_pending_dead_ally(callback: Callable) -> void:
 		action_panel.btn_attack.grab_focus()
 		return
 	_pending_action = callback
-	#actor_indicator.text = "👆 点击或按方向锄1�7��择要�1�7活的队友（回车确认，ESC取消�?
+	actor_indicator.text = "👆 点击或按方向键选择要复活的队友（回车确认，ESC取消）"
 	action_panel.set_enabled(false)
 	_enable_dead_ally_selection(true)
 	_dead_ally_select_idx = 0
@@ -551,7 +554,7 @@ func _enable_enemy_selection(val: bool) -> void:
 			var nd = ch.get_parent()
 			if nd: nd.selectable = val
 
-# ┢�┢� 队友选择按钮（保护时显示�?┢�┢�
+# 🛡️ 队友选择按钮（保护时显示）🛡️
 var _ally_pick_btns: Array = []
 var _ally_pick_nodes: Array = []
 
@@ -565,7 +568,7 @@ func _enable_ally_selection(val: bool) -> void:
 		var ch = allys[i]
 		var nd = ch.get_parent()
 		if nd == null: continue
-		# 叄1�7��亄1�7�1�7丢��?		
+		# 先高亮第一个
 		nd.set_selected(i == 0)
 		var btn = Button.new()
 		btn.flat = true
@@ -603,7 +606,7 @@ func _clear_ally_pick_btns() -> void:
 
 
 func _process(_delta: float) -> void:
-	# Alt+Q 忄1�7��施法（用物理锄1�7��避免 OS 拦截�?	
+	# Alt+Q 快速施法（用物理按键避免 OS 拦截）	
 	if Input.is_physical_key_pressed(KEY_Q) and Input.is_physical_key_pressed(KEY_ALT):
 		if not _quick_cast_held:
 			_quick_cast_held = true
@@ -622,7 +625,7 @@ func _process(_delta: float) -> void:
 		if is_instance_valid(btn) and is_instance_valid(nd):
 			btn.position = nd.global_position - btn.custom_minimum_size * 0.5
 
-	# 符咒切换（数字键 1-4，仅主�1�7/远程角色�?	
+	# 符咒切换（数字键 1-4，仅主角/远程角色）	
 	if battle_manager.state == BattleManager.BattleState.PLAYER_TURN:
 		var actor = battle_manager.current_actor()
 		if actor and not actor.is_dead and actor.is_player and actor.stats.is_ranged:
@@ -632,9 +635,9 @@ func _process(_delta: float) -> void:
 			elif Input.is_physical_key_pressed(KEY_3): pressed = 2
 			elif Input.is_physical_key_pressed(KEY_4): pressed = 3
 			if pressed >= 0 and pressed != actor.stats.talisman_type:
-				var names = [""]
+				var names = ["火焰", "雷电", "冰冻", "加速"]
 				switch_talisman(actor, pressed)
-				_push_log_to_battle("切换符咒" % [actor.stats.character_name, names[pressed]])
+				_push_log_to_battle("%s 切换符咒：%s" % [actor.stats.character_name, names[pressed]])
 
 
 func _push_log_to_battle(text: String):
@@ -670,13 +673,13 @@ func _ally_card_highlight() -> StyleBoxFlat:
 	return sb
 
 
-# ┢�┢� 锄1�7��选择（保护��队�?/ 攻击选敌人） ┢�┢�
+# ⌨️ 键盘选择（保护队友 / 攻击选敌人）⌨️
 var _ally_select_idx: int = 0
 var _enemy_select_idx: int = 0
 var _ally_select_include_self: bool = true
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Alt+Q 忄1�7��施法
+	# Alt+Q 快速施法
 	if event is InputEventKey and event.is_pressed() and not event.is_echo():
 		var k: InputEventKey = event
 		if k.keycode == KEY_Q and k.alt_pressed:
@@ -696,7 +699,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	# 替换宠物模式：左右切�?+ 回车硄1�7�1�7
+	# 替换宠物模式：左右切换 + 回车确认
 	if _pending_summon_pet and not _pet_replace_targets.is_empty():
 		if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
 			if event.is_action_pressed("ui_left"):
@@ -738,7 +741,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 
-	# ESC 取消当前盄1�7��选择
+	# ESC 取消当前目标选择
 	if event.is_action_pressed("ui_cancel") and _pending_action.is_valid():
 		_cancel_pending()
 		get_viewport().set_input_as_handled()
@@ -746,14 +749,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if not _pending_action.is_valid(): return
 
-	# 点击空白处取�?	
+	# 点击空白处取消	
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if not _is_mouse_over_selectable_target():
 			_cancel_pending()
 			get_viewport().set_input_as_handled()
 		return
 
-	# 队友选择模式：保�?/ 治疗 / Buff
+	# 队友选择模式：保护 / 治疗 / Buff
 	if not _ally_pick_btns.is_empty():
 		var allys = _selectable_allies()
 		if allys.is_empty(): return
@@ -775,7 +778,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 
-	# 复活模式：��择已�1�7亡的队友
+	# 复活模式：选择已死亡的队友
 	if not _dead_ally_pick_btns.is_empty():
 		var dead_allies = _dead_selectable_allies()
 		if dead_allies.is_empty(): return
@@ -797,7 +800,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 
-	# 攻击/抢��?捕捉模式：��敌�?	
+	# 攻击/捕捉模式：选敌人	
 	if actor_indicator.text.contains("点击") or actor_indicator.text.contains("敌人") or actor_indicator.text.contains("捕捉"):
 		var enemies = battle_manager.alive_enemies()
 		if enemies.is_empty(): return
@@ -864,9 +867,9 @@ func _highlight_enemy(ch: BattleCharacter) -> void:
 	if nd: nd.set_selected(true)
 
 
-## 鼠标悄1�7��敌人 �?同�1�7更新 keyboard 选中
+## 鼠标悬停敌人 — 同步更新 keyboard 选中
 func _on_enemy_hovered(ch: BattleCharacter) -> void:
-	# 叄1�7��选敌人的模式下响�?	
+	# 只在选敌人的模式下响应	
 	if not (actor_indicator.text.contains("点击") or actor_indicator.text.contains("敌人") or actor_indicator.text.contains("捕捉")):
 		return
 	var enemies := battle_manager.alive_enemies()
@@ -876,12 +879,12 @@ func _on_enemy_hovered(ch: BattleCharacter) -> void:
 		_highlight_enemy(ch)
 
 # ══════════════════════════════════════════════
-# 我方状��卡
+# 我方状态卡
 # ══════════════════════════════════════════════
 
 
 # ══════════════════════════════════════════════
-# 行动顺序条（队友头像�?SP 平滑上下浄1�7���?# ══════════════════════════════════════════════
+# 行动顺序条（队友头像 + SP 平滑上下浮动）# ══════════════════════════════════════════════
 
 const _ENTRY_SCENE = preload("res://tools/TurnOrderEntry.tscn")
 
@@ -907,7 +910,7 @@ func _make_turn_entry(c: BattleCharacter) -> void:
 		c.died.connect(_on_turn_actor_died.bind(c))
 
 func _update_turn_order() -> void:
-	# 扢�有存活�1�7色按 SP 降序排列
+	# 所有存活角色按 SP 降序排列
 	var actors: Array = []
 	for c in battle_manager.party + battle_manager.enemies:
 		if not c.is_dead:
@@ -917,7 +920,7 @@ func _update_turn_order() -> void:
 	var _current := battle_manager._current_actor
 	var current_alive := _current != null and not _current.is_dead
 
-	# 构建显示列表：当前�1�7动���1�7终在首位（最右），其余取 SP 朢�高的�?4 �?	
+	# 构建显示列表：当前行动者始终在首位（最右），其余取 SP 最高的前 4 个	
 	var display: Array = []
 	var shown: Dictionary = {}
 	if current_alive:
@@ -968,26 +971,26 @@ func _update_turn_order() -> void:
 
 		_update_avatar_for(c)
 
-	# 隐藏朄1�7��示的角色
+	# 隐藏未显示的角色
 	for c in _turn_entries.keys():
 		var e = _turn_entries.get(c)
 		if e:
 			e["entry"].visible = shown.has(c)
 
-	# 首帧懒�1�7�?panel 宽度
+	# 首帧懒加载 panel 宽度
 	if panel_w == 800:
 		await get_tree().process_frame
 		_update_turn_order()
 
-# ┢�┢� SP 变化时更新进度条 ┢�┢�
+# 🔄 SP 变化时更新进度条 🔄
 func _on_sp_changed(_old: float, _new: float, _max: float, c: BattleCharacter) -> void:
 	_update_turn_order()
 
-# ┢�┢� 角色死亡时隐�?┢�┢�
+# 💀 角色死亡时隐藏 💀
 func _on_turn_actor_died(_c: BattleCharacter) -> void:
 	_update_turn_order()
 
-# ┢�┢� HP 变化时更新头像（受击时换脸）┢�┢�
+# 😠 HP 变化时更新头像（受击时换脸）😠
 func _on_hp_changed_for_portrait(o: int, n: int, _m: int, c: BattleCharacter) -> void:
 	if n < o:
 		var e = _turn_entries.get(c)
@@ -998,7 +1001,7 @@ func _on_hp_changed_for_portrait(o: int, n: int, _m: int, c: BattleCharacter) ->
 	else:
 		_update_avatar_for(c)
 
-# ┢�┢� 袄1�7��状��时临时显示 buff 头像 + 左移 ┢�┢�
+# ✨ 加buff状态时临时显示 buff 头像 + 左移 ✨
 func _on_buff_added_for_portrait(buff_id: String, c: BattleCharacter) -> void:
 	var e = _turn_entries.get(c)
 	if e == null:
@@ -1031,7 +1034,7 @@ func _on_damage_floated(target: BattleCharacter, amount: int, float_type: String
 		_:
 			prefix = "23"
 
-	# 如果昄1�7��疗量数字，前面加�?"+" 小标�?	
+	# 如果是治疗量数字，前面加上"+" 小标记	
 	var digits: Array[int] = []
 	var n := amount
 	if n == 0:
@@ -1061,7 +1064,7 @@ func _on_damage_floated(target: BattleCharacter, amount: int, float_type: String
 		x_offset += spec["w"]
 		container.add_child(spr)
 
-	# 浄1�7��渐隐
+	# 上浮渐隐
 	var tween = create_tween()
 	tween.tween_property(container, "position:y", container.position.y - 60, 0.9)
 	tween.parallel().tween_property(container, "modulate:a", 0.0, 0.9)
@@ -1078,23 +1081,23 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 			if anim_name == "attack" and target:
 				var enemy_nd = target.get_parent()
 				var target_pos = target.get_parent().global_position
-				# 盄1�7��挨打�?				
+				# 目标挨打				
 				var ee = _turn_entries.get(target)
 				if ee != null:
 					var tex := _portrait_texture(target.stats.was_base_path, "x44")
 					if tex: ee["avatar"].texture = tex
-				# on_hit：攻击命丄1�7��立刻扣�1�7，不等走回来
-				# 斩杀特效�?died 信号臄1�7��触发（EnemyNode._on_died 处理冰冻碎冰/失魂离体�?			
+				# on_hit：攻击命中时立刻扣血，不等走回来
+				# 斩杀特效：died 信号会触发（EnemyNode._on_died 处理冰冻碎冰/失魂离体）			
 				var on_hit := func():
 					battle_manager.flush_pending_damage()
 				await nd.play_attack_sequence(target_pos, enemy_nd, on_hit)
 				battle_manager.flush_pending_damage()  # 兜底（on_hit 已清空则无操作）
-				# 走回来后才刷新头�?				
+				# 走回来后才刷新头像				
 				if ee != null:
 					_update_avatar_for(target)
 			elif anim_name == "cast":
 				var spell_name = nd._current_spell_anim
-				# 盄1�7��进入挨打 + 闄1�7�� + 法术特效
+				# 目标进入挨打 + 闪白 + 法术特效
 				var target_node: Node2D = target.get_parent() if target and is_instance_valid(target) else null
 				if target_node:
 					if target_node.has_method("play_hit_once"):
@@ -1103,11 +1106,11 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 						target_node.play_hit_flash()
 				if target and is_instance_valid(target):
 					target.play_spell_effect(spell_name)
-				# 施法者播放施法动�?				
+				# 施法者播放施法动画				
 				await nd.play_cast_sequence(spell_name)
 				nd._current_spell_anim = ""
 				battle_manager.flush_pending_damage()
-				# 斩杀特效�?died 信号臄1�7��触发
+				# 斩杀特效：died 信号会触发
 				if target_node and target_node.has_method("play_idle"):
 					if target and is_instance_valid(target):
 						if target.is_frozen:
@@ -1117,10 +1120,11 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 						else:
 							target_node.play_idle()
 			elif anim_name == "ranged_attack" and target:
-				# 远程攻击：原地播放攻击动�?�?发射投射�?�?命中结算
+				# 远程攻击：原地播放攻击动画 → 发射投射物 → 命中结算
 				var target_pos = target.get_parent().global_position
 				var caster_pos = actor.get_parent().global_position if actor.get_parent() else Vector2.ZERO
 				var from_pos = caster_pos
+			
 				var ee = _turn_entries.get(target)
 				if ee != null:
 					var tex := _portrait_texture(target.stats.was_base_path, "x44")
@@ -1143,7 +1147,7 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 				var hero_nd = target.get_parent()
 				var hit_target: Node2D = hero_nd if (hero_nd and not has_guard) else null
 				var target_pos = target.get_parent().global_position
-				# 盄1�7��挨打�?				
+				# 目标挨打				
 				var ee = _turn_entries.get(target)
 				if ee != null:
 					var tex := _portrait_texture(target.stats.was_base_path, "x44")
@@ -1172,7 +1176,7 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 				await nd.play_cast_sequence(spell_name)
 				nd._current_spell_anim = ""
 				battle_manager.flush_pending_damage()
-				# 斩杀特效�?died 信号臄1�7��触发
+				# 斩杀特效：died 信号会触发
 				if target_node and target_node.has_method("play_idle"):
 					if target and is_instance_valid(target):
 						if target.is_frozen:
@@ -1222,10 +1226,10 @@ func _on_state_changed(new_state: BattleManager.BattleState) -> void:
 		_enable_ally_selection(false)
 		_enable_dead_ally_selection(false)
 		_clear_enemy_selection()
-		# 非玩家回合隐藏操作面�?		
+		# 非玩家回合隐藏操作面板		
 		action_panel.visible = false
 	else:
-		# 恢�1�7操作面板
+		# 恢复操作面板
 		action_panel.visible = true
 
 func _on_actor_turn_started(actor: BattleCharacter, is_player: bool) -> void:
@@ -1240,26 +1244,26 @@ func _on_actor_turn_started(actor: BattleCharacter, is_player: bool) -> void:
 		var nd = actor.get_parent()
 		if nd: nd.set_active_turn(true)
 
-		# 面板定位到�1�7色右�?		
+		# 面板定位到角色右侧		
 		var actor_node := actor.get_parent()
 		if actor_node:
 			action_panel.show_near(actor_node.global_position)
 
 		# 远程角色显示当前符咒
-		var talisman_names = ["[灄1�7�1�7]", "[傄1�7��笄1�7", "[冰�1�7]", "[加���1�7]"]
+		var talisman_names = ["[火焰]", "[雷电]", "[冰冻]", "[加速]"]
 		var talisman_info = ""
 		if actor.stats.is_ranged:
 			talisman_info = " " + talisman_names[actor.stats.talisman_type]
-		actor_indicator.text = "�?%s 的回�?s" % [actor.stats.character_name, talisman_info]
+		actor_indicator.text = "—— %s 的回合 %s" % [actor.stats.character_name, talisman_info]
 		action_panel.refresh(actor, true)
 		_enable_enemy_selection(false)
-		# 臄1�7��聚焦攻击按钮
+		# 自动聚焦攻击按钮
 		action_panel.btn_attack.grab_focus()
 	else:
 		return
-	#	actor_indicator.text = "�?%s 行动丄1�7����? % actor.stats.character_name
+	#	actor_indicator.text = "—— %s 行动中..." % actor.stats.character_name
 
-	# 头顶名字：只有当前�1�7动��变�?	
+	# 头顶名字：只有当前行动者变色	
 	for ch in battle_manager.party + battle_manager.enemies:
 		ch.set_name_label_color(Color.WHITE)
 	actor.set_name_label_color(Color.RED)
@@ -1274,23 +1278,23 @@ func _on_battle_ended(player_won: bool, exp_gained: int, gold_gained: int, level
 	if player_won:
 		# 停掉战斗 BGM
 		_stop_battle_bgm()
-		# 撄1�7��胜利音效（挂�?root 上防止随战场锢�毁）
+		# 播放胜利音效（挂在 root 上防止随战场销毁）
 		var snd := AudioStreamPlayer.new()
 		snd.stream = load("res://Audio/SE/胜利.wav")
 		snd.bus = "SFX"
 		snd.finished.connect(snd.queue_free)
 		get_tree().root.add_child(snd)
 		snd.play()
-		battle_log.append_text("[color=gold]�?战斗胜利！[/color]\n")
+		battle_log.append_text("[color=gold]🎉 战斗胜利！[/color]\n")
 		await _show_reward_popup(exp_gained, gold_gained)
 		for lu in level_ups:
 			await _show_level_up_popup(lu)
 	else:
-		battle_log.append_text("[color=red]�?全员阵亡，战斗失败����1�7/color]\n")
+		battle_log.append_text("[color=red]💀 全员阵亡，战斗失败...[/color]\n")
 		await get_tree().create_timer(1.0).timeout
 	var battle_scene = get_parent()
 	if battle_scene and battle_scene != get_tree().current_scene:
-		# 在自�?CanvasLayer 上�1�7盖一层黑幕渐显，然后锢��?		
+		# 在自己 CanvasLayer 上覆盖一层黑幕渐显，然后销毁		
 		var fade := ColorRect.new()
 		fade.color = Color(0, 0, 0, 0)
 		fade.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1301,7 +1305,7 @@ func _on_battle_ended(player_won: bool, exp_gained: int, gold_gained: int, level
 		await tw.finished
 		battle_scene.queue_free()
 
-## 停掉战斗场景�?BGM
+## 停掉战斗场景的 BGM
 func _stop_battle_bgm() -> void:
 	var battle_scene = get_parent()
 	if battle_scene == null: return
@@ -1347,7 +1351,7 @@ func _show_reward_popup(exp_gained: int, gold_gained: int) -> void:
 	vbox.add_child(gold_label)
 
 	var ok := Button.new()
-	ok.text = "硄1�7��"
+	ok.text = "确认"
 	ok.add_theme_font_size_override("font_size", 20)
 	ok.custom_minimum_size = Vector2(120, 40)
 	ok.focus_mode = Control.FOCUS_ALL
@@ -1382,7 +1386,7 @@ func _show_level_up_popup(lu: Dictionary) -> void:
 	panel.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "�?境界提升 �?"
+	title.text = "🌟 境界提升 🌟"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Color.GOLD)
@@ -1396,7 +1400,7 @@ func _show_level_up_popup(lu: Dictionary) -> void:
 	vbox.add_child(name_label)
 
 	var lv_label := Label.new()
-	lv_label.text = "升至 �?%d 重天�? % new_level"
+	lv_label.text = "升至 %d 重天" % new_level
 	lv_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lv_label.add_theme_font_size_override("font_size", 22)
 	lv_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.5))
@@ -1405,7 +1409,7 @@ func _show_level_up_popup(lu: Dictionary) -> void:
 	if not new_skills.is_empty():
 		var skill_text := "新技能："
 		for sk in new_skills:
-			skill_text += "�?s�? % sk"
+			skill_text += "【%s】" % sk
 		var skill_label := Label.new()
 		skill_label.text = skill_text
 		skill_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1414,7 +1418,7 @@ func _show_level_up_popup(lu: Dictionary) -> void:
 		vbox.add_child(skill_label)
 
 	var ok := Button.new()
-	ok.text = "硄1�7��"
+	ok.text = "确认"
 	ok.add_theme_font_size_override("font_size", 20)
 	ok.custom_minimum_size = Vector2(120, 40)
 	ok.focus_mode = Control.FOCUS_ALL
@@ -1439,7 +1443,7 @@ func _make_panel_style(bg_color: Color) -> StyleBoxFlat:
 
 
 # ══════════════════════════════════════════════
-# 抢�能弹�?# ══════════════════════════════════════════════
+# 技能弹窗# ══════════════════════════════════════════════
 
 func _on_open_skill_popup(actor: BattleCharacter, get_cd_func: Callable) -> void:
 	if _skill_popup == null:
@@ -1453,7 +1457,7 @@ func _on_popup_skill_selected(skill_id: String) -> void:
 
 
 func _on_popup_cancelled() -> void:
-	# 恢�1�7操作面板
+	# 恢复操作面板
 	action_panel.slide_in()
 	action_panel.set_enabled(true)
 	action_panel.btn_attack.grab_focus()
@@ -1470,23 +1474,23 @@ func _on_popup_item_selected(item_id: String) -> void:
 	_action_item(item_id)
 
 # ══════════════════════════════════════════════
-# 叄1�7��弹窗
+# 召唤弹窗
 # ══════════════════════════════════════════════
 
-var _pending_summon_pet: PetData = null  # 替换模式：待叄1�7��的宠�?
+var _pending_summon_pet: PetData = null  # 替换模式：待召唤的宠物
 var _pet_replace_idx: int = 0
 var _pet_replace_targets: Array[BattleCharacter] = []
 
 func _on_summon_pet_selected(pet: PetData) -> void:
-	# 棢�查是否有空闲�?	
+	# 检查是否有空闲位	
 	var scene = get_parent()
 	if scene and scene.has_method("has_free_pet_slot") and not scene.has_free_pet_slot():
-		# 没有空位 �?进入替换模式
+		# 没有空位 → 进入替换模式
 		_pending_summon_pet = pet
 		_enable_pet_replace_selection(true)
 		return
 
-	# 有空�?�?正常叄1�7��
+	# 有空位 → 正常召唤
 	action_panel.set_enabled(false)
 	battle_manager.player_summon(pet)
 	_finish_action()
@@ -1494,7 +1498,7 @@ func _on_summon_pet_selected(pet: PetData) -> void:
 
 func _enable_pet_replace_selection(val: bool) -> void:
 	if val:
-		actor_indicator.text = "👆 点击要替换的宠物（← �?选择，回车确认）"
+		actor_indicator.text = "👆 点击要替换的宠物（← → 选择，回车确认）"
 		action_panel.set_enabled(false)
 	else:
 		actor_indicator.text = ""
@@ -1508,18 +1512,18 @@ func _enable_pet_replace_selection(val: bool) -> void:
 		_pet_replace_idx = 0
 		return
 
-	# 收集扢�有可替换的宠�?	
+	# 收集所有可替换的宠物	
 	_pet_replace_targets.clear()
 	for ch in battle_manager.party:
 		if ch.is_summoned_pet and not ch.is_dead:
 			_pet_replace_targets.append(ch)
 
-	# 叄1�7��当前选中显示指示�?	
+	# 先高亮当前选中显示指示器	
 	_pet_replace_idx = 0
 
 	# 创建透明按钮
 	_rebuild_pet_replace_buttons()
-	# 在按钄1�7��建后再�1�7指示噄1�7��避免�?
+	# 在按钮创建后再刷新指示器避免错位
 	_clear_ally_pick_btns()
 	_refresh_pet_replace_highlight()
 	set_process(true)
@@ -1559,7 +1563,7 @@ func _rebuild_pet_replace_buttons() -> void:
 func _do_replace_summon(old_bc: BattleCharacter, new_pet: PetData) -> void:
 	action_panel.set_enabled(false)
 	actor_indicator.text = ""
-	# 保存旧位罄1�7��再����?
+	# 保存旧位置再移除
 	var old_pos = old_bc.get_parent().position if old_bc.get_parent() else Vector2.ZERO
 	var old_node = old_bc.get_parent()
 	if old_node:
@@ -1570,7 +1574,7 @@ func _do_replace_summon(old_bc: BattleCharacter, new_pet: PetData) -> void:
 	battle_manager.remove_character(old_bc)
 	if is_instance_valid(old_node):
 		old_node.queue_free()
-	# 新宠站在旧位罄1�7��进场 + 攻击
+	# 新宠站在旧位置进场 + 攻击
 	battle_manager.player_summon(new_pet, old_pos)
 	_finish_action()
 
@@ -1585,13 +1589,13 @@ func _on_summon_cancelled() -> void:
 
 
 # ══════════════════════════════════════════════
-# 铁甲兽召�?# ══════════════════════════════════════════════
+# 铁甲兽召唤# ══════════════════════════════════════════════
 
 func _show_mech_summon_popup() -> void:
 	if battle_manager.state != BattleManager.BattleState.PLAYER_TURN:
 		return
 	if GameData.mech_team.is_empty():
-		battle_manager._push_log("没有叄1�7��唤的铁甲兽！", "system")
+		battle_manager._push_log("没有可以召唤的铁甲兽！", "system")
 		return
 	var scene = get_parent()
 	var has_slot = true
@@ -1621,7 +1625,7 @@ var _mech_replace_targets: Array[BattleCharacter] = []
 
 func _enable_mech_replace_selection(val: bool) -> void:
 	if val:
-		actor_indicator.text = "👆 点击要替换的宠物（← �?选择，回车确认）"
+		actor_indicator.text = "👆 点击要替换的宠物（← → 选择，回车确认）"
 		action_panel.set_enabled(false)
 	else:
 		actor_indicator.text = ""
@@ -1682,7 +1686,7 @@ func _on_mech_summon_cancelled() -> void:
 	action_panel.btn_attack.grab_focus()
 
 
-# —��?总�1�7条刷新回调（信号参数匹配�?—��?
+# —— 总血条刷新回调（信号参数匹配）——
 func _on_enemy_hp_changed(_old: int, _new: int, _max: int) -> void:
 	_refresh_enemy_total_hp()
 
@@ -1693,10 +1697,10 @@ func _on_damage_floated_for_bar(_target: BattleCharacter, _amount: int, _type: S
 	_refresh_enemy_total_hp()
 
 
-# ══�?符咒系统 ══�?
-## 获取当前符咒的贴�?
+# ══ 符咒系统 ══
+## 获取当前符咒的贴图
 func _get_talisman_texture(actor: BattleCharacter) -> Texture2D:
-	var tex_path = "res://Graphic/BattleAnimation/失魂�?png"
+	var tex_path = "res://Graphic/BattleAnimation/失魂.png"
 
 	if !ResourceLoader.exists(tex_path):
 		return null
@@ -1712,7 +1716,7 @@ func _get_talisman_texture(actor: BattleCharacter) -> Texture2D:
 	var frame_width = sheet.get_width() / columns
 	var frame_height = sheet.get_height() / rows
 
-	var frame := 2  # 想显示哪丢��?
+	var frame := 2  # 想显示哪一帧
 	var x := frame % columns
 	var y := frame / columns
 

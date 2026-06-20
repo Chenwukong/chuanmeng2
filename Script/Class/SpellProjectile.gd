@@ -16,10 +16,12 @@ signal hit
 
 
 func _ready():
-	var spr = Sprite2D.new()
-	spr.name = "Sprite"
-	spr.scale = Vector2(0.5, 0.5)
-	add_child(spr)
+	# 场景已自带 Sprite2D 子节点（position 0, -30），直接复用
+	var spr = get_node_or_null("Sprite2D") as Sprite2D
+	if spr == null:
+		spr = Sprite2D.new()
+		spr.name = "Sprite2D"
+		add_child(spr)
 
 	if texture:
 		spr.texture = texture
@@ -98,6 +100,7 @@ static func shoot(
 	# 挂在目标所在 group 下（敌人/我方都在 BattleScene 的 Node2D 子节点中）
 	# 这样投射物和角色在同一世界坐标系
 	var group = target_node_ref.get_parent()
+	group.add_child(p)
 	p.global_position = from_pos
 	p.target_pos = to_pos
 	p.target_node = target_node_ref
@@ -105,5 +108,4 @@ static func shoot(
 	p.texture = icon_texture
 	p.talisman_type = talisman
 	p.attacker = attacker
-	group.add_child(p)
 	return p.hit
