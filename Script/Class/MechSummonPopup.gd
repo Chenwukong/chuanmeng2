@@ -15,10 +15,17 @@ func open() -> void:
 	_update_highlight()
 	show()
 	_pop_in()
+	_just_opened = true
+	call_deferred(&"_clear_just_opened")
+
+
+func _clear_just_opened() -> void:
+	_just_opened = false
 
 
 var _mech_names: Array[String] = []
 var _selected_idx: int = 0
+var _just_opened: bool = false
 
 
 func _build_grid() -> void:
@@ -64,6 +71,9 @@ func _update_highlight() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible: return
+	if _just_opened:
+		_just_opened = false
+		return
 	if event.is_action_pressed("ui_cancel"):
 		_pop_out(); cancelled.emit(); get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_up"):

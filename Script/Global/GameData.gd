@@ -52,7 +52,7 @@ const ENCOUNTER_CONFIG := {
 	},
 }
 const ENCOUNTER_INTERVAL := 120.0   # 像素检查间隔
-const ENCOUNTER_CHANCE  := 0    # 触发概率（1.0 = 100%）
+const ENCOUNTER_CHANCE  := 10    # 触发概率（1.0 = 100%）
 
 func _ready() -> void:
 	
@@ -526,7 +526,7 @@ func _init_party() -> void:
 
 	_add_member("dingdong", {
 		"name": "叮咚", "class": "灵师", "elem": "水", "role": "召",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 2005,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/超级赤焰兽",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"],

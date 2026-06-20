@@ -232,11 +232,12 @@ func _action_skill(skill_id: String) -> void:
 	var data: SkillData = SkillManager.get_skill(skill_id)
 
 	
-	if skill_id == "召唤铁甲":
+	if skill_id == "召唤铁甲兽":
 		var cd = battle_manager.get_skill_cooldown(battle_manager.current_actor(), skill_id)
 		if cd > 0:
-			battle_manager._push_log("【召唤铁甲兽】还剩%d 回合冷却 2 % cd ", "system")
+			battle_manager._push_log("【召唤铁甲兽】还剩 %d 回合冷却" % cd, "system")
 			return
+	
 		_show_mech_summon_popup()
 		return
 	if data == null: return
@@ -1589,20 +1590,14 @@ func _on_summon_cancelled() -> void:
 
 
 # ══════════════════════════════════════════════
-# 铁甲兽召唤# ══════════════════════════════════════════════
+# 铁甲兽召唤
+# ══════════════════════════════════════════════
 
 func _show_mech_summon_popup() -> void:
 	if battle_manager.state != BattleManager.BattleState.PLAYER_TURN:
 		return
 	if GameData.mech_team.is_empty():
 		battle_manager._push_log("没有可以召唤的铁甲兽！", "system")
-		return
-	var scene = get_parent()
-	var has_slot = true
-	if scene and scene.has_method("has_free_pet_slot"):
-		has_slot = scene.has_free_pet_slot()
-	if not has_slot:
-		_mech_summon_popup.open()
 		return
 	_mech_summon_popup.open()
 
