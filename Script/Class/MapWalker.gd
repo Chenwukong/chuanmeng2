@@ -22,6 +22,7 @@ var _last_pos: Vector2 = Vector2.ZERO
 var _riding = false
 var _mounting = false
 var _bob_t = 0.0
+var _nav_cd: float = 0.0
 
 
 func _ready() -> void:
@@ -100,12 +101,16 @@ func _unhandled_input(event: InputEvent) -> void:
 	if GameData.in_battle or GameData.ui_blocked:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if _nav_cd > 0.0:
+			return
+		_nav_cd = 0.5
 		_navigate_to(get_global_mouse_position())
 
 
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
+	_nav_cd = maxf(0.0, _nav_cd - delta)
 	if GameData.in_battle or GameData.ui_blocked or _mounting:
 		return
 	var dx: float = 0.0; var dy: float = 0.0
