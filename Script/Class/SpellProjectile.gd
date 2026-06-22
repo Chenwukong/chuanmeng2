@@ -101,11 +101,14 @@ static func shoot(
 	# 这样投射物和角色在同一世界坐标系
 	var group = target_node_ref.get_parent()
 	group.add_child(p)
+	from_pos.x -= 20
+	from_pos.y -= 20
 	p.global_position = from_pos
 	p.target_pos = to_pos
 	p.target_node = target_node_ref
 	p.on_hit = hit_callback
 	p.texture = icon_texture
 	p.talisman_type = talisman
+	
 	p.attacker = attacker
 	return p.hit

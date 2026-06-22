@@ -40,6 +40,55 @@ var in_battle: bool = false
 var ui_blocked: bool = false    # 弹窗打开时暂停地图操作/追踪怪
 var current_scene_path: String = ""
 var chapter_id: int = 1
+var current_locale: String = "zh"  # 当前语言
+## 多语言翻译表（JSON 加载，不依赖 Godot 的 tr()）
+static var _lang_cache: Dictionary = {}
+static var _current_lang: String = "zh"
+
+
+## 获取翻译 text = _T("KEY")，带 %s/%d 插值
+static func _T(key: String) -> String:
+	var table: Dictionary = _lang_cache.get(_current_lang, {})
+	return table.get(key, key)
+
+
+## 翻译类型标签（中文 → 根据当前语言查找翻译键）
+const _LABEL_TO_KEY: Dictionary = {
+	"未知": "SKILL_UNKNOWN",
+	"物理攻击": "SKILL_TYPE_PHYSICAL", "法术攻击": "SKILL_TYPE_MAGIC", "治疗": "SKILL_TYPE_HEAL",
+	"增益": "SKILL_TYPE_BUFF", "减益": "SKILL_TYPE_DEBUFF", "多段攻击": "SKILL_TYPE_MULTI", "群体攻击": "SKILL_TYPE_AOE",
+	"敌方单体": "TARGET_SINGLE_ENEMY", "己方单体": "TARGET_SINGLE_ALLY", "自身": "TARGET_SELF",
+	"敌方全体": "TARGET_ALL_ENEMIES", "己方全体": "TARGET_ALL_ALLIES",
+	"确认": "BATTLE_CONFIRM",
+}
+static func _TL(label: String) -> String:
+	var key: String = _LABEL_TO_KEY.get(label, "")
+	if not key.is_empty():
+		return _T(key)
+	return label
+
+
+## 切换语言
+static func set_language(lang: String) -> void:
+	if lang in ["zh", "en"]:
+		_current_lang = lang
+		TranslationServer.set_locale(lang)
+
+
+## 对话数据库：npc_name → { index, entries }
+## entries: [{ chapter, title, type: "normal"|"story", once }]
+## 文件自动拼为 "res://Dialogue/chapter{chapter}.dialogue"
+## 点击 NPC 时取 entries[index]，按 entry.type 选气泡，once 完成后 index+1
+var DIALOGUE_DB = {
+	"镖头": {
+		"index": 0,
+		"entries": [
+			{ "chapter": 1, "title": "start",    "type": "story",  "once": true  },
+			{ "chapter": 1, "title": "d", "type": "normal", "once": false },
+		]
+	},
+}
+
 signal battle_ended_for_save()
 
 ## 暗雷配置：{ 地图名: { "pool": [怪物名], "min": 最少数量, "min_lv": 最低等级, "max_lv": 最高等级 } }
@@ -52,10 +101,10 @@ const ENCOUNTER_CONFIG := {
 	},
 }
 const ENCOUNTER_INTERVAL := 120.0   # 像素检查间隔
-const ENCOUNTER_CHANCE  := 10    # 触发概率（1.0 = 100%）
+const ENCOUNTER_CHANCE  := 0    # 触发概率（1.0 = 100%）
 
 func _ready() -> void:
-	
+	_load_languages()
 	_register_skills()
 	_register_items()
 	_init_party()
@@ -66,6 +115,20 @@ func _ready() -> void:
 	_init_equip_db()
 	_debug_equip_belt()  # 测试：穿一件粗腰带
 	debug_party()
+
+# ══════════════════════════════════════════════
+# 多语言
+# ══════════════════════════════════════════════
+
+func _load_languages() -> void:
+	for lang in ["zh", "en"]:
+		var path := "res://locales/%s.json" % lang
+		if FileAccess.file_exists(path):
+			var f := FileAccess.open(path, FileAccess.READ)
+			var text := f.get_as_text()
+			var json := JSON.new()
+			if json.parse(text) == OK:
+				_lang_cache[lang] = json.data
 
 # ══════════════════════════════════════════════
 # 对外接口
@@ -194,6 +257,19 @@ func debug_party() -> void:
 # 存档系统
 # ══════════════════════════════════════════════
 
+func _serialize_dialogue_indexes() -> Dictionary:
+	var out := {}
+	for npc_name in DIALOGUE_DB:
+		out[npc_name] = DIALOGUE_DB[npc_name].get("index", 0)
+	return out
+
+
+func _restore_dialogue_indexes(data: Dictionary) -> void:
+	for npc_name in data:
+		if DIALOGUE_DB.has(npc_name):
+			DIALOGUE_DB[npc_name]["index"] = data[npc_name]
+
+
 const SAVE_PATH := "user://savegame.json"
 
 ## 保存游戏
@@ -221,6 +297,7 @@ func save_game(slot: int = 0) -> void:
 		"completed_bounty_ids": completed_bounty_ids.duplicate(),
 		"equipment": player_equipment,
 		"equip_bag": equip_bag,  # 纯字典，直接存
+		"dialogue_indexes": _serialize_dialogue_indexes(),
 	}
 
 	for mid in party_db:
@@ -272,6 +349,7 @@ func load_game(slot: int = 0) -> bool:
 	play_time_sec  = data.get("play_time_sec", 0)
 	chapter_id     = data.get("chapter_id", 1)
 	current_scene_path = data.get("scene_path", "res://scenes/MainScene.tscn")
+	_restore_dialogue_indexes(data.get("dialogue_indexes", {}))
 
 	# 恢复队伍
 	for mid in data.get("party", {}):
@@ -526,7 +604,7 @@ func _init_party() -> void:
 
 	_add_member("dingdong", {
 		"name": "叮咚", "class": "灵师", "elem": "水", "role": "召",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 2005,
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/超级赤焰兽",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"],

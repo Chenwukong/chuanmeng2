@@ -25,6 +25,7 @@ var _shichen_accum: float = 0.0
 var _shichen_idx: int = 10
 var _last_period: int = -1
 var _cached_map = null
+var _was_in_battle: bool = false
 
 const PERIOD_TINTS: Array = [
 	Color(0.28, 0.32, 0.5),
@@ -45,10 +46,12 @@ const PERIOD_TINTS: Array = [
 var _tex_cache: Dictionary = {}
 
 
+
 func _ready() -> void:
 	bounty_btn.pressed.connect(_on_bounty_pressed)
 	_setup_ui_buttons()
-
+	GameData.set_language("en")
+	add_child(load("res://Script/Class/CursorController.gd").new())
 
 # ════════════════════════════
 # UI 按钮系统
@@ -88,7 +91,7 @@ func _get_menu_sprite_at(pos: Vector2) -> AnimatedSprite2D:
 var _hovered_sprite: AnimatedSprite2D = null
 
 func _input(event: InputEvent):
-	if GameData.in_battle: return
+	if GameData.in_battle or GameData.ui_blocked or get_tree().current_scene.is_dialogue_active(): return
 
 	# 鼠标移动 — hover 切换
 	if event is InputEventMouseMotion:
@@ -256,11 +259,24 @@ func _close_popup(node: Node):
 
 
 func _process(delta: float) -> void:
-	if not GameData.in_battle:
-		_shichen_accum += delta
-		if _shichen_accum >= SECONDS_PER_SHICHEN:
-			_shichen_accum -= SECONDS_PER_SHICHEN
-			_shichen_idx = (_shichen_idx + 1) % 12
+	if GameData.in_battle:
+		if not _was_in_battle:
+			_was_in_battle = true
+		$UI/坐标图.visible = false
+		$UI/按钮底图.visible = false
+		if bounty_btn: bounty_btn.visible = false
+		return
+
+	if _was_in_battle:
+		_was_in_battle = false
+		$UI/坐标图.visible = true
+		$UI/按钮底图.visible = true
+		if bounty_btn: bounty_btn.visible = true
+
+	_shichen_accum += delta
+	if _shichen_accum >= SECONDS_PER_SHICHEN:
+		_shichen_accum -= SECONDS_PER_SHICHEN
+		_shichen_idx = (_shichen_idx + 1) % 12
 	GameData.play_time_sec = int(Time.get_ticks_msec() / 1000.0)
 	_update_time_ui()
 
@@ -339,6 +355,56 @@ func _find_player() -> Node2D:
 
 func get_camera() -> Camera2D:
 	return _camera
+
+
+## 场景中是否有对话气球正在显示
+static func is_dialogue_active() -> bool:
+	var tree := Engine.get_main_loop() as SceneTree
+	return tree.get_nodes_in_group(&"ballon").size() > 0
+
+
+## 支持的语言列表
+const SUPPORTED_LOCALES: Array[String] = ["zh", "en"]
+
+
+## 切换语言
+static func switch_language(locale: String) -> void:
+	GameData.set_language(locale)
+
+
+## 当前语言
+static func current_language() -> String:
+	return TranslationServer.get_locale()
+
+
+## 显示普通对话气泡（商店等无限对话 NPC）
+func show_normal_chat(dialogue_file: String, title: String, flag: String = "") -> void:
+	_show_dialogue_balloon("res://addons/dialogue_manager/example_balloon/normalChat.tscn", dialogue_file, title, flag)
+
+
+## 显示剧情对话气泡
+func show_story_chat(dialogue_file: String, title: String, flag: String = "") -> void:
+	_show_dialogue_balloon("res://addons/dialogue_manager/example_balloon/storyChat.tscn", dialogue_file, title, flag)
+
+
+func _show_dialogue_balloon(balloon_scene: String, dialogue_file: String, title: String, flag: String) -> void:
+	var res := load(dialogue_file) as DialogueResource
+	if res == null:
+		return
+	var balloon := load(balloon_scene).instantiate() as CanvasLayer
+	balloon.add_to_group(&"ballon")
+	balloon.dialogue_resource = res
+	balloon.start_from_title = title
+	balloon.auto_start = false
+	balloon.will_block_other_input = true
+	add_child(balloon)
+	balloon.start(res, title)
+	# 等 DialogueManager 发出对话结束信号
+	await Engine.get_singleton("DialogueManager").dialogue_ended
+	if is_instance_valid(balloon):
+		balloon.queue_free()
+	if not flag.is_empty():
+		GameData.game_flags[flag] = true
 
 
 func _on_bounty_pressed() -> void:

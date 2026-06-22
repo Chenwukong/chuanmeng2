@@ -124,7 +124,7 @@ func open(actor: BattleCharacter, get_cd_func: Callable) -> void:
 	_mode = Mode.SKILL
 	_actor = actor
 	_get_cooldown = get_cd_func
-	title_label.text = "✦ 选择仙术"
+	title_label.text = GameData._T("POPUP_SELECT_SKILL")
 	_build_skill_list()
 	_selected_idx = 0
 	show()
@@ -146,7 +146,7 @@ func open_for_items(actor: BattleCharacter, inventory: Inventory) -> void:
 	_actor = actor
 	_inventory = inventory
 	_get_cooldown = Callable()
-	title_label.text = "✦ 选择道具"
+	title_label.text = GameData._T("POPUP_SELECT_ITEM")
 	_build_item_list()
 	_selected_idx = 0
 	show()
@@ -176,11 +176,11 @@ class SkillButton:
 		# 副行：冷却 / MP
 		var sub = ""
 		if cd > 0:
-			sub = "冷却 %d 回合" % cd
+			sub = GameData._T("SKILL_STATUS_CD") % cd
 		elif data.mp_cost > 0:
-			sub = "灵力 %d" % data.mp_cost
+			sub = GameData._T("SKILL_STATUS_MP") % data.mp_cost
 			if not mp_ok:
-				sub += "（不足）"
+				sub += GameData._T("SKILL_STATUS_NOT_ENOUGH")
 
 		# 显示双行
 		text = "%s\n%s" % [text, sub]
@@ -267,7 +267,7 @@ func _build_item_list() -> void:
 	_item_entries = _inventory.get_all_items()
 
 	if _item_entries.is_empty():
-		skill_name_lb.text = "背包空空"
+		skill_name_lb.text = GameData._T("POPUP_BAG_EMPTY")
 		skill_meta_lb.text = ""
 		skill_desc_lb.text = ""
 		return
@@ -317,17 +317,17 @@ func _update_detail(index: int) -> void:
 	skill_name_lb.text = data.skill_name
 
 	# 行二：类型 + 目标 + 消耗
-	var type_str = TYPE_LABELS.get(data.skill_type, "未知")
-	var target_str = TARGET_LABELS.get(data.target_type, "未知")
+	var type_str = GameData._TL(TYPE_LABELS.get(data.skill_type, "未知"))
+	var target_str = GameData._TL(TARGET_LABELS.get(data.target_type, "未知"))
 	var parts := []
 	parts.append("%s · %s" % [type_str, target_str])
 	if data.mp_cost > 0:
-		parts.append("灵力 %d" % data.mp_cost)
+		parts.append(GameData._T("SKILL_DETAIL_MP") % data.mp_cost)
 	if data.hp_cost > 0:
-		parts.append("气血 %d" % data.hp_cost)
+		parts.append(GameData._T("SKILL_DETAIL_HP") % data.hp_cost)
 	var cd = _get_cooldown.call(_actor, _skill_datas[index].skill_id) if _actor else 0
 	if cd > 0:
-		parts.append("冷却 %d 回合" % cd)
+		parts.append(GameData._T("SKILL_DETAIL_CD") % cd)
 	skill_meta_lb.text = " | ".join(parts)
 
 	# 描述
@@ -348,21 +348,21 @@ func _update_item_detail(index: int) -> void:
 
 	var parts := []
 	match data.item_type:
-		ItemData.ItemType.HP_POTION:  parts.append("回复气血")
-		ItemData.ItemType.MP_POTION:  parts.append("回复灵力")
-		ItemData.ItemType.BUFF_ITEM:  parts.append("增益")
-		ItemData.ItemType.REVIVE:     parts.append("复活")
-		_:                              parts.append("特殊")
+		ItemData.ItemType.HP_POTION:  parts.append(GameData._T("ITEM_TYPE_HP"))
+		ItemData.ItemType.MP_POTION:  parts.append(GameData._T("ITEM_TYPE_MP"))
+		ItemData.ItemType.BUFF_ITEM:  parts.append(GameData._T("ITEM_TYPE_BUFF"))
+		ItemData.ItemType.REVIVE:     parts.append(GameData._T("ITEM_TYPE_REVIVE"))
+		_:                              parts.append(GameData._T("ITEM_TYPE_SPECIAL"))
 	parts.append("×%d" % count)
 	skill_meta_lb.text = " | ".join(parts)
 
 	var desc = data.description
 	if desc.is_empty():
 		var dparts := []
-		if data.hp_restore > 0:  dparts.append("恢复 %d 气血" % data.hp_restore)
-		if data.mp_restore > 0:  dparts.append("恢复 %d 灵力" % data.mp_restore)
-		if data.revive_hp_percent > 0: dparts.append("复活并恢复 %.0f%% 气血" % (data.revive_hp_percent * 100))
-		desc = "。".join(dparts) + "。" if dparts else "无特殊效果"
+		if data.hp_restore > 0:  dparts.append(GameData._T("DESC_RESTORE_HP") % data.hp_restore)
+		if data.mp_restore > 0:  dparts.append(GameData._T("DESC_RESTORE_MP") % data.mp_restore)
+		if data.revive_hp_percent > 0: dparts.append(GameData._T("DESC_REVIVE_HP") % (data.revive_hp_percent * 100))
+		desc = "。".join(dparts) + "。" if dparts else GameData._T("DESC_NO_EFFECT")
 	skill_desc_lb.text = desc
 
 
@@ -370,27 +370,27 @@ func _auto_desc(data: SkillData) -> String:
 	var parts := []
 	match data.skill_type:
 		SkillData.SkillType.PHYSICAL:
-			parts.append("对目标造成 %d%% 物理伤害" % int(data.damage_multiplier * 100))
+			parts.append(GameData._T("DESC_PHYSICAL") % int(data.damage_multiplier * 100))
 			if data.hit_count > 1:
-				parts.append("共 %d 段攻击" % data.hit_count)
+				parts.append(GameData._T("DESC_HIT_COUNT") % data.hit_count)
 		SkillData.SkillType.MAGIC:
-			parts.append("对目标造成 %d%% 法术伤害" % int(data.damage_multiplier * 100))
+			parts.append(GameData._T("DESC_MAGIC") % int(data.damage_multiplier * 100))
 			if data.ignore_defense_ratio > 0:
-				parts.append("无视 %d%% 防御" % int(data.ignore_defense_ratio * 100))
+				parts.append(GameData._T("DESC_IGNORE_DEF") % int(data.ignore_defense_ratio * 100))
 		SkillData.SkillType.HEAL:
 			if data.heal_multiplier > 0:
-				parts.append("恢复目标 %d%% 最大气血" % int(data.heal_multiplier * 100))
+				parts.append(GameData._T("DESC_HEAL_PCT") % int(data.heal_multiplier * 100))
 			if data.flat_heal > 0:
-				parts.append("额外恢复 %d 点" % data.flat_heal)
+				parts.append(GameData._T("DESC_FLAT_HEAL") % data.flat_heal)
 		SkillData.SkillType.MULTI_HIT:
-			parts.append("对目标造成 %d 段攻击，每段 %d%% 伤害" % [data.hit_count, int(data.damage_multiplier * 100)])
+			parts.append(GameData._T("DESC_MULTI_HIT") % [data.hit_count, int(data.damage_multiplier * 100)])
 		SkillData.SkillType.BUFF:
-			parts.append("为自己施加 %s 效果" % data.apply_buff_id)
+			parts.append(GameData._T("DESC_BUFF_SELF") % data.apply_buff_id)
 		SkillData.SkillType.DEBUFF:
-			parts.append("有 %d%% 概率对目标施加 %s 效果" % [int(data.apply_buff_chance * 100), data.apply_buff_id])
+			parts.append(GameData._T("DESC_DEBUFF_CHANCE") % [int(data.apply_buff_chance * 100), data.apply_buff_id])
 	if data.flat_damage > 0:
-		parts.append("固定伤害 %d" % data.flat_damage)
-	parts.append("冷却 %d 回合" % data.cooldown_turns)
+		parts.append(GameData._T("DESC_FLAT_DMG") % data.flat_damage)
+	parts.append(GameData._T("DESC_CD") % data.cooldown_turns)
 	return "。".join(parts) + "。"
 
 

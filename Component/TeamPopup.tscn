@@ -1,0 +1,168 @@
+[gd_scene format=3 uid="uid://do2pxlayimldt"]
+
+[ext_resource type="Texture2D" uid="uid://dj4rhydpdamyf" path="res://Graphic/UI/队伍列表.png" id="1_wkpjs"]
+
+[node name="TeamPopUp" type="Node2D" unique_id=821199285]
+
+[node name="队伍列表" type="Sprite2D" parent="." unique_id=27760796]
+position = Vector2(307, 151)
+texture = ExtResource("1_wkpjs")
+
+[node name="Player1" type="Node2D" parent="队伍列表" unique_id=1906524167]
+
+[node name="sprite" type="Sprite2D" parent="队伍列表/Player1" unique_id=900245779]
+position = Vector2(-238, -20)
+
+[node name="name" type="Label" parent="队伍列表/Player1" unique_id=474148849]
+offset_left = -292.0
+offset_top = 64.0
+offset_right = -181.0
+offset_bottom = 87.0
+text = "羽灵神"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="role" type="Label" parent="队伍列表/Player1" unique_id=1160186761]
+offset_left = -257.0
+offset_top = 86.0
+offset_right = -209.0
+offset_bottom = 109.0
+text = "主/水"
+
+[node name="level" type="Label" parent="队伍列表/Player1" unique_id=467434464]
+offset_left = -290.0
+offset_top = 115.0
+offset_right = -260.0
+offset_bottom = 130.0
+theme_override_font_sizes/font_size = 10
+text = "LV:50"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Player2" type="Node2D" parent="队伍列表" unique_id=1863616506]
+position = Vector2(120, 0)
+
+[node name="sprite" type="Sprite2D" parent="队伍列表/Player2" unique_id=617683510]
+position = Vector2(-238, -20)
+
+[node name="name" type="Label" parent="队伍列表/Player2" unique_id=1824507961]
+offset_left = -292.0
+offset_top = 64.0
+offset_right = -181.0
+offset_bottom = 87.0
+text = "羽灵神"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="role" type="Label" parent="队伍列表/Player2" unique_id=850066650]
+offset_left = -257.0
+offset_top = 86.0
+offset_right = -209.0
+offset_bottom = 109.0
+text = "主/水"
+
+[node name="level" type="Label" parent="队伍列表/Player2" unique_id=1220825483]
+offset_left = -290.0
+offset_top = 115.0
+offset_right = -260.0
+offset_bottom = 130.0
+theme_override_font_sizes/font_size = 10
+text = "LV:50"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Player3" type="Node2D" parent="队伍列表" unique_id=391274412]
+position = Vector2(240, 0)
+
+[node name="sprite" type="Sprite2D" parent="队伍列表/Player3" unique_id=1483665295]
+position = Vector2(-238, -20)
+
+[node name="name" type="Label" parent="队伍列表/Player3" unique_id=950363126]
+offset_left = -292.0
+offset_top = 64.0
+offset_right = -181.0
+offset_bottom = 87.0
+text = "羽灵神"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="role" type="Label" parent="队伍列表/Player3" unique_id=429868851]
+offset_left = -257.0
+offset_top = 86.0
+offset_right = -209.0
+offset_bottom = 109.0
+text = "主/水"
+
+[node name="level" type="Label" parent="队伍列表/Player3" unique_id=1995722344]
+offset_left = -293.0
+offset_top = 115.0
+offset_right = -263.0
+offset_bottom = 130.0
+theme_override_font_sizes/font_size = 10
+text = "LV:50"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Player4" type="Node2D" parent="队伍列表" unique_id=1530545419]
+position = Vector2(360, 0)
+
+[node name="sprite" type="Sprite2D" parent="队伍列表/Player4" unique_id=1067696540]
+position = Vector2(-238, -20)
+
+[node name="name" type="Label" parent="队伍列表/Player4" unique_id=327314154]
+offset_left = -292.0
+offset_top = 64.0
+offset_right = -181.0
+offset_bottom = 87.0
+text = "羽灵神"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="role" type="Label" parent="队伍列表/Player4" unique_id=391963601]
+offset_left = -257.0
+offset_top = 86.0
+offset_right = -209.0
+offset_bottom = 109.0
+text = "主/水"
+
+[node name="level" type="Label" parent="队伍列表/Player4" unique_id=1625878599]
+offset_left = -292.0
+offset_top = 115.0
+offset_right = -262.0
+offset_bottom = 130.0
+theme_override_font_sizes/font_size = 10
+text = "LV:50"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Player5" type="Node2D" parent="队伍列表" unique_id=2124520728]
+position = Vector2(480, 0)
+
+[node name="sprite" type="Sprite2D" parent="队伍列表/Player5" unique_id=1718209042]
+position = Vector2(-238, -20)
+
+[node name="name" type="Label" parent="队伍列表/Player5" unique_id=1718515308]
+offset_left = -292.0
+offset_top = 64.0
+offset_right = -181.0
+offset_bottom = 87.0
+text = "羽灵神"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="role" type="Label" parent="队伍列表/Player5" unique_id=1680610741]
+offset_left = -257.0
+offset_top = 86.0
+offset_right = -209.0
+offset_bottom = 109.0
+text = "主/水"
+
+[node name="level" type="Label" parent="队伍列表/Player5" unique_id=3191913]
+offset_left = -293.0
+offset_top = 114.0
+offset_right = -263.0
+offset_bottom = 129.0
+theme_override_font_sizes/font_size = 10
+text = "LV:50"
+horizontal_alignment = 1
+vertical_alignment = 1

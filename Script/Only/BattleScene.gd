@@ -208,6 +208,8 @@ func _ready() -> void:
 
 	battle_manager.setup(all_chars, all_stats, all_ids, enemy_chars, enemy_stats, GameData.player_inventory)
 	battle_manager.start_battle()
+	# 让 CursorController 知道战斗管理器，以便鼠标悬停敌人切换龙泉剑
+	_inject_cursor_controller()
 	_sort_party_z_index()
 	# BGM 立刻启动，不等延迟（延迟可能在战斗结束时还未触发）
 	_start_bgm()
@@ -364,6 +366,10 @@ func _start_bgm() -> void:
 func _exit_tree() -> void:
 	if _bgm_player:
 		_bgm_player.stop()
+	# 清除 CursorController 的 battle_manager 引用
+	var cc := _find_cursor_controller(get_tree().root)
+	if cc:
+		cc._battle_manager = null
 
 
 ## 生成敌人（斜向站位）
@@ -397,3 +403,19 @@ func _spawn_enemies(count: int) -> Array[BattleCharacter]:
 		chars.append(node.get_node("BattleCharacter"))
 
 	return chars
+
+## 把 battle_manager 注入 CursorController，滚动敌人时切换龙泉剑光标
+func _inject_cursor_controller() -> void:
+	var cc := _find_cursor_controller(get_tree().root)
+	if cc:
+		cc._battle_manager = battle_manager
+
+
+func _find_cursor_controller(from: Node) -> CursorController:
+	for child in from.get_children():
+		if child is CursorController:
+			return child
+		var found := _find_cursor_controller(child)
+		if found:
+			return found
+	return null

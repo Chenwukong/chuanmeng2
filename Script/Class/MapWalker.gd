@@ -13,6 +13,12 @@ var _astar: AStarGrid2D = null
 var _cell_size: int = 0
 
 var _dir_idx: int = 0
+const FACING_DIRS: Array[Vector2] = [
+	Vector2( 0.707,  0.707),  # 0: 右下
+	Vector2(-0.707,  0.707),  # 1: 左下
+	Vector2(-0.707, -0.707),  # 2: 左上
+	Vector2( 0.707, -0.707),  # 3: 右上
+]
 var _is_moving: bool = false
 var _click_path: PackedVector2Array = PackedVector2Array()
 var _click_idx: int = 0
@@ -63,7 +69,7 @@ func _play_hero(anim):
 
 
 func _input(event: InputEvent):
-	if GameData.in_battle or GameData.ui_blocked:
+	if GameData.in_battle or GameData.ui_blocked or get_tree().current_scene.is_dialogue_active():
 		return
 	if not (event is InputEventKey and event.pressed and event.keycode == KEY_R and not event.echo):
 		return
@@ -98,20 +104,74 @@ func _input(event: InputEvent):
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if GameData.in_battle or GameData.ui_blocked:
+	if GameData.in_battle or GameData.ui_blocked or get_tree().current_scene.is_dialogue_active():
+		return
+	if event.is_action_pressed("ui_accept"):
+		_try_talk_to_nearest_npc()
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var click_pos := get_global_mouse_position()
+		# 优先检查是否点中 NPC
+		for child in get_parent().get_children():
+			if child is NpcNode and click_pos.distance_to(child.global_position) < 80:
+				_talk_to_npc(child)
+				return
 		if _nav_cd > 0.0:
 			return
 		_nav_cd = 0.5
-		_navigate_to(get_global_mouse_position())
+		_navigate_to(click_pos)
+
+
+func _talk_to_npc(npc: NpcNode) -> void:
+	var npc_name := npc.npc_name
+	if npc_name.is_empty():
+		return
+	var db: Dictionary = GameData.DIALOGUE_DB.get(npc_name, {})
+	if db.is_empty():
+		return
+	var entries: Array = db.get("entries", [])
+	if entries.is_empty():
+		return
+	var idx: int = db.get("index", 0)
+	if idx < 0 or idx >= entries.size():
+		return
+	var entry: Dictionary = entries[idx]
+	var chapter: int = entry.get("chapter", GameData.chapter_id)
+	var title: String = entry.get("title", "start")
+	var balloon: String = entry.get("type", "normal")
+	var once: bool = entry.get("once", true)
+	var file_path := "res://Dialogue/chapter%d.dialogue" % chapter
+	var main_scene := get_tree().current_scene
+	if main_scene == null:
+		return
+	if balloon == "story":
+		main_scene.show_story_chat(file_path, title, "")
+	else:
+		main_scene.show_normal_chat(file_path, title, "")
+	if once and idx + 1 < entries.size():
+		db["index"] = idx + 1
+
+
+## 按空格/回车时，找面前最近的 NPC 触发对话
+func _try_talk_to_nearest_npc() -> void:
+	var facing := FACING_DIRS[_dir_idx]
+	for child in get_parent().get_children():
+		if not child is NpcNode:
+			continue
+		var to_npc = child.global_position - global_position
+		if to_npc.length() > 50.0:
+			continue
+		if to_npc.normalized().dot(facing) < 0.5:
+			continue
+		_talk_to_npc(child)
+		return
 
 
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
 	_nav_cd = maxf(0.0, _nav_cd - delta)
-	if GameData.in_battle or GameData.ui_blocked or _mounting:
+	if GameData.in_battle or GameData.ui_blocked or get_tree().current_scene.is_dialogue_active() or _mounting:
 		return
 	var dx: float = 0.0; var dy: float = 0.0
 	if Input.is_key_pressed(KEY_LEFT) or Input.is_key_pressed(KEY_A):   dx = -1; dy = -1

@@ -58,7 +58,7 @@ func _ready() -> void:
 	_start_map_bgm()
 	# 记下当前场景路径，存档/读档用
 	GameData.current_scene_path = get_tree().current_scene.scene_file_path
-
+#	DialogueManager.showStoryChat(load("res://Dialogue/chapter1.dialogue"),"start")
 
 func _start_map_bgm() -> void:
 	if map_bgm == null:
@@ -96,7 +96,7 @@ func _setup_chase_monster() -> void:
 
 
 func _spawn_chase_batch() -> void:
-	if GameData.in_battle:
+	if GameData.in_battle or GameData.ui_blocked or get_tree().current_scene.is_dialogue_active():
 		return
 	var pool := _get_encounter_pool()
 	if pool.is_empty():

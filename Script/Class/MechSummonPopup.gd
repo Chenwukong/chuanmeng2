@@ -9,7 +9,11 @@ signal cancelled()
 @onready var panel: Control = $Panel
 @onready var grid: GridContainer = $Panel/VBox/Grid
 
-func open() -> void:
+var _summoned_ids: Array[String] = []  # 战斗中已召唤的铁甲兽，本次打开时过滤掉
+
+
+func open(summoned_ids: Array[String] = []) -> void:
+	_summoned_ids = summoned_ids
 	_build_grid()
 	_selected_idx = 0
 	_update_highlight()
@@ -29,9 +33,11 @@ var _just_opened: bool = false
 
 
 func _build_grid() -> void:
-	for c in grid.get_children(): c.queue_free()
+	for c in grid.get_children(): c.free()
 	_mech_names.clear()
 	for pid in GameData.mech_team:
+		if pid in _summoned_ids:
+			continue
 		var pet = GameData.mech_db.get(pid)
 		if pet == null: continue
 		_mech_names.append(pid)
