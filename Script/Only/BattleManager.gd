@@ -104,6 +104,7 @@ func add_summoned_character(bc: BattleCharacter, stats: CharacterStats, pet_id: 
 	bc.is_player = true
 	bc.is_summoned_pet = true
 	bc.pet_id = pet_id
+	bc.summoner_member_id = _current_actor.member_id
 	bc.died.connect(_on_character_died.bind(bc))
 	party.append(bc)
 	if not pet_id.is_empty():
@@ -166,7 +167,7 @@ func _run_actor_turn(actor: BattleCharacter) -> void:
 	# 毒/灼烧结算
 	await _apply_dot(actor)
 	if actor.is_dead:
-		_check_battle_end()
+		await _check_battle_end()
 		return
 
 	# 生命恢复：每回合自动回血
@@ -212,7 +213,7 @@ func _run_actor_turn(actor: BattleCharacter) -> void:
 		_push_log(GameData._T("LOG_TURN_ACT") % actor.stats.character_name, "turn")
 		await get_tree().create_timer(0.4).timeout
 		await enemy_ai.execute_turn(actor)
-		_check_battle_end()
+		await _check_battle_end()
 		if state in [BattleState.BATTLE_WIN, BattleState.BATTLE_LOSE]:
 			return
 		_current_actor.reset_sp()
@@ -284,6 +285,44 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		add_child(snd)
 		snd.play()
 		snd.finished.connect(snd.queue_free)
+
+	# 寂静剑法：全屏序列帧动画 + 对所有敌人造成物理伤害
+	if skill_id == "寂静剑法":
+		var jj_targets: Array[BattleCharacter] = []
+		for e in enemies:
+			if not e.is_dead:
+				jj_targets.append(e)
+		# 施法者播放施法动画
+		var jj_caster = _current_actor.get_parent()
+		if jj_caster and jj_caster.has_method("play_cast_sequence"):
+			await jj_caster.play_cast_sequence(skill_id)
+		# 全屏动画播一次，等播完再结算
+		if FullscreenAnimation.has_animation(skill_id):
+			await FullscreenAnimation.play(skill_id).finished
+		# 剑气吹走已死怪物（boss 除外）—— 飘向左上角渐隐
+		for e in enemies:
+			if e.is_dead and e.stats.rank != "boss":
+				var nd = e.get_parent()
+				if nd and is_instance_valid(nd):
+					var tw := nd.create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+					tw.tween_property(nd, "position", nd.position + Vector2(-600, -400), 0.8)
+					tw.parallel().tween_property(nd, "modulate:a", 0.0, 0.8)
+					tw.tween_callback(func(): nd.visible = false)
+		# 所有敌人挨打 + 结算伤害
+		_push_log("%s 施展【寂静剑法】，剑气覆盖全场！" % _current_actor.stats.character_name, "player_action")
+		for t in jj_targets:
+			var tn = t.get_parent() as Node2D
+			if tn:
+				if tn.has_method("play_hit_once"): tn.play_hit_once()
+				if tn.has_method("play_hit_flash"): tn.play_hit_flash()
+			var dmg = maxi(1, int(_current_actor.get_effective_attack() * data.damage_multiplier) - int(t.get_effective_defense() * 0.6))
+			dmg = int(dmg * randf_range(0.95, 1.05))
+			var actual = t.take_damage(dmg)
+			t.sync_visual()
+			damage_floated.emit(t, actual, "normal")
+			if tn and tn.has_method("play_idle"): tn.play_idle()
+		await _finish_player_action()
+		return
 
 	# 铁甲出击：所有存活的铁甲兽依次攻击目标
 	if skill_id == "铁甲出击":
@@ -504,7 +543,7 @@ func player_flee() -> void:
 		await _finish_player_action()
 
 func _finish_player_action() -> void:
-	_check_battle_end()
+	await _check_battle_end()
 	if state in [BattleState.BATTLE_WIN, BattleState.BATTLE_LOSE]:
 		return
 	if _current_actor:
@@ -696,6 +735,7 @@ func player_summon_mech(mech_name: String, replace_bc: BattleCharacter = null) -
 		var mech_bc = pet_node.get_node_or_null("BattleCharacter") as BattleCharacter
 		if mech_bc:
 			mech_bc.pet_id = mech_name
+			mech_bc.summoner_member_id = _current_actor.member_id
 	else:
 		_push_log(GameData._T("LOG_MEHC_FAIL"), "system"); await _finish_player_action(); return
 	var target = _pick_random_enemy()
@@ -875,7 +915,8 @@ func flush_pending_damage() -> void:
 		if d.type == "heal":
 			d.target.heal(d.amount)
 		else:
-			d.target.take_damage(d.amount)
+			var actual = d.target.take_damage(d.amount)
+			d.amount = actual  # 用实际扣血替换原始值，后续统一 emit
 			# 反震：受到物理伤害反弹
 			if not d.get("is_magic", false) and d.target._has_book_type("reflect"):
 				var ratio = d.target.get_reflect_ratio()
@@ -1002,6 +1043,10 @@ func _check_battle_end() -> void:
 		_battle_ended_flag = true
 
 	if all_enemies_dead:
+		# 最后一个死了，全部消失
+		for e in enemies:
+			var nd = e.get_parent()
+			if nd: nd.visible = false
 		_change_state(BattleState.BATTLE_WIN)
 		var total_exp = 0
 		var total_gold = 0
@@ -1119,4 +1164,4 @@ func _on_character_died(character: BattleCharacter) -> void:
 	_push_log(GameData._T("LOG_DEAD") % character.stats.character_name, "system")
 	if not character.pet_id.is_empty() and character.is_summoned_pet:
 		summoned_mech_ids.erase(character.pet_id)
-	_check_battle_end()
+	await _check_battle_end()

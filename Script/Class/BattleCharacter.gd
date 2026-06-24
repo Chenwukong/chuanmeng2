@@ -10,6 +10,7 @@ var stats: CharacterStats
 var is_player: bool = false
 var member_id: String = ""  # 玩家角色 ID（用于永久存档）
 var pet_id: String = ""      # 如果是宠物，记录 pet_id
+var summoner_member_id: String = ""  # 宠物/召唤物的主人 member_id（用于统计归因）
 
 ## 运行时战斗状态
 var current_hp: int = 0

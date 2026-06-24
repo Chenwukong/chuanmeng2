@@ -25,6 +25,7 @@ const ARROW_FRAME_COUNT: int = 9
 
 var _sprite: AnimatedSprite2D
 var _battle_manager = null  # 由 BattleScene 注入
+var _selecting_ally: bool = false  # 由 battleUI 同步：是否正在选队友目标
 
 
 func _ready() -> void:
@@ -87,8 +88,8 @@ func _process(_delta: float) -> void:
 			_sprite.scale = Vector2(0.2, 0.2)
 			_sprite.play(&"sword")
 		return
-	# 悬停队友 → 战斗箭头
-	if _is_over_ally():
+	# 悬停队友 → 战斗箭头（仅在选择队友施法/保护时）
+	if _selecting_ally and _is_over_ally():
 		if _sprite.animation != &"arrow":
 			_sprite.scale = Vector2(1, 1)
 			_sprite.play(&"arrow")
@@ -139,8 +140,8 @@ func _is_over_ally() -> bool:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		# 战斗中悬停敌人/队友时不切换 click 动画
-		if _is_over_enemy() or _is_over_ally():
+		# 战斗中悬停敌人时不切换 click 动画；悬停队友仅在选目标时拦截
+		if _is_over_enemy() or (_selecting_ally and _is_over_ally()):
 			return
 		_sprite.play(&"click") if event.pressed else _sprite.play(&"idle")
 

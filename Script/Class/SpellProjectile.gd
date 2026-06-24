@@ -22,7 +22,7 @@ func _ready():
 		spr = Sprite2D.new()
 		spr.name = "Sprite2D"
 		add_child(spr)
-
+	
 	if texture:
 		spr.texture = texture
 	else:
@@ -97,18 +97,17 @@ static func shoot(
 	icon_texture: Texture2D = null
 ) -> Signal:
 	var p = SpellProjectile.new()
-	# 挂在目标所在 group 下（敌人/我方都在 BattleScene 的 Node2D 子节点中）
-	# 这样投射物和角色在同一世界坐标系
-	var group = target_node_ref.get_parent()
-	group.add_child(p)
-	from_pos.x -= 20
-	from_pos.y -= 20
-	p.global_position = from_pos
+	# 先设属性再入树，避免 _ready 触发时 texture 尚未赋值
 	p.target_pos = to_pos
 	p.target_node = target_node_ref
 	p.on_hit = hit_callback
 	p.texture = icon_texture
 	p.talisman_type = talisman
-	
 	p.attacker = attacker
+	from_pos.x -= 240
+	from_pos.y -= 400
+	p.global_position = from_pos
+	# 挂在目标所在 group 下（同一世界坐标）
+	var group = target_node_ref.get_parent()
+	group.add_child(p)
 	return p.hit

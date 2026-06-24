@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="新建游戏项目"
-run/main_scene="uid://d2wh8kwqnqhv1"
+run/main_scene="res://scenes/TitleScreen.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -22,7 +22,10 @@ DialogueManager="*uid://c3rodes2l3gxb"
 
 [display]
 
+window/size/viewport_width=1300
+window/size/viewport_height=800
 window/stretch/mode="canvas_items"
+window/per_pixel_transparency/allowed=true
 
 [editor_plugins]
 

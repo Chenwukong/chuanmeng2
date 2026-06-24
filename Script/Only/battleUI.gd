@@ -133,6 +133,12 @@ func _shake_bar(bar: Node) -> void:
 var _turn_entries: Dictionary = {}
 var _turn_signal_connected: Array = []
 
+# 📊 战斗统计
+var _damage_stats: Dictionary = {}   # { member_id: int }
+var _healing_stats: Dictionary = {}  # { member_id: int }
+var _stats_list: VBoxContainer = null  # 统计条目容器
+var _stats_mode: String = "damage"     # "damage" / "heal" / "threat"
+
 ## 上次攻击目标（Alt+A 快速攻击用）
 var _last_attack_target: BattleCharacter = null
 
@@ -197,6 +203,7 @@ func init_ui() -> void:
 		ch.hp_changed.connect(_on_enemy_hp_changed)
 		ch.died.connect(_on_enemy_died_for_bar)
 	battle_manager.damage_floated.connect(_on_damage_floated_for_bar)
+	battle_manager.damage_floated.connect(_on_damage_stats)
 	if _summon_popup == null:
 		_summon_popup = SUMMON_POPUP.instantiate()
 		add_child(_summon_popup)
@@ -461,6 +468,7 @@ func _set_pending_ally(callback: Callable, include_self: bool = true) -> void:
 	actor_indicator.text = GameData._T("BATTLE_CLICK_ALLY")
 	action_panel.set_enabled(false)
 	_enable_ally_selection(true)
+	_set_cursor_selecting_ally(true)
 	_ally_select_idx = 0
 	var allys = _selectable_allies()
 	if allys.size() > 0:
@@ -663,6 +671,7 @@ func _on_ally_sprite_clicked(ch: BattleCharacter) -> void:
 	# 复活模式：忽略存活队友的点击
 	if not _dead_ally_pick_btns.is_empty(): return
 	_enable_ally_selection(false)
+	_set_cursor_selecting_ally(false)
 	if _pending_action.is_valid():
 		_selection_mode = SelectionMode.NONE
 		var action = _pending_action
@@ -930,6 +939,23 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 
+## 同步图标状态：是否正在选队友目标（控制 CursorController 的箭头光标）
+func _set_cursor_selecting_ally(val: bool) -> void:
+	var cc := _find_cursor_controller(get_tree().root)
+	if cc:
+		cc._selecting_ally = val
+
+
+func _find_cursor_controller(from: Node) -> Control:
+	for child in from.get_children():
+		if child is CursorController:
+			return child
+		var found := _find_cursor_controller(child)
+		if found:
+			return found
+	return null
+
+
 func _cancel_pending() -> void:
 	_pending_action = Callable()
 	_selection_mode = SelectionMode.NONE
@@ -937,6 +963,7 @@ func _cancel_pending() -> void:
 	_enable_enemy_selection(false)
 	_enable_ally_selection(false)
 	_enable_dead_ally_selection(false)
+	_set_cursor_selecting_ally(false)
 	_clear_enemy_selection()
 	action_panel.set_enabled(true)
 	action_panel.slide_in()
@@ -1242,6 +1269,7 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 					battle_manager.flush_pending_damage()
 				await get_tree().create_timer(0.5).timeout
 				await SpellProjectile.shoot(from_pos, target_pos, target.get_parent(), on_hit, self, actor, actor.stats.talisman_type, _get_talisman_texture(actor))
+				
 				battle_manager.flush_pending_damage()
 				battle_manager.ranged_attack_completed.emit()
 				if ee != null:
@@ -1336,12 +1364,14 @@ func _on_state_changed(new_state: BattleManager.BattleState) -> void:
 		_enable_ally_selection(false)
 		_enable_dead_ally_selection(false)
 		_clear_enemy_selection()
+		_set_cursor_selecting_ally(false)
 		# 非玩家回合隐藏操作面板		
 		action_panel.visible = false
 	else:
 		# 恢复操作面板，敌人默认可点击（直接点 = 普通攻击）
 		action_panel.visible = true
 		_enable_enemy_selection(true)
+		_set_cursor_selecting_ally(false)
 
 func _on_actor_turn_started(actor: BattleCharacter, is_player: bool) -> void:
 	for ch in battle_manager.party:
@@ -1400,9 +1430,11 @@ func _on_battle_ended(player_won: bool, exp_gained: int, gold_gained: int, level
 		await _show_reward_popup(exp_gained, gold_gained)
 		for lu in level_ups:
 			await _show_level_up_popup(lu)
+		await _show_battle_summary()
 	else:
 		battle_log.append_text("[color=red]" + GameData._T("BATTLE_DEFEAT") + "[/color]\n")
 		await get_tree().create_timer(1.0).timeout
+		await _show_battle_summary()
 	var battle_scene = get_parent()
 	if battle_scene and battle_scene != get_tree().current_scene:
 		# 在自己 CanvasLayer 上覆盖一层黑幕渐显，然后销毁		
@@ -1415,6 +1447,75 @@ func _on_battle_ended(player_won: bool, exp_gained: int, gold_gained: int, level
 		tw.tween_property(fade, "color", Color.BLACK, 0.4)
 		await tw.finished
 		battle_scene.queue_free()
+		_damage_stats.clear()
+		_healing_stats.clear()
+
+
+## 战斗统计总结弹窗（胜/负后显示伤害和治疗排行）
+func _show_battle_summary() -> void:
+	var panel := PanelContainer.new()
+	panel.anchor_left = 0.5; panel.anchor_right = 0.5
+	panel.anchor_top = 0.5; panel.anchor_bottom = 0.5
+	panel.offset_left = -160; panel.offset_top = -140
+	panel.offset_right = 160; panel.offset_bottom = 140
+	panel.mouse_filter = Control.MOUSE_FILTER_PASS
+	panel.set("theme_override_styles/panel", _make_panel_style(Color(0.06, 0.08, 0.20)))
+	add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	panel.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "战斗统计"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+	vbox.add_child(title)
+
+	# 伤害排行
+	_add_summary_section(vbox, "伤害", _damage_stats)
+	# 治疗排行
+	_add_summary_section(vbox, "治疗", _healing_stats)
+
+	# 点击关闭
+	var ok := Button.new()
+	ok.text = GameData._T("BATTLE_CONFIRM")
+	ok.add_theme_font_size_override("font_size", 14)
+	ok.custom_minimum_size = Vector2(100, 30)
+	vbox.add_child(ok)
+
+	ok.grab_focus()
+	await ok.pressed
+	panel.queue_free()
+
+
+func _add_summary_section(parent: Control, label_text: String, stats: Dictionary) -> void:
+	var lbl := Label.new()
+	lbl.text = "—— %s ——" % label_text
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", Color(0.7, 0.85, 1.0))
+	parent.add_child(lbl)
+
+	if stats.is_empty():
+		var na := Label.new()
+		na.text = "-"
+		na.add_theme_font_size_override("font_size", 11)
+		parent.add_child(na)
+		return
+
+	var entries: Array = []
+	for key in stats:
+		var name = key
+		if GameData.party_db.has(key):
+			name = GameData.party_db[key].character_name
+		entries.append({"name": name, "value": stats[key]})
+	entries.sort_custom(func(a, b): return a.value > b.value)
+	for e in entries:
+		var line := Label.new()
+		line.text = "%s: %d" % [e.name, e.value]
+		line.add_theme_font_size_override("font_size", 12)
+		parent.add_child(line)
 
 ## 停掉战斗场景的 BGM
 func _stop_battle_bgm() -> void:
@@ -1803,8 +1904,121 @@ func _on_damage_floated_for_bar(_target: BattleCharacter, _amount: int, _type: S
 	_refresh_enemy_total_hp()
 
 
+## 战斗统计：累加每人造成的伤害和治疗（宠物归因到召唤者）
+func _on_damage_stats(target: BattleCharacter, amount: int, float_type: String) -> void:
+	var actor := battle_manager.current_actor()
+	if actor == null or not actor.is_player:
+		return
+	# 宠物/召唤物的伤害和治疗归到主人
+	var key := actor.member_id
+	if actor.is_summoned_pet and not actor.summoner_member_id.is_empty():
+		key = actor.summoner_member_id
+	if key.is_empty():
+		return
+	if float_type == "heal":
+		_healing_stats[key] = _healing_stats.get(key, 0) + amount
+	else:
+		_damage_stats[key] = _damage_stats.get(key, 0) + amount
+	# 如果当前面板正显示对应类型，自动刷新
+	if (_stats_mode == "damage" and float_type != "heal") or (_stats_mode == "heal" and float_type == "heal"):
+		_refresh_stats_display()
+
+
+# ══ 战斗统计面板 ══
+func _build_stats_panel() -> void:
+	var panel := Control.new()
+	panel.name = "StatsPanel"
+	panel.offset_left = 4; panel.offset_top = 340
+	panel.offset_right = 180; panel.offset_bottom = 460
+	add_child(panel)
+
+	# 按钮行
+	var hbox := HBoxContainer.new()
+	hbox.position.y -= 40
+	hbox.add_theme_constant_override("separation", 2)
+	panel.add_child(hbox)
+
+	var btn_threat := Button.new()
+	btn_threat.text = "仇恨"
+	btn_threat.custom_minimum_size = Vector2(52, 32)
+	btn_threat.add_theme_font_size_override("font_size", 10)
+	btn_threat.pressed.connect(func(): _stats_mode = "threat"; _refresh_stats_display())
+	hbox.add_child(btn_threat)
+
+	var btn_dmg := Button.new()
+	btn_dmg.text = "伤害"
+	btn_dmg.custom_minimum_size = Vector2(52, 32)
+	btn_dmg.add_theme_font_size_override("font_size", 10)
+	btn_dmg.pressed.connect(func(): _stats_mode = "damage"; _refresh_stats_display())
+	hbox.add_child(btn_dmg)
+
+	var btn_heal := Button.new()
+	btn_heal.text = "治疗"
+	btn_heal.custom_minimum_size = Vector2(52, 32)
+	btn_heal.add_theme_font_size_override("font_size", 10)
+	btn_heal.pressed.connect(func(): _stats_mode = "heal"; _refresh_stats_display())
+	hbox.add_child(btn_heal)
+
+	# 分割线
+	var sep := HSeparator.new()
+	panel.add_child(sep)
+
+	# 统计条目容器
+	_stats_list = VBoxContainer.new()
+	_stats_list.add_theme_constant_override("separation", 1)
+	panel.add_child(_stats_list)
+
+	_refresh_stats_display()
+	# 默认显示仇恨
+	_stats_mode = "threat"
+	_refresh_stats_display()
+
+
+func _refresh_stats_display() -> void:
+	if _stats_list == null:
+		return
+	for c in _stats_list.get_children():
+		c.queue_free()
+
+	if _stats_mode == "threat":
+		var na := Label.new()
+		na.text = "仇恨 — 未实现"
+		na.add_theme_font_size_override("font_size", 11)
+		_stats_list.add_child(na)
+		return
+
+	var src: Dictionary = _damage_stats if _stats_mode == "damage" else _healing_stats
+	var title := "伤害" if _stats_mode == "damage" else "治疗"
+
+	var header := Label.new()
+	header.text = "—— %s ——" % title
+	header.add_theme_font_size_override("font_size", 12)
+	_stats_list.add_child(header)
+
+	if src.is_empty():
+		var na := Label.new()
+		na.text = "-"
+		na.add_theme_font_size_override("font_size", 11)
+		_stats_list.add_child(na)
+		return
+
+	var entries: Array = []
+	for key in src:
+		var value: int = src[key]
+		var name = key
+		if GameData.party_db.has(key):
+			name = GameData.party_db[key].character_name
+		entries.append({ "name": name, "value": value })
+	entries.sort_custom(func(a, b): return a.value > b.value)
+	for e in entries:
+		var lbl := Label.new()
+		lbl.text = "%s: %d" % [e.name, e.value]
+		lbl.add_theme_font_size_override("font_size", 11)
+		_stats_list.add_child(lbl)
+
+
 # ══ 符咒系统 ══
-## 获取当前符咒的贴图
+## 获取当前符咒的飞行贴图 —— 从失魂符.png 5×4 雪碧图取第 0 帧
 func _get_talisman_texture(actor: BattleCharacter) -> Texture2D:
 	var tex_path = "res://Graphic/BattleAnimation/失魂符.png"
 
@@ -1822,7 +2036,7 @@ func _get_talisman_texture(actor: BattleCharacter) -> Texture2D:
 	var frame_width = sheet.get_width() / columns
 	var frame_height = sheet.get_height() / rows
 
-	var frame := 2  # 想显示哪一帧
+	var frame := 0  # 第 0 帧
 	var x := frame % columns
 	var y := frame / columns
 

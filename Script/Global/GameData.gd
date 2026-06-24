@@ -101,7 +101,7 @@ const ENCOUNTER_CONFIG := {
 	},
 }
 const ENCOUNTER_INTERVAL := 120.0   # 像素检查间隔
-const ENCOUNTER_CHANCE  := 0    # 触发概率（1.0 = 100%）
+const ENCOUNTER_CHANCE  := 10    # 触发概率（1.0 = 100%）
 
 func _ready() -> void:
 	_load_languages()
@@ -524,6 +524,7 @@ func create_enemy(enemy_name: String) -> CharacterStats:
 	s.exp_reward     = row.get("exp", 0)
 	s.attack_sound_path = row.get("attack_sound", "")
 	s.cast_sound_path   = row.get("cast_sound", "")
+	s.rank             = row.get("rank", "")
 	s.element = _parse_element(row.get("elem", "金"))
 	s.role    = _parse_role(row.get("role", "护"))
 	# 进场时随机资质（捕捉时保留）
@@ -588,16 +589,16 @@ func _init_party() -> void:
 		"hp": 150, "mp": 80,  "atk": 3500, "matk": 25, "def": 14, "mdef": 10, "spd": 308,
 		"crit": 0.18, "crit_mult": 1.7,
 		"was_base_path": "res://WAS/队员/羽灵神-弓/",
-		"skills": ["一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴"],
+		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg", 
 		 "cast_sound":   "res://Audio/SE/男-枪.ogg",
 		"ranged": true,
 	})
-	_add_member("chiyanshou", {
-		"name": "超级赤焰兽", "class": "战神", "elem": "金", "role": "攻",
+	_add_member("erlang", {
+		"name": "二郎神", "class": "战神", "elem": "金", "role": "攻",
 		"hp": 150, "mp": 70,  "atk": 30, "matk": 20, "def": 14, "mdef": 10, "spd": 30,
 		"crit": 0.18, "crit_mult": 1.7,
-		"was_base_path": "res://WAS/超级赤焰兽",
+		"was_base_path": "res://WAS/二郎神",
 		"skills": ["普通攻击","御剑气","雷霆诀","破防击","金刚护体"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg", 
 	})
@@ -768,6 +769,11 @@ const SKILL_DB := {
 		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
 		"mp": 15, "dmg": 1.8, "cd": 1, "sound": "res://Audio/SE/男-枪.ogg",
 		"desc": "凝聚剑气，对目标造成 180% 物理伤害",
+	},
+	"寂静剑法": {
+		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 30, "dmg": 1.3, "cd": 2, "sound": "res://Audio/SE/男-枪.ogg",
+		"desc": "寂静剑气覆盖全场，对所有敌人造成 130% 物理伤害",
 	},
 	"雷霆诀": {
 		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,

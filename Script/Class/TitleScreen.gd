@@ -8,11 +8,14 @@ extends CanvasLayer
 
 signal closed
 
+## 点击标题后进入的游戏场景（当前启动场景；想改入口改这里）
+const GAME_SCENE: String = "res://Class/battleField.tscn"
+
 var _dismiss_on_click: bool = false
 
 
 static func show_at(parent: Node) -> CanvasLayer:
-	var scene := load("res://Component/TitleScreen.tscn")
+	var scene := load("res://scenes/TitleScreen.tscn")
 	if scene == null:
 		return null
 	var inst = scene.instantiate()
@@ -21,7 +24,22 @@ static func show_at(parent: Node) -> CanvasLayer:
 
 
 func _ready() -> void:
+	_apply_transparent_window()
 	_play_intro()
+
+
+## 标题期间：窗口透明 + 无边框（像直接画在桌面上）
+func _apply_transparent_window() -> void:
+	get_tree().root.transparent_bg = true
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_TRANSPARENT, true)
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
+
+
+## 进游戏：恢复正常窗口（不透明 + 有边框）
+func _restore_window() -> void:
+	get_tree().root.transparent_bg = false
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_TRANSPARENT, false)
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, false)
 
 
 func _play_intro() -> void:
@@ -52,7 +70,7 @@ func _play_intro() -> void:
 	# 标题浮现 — 从下方弹入
 	var t2 := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 	t2.tween_property(_title, "modulate:a", 1.0, 0.55).set_delay(0.35)
-	t2.parallel().tween_property(_title, "position:y", -40, 0.55).set_delay(0.35)
+	t2.parallel().tween_property(_title, "position:y", 0, 0.55).set_delay(0.35)
 
 	# 副标题淡入
 	var t3 := create_tween()
@@ -71,7 +89,16 @@ func _input(event: InputEvent) -> void:
 
 func _dismiss() -> void:
 	_dismiss_on_click = false
+	# 内容淡出（CanvasLayer 自身无 modulate，淡子节点）
 	var t := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
-	t.tween_property(self, "modulate:a", 0.0, 0.35)
-	t.tween_callback(queue_free)
+	t.tween_property(_title, "modulate:a", 0.0, 0.35)
+	t.parallel().tween_property(_subtitle, "modulate:a", 0.0, 0.35)
+	t.parallel().tween_property(_slashes, "modulate:a", 0.0, 0.35)
+	t.tween_callback(_enter_game)
+
+
+func _enter_game() -> void:
+	# 先恢复正常窗口，再切换到游戏场景（避免透明窗口下游戏闪一下）
+	_restore_window()
 	closed.emit()
+	get_tree().change_scene_to_file(GAME_SCENE)

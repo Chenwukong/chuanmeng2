@@ -63,6 +63,9 @@ static func role_name(r: Role) -> String:
 enum TalismanType { FIRE, SLEEP, ICE, HASTE }
 @export var talisman_type: TalismanType = TalismanType.FIRE
 
+## 敌人等级标记（如 "boss" / "special" / ""）
+@export var rank: String = ""
+
 ## WAS 动画基础路径（目录路径，其下的文件按约定命名）
 ## 文件约定：idle.was, attack.was, hit.was, die.was
 @export var was_base_path: String = ""
@@ -139,6 +142,7 @@ func duplicate_for_battle() -> CharacterStats:
 	copy.book_skills     = book_skills.duplicate()
 	copy.is_ranged       = is_ranged
 	copy.talisman_type   = talisman_type
+	copy.rank            = rank
 	copy.book_skills     = book_skills.duplicate()
 	return copy
 
@@ -177,6 +181,7 @@ func save_to_dict() -> Dictionary:
 		"ai":      ai_strategy,
 		"ranged":  is_ranged,
 		"talisman": talisman_type,
+		"rank": rank,
 	}
 
 
@@ -206,6 +211,7 @@ func load_from_dict(d: Dictionary) -> void:
 	role            = d.get("role", Role.ATTACK)
 	is_ranged       = d.get("ranged", false)
 	talisman_type   = d.get("talisman", TalismanType.FIRE)
+	rank            = d.get("rank", "")
 	var arr: Array = d.get("skills", [])
 	skill_ids.clear()
 	skill_ids.assign(arr)

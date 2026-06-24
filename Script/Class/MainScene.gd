@@ -21,6 +21,7 @@ var _pet_popup = null
 var _save_popup = null
 var _talent_tree = null
 var _equip_page = null
+var _team_popup = null
 var _shichen_accum: float = 0.0
 var _shichen_idx: int = 10
 var _last_period: int = -1
@@ -114,6 +115,7 @@ func _input(event: InputEvent):
 				"道具": _open_equip_page()
 				"存档": _open_save_popup()
 				"悬赏": _open_bounty_popup()
+				"队伍": _open_team_popup()
 			_play_sprite_anim(sprite, "pressed")
 			get_viewport().set_input_as_handled()
 			await get_tree().create_timer(0.15).timeout
@@ -193,6 +195,21 @@ func _open_pet_popup():
 	add_child(_pet_popup)
 	_pet_popup.closed.connect(func(): _pet_popup = null; _unregister_popup())
 	_register_popup()
+
+
+## 队伍列表弹窗 — 点击「队伍」按钮打开（弹窗会阻止走路/怪物追击，ESC 或点击任意处关闭）
+func _open_team_popup():
+	if _team_popup and is_instance_valid(_team_popup):
+		_team_popup.close()
+		return
+	_team_popup = preload("res://Component/TeamPopup.tscn").instantiate()
+	$UI.add_child(_team_popup)
+	_team_popup.closed.connect(func():
+		if is_instance_valid(_team_popup):
+			_team_popup.queue_free()
+		_team_popup = null
+	)
+	_team_popup.open()
 
 
 func _open_save_popup():
