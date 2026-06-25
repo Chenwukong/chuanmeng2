@@ -138,12 +138,20 @@ var _damage_stats: Dictionary = {}   # { member_id: int }
 var _healing_stats: Dictionary = {}  # { member_id: int }
 var _stats_list: VBoxContainer = null  # 统计条目容器
 var _stats_mode: String = "damage"     # "damage" / "heal" / "threat"
+var _threat_eye: Sprite2D = null            # 仇恨目标变化指示器
+var _last_top_threat_key: String = ""       # 上次最高仇恨者
+var _threat_eye_first: bool = true           # 开局必须出一次
 
 ## 上次攻击目标（Alt+A 快速攻击用）
 var _last_attack_target: BattleCharacter = null
 
 ## 上次使用道具（Alt+R 快速道具用）
 var _last_item_id: String = ""
+
+## 悬浮提示 tooltip
+var _tooltip: Panel = null
+var _tooltip_labels: Dictionary = {}
+var _tooltip_hover_count: int = 0     # 当前悬停的角色数（进入+1，离开-1）
 
 # ══════════════════════════════════════════════
 func _ready() -> void:
@@ -166,16 +174,23 @@ func _ready() -> void:
 # ══════════════════════════════════════════════
 
 func init_ui() -> void:
+	# 重置仇恨 eye
+	_threat_eye_first = true
+	_last_top_threat_key = ""
 	# 连接敌人点击信号
 	for ch in battle_manager.enemies:
 		var nd = ch.get_parent()
 		if nd:
 			nd.clicked.connect(_on_enemy_sprite_clicked)
 			nd.hovered.connect(_on_enemy_hovered)
+			nd.mouse_left.connect(_hide_tooltip)
 	# 连接队友点击信号（保护时选目标用）	
 	for ch in battle_manager.party:
 		var nd = ch.get_parent()
-		if nd: nd.clicked.connect(_on_ally_sprite_clicked.bind(ch))
+		if nd:
+			nd.clicked.connect(_on_ally_sprite_clicked.bind(ch))
+			nd.hovered.connect(_on_ally_hovered)
+			nd.mouse_left.connect(_hide_tooltip)
 	action_panel.setup(
 		_action_attack,
 		_action_skill,
@@ -224,6 +239,10 @@ func init_ui() -> void:
 	for c in battle_manager.party + battle_manager.enemies:
 		_make_turn_entry(c)
 	_update_turn_order()
+	_build_stats_panel()
+	_build_tooltip()
+	# 延迟一帧确保 _threat_mgr 已创建，开局随机出 eye
+	call_deferred("_check_threat_eye")
 
 # ══════════════════════════════════════════════
 # ActionPanel 回调
@@ -1004,14 +1023,121 @@ func _highlight_enemy(ch: BattleCharacter) -> void:
 
 ## 鼠标悬停敌人 — 同步更新 keyboard 选中
 func _on_enemy_hovered(ch: BattleCharacter) -> void:
-	# 只在选敌人的模式下响应
-	if _selection_mode != SelectionMode.ENEMY:
-		return
+	_show_tooltip(ch)
+	# 选敌模式下同步键盘高亮
 	var enemies := battle_manager.alive_enemies()
 	var idx := enemies.find(ch)
 	if idx >= 0:
 		_enemy_select_idx = idx
 		_highlight_enemy(ch)
+
+
+func _on_ally_hovered(ch: BattleCharacter) -> void:
+	_show_tooltip(ch)
+
+
+# ══════════════════════════════════════════════
+# Tooltip 悬浮提示
+# ══════════════════════════════════════════════
+
+func _build_tooltip() -> void:
+	_tooltip = Panel.new()
+	_tooltip.name = "Tooltip"
+	_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_tooltip.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_tooltip.visible = false
+	var s := StyleBoxFlat.new()
+	s.bg_color = Color(0.02, 0.04, 0.12, 0.92)
+	s.border_color = Color(0.3, 0.5, 0.8, 0.7)
+	s.border_width_top = 1; s.border_width_bottom = 1
+	s.border_width_left = 1; s.border_width_right = 1
+	s.content_margin_top = 4; s.content_margin_bottom = 4
+	s.content_margin_left = 6; s.content_margin_right = 6
+	_tooltip.add_theme_stylebox_override("panel", s)
+	add_child(_tooltip)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 1)
+	_tooltip.add_child(vbox)
+
+	for key in ["name", "hp", "mp", "buffs"]:
+		var lbl := Label.new()
+		lbl.add_theme_font_size_override("font_size", 10)
+		lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+		lbl.add_theme_constant_override("shadow_offset_x", 1)
+		lbl.add_theme_constant_override("shadow_offset_y", 1)
+		vbox.add_child(lbl)
+		_tooltip_labels[key] = lbl
+
+
+func _show_tooltip(ch: BattleCharacter) -> void:
+	if ch == null or _tooltip == null:
+		return
+	var eff_max_hp := ch.get_effective_max_hp()
+	_tooltip_labels["name"].text = ch.stats.character_name
+	_tooltip_labels["name"].add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+
+	_tooltip_labels["hp"].text = "HP: %d / %d" % [ch.current_hp, eff_max_hp]
+	_tooltip_labels["hp"].add_theme_color_override("font_color", Color(0.3, 1, 0.4))
+
+	_tooltip_labels["mp"].text = "MP: %d / %d" % [ch.current_mp, ch.stats.max_mp]
+	_tooltip_labels["mp"].add_theme_color_override("font_color", Color(0.4, 0.7, 1))
+
+	var buf_text := ""
+	var has_debuff := false
+	for bid in ch.buffs:
+		var b = ch.buffs[bid]
+		var turns: int = b.get("turns", 0)
+		var name := _buff_display_name(bid)
+		if bid in ["burn", "freeze", "slow", "poison", "weakened"]:
+			has_debuff = true
+		if buf_text != "":
+			buf_text += "\n"
+		buf_text += "%s (%d)" % [name, turns]
+	_tooltip_labels["buffs"].add_theme_color_override("font_color", Color(1, 0.4, 0.2) if has_debuff else Color(0.5, 1, 0.4))
+	_tooltip_labels["buffs"].text = buf_text if buf_text else ""
+	_tooltip_labels["buffs"].visible = not buf_text.is_empty()
+
+	_tooltip.visible = true
+	_update_tooltip_position()
+	_tooltip_hover_count += 1
+
+
+func _hide_tooltip() -> void:
+	_tooltip_hover_count = maxi(0, _tooltip_hover_count - 1)
+	await get_tree().create_timer(0.08).timeout
+	if _tooltip_hover_count == 0 and _tooltip:
+		_tooltip.visible = false
+
+
+func _update_tooltip_position() -> void:
+	if _tooltip == null or not _tooltip.visible:
+		return
+	var pos := get_viewport().get_mouse_position() + Vector2(18, 12)
+	var vs := get_viewport().get_visible_rect().size
+	if pos.x + _tooltip.size.x > vs.x:
+		pos.x = vs.x - _tooltip.size.x - 4
+	if pos.y + _tooltip.size.y > vs.y:
+		pos.y = vs.y - _tooltip.size.y - 4
+	_tooltip.position = pos
+
+
+## Buff ID → 显示名
+func _buff_display_name(buff_id: String) -> String:
+	match buff_id:
+		"shield": return "护盾"
+		"haste": return "加速"
+		"hp_up": return "气血↑"
+		"atk_up": return "攻击↑"
+		"def_up": return "防御↑"
+		"mdef_up": return "魔防↑"
+		"burn": return "灼烧"
+		"freeze": return "冰冻"
+		"slow": return "减速"
+		"poison": return "中毒"
+		"weakened": return "虚弱"
+		_: return buff_id
+
 
 # ══════════════════════════════════════════════
 # 我方状态卡
@@ -1372,6 +1498,7 @@ func _on_state_changed(new_state: BattleManager.BattleState) -> void:
 		action_panel.visible = true
 		_enable_enemy_selection(true)
 		_set_cursor_selecting_ally(false)
+		_check_threat_eye()
 
 func _on_actor_turn_started(actor: BattleCharacter, is_player: bool) -> void:
 	for ch in battle_manager.party:
@@ -1447,6 +1574,15 @@ func _on_battle_ended(player_won: bool, exp_gained: int, gold_gained: int, level
 		tw.tween_property(fade, "color", Color.BLACK, 0.4)
 		await tw.finished
 		battle_scene.queue_free()
+		# 战后保存战损 + 恢复 5% 血蓝
+		for c in battle_manager.party:
+			if c.member_id.is_empty(): continue
+			var s := GameData.party_db.get(c.member_id)
+			if s == null: continue
+			s.saved_hp = mini(c.current_hp + int(s.max_hp * 0.05), s.max_hp)
+			s.saved_mp = mini(c.current_mp + int(s.max_mp * 0.05), s.max_mp)
+			if s.saved_hp >= s.max_hp: s.saved_hp = 0
+			if s.saved_mp >= s.max_mp: s.saved_mp = 0
 		_damage_stats.clear()
 		_healing_stats.clear()
 
@@ -1516,6 +1652,38 @@ func _add_summary_section(parent: Control, label_text: String, stats: Dictionary
 		line.text = "%s: %d" % [e.name, e.value]
 		line.add_theme_font_size_override("font_size", 12)
 		parent.add_child(line)
+
+
+## 战斗总结中的仇恨排序（仅显示角色名排序，不显示数值）
+func _add_threat_summary(parent: Control) -> void:
+	var tm := battle_manager._threat_mgr
+	if tm == null:
+		return
+	var lbl := Label.new()
+	lbl.text = "—— 仇恨 ——"
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", Color(1, 0.5, 0.3))
+	parent.add_child(lbl)
+
+	var entries: Array = []
+	for c in battle_manager.party:
+		if c.is_dead:
+			continue
+		var val := tm.get_threat_value(c)
+		entries.append({"name": c.stats.character_name, "value": val})
+	if entries.is_empty():
+		var na := Label.new()
+		na.text = "-"
+		na.add_theme_font_size_override("font_size", 11)
+		parent.add_child(na)
+		return
+	entries.sort_custom(func(a, b): return a.value > b.value)
+	for e in entries:
+		var line := Label.new()
+		line.text = e.name
+		line.add_theme_font_size_override("font_size", 12)
+		parent.add_child(line)
+
 
 ## 停掉战斗场景的 BGM
 func _stop_battle_bgm() -> void:
@@ -1651,6 +1819,83 @@ func _make_panel_style(bg_color: Color) -> StyleBoxFlat:
 	s.content_margin_left = 20; s.content_margin_right = 20
 	s.content_margin_top = 16; s.content_margin_bottom = 16
 	return s
+
+
+## 每帧检查仇恨目标是否变化（由 _on_damage_stats 驱动）
+func _check_threat_eye() -> void:
+	if battle_manager._threat_mgr == null:
+		return
+	var alive := battle_manager.alive_party()
+	if alive.is_empty():
+		return
+	var top := battle_manager._threat_mgr.get_top_target(alive)
+	var top_key := top.member_id if (top and not top.member_id.is_empty()) else (top.stats.character_name if top else "")
+	if _threat_eye_first:
+		_threat_eye_first = false
+		# 开局全部仇恨为 0 → 随机选一人，记下 key 避免后续平局覆盖
+		var all_zero := true
+		for c in alive:
+			if battle_manager._threat_mgr.get_threat_value(c) > 0:
+				all_zero = false
+				break
+		if all_zero:
+			alive.shuffle()
+			top = alive[0]
+			top_key = top.member_id if (top and not top.member_id.is_empty()) else (top.stats.character_name if top else "")
+			_show_threat_eye(top)
+			_last_top_threat_key = top_key
+			return
+		_show_threat_eye(top)
+		_last_top_threat_key = top_key
+		return
+	elif top_key != "" and top_key != _last_top_threat_key \
+		and battle_manager._threat_mgr.get_threat_value(top) > 0:
+		_show_threat_eye(top)
+		_last_top_threat_key = top_key
+
+
+## 仇恨目标变化时显示眼睛指示器（淡入 → 停留 → 淡出）
+func _show_threat_eye(target: BattleCharacter) -> void:
+	if target == null:
+		return
+	# 懒加载 eye 精灵
+	if _threat_eye == null:
+		_threat_eye = Sprite2D.new()
+		_threat_eye.name = "ThreatEye"
+		_threat_eye.texture = load("res://Graphic/RANDOM/eye.png")
+		_threat_eye.visible = true
+		_threat_eye.modulate.a = 1.0  # 先设为可见再淡
+		_threat_eye.z_index = 500
+		_threat_eye.scale.x = 0.3
+		_threat_eye.scale.y = 0.3
+		
+		add_child(_threat_eye)
+	# 定位到目标上方（找不到就放屏幕中上）
+	var pos := Vector2(500, 0)
+	var nd := target.get_parent() as Node2D
+	if nd and nd.global_position.length() > 10:
+		pos = nd.global_position + Vector2(0, -50)
+	_threat_eye.global_position = pos
+
+	# 音效
+	var snd := AudioStreamPlayer.new()
+	snd.stream = load("res://Audio/SE/087-Action02.ogg")
+	snd.bus = "SFX"
+	snd.finished.connect(snd.queue_free)
+	add_child(snd)
+	snd.play()
+
+	# 动画：淡入 → 停留 1s → 淡出（打断旧动画，重新淡入）
+	if _threat_eye.has_meta("_eye_tween"):
+		var old := _threat_eye.get_meta("_eye_tween") as Tween
+		if old and old.is_valid():
+			old.kill()
+	_threat_eye.modulate.a = 0.0
+	var tw := create_tween()
+	_threat_eye.set_meta("_eye_tween", tw)
+	tw.tween_property(_threat_eye, "modulate:a", 1.0, 0.15)
+	tw.tween_interval(1.0)
+	tw.tween_property(_threat_eye, "modulate:a", 0.0, 0.3)
 
 
 
@@ -1922,6 +2167,11 @@ func _on_damage_stats(target: BattleCharacter, amount: int, float_type: String) 
 	# 如果当前面板正显示对应类型，自动刷新
 	if (_stats_mode == "damage" and float_type != "heal") or (_stats_mode == "heal" and float_type == "heal"):
 		_refresh_stats_display()
+	# 威胁面板自动刷新
+	if _stats_mode == "threat":
+		_refresh_stats_display()
+	# 仇恨 eye 检查
+	_check_threat_eye()
 
 
 # ══ 战斗统计面板 ══
@@ -1981,10 +2231,30 @@ func _refresh_stats_display() -> void:
 		c.queue_free()
 
 	if _stats_mode == "threat":
-		var na := Label.new()
-		na.text = "仇恨 — 未实现"
-		na.add_theme_font_size_override("font_size", 11)
-		_stats_list.add_child(na)
+		var header := Label.new()
+		header.text = "—— 仇恨 ——"
+		header.add_theme_font_size_override("font_size", 12)
+		_stats_list.add_child(header)
+
+		var alive := battle_manager.alive_party()
+		if alive.is_empty():
+			var na := Label.new()
+			na.text = "-"
+			na.add_theme_font_size_override("font_size", 11)
+			_stats_list.add_child(na)
+			return
+
+		var tm := battle_manager._threat_mgr
+		for c in alive:
+			var lbl := Label.new()
+			var state := tm.get_threat_state(c, alive)
+			lbl.text = "%s: %d" % [c.stats.character_name, tm.get_threat_value(c)]
+			match state:
+				"red":    lbl.add_theme_color_override("font_color", Color(1, 0.3, 0.2))
+				"yellow": lbl.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+				_:        lbl.add_theme_color_override("font_color", Color(0.3, 1, 0.4))
+			lbl.add_theme_font_size_override("font_size", 11)
+			_stats_list.add_child(lbl)
 		return
 
 	var src: Dictionary = _damage_stats if _stats_mode == "damage" else _healing_stats

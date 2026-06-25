@@ -40,6 +40,7 @@ enum TargetType { SINGLE_ENEMY, SINGLE_ALLY, SELF, ALL_ENEMIES, ALL_ALLIES }
 ## 治疗参数
 @export var heal_multiplier: float = 0.0  # 基于最大 HP 的治疗比例
 @export var flat_heal: int = 0            # 固定治疗量
+@export var heal_size: String = "medium"  # small / medium / large / group / hot / revive（仇恨系统用）
 
 ## 效果（施加 Buff/Debuff）
 @export var apply_buff_id: String = ""      # 施加的 Buff ID（空=不施加）

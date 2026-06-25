@@ -43,6 +43,8 @@ static func role_name(r: Role) -> String:
 
 ## 成长属性（玩家专用）
 @export var level: int = 1
+@export var saved_hp: int = 0   # 战后存的血量（0=满血）
+@export var saved_mp: int = 0   # 战后存的蓝量（0=满蓝）
 @export var exp: int = 0
 @export var exp_to_next: int = 156
 
@@ -123,6 +125,8 @@ func duplicate_for_battle() -> CharacterStats:
 	copy.crit_rate       = crit_rate
 	copy.crit_mult       = crit_mult
 	copy.level           = level
+	copy.saved_hp        = saved_hp
+	copy.saved_mp        = saved_mp
 	copy.exp             = exp
 	copy.exp_to_next     = exp_to_next
 	copy.hp_growth       = hp_growth
@@ -163,6 +167,8 @@ func save_to_dict() -> Dictionary:
 		"crit":    crit_rate,
 		"critmul": crit_mult,
 		"lv":      level,
+		"saved_hp": saved_hp,
+		"saved_mp": saved_mp,
 		"exp":     exp,
 		"to_next": exp_to_next,
 		"hp_g":    hp_growth,
@@ -200,6 +206,8 @@ func load_from_dict(d: Dictionary) -> void:
 	crit_rate       = d.get("crit", 0.1)
 	crit_mult       = d.get("critmul", 1.5)
 	level           = d.get("lv", 1)
+	saved_hp        = d.get("saved_hp", 0)
+	saved_mp        = d.get("saved_mp", 0)
 	exp             = d.get("exp", 0)
 	exp_to_next     = d.get("to_next", CharacterStats.calc_exp_to_next(maxi(1, level)))
 	hp_growth       = d.get("hp_g", 15)

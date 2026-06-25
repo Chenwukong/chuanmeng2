@@ -34,6 +34,7 @@ var _party_member_ids: Array = []
 # ── 冷却  { character_name + skill_id : turns } ──
 var skill_cooldowns: Dictionary = {}
 var guard_relations:  Dictionary = {}  # 被保护的BattleCharacter → 保护者BattleCharacter
+var _threat_mgr: ThreatManager = null          # 仇恨系统
 var summoned_pet_ids: Array[String] = []  # 已召唤的宠物ID，防止重复召唤
 var summoned_mech_ids: Array[String] = []  # 已召唤的铁甲兽名，防止重复召唤
 
@@ -76,6 +77,7 @@ func setup(
 	summoned_pet_ids.clear()
 	summoned_mech_ids.clear()
 	turn_count = 0
+	_threat_mgr = ThreatManager.new()
 	_party_member_ids = party_ids.duplicate()
 
 	for i in party_chars.size():
@@ -152,6 +154,8 @@ func _process(delta: float) -> void:
 		_change_state(BattleState.PLAYER_TURN)
 	else:
 		_change_state(BattleState.ENEMY_TURN)
+		# 敌方回合开始：仇恨衰减
+		_threat_mgr.decay_all()
 	# 连续行动计数：新行动者+1，其他人清零
 	for c in party + enemies:
 		if c == _current_actor:
@@ -614,6 +618,8 @@ func _apply_aoe_buff(target: BattleCharacter, buff_id: String, turns: int, value
 		else:
 			b.sync_visual()
 		_push_log(GameData._T("LOG_STRONG") % b.stats.character_name, "system")
+	# 群体 Buff 仇恨
+	_threat_mgr.add_buff_threat(_current_actor, true)
 	await get_tree().create_timer(action_delay).timeout
 	await _finish_player_action()
 
@@ -856,6 +862,11 @@ func _apply_skill_result(
 		guardian = guard_relations.get(target)
 		if guardian and not guardian.is_dead:
 			actual_target = guardian
+			# 守护仇恨：守卫承担的伤害 × 0.5
+			var total_dmg := 0
+			for dmg in result.damage_list:
+				total_dmg += dmg
+			_threat_mgr.add_guard_threat(guardian, total_dmg)
 			_push_log(GameData._T("LOG_BLOCK") % [guardian.stats.character_name, target.stats.character_name], "system")
 			# 标记本次攻击有保护者需要动画
 			pending_guard_anim = { "guardian": guardian, "ally_global_pos": target.get_parent().global_position, "ally_node": target.get_parent() }
@@ -890,10 +901,14 @@ func _apply_skill_result(
 			"is_magic": result.is_magic,
 		})
 	if result.heal_amount > 0:
+		var skill_data = SkillManager.get_skill(result.skill_id)
+		var hsize = skill_data.heal_size if skill_data else "medium"
 		pending_damage.append({
+			"attacker": actor,
 			"target": actual_target,
 			"amount": result.heal_amount,
-			"type": "heal"
+			"type": "heal",
+			"heal_size": hsize,
 		})
 
 	var log_type = "player_action" if actor.is_player else "enemy_action"
@@ -940,6 +955,13 @@ func flush_pending_damage() -> void:
 					d.target.add_buff("poison", 3)
 					_push_log(GameData._T("LOG_POISON") % d.target.stats.character_name, "debuff")
 					d.target.sync_visual()
+		# 仇恨：伤害 / 治疗
+		if d.type == "heal":
+			if d.has("attacker") and d.attacker:
+				_threat_mgr.add_heal_threat(d.attacker, d.get("heal_size", "medium"))
+		else:
+			if d.has("attacker") and d.attacker:
+				_threat_mgr.add_damage_threat(d.attacker, d.amount)
 		damage_floated.emit(d.target, d.amount, d.type)
 		if not synced.has(d.target):
 			synced[d.target] = true
@@ -1164,4 +1186,5 @@ func _on_character_died(character: BattleCharacter) -> void:
 	_push_log(GameData._T("LOG_DEAD") % character.stats.character_name, "system")
 	if not character.pet_id.is_empty() and character.is_summoned_pet:
 		summoned_mech_ids.erase(character.pet_id)
+	_threat_mgr.clear_threat(character)
 	await _check_battle_end()

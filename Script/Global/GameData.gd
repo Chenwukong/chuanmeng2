@@ -5,6 +5,7 @@ extends Node
 
 var item_db:  Dictionary = {}  # { item_id: ItemData }
 var party_db: Dictionary = {}  # { member_id: CharacterStats }
+var party_order: Array[String] = []  # 队伍出场顺序
 var pet_db:   Dictionary = {}     # { pet_id: PetData }
 var pet_team: Array[String] = []  # 最多6只出战宠物ID
 var mech_db:  Dictionary = {}     # { name: { name, was_base_path, level, exp, atk, def_, spd, skills } }
@@ -75,6 +76,11 @@ static func set_language(lang: String) -> void:
 		TranslationServer.set_locale(lang)
 
 
+## 安全检测是否有对话气球（不依赖 MainScene 类型，兼容单独运行场景）
+static func is_dialogue_active() -> bool:
+	return Engine.get_main_loop().get_nodes_in_group(&"ballon").size() > 0
+
+
 ## 对话数据库：npc_name → { index, entries }
 ## entries: [{ chapter, title, type: "normal"|"story", once }]
 ## 文件自动拼为 "res://Dialogue/chapter{chapter}.dialogue"
@@ -84,6 +90,13 @@ var DIALOGUE_DB = {
 		"index": 0,
 		"entries": [
 			{ "chapter": 1, "title": "start",    "type": "story",  "once": true  },
+			{ "chapter": 1, "title": "d", "type": "normal", "once": false },
+		]
+	},
+	"剑侠客": {
+		"index": 0,
+		"entries": [
+			{ "chapter": 0, "title": "剑侠客",    "type": "normal",  "once": false  },
 			{ "chapter": 1, "title": "d", "type": "normal", "once": false },
 		]
 	},
@@ -101,7 +114,7 @@ const ENCOUNTER_CONFIG := {
 	},
 }
 const ENCOUNTER_INTERVAL := 120.0   # 像素检查间隔
-const ENCOUNTER_CHANCE  := 10    # 触发概率（1.0 = 100%）
+const ENCOUNTER_CHANCE  := 0.1   # 触发概率（1.0 = 100%）
 
 func _ready() -> void:
 	_load_languages()
@@ -286,6 +299,7 @@ func save_game(slot: int = 0) -> void:
 		"chapter_id": chapter_id,
 		"scene_path": current_scene_path,
 		"party": {},
+		"party_order": party_order.duplicate(),
 		"pets": {},
 		"pet_team": pet_team.duplicate(),
 		"inventory": player_inventory.serialize() if player_inventory else {},
@@ -356,6 +370,8 @@ func load_game(slot: int = 0) -> bool:
 		var s = CharacterStats.new()
 		s.load_from_dict(data.party[mid])
 		party_db[mid] = s
+	var default_order: Array = party_db.keys().duplicate()
+	party_order.assign(data.get("party_order", default_order))
 
 	# 恢复背包
 	if player_inventory and data.has("inventory"):
@@ -496,6 +512,47 @@ func get_party_member(member_id: String) -> CharacterStats:
 func get_full_party() -> Array:
 	return party_db.values()
 
+
+## 按名字添加队员（从 CHARACTER_DB 查数据，找不到则用参数自定义）
+func add_party_by_name(p_name: String, p_class: String = "", p_role: String = "",
+	p_elem: String = "", p_level: int = 1, p_was: String = "") -> void:
+	# 先从数据库查
+
+	for mid in CHARACTER_DB:
+		if CHARACTER_DB[mid].name == p_name:
+			if party_db.has(mid):
+				return  # 已在队
+			var dd: Dictionary = CHARACTER_DB[mid].duplicate()
+			_add_member(mid, dd)
+			if p_level > 1:
+				party_db[mid].level = p_level
+			party_order.append(mid)
+			return
+	# 没找到 → 给默认数据
+
+	var mid := p_name.to_lower().replace(" ", "_")
+	if party_db.has(mid):
+		
+		return
+	var dd := {
+		"name": p_name, "class": p_class if p_class else "剑修",
+		"elem": p_elem if p_elem else "金", "role": p_role if p_role else "攻",
+		"hp": 120, "mp": 60, "atk": 25, "matk": 15, "def": 10, "mdef": 8, "spd": 12,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": p_was,
+		"skills": ["普通攻击"],
+	}
+	print(123)
+	_add_member(mid, dd)
+	party_db[mid].level = p_level
+	party_order.append(mid)
+
+
+## 按 member_id 移除队员
+func remove_party_member(member_id: String) -> void:
+	party_db.erase(member_id)
+	party_order.erase(member_id)
+
 ## 按等级范围随机返回怪物 ID（随机遇敌用）
 ## 按等级范围随机返回怪物 ID（随机遇敌用）
 func get_random_enemy_id(min_lv: int = 1, max_lv: int = 99) -> String:
@@ -580,37 +637,49 @@ func _build_enemy_db() -> void:
 		_enemy_db_cache[key] = row
 
 # ══════════════════════════════════════════════
-# 队伍成员
+# 角色数据库 — add_party_by_name 从这里查找角色数据
 # ══════════════════════════════════════════════
 
-func _init_party() -> void:
-	_add_member("yuling", {
+const CHARACTER_DB := {
+	"yuling": {
 		"name": "羽灵神", "class": "战神", "elem": "金", "role": "主",
 		"hp": 150, "mp": 80,  "atk": 3500, "matk": 25, "def": 14, "mdef": 10, "spd": 308,
 		"crit": 0.18, "crit_mult": 1.7,
-		"was_base_path": "res://WAS/队员/羽灵神-弓/",
+		"was_base_path": "res://WAS/羽灵神-弓/",
 		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg", 
-		 "cast_sound":   "res://Audio/SE/男-枪.ogg",
+		"attack_sound": "res://Audio/SE/男-枪.ogg", "cast_sound": "res://Audio/SE/男-枪.ogg",
 		"ranged": true,
-	})
-	_add_member("erlang", {
+	},
+	"erlang": {
 		"name": "二郎神", "class": "战神", "elem": "金", "role": "攻",
 		"hp": 150, "mp": 70,  "atk": 30, "matk": 20, "def": 14, "mdef": 10, "spd": 30,
 		"crit": 0.18, "crit_mult": 1.7,
 		"was_base_path": "res://WAS/二郎神",
 		"skills": ["普通攻击","御剑气","雷霆诀","破防击","金刚护体"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg", 
-	})
-
-	_add_member("dingdong", {
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
+	},
+	"dingdong": {
 		"name": "叮咚", "class": "灵师", "elem": "水", "role": "召",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/超级赤焰兽",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
-	})
+	},
+	"jianxiake": {
+		"name": "剑侠客", "class": "灵师", "elem": "金", "role": "攻",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": "res://WAS/剑侠客",
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"],
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
+	},
+}
+
+
+func _init_party() -> void:
+	party_db.clear()
+	party_order.clear()
 
 func _add_member(member_id: String, d: Dictionary) -> void:
 	var s = CharacterStats.new()
@@ -788,6 +857,7 @@ const SKILL_DB := {
 	"回元术": {
 		"type": SkillData.SkillType.HEAL, "target": SkillData.TargetType.SINGLE_ALLY,
 		"mp": 12, "heal": 0.25, "flat": 10, "cd": 2, "sound": "res://Audio/SE/heal 1.ogg",
+		"hsize": "medium",
 		"desc": "恢复自身 25% 最大气血 + 10 点",
 	},
 	"护体真气": {
@@ -851,6 +921,7 @@ const SKILL_DB := {
 	"如沐春风": {
 		"type": SkillData.SkillType.HEAL, "target": SkillData.TargetType.SINGLE_ALLY,
 		"mp": 18, "heal": 0.15, "flat": 30, "cd": 2, "sound": "res://Audio/SE/heal 1.ogg",
+		"hsize": "group",
 		"desc": "选定目标及随机 3 名队友恢复 15% 最大气血 + 30 点",
 	},
 	"烈焰诀": {
@@ -975,6 +1046,7 @@ func _register_skills() -> void:
 		sk.hit_count         = row.get("hits", 1)
 		sk.heal_multiplier   = row.get("heal", 0.0)
 		sk.flat_heal         = row.get("flat", 0)
+		sk.heal_size         = row.get("hsize", "medium")
 		sk.flat_damage       = row.get("flat_dmg", 0)
 		sk.cooldown_turns    = row.get("cd", 0)
 		sk.apply_buff_id     = row.get("buff", "")
@@ -1174,13 +1246,10 @@ func _init_equip_db() -> void:
 
 ## 调试：往背包放几件腰带看看效果
 func _debug_equip_belt() -> void:
-	equip_bag = equip_bag.filter(func(eq): return eq is Dictionary and not eq.is_empty() and not str(eq.get("tcp_path", "")).is_empty())
-
+	equip_bag = equip_bag.filter(func(eq): return eq is Dictionary and not eq.is_empty())
 	if equip_bag.is_empty():
 		for equip_id in ["equip_2902", "equip_2910", "equip_2957"]:
 			var eq := EquipData.get_named(equip_id)
 			if not eq.is_empty():
 				equip_bag.append(eq)
 		print("[装备调试] 已往背包放入粗腰带、虎筋腰带、青龙腰带")
-		for eq in equip_bag:
-			print("  - %s, tcp: %s" % [eq.get("display_name", "?"), eq.get("tcp_path", "无")])

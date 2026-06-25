@@ -151,10 +151,14 @@ func _can_use(actor: BattleCharacter, skill_id: String) -> bool:
 	var d = SkillManager.get_skill(skill_id)
 	if d == null: return false
 	return actor.current_mp >= d.mp_cost
-## 选择存活玩家中血量百分比最低的
-func _pick_lowest_hp_target() -> BattleCharacter:
+## 根据仇恨权重选择目标（追敌 > 70/20/10 权重随机）
+func _pick_threat_target() -> BattleCharacter:
 	var alive = battle_manager.alive_party()
 	if alive.is_empty():
-		return battle_manager.party[0] if battle_manager.party.size() > 0 else null
-	alive.sort_custom(func(a, b): return a.hp_percent() < b.hp_percent())
-	return alive[0]
+		return null
+	return battle_manager._threat_mgr.get_weighted_target(alive)
+
+
+func _pick_lowest_hp_target() -> BattleCharacter:
+	# 保留作为 fallback
+	return _pick_threat_target()

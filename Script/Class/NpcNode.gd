@@ -39,7 +39,7 @@ func _ready():
 func _load_was():
 	if npc_name.is_empty():
 		return
-	_was_dir = "res://WAS/NPC/" + npc_name.trim_suffix("/")
+	_was_dir = "res://WAS/" + npc_name.trim_suffix("/")
 	wasp.add_anim("idle",   _was_dir + "/待机.was")
 	wasp.add_anim("walk",   _was_dir + "/行走.was")
 	wasp.add_anim("move",   _was_dir + "/移动.was")

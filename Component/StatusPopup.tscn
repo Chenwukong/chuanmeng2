@@ -1,0 +1,325 @@
+[gd_scene format=3 uid="uid://5metpqydibfe"]
+
+[ext_resource type="Texture2D" uid="uid://ta1c4t7dypmq" path="res://Graphic/UI/ChatGPT Image 2026年6月25日 07_17_05.png" id="1_3kagr"]
+[ext_resource type="Script" uid="uid://bq5x5k1fyyt1v" path="res://Script/Class/StatusPopup.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="2_ggtfs"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xxkj8"]
+atlas = ExtResource("2_ggtfs")
+region = Rect2(0, 0, 42.200043, 21.399994)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ycfhy"]
+atlas = ExtResource("2_ggtfs")
+region = Rect2(84.65245, 0, 41.34755, 21.511547)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mp7lv"]
+atlas = ExtResource("2_ggtfs")
+region = Rect2(42.56493, 0, 40.23701, 21.74393)
+
+[node name="Node2D" type="CanvasLayer" unique_id=887008669]
+script = ExtResource("1_script")
+
+[node name="梦传之路2任务状态" type="Sprite2D" parent="." unique_id=143389293]
+position = Vector2(672, 351.40433)
+scale = Vector2(0.32310468, 0.32310468)
+texture = ExtResource("1_3kagr")
+
+[node name="Portrait" type="TextureRect" parent="." unique_id=1976545015]
+unique_name_in_owner = true
+offset_left = 513.0
+offset_top = 153.0
+offset_right = 663.6413
+offset_bottom = 313.0
+expand_mode = 4
+
+[node name="体质" type="Label" parent="." unique_id=604715093]
+offset_left = 739.0
+offset_top = 162.0
+offset_right = 794.0
+offset_bottom = 185.0
+text = "123"
+horizontal_alignment = 1
+
+[node name="魔力" type="Label" parent="." unique_id=902550558]
+offset_left = 738.0
+offset_top = 195.40431
+offset_right = 793.0
+offset_bottom = 218.40431
+text = "123"
+horizontal_alignment = 1
+
+[node name="力量" type="Label" parent="." unique_id=150283413]
+offset_left = 738.0
+offset_top = 227.40431
+offset_right = 794.0
+offset_bottom = 251.40431
+text = "123"
+horizontal_alignment = 1
+
+[node name="耐力" type="Label" parent="." unique_id=1170766075]
+offset_left = 739.0
+offset_top = 260.4043
+offset_right = 793.0
+offset_bottom = 284.4043
+text = "123"
+horizontal_alignment = 1
+
+[node name="敏捷" type="Label" parent="." unique_id=1176772349]
+offset_left = 738.0
+offset_top = 292.4043
+offset_right = 793.0
+offset_bottom = 316.4043
+text = "123"
+horizontal_alignment = 1
+
+[node name="潜力" type="Label" parent="." unique_id=152286256]
+offset_left = 719.0
+offset_top = 327.4043
+offset_right = 778.0
+offset_bottom = 351.4043
+text = "123"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="等级" type="Label" parent="." unique_id=1123920937]
+offset_left = 559.0
+offset_top = 376.4043
+offset_right = 615.0
+offset_bottom = 400.4043
+text = "123"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="名称" type="Label" parent="." unique_id=1377534274]
+offset_left = 715.0
+offset_top = 376.4043
+offset_right = 833.0
+offset_bottom = 400.4043
+text = "123"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="气血" type="Label" parent="." unique_id=842244247]
+offset_left = 559.0
+offset_top = 415.4043
+offset_right = 833.0
+offset_bottom = 439.4043
+text = "123"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="蓝量" type="Label" parent="." unique_id=1726402169]
+offset_left = 560.0
+offset_top = 450.4043
+offset_right = 834.0
+offset_bottom = 474.4043
+text = "123"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="升级经验" type="Label" parent="." unique_id=1536250797]
+offset_left = 604.0
+offset_top = 491.4043
+offset_right = 742.0
+offset_bottom = 515.4043
+text = "123"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="所需经验" type="Label" parent="." unique_id=695984285]
+offset_left = 603.0
+offset_top = 526.4043
+offset_right = 741.0
+offset_bottom = 550.4043
+text = "123"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NextButton" type="TextureButton" parent="." unique_id=1117198565]
+unique_name_in_owner = true
+offset_left = 850.99994
+offset_top = 375.4043
+offset_right = 892.99994
+offset_bottom = 396.4043
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_xxkj8")
+texture_pressed = SubResource("AtlasTexture_ycfhy")
+texture_hover = SubResource("AtlasTexture_mp7lv")
+
+[node name="Label" type="Label" parent="NextButton" unique_id=1643996014]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = ">"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HpAddButton" type="TextureButton" parent="." unique_id=1823509375]
+unique_name_in_owner = true
+offset_left = 805.99994
+offset_top = 167.40431
+offset_right = 847.99994
+offset_bottom = 188.40431
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_xxkj8")
+texture_pressed = SubResource("AtlasTexture_ycfhy")
+texture_hover = SubResource("AtlasTexture_mp7lv")
+
+[node name="Label" type="Label" parent="HpAddButton" unique_id=1385683560]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MagicAddButton" type="TextureButton" parent="." unique_id=1568372426]
+unique_name_in_owner = true
+offset_left = 805.99994
+offset_top = 199.4043
+offset_right = 847.99994
+offset_bottom = 220.4043
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_xxkj8")
+texture_pressed = SubResource("AtlasTexture_ycfhy")
+texture_hover = SubResource("AtlasTexture_mp7lv")
+
+[node name="Label" type="Label" parent="MagicAddButton" unique_id=1542930407]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StrengthAddButton" type="TextureButton" parent="." unique_id=1917878260]
+unique_name_in_owner = true
+offset_left = 805.99994
+offset_top = 232.4043
+offset_right = 847.99994
+offset_bottom = 253.4043
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_xxkj8")
+texture_pressed = SubResource("AtlasTexture_ycfhy")
+texture_hover = SubResource("AtlasTexture_mp7lv")
+
+[node name="Label" type="Label" parent="StrengthAddButton" unique_id=1133126702]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DefenseAddButton" type="TextureButton" parent="." unique_id=866886247]
+unique_name_in_owner = true
+offset_left = 805.99994
+offset_top = 265.4043
+offset_right = 847.99994
+offset_bottom = 286.4043
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_xxkj8")
+texture_pressed = SubResource("AtlasTexture_ycfhy")
+texture_hover = SubResource("AtlasTexture_mp7lv")
+
+[node name="Label" type="Label" parent="DefenseAddButton" unique_id=76730053]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SpeedAddButton" type="TextureButton" parent="." unique_id=1736152906]
+unique_name_in_owner = true
+offset_left = 805.99994
+offset_top = 298.4043
+offset_right = 847.99994
+offset_bottom = 319.4043
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_xxkj8")
+texture_pressed = SubResource("AtlasTexture_ycfhy")
+texture_hover = SubResource("AtlasTexture_mp7lv")
+
+[node name="Label" type="Label" parent="SpeedAddButton" unique_id=812988121]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PrevButton" type="TextureButton" parent="." unique_id=1813183612]
+unique_name_in_owner = true
+offset_left = 462.99994
+offset_top = 375.4043
+offset_right = 504.99994
+offset_bottom = 396.4043
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_xxkj8")
+texture_pressed = SubResource("AtlasTexture_ycfhy")
+texture_hover = SubResource("AtlasTexture_mp7lv")
+
+[node name="Label" type="Label" parent="PrevButton" unique_id=101168290]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "<"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ConfirmButton" type="TextureButton" parent="." unique_id=1993294774]
+unique_name_in_owner = true
+offset_left = 783.0
+offset_top = 331.4043
+offset_right = 825.0
+offset_bottom = 352.4043
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_xxkj8")
+texture_pressed = SubResource("AtlasTexture_ycfhy")
+texture_hover = SubResource("AtlasTexture_mp7lv")
+
+[node name="Label" type="Label" parent="ConfirmButton" unique_id=1220235117]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "确认"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CancelButton" type="TextureButton" parent="." unique_id=1887769047]
+unique_name_in_owner = true
+offset_left = 814.0
+offset_top = 331.4043
+offset_right = 856.0
+offset_bottom = 352.4043
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_xxkj8")
+texture_pressed = SubResource("AtlasTexture_ycfhy")
+texture_hover = SubResource("AtlasTexture_mp7lv")
+
+[node name="Label" type="Label" parent="CancelButton" unique_id=1852381715]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "取消"
+horizontal_alignment = 1
+vertical_alignment = 1

@@ -1,11 +1,12 @@
 [gd_scene format=3 uid="uid://brf4jrad0lbqm"]
 
 [ext_resource type="Script" uid="uid://d1wt4ma6055l8" path="res://addons/dialogue_manager/example_balloon/example_balloon.gd" id="1_4sflu"]
+[ext_resource type="Texture2D" uid="uid://cisbmf8fco3j0" path="res://Graphic/UI/sad as dasd as.png" id="2_prxsg"]
 [ext_resource type="PackedScene" uid="uid://ckvgyvclnwggo" path="res://addons/dialogue_manager/dialogue_label.tscn" id="2_vlahx"]
 [ext_resource type="Script" uid="uid://bb52rsfwhkxbn" path="res://addons/dialogue_manager/dialogue_responses_menu.gd" id="3_prxsg"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_spyqn"]
-bg_color = Color(0, 0, 0, 1)
+bg_color = Color(0, 0, 0, 0)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
@@ -17,7 +18,7 @@ corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ri4m3"]
-bg_color = Color(0.121569, 0.121569, 0.121569, 1)
+bg_color = Color(0, 0, 0, 0)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
@@ -29,7 +30,7 @@ corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e0njw"]
-bg_color = Color(0, 0, 0, 1)
+bg_color = Color(0, 0, 0, 0)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
@@ -41,7 +42,7 @@ corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qkmqt"]
-bg_color = Color(0, 0, 0, 1)
+bg_color = Color(0, 0, 0, 0)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
@@ -99,9 +100,89 @@ _data = {
 &"progress": SubResource("Animation_qkmqt")
 }
 
-[node name="ExampleBalloon" type="CanvasLayer" unique_id=1434168376]
+[sub_resource type="Animation" id="Animation_oaell"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("ColorRect:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(-87, -74)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("ColorRect2:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(-93, 679)]
+}
+
+[sub_resource type="Animation" id="Animation_pc582"]
+resource_name = "blackshow"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("ColorRect:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.33333334),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(-87, -147), Vector2(-88, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("ColorRect2:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.36),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(-90, 828), Vector2(-73, 707)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_jjw4j"]
+_data = {
+&"RESET": SubResource("Animation_oaell"),
+&"blackshow": SubResource("Animation_pc582")
+}
+
+[node name="ExampleBalloon" type="CanvasLayer" unique_id=1434168376 groups=["ballon"]]
 layer = 100
 script = ExtResource("1_4sflu")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1660299479]
+visible = false
+offset_left = -87.0
+offset_top = -74.0
+offset_right = 1372.0
+offset_bottom = 76.0
+color = Color(0, 0, 0, 1)
+
+[node name="ColorRect2" type="ColorRect" parent="." unique_id=2079714807]
+visible = false
+offset_left = -93.0
+offset_top = 679.0
+offset_right = 1366.0
+offset_bottom = 809.0
+color = Color(0, 0, 0, 1)
+
+[node name="SadAsDasdAs" type="Sprite2D" parent="." unique_id=1464047764]
+position = Vector2(604, 646)
+texture = ExtResource("2_prxsg")
 
 [node name="Balloon" type="Control" parent="." unique_id=359403728]
 unique_name_in_owner = true
@@ -109,61 +190,55 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 54.0
+offset_top = 106.0
+offset_right = 54.0
+offset_bottom = 106.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = SubResource("Theme_qq3yp")
 
-[node name="MarginContainer" type="MarginContainer" parent="Balloon" unique_id=1011109179]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -219.0
-grow_horizontal = 2
-grow_vertical = 0
-
-[node name="PanelContainer" type="PanelContainer" parent="Balloon/MarginContainer" unique_id=810051587]
-clip_children = 2
-layout_mode = 2
-mouse_filter = 1
-
-[node name="MarginContainer" type="MarginContainer" parent="Balloon/MarginContainer/PanelContainer" unique_id=1030936092]
-layout_mode = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Balloon/MarginContainer/PanelContainer/MarginContainer" unique_id=1428277592]
-layout_mode = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/HBoxContainer" unique_id=1624289611]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="CharacterLabel" type="RichTextLabel" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer" unique_id=507199029]
+[node name="CharacterLabel" type="RichTextLabel" parent="Balloon" unique_id=507199029]
 unique_name_in_owner = true
-modulate = Color(1, 1, 1, 0.501961)
-layout_mode = 2
+layout_mode = 0
+offset_left = 489.0
+offset_top = 422.0
+offset_right = 615.0
+offset_bottom = 461.0
 mouse_filter = 1
+theme_override_font_sizes/normal_font_size = 30
 bbcode_enabled = true
-text = "Character"
+text = "传梦"
 fit_content = true
 scroll_active = false
 
-[node name="DialogueLabel" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer" unique_id=1225160028 instance=ExtResource("2_vlahx")]
+[node name="DialogueLabel" parent="Balloon" unique_id=1225160028 instance=ExtResource("2_vlahx")]
 unique_name_in_owner = true
-layout_mode = 2
+layout_mode = 0
+anchors_preset = 0
+anchor_right = 0.0
+offset_left = 310.0
+offset_top = 491.0
+offset_right = 781.0
+offset_bottom = 614.0
+grow_horizontal = 1
 size_flags_vertical = 3
 text = "Dialogue..."
 
-[node name="Control" type="Control" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/HBoxContainer" unique_id=1162966119]
+[node name="Control" type="Control" parent="Balloon" unique_id=1162966119]
 custom_minimum_size = Vector2(20, 10)
-layout_mode = 2
+anchors_preset = 0
+offset_left = 83.0
+offset_top = 633.2
+offset_right = 1109.0
+offset_bottom = 643.2
 size_flags_vertical = 8
 
-[node name="Progress" type="Polygon2D" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/HBoxContainer/Control" unique_id=821575988]
+[node name="Progress" type="Polygon2D" parent="Balloon/Control" unique_id=821575988]
 unique_name_in_owner = true
 polygon = PackedVector2Array(0, 0, 10, 10, 20, 0)
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/HBoxContainer/Control" unique_id=452325722]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Balloon/Control" unique_id=452325722]
 libraries/ = SubResource("AnimationLibrary_1337t")
 autoplay = &"progress"
 
@@ -175,10 +250,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -290.5
-offset_top = -35.0
-offset_right = 290.5
-offset_bottom = 35.0
+offset_left = -345.0
+offset_top = 119.0
+offset_right = 133.0
+offset_bottom = 189.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_vertical = 8
@@ -193,6 +268,23 @@ text = "Response example"
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1116280512]
 unique_name_in_owner = true
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1974050070]
+libraries/ = SubResource("AnimationLibrary_jjw4j")
+autoplay = &"blackshow"
+
+[node name="portrait" type="TextureRect" parent="." unique_id=1921133231]
+unique_name_in_owner = true
+anchors_preset = -1
+anchor_left = 0.321
+anchor_top = 0.717
+anchor_right = 0.321
+anchor_bottom = 0.717
+offset_left = -70.30002
+offset_top = -228.59998
+offset_right = 51.69998
+offset_bottom = -106.599976
+stretch_mode = 5
 
 [connection signal="gui_input" from="Balloon" to="." method="_on_balloon_gui_input"]
 [connection signal="response_selected" from="Balloon/ResponsesMenu" to="." method="_on_responses_menu_response_selected"]

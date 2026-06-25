@@ -96,7 +96,7 @@ func _setup_chase_monster() -> void:
 
 
 func _spawn_chase_batch() -> void:
-	if GameData.in_battle or GameData.ui_blocked or get_tree().current_scene.is_dialogue_active():
+	if GameData.in_battle or GameData.ui_blocked or GameData.is_dialogue_active():
 		return
 	var pool := _get_encounter_pool()
 	if pool.is_empty():

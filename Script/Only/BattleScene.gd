@@ -1,7 +1,7 @@
 # BattleScene.gd
 extends CanvasLayer
 
-var party_ids: Array = [ "yuling", "chiyanshou", "dingdong"]
+var party_ids: Array = [ "yuling", "erlang", "dingdong"]  # 兜底，正式走 GameData.party_order
 var enemy_ids: Array = ["超级赤焰兽",]
 
 @onready var battle_manager = $BattleManager
@@ -101,6 +101,17 @@ func _ready() -> void:
 		enemy_ids = GameData.get_meta("pending_enemies")
 	if GameData.has_meta("pending_party"):
 		party_ids = GameData.get_meta("pending_party")
+	if not GameData.party_order.is_empty():
+		for pid in GameData.party_order:
+			if pid not in party_ids:
+				party_ids.append(pid)
+	else:
+		# 队伍完全空 → 兜底加载默认成员
+		if GameData.party_db.is_empty():
+			GameData.add_party_by_name("羽灵神")
+			GameData.add_party_by_name("二郎神")
+			GameData.add_party_by_name("叮咚")
+		party_ids = ["yuling", "erlang", "dingdong"]
 
 	# ── 构建队伍数据 ──
 	var party_stats: Array[CharacterStats] = []
@@ -109,8 +120,22 @@ func _ready() -> void:
 		if s:
 			# 合并技能库
 			var merged = s.duplicate_for_battle()
+			# 战损血蓝（战斗持续）
+			if s.saved_hp > 0: merged.saved_hp = s.saved_hp
+			if s.saved_mp > 0: merged.saved_mp = s.saved_mp
 			var full_skills = GameData.get_all_skills(pid)
 			merged.skill_ids = full_skills
+			# 套用装备属性
+			for eq in GameData.player_equipment.values():
+				if eq is Dictionary:
+					var b = eq.get("base", {})
+					merged.max_hp += b.get("hp", 0)
+					merged.max_mp += b.get("mp", 0)
+					merged.attack += b.get("atk", 0)
+					merged.magic_attack += b.get("matk", 0)
+					merged.defense += b.get("def", 0)
+					merged.magic_defense += b.get("mdef", 0)
+					merged.speed += b.get("spd", 0)
 			party_stats.append(merged)
 
 	var enemy_stats: Array[CharacterStats] = []

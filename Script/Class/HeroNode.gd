@@ -15,6 +15,8 @@ var selectable: bool = false
 var _current_spell_anim: String = ""
 
 signal clicked(char: BattleCharacter)
+signal hovered(char: BattleCharacter)
+signal mouse_left
 
 const GENERIC_CAST_SOUND: String = "res://Audio/SE/男-枪.ogg"
 
@@ -40,9 +42,12 @@ func _on_area_input_event(_viewport, event: InputEvent, _shape_idx: int) -> void
 
 func _on_mouse_entered() -> void:
 	if selectable: sprite.modulate = COLOR_HOVER
+	hovered.emit($BattleCharacter)
+
 
 func _on_mouse_exited() -> void:
 	if selectable: sprite.modulate = COLOR_NORMAL
+	mouse_left.emit()
 
 ## 传入 WAS 文件路径，由外部在 setup 后调用
 func setup_was(was_path: String) -> void:

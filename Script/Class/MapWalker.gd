@@ -32,9 +32,9 @@ var _nav_cd: float = 0.0
 
 
 func _ready() -> void:
-	_wasp.add_anim("idle",   "res://WAS/队员/羽灵神-弓/待机.was")
-	_wasp.add_anim("move",   "res://WAS/队员/羽灵神-弓/移动.was")
-	_wasp.add_anim("attack", "res://WAS/队员/羽灵神-弓/攻击.was")
+	_wasp.add_anim("idle",   "res://WAS/羽灵神-弓/待机.was")
+	_wasp.add_anim("move",   "res://WAS/羽灵神-弓/移动.was")
+	_wasp.add_anim("attack", "res://WAS/羽灵神-弓/攻击.was")
 	_wasp.add_anim("ride_idle", "res://WAS/坐骑/羽灵神-坐骑-宝贝葫芦/站立.was")
 	_wasp.add_anim("ride_move", "res://WAS/坐骑/羽灵神-坐骑-宝贝葫芦/行走.was")
 	_wasp.load_all()
@@ -69,7 +69,7 @@ func _play_hero(anim):
 
 
 func _input(event: InputEvent):
-	if GameData.in_battle or GameData.ui_blocked or get_tree().current_scene.is_dialogue_active():
+	if GameData.in_battle or GameData.ui_blocked or GameData.is_dialogue_active():
 		return
 	if not (event is InputEventKey and event.pressed and event.keycode == KEY_R and not event.echo):
 		return
@@ -104,7 +104,7 @@ func _input(event: InputEvent):
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if GameData.in_battle or GameData.ui_blocked or get_tree().current_scene.is_dialogue_active():
+	if GameData.in_battle or GameData.ui_blocked or GameData.is_dialogue_active():
 		return
 	if event.is_action_pressed("ui_accept"):
 		_try_talk_to_nearest_npc()
@@ -113,7 +113,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var click_pos := get_global_mouse_position()
 		# 优先检查是否点中 NPC
 		for child in get_parent().get_children():
-			if child is NpcNode and click_pos.distance_to(child.global_position) < 80:
+			if child is NpcNode and click_pos.distance_to(child.global_position) < 50:
 				_talk_to_npc(child)
 				return
 		if _nav_cd > 0.0:
@@ -123,6 +123,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _talk_to_npc(npc: NpcNode) -> void:
+	if global_position.distance_to(npc.global_position) > 80:
+		return
 	var npc_name := npc.npc_name
 	if npc_name.is_empty():
 		return
@@ -171,7 +173,7 @@ func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
 	_nav_cd = maxf(0.0, _nav_cd - delta)
-	if GameData.in_battle or GameData.ui_blocked or get_tree().current_scene.is_dialogue_active() or _mounting:
+	if GameData.in_battle or GameData.ui_blocked or GameData.is_dialogue_active() or _mounting:
 		return
 	var dx: float = 0.0; var dy: float = 0.0
 	if Input.is_key_pressed(KEY_LEFT) or Input.is_key_pressed(KEY_A):   dx = -1; dy = -1

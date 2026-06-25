@@ -42,7 +42,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _caught or GameData.in_battle or GameData.ui_blocked or get_tree().current_scene.is_dialogue_active():
+	if _caught or GameData.in_battle or GameData.ui_blocked or GameData.is_dialogue_active():
 		return
 	if not _player or not is_instance_valid(_player):
 		return

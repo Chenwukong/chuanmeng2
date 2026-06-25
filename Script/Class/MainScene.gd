@@ -22,6 +22,7 @@ var _save_popup = null
 var _talent_tree = null
 var _equip_page = null
 var _team_popup = null
+var _status_popup = null
 var _shichen_accum: float = 0.0
 var _shichen_idx: int = 10
 var _last_period: int = -1
@@ -53,6 +54,7 @@ func _ready() -> void:
 	_setup_ui_buttons()
 	GameData.set_language("en")
 	add_child(load("res://Script/Class/CursorController.gd").new())
+#	GameData.add_party_by_name("二郎神")
 
 # ════════════════════════════
 # UI 按钮系统
@@ -73,7 +75,7 @@ func _setup_ui_buttons() -> void:
 func _get_menu_sprite_at(pos: Vector2) -> AnimatedSprite2D:
 	var btn_base = $UI/按钮底图
 	if btn_base == null: return null
-	var buttons = ["宠物", "天赋", "道具", "队伍", "系统", "存档", "悬赏", "剧情"]
+	var buttons = ["宠物", "天赋", "道具", "队伍", "系统", "存档", "悬赏", "剧情", "人物"]
 	for node_name in buttons:
 		var sprite = btn_base.get_node_or_null(node_name) as AnimatedSprite2D
 		if sprite == null: continue
@@ -92,7 +94,7 @@ func _get_menu_sprite_at(pos: Vector2) -> AnimatedSprite2D:
 var _hovered_sprite: AnimatedSprite2D = null
 
 func _input(event: InputEvent):
-	if GameData.in_battle or GameData.ui_blocked or get_tree().current_scene.is_dialogue_active(): return
+	if GameData.in_battle or GameData.ui_blocked or GameData.is_dialogue_active(): return
 
 	# 鼠标移动 — hover 切换
 	if event is InputEventMouseMotion:
@@ -116,6 +118,7 @@ func _input(event: InputEvent):
 				"存档": _open_save_popup()
 				"悬赏": _open_bounty_popup()
 				"队伍": _open_team_popup()
+				"人物": _open_status_popup()
 			_play_sprite_anim(sprite, "pressed")
 			get_viewport().set_input_as_handled()
 			await get_tree().create_timer(0.15).timeout
@@ -130,6 +133,42 @@ func _input(event: InputEvent):
 		_open_save_popup()
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		_esc_close_or_save()
+
+
+## ESC 依次关闭已打开的面板（队伍/道具/宠物/天赋/悬赏/存档），全关掉后开存档
+func _esc_close_or_save() -> void:
+	if _team_popup and is_instance_valid(_team_popup):
+		_team_popup.close()
+		return
+	if _status_popup and is_instance_valid(_status_popup):
+		_status_popup.close_popup()
+		_status_popup = null
+		_unregister_popup()
+		return
+	if _equip_page and is_instance_valid(_equip_page):
+		_close_popup(_equip_page)
+		return
+	if _pet_popup and is_instance_valid(_pet_popup):
+		_close_popup(_pet_popup)
+		return
+	if _talent_tree and is_instance_valid(_talent_tree):
+		_close_popup(_talent_tree)
+		return
+	if _bounty_popup and is_instance_valid(_bounty_popup) and _bounty_open:
+		_bounty_popup.hide()
+		_bounty_open = false
+		_unregister_popup()
+		return
+	if _save_popup and is_instance_valid(_save_popup):
+		_close_popup(_save_popup)
+		return
+	_open_save_popup()
+
+
 func _play_sprite_anim(sprite: AnimatedSprite2D, anim: String):
 	if sprite.sprite_frames and sprite.sprite_frames.has_animation(anim):
 		sprite.play(anim)
@@ -142,6 +181,19 @@ func _open_talent_tree():
 	_talent_tree = preload("res://Component/TalentTree.tscn").instantiate()
 	add_child(_talent_tree)
 	_register_popup(_talent_tree)
+
+
+func _open_status_popup():
+	if _status_popup and is_instance_valid(_status_popup):
+		_status_popup.close_popup()
+		_status_popup = null
+		return
+	_status_popup = StatusPopup.open()
+	_status_popup.closed.connect(func():
+		_status_popup = null
+		_unregister_popup()
+	)
+	_register_popup(_status_popup)
 
 
 func _open_equip_page():
@@ -248,6 +300,7 @@ func _has_any_popup_open() -> bool:
 	if _save_popup and is_instance_valid(_save_popup): return true
 	if _talent_tree and is_instance_valid(_talent_tree): return true
 	if _equip_page and is_instance_valid(_equip_page): return true
+	if _status_popup and is_instance_valid(_status_popup): return true
 	return false
 
 
@@ -376,12 +429,19 @@ func get_camera() -> Camera2D:
 
 ## 场景中是否有对话气球正在显示
 static func is_dialogue_active() -> bool:
-	var tree := Engine.get_main_loop() as SceneTree
-	return tree.get_nodes_in_group(&"ballon").size() > 0
+	return GameData.is_dialogue_active()
 
 
 ## 支持的语言列表
 const SUPPORTED_LOCALES: Array[String] = ["zh", "en"]
+
+
+## 安全检测：当前场景是否有对话气球阻塞 UI（避免非 MainScene 时崩溃）
+func _is_ui_blocked_by_dialogue() -> bool:
+	var s := get_tree().current_scene
+	if s == self or not s.has_method("is_dialogue_active"):
+		return false
+	return s.is_dialogue_active()
 
 
 ## 切换语言

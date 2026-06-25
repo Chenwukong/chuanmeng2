@@ -54,8 +54,8 @@ var _mp_tween_node: Node
 func setup(character_stats: CharacterStats, for_player: bool = false) -> void:
 	stats = character_stats.duplicate_for_battle()
 	is_player = for_player
-	current_hp = stats.max_hp
-	current_mp = stats.max_mp
+	current_hp = stats.saved_hp if stats.saved_hp > 0 else stats.max_hp
+	current_mp = stats.saved_mp if stats.saved_mp > 0 else stats.max_mp
 	book_skills = stats.book_skills.duplicate()
 
 	# 初始化专用 tween 容器（避免 HP/MP 互相覆盖）

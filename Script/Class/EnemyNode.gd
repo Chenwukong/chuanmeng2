@@ -17,6 +17,7 @@ var _current_spell_anim: String = ""
 var battle_character: BattleCharacter = null
 
 signal hovered(char: BattleCharacter)   ## 鼠标悬停（用于 UI 切换选中）
+signal mouse_left                        ## 鼠标离开（隐藏 tooltip）
 
 const GENERIC_CAST_SOUND: String = "res://Audio/SE/男-枪.ogg"
 
@@ -54,8 +55,8 @@ func _on_mouse_entered() -> void:
 		hovered.emit(battle_character)
 
 func _on_mouse_exited() -> void:
-	if selectable:
-		sprite.modulate = COLOR_NORMAL
+	sprite.modulate = COLOR_NORMAL
+	mouse_left.emit()
 
 ## 外部调用：设置"被选中"高亮（显示浮动指示器 + 白色描边）
 func set_selected(is_selected: bool) -> void:

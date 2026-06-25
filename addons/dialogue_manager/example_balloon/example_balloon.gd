@@ -61,6 +61,9 @@ var mutation_cooldown: Timer = Timer.new()
 ## The label showing the name of the currently speaking character
 @onready var character_label: RichTextLabel = %CharacterLabel
 
+## The character portrait (only in storyChat)
+@onready var portrait: TextureRect = %portrait
+
 ## The label showing the currently spoken dialogue
 @onready var dialogue_label: DialogueLabel = %DialogueLabel
 
@@ -133,6 +136,9 @@ func apply_dialogue_line() -> void:
 	character_label.visible = not dialogue_line.character.is_empty()
 	character_label.text = tr(dialogue_line.character, "dialogue")
 
+	# 加载角色头像
+	_load_portrait(dialogue_line.character)
+
 	dialogue_label.hide()
 	dialogue_label.dialogue_line = dialogue_line
 
@@ -170,6 +176,41 @@ func apply_dialogue_line() -> void:
 ## Go to the next line
 func next(next_id: String) -> void:
 	dialogue_line = await dialogue_resource.get_next_dialogue_line(next_id, temporary_game_states)
+
+
+## 根据角色名加载头像（从 CHARACTER_DB 查 was_base_path，解码头像/头像.was）
+func _load_portrait(character_name: String) -> void:
+	if portrait == null:
+		return
+	if character_name.is_empty():
+		portrait.texture = null
+		return
+	# 1) CHARACTER_DB
+	var was_path := ""
+	for mid in GameData.CHARACTER_DB:
+		if GameData.CHARACTER_DB[mid].name == character_name:
+			was_path = GameData.CHARACTER_DB[mid].get("was_base_path", "")
+			break
+	# 2) 敌人数据库
+	if was_path.is_empty():
+		for row in GameData._enemy_db_cache.values():
+			if row.name == character_name:
+				was_path = row.get("was_base_path", "")
+				break
+	# 3) 直接猜 WAS/<角色名>
+	if was_path.is_empty():
+		was_path = "res://WAS/" + character_name
+
+	var portrait_path := was_path.path_join("头像/头像.was") if not was_path.is_empty() else ""
+	if portrait_path.is_empty() or not FileAccess.file_exists(portrait_path):
+		portrait.texture = null
+		return
+	var r := WASReader.new()
+	if not r.load_from_file(portrait_path):
+		portrait.texture = null
+		return
+	var d := r.decode_frame(0, 0)
+	portrait.texture = d.get("texture", null) if not d.is_empty() else null
 
 
 #region Signals
