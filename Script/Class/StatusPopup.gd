@@ -27,6 +27,7 @@ var _tmp_spd: int = 0
 var _tmp_magic: int = 0
 var _tmp_matk: int = 0
 var _potential_pool: Dictionary = {}
+var _animating: bool = false
 
 
 static func open() -> StatusPopup:
@@ -91,18 +92,41 @@ func _add_magic() -> void:
 	_refresh()
 
 
+
+
 func _prev_char() -> void:
-	if _members.is_empty(): return
+	if _members.is_empty() or _animating: return
+	_animating = true
 	_reset_temp()
+	var orig := offset.x
+	await _shift_x(orig + 30)
 	_current_idx = (_current_idx - 1 + _members.size()) % _members.size()
 	_refresh()
+	await _unshift_x(orig)
+	_animating = false
 
 
 func _next_char() -> void:
-	if _members.is_empty(): return
+	if _members.is_empty() or _animating: return
+	_animating = true
 	_reset_temp()
+	var orig := offset.x
+	await _shift_x(orig - 30)
 	_current_idx = (_current_idx + 1) % _members.size()
 	_refresh()
+	await _unshift_x(orig)
+	_animating = false
+
+
+func _shift_x(to: float) -> void:
+	var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tw.tween_property(self, "offset:x", to, 0.08)
+	await tw.finished
+
+
+func _unshift_x(orig: float) -> void:
+	var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tw.tween_property(self, "offset:x", orig, 0.15)
 
 
 func _confirm() -> void:
@@ -141,18 +165,34 @@ func _refresh() -> void:
 	var s := _current_stats()
 	if s == null: return
 
+	# 套用装备属性
+	var eq_hp := 0; var eq_mp := 0; var eq_atk := 0
+	var eq_def := 0; var eq_spd := 0; var eq_matk := 0
+	for eq in GameData.player_equipment.values():
+		if eq is Dictionary:
+			var b = eq.get("base", {})
+			eq_hp += b.get("hp", 0); eq_mp += b.get("mp", 0)
+			eq_atk += b.get("atk", 0); eq_def += b.get("def", 0)
+			eq_spd += b.get("spd", 0); eq_matk += b.get("matk", 0)
+
+	var hp := s.max_hp + eq_hp + _tmp_hp + _tmp_magic
+	var mp := s.max_mp + eq_mp + _tmp_mp + _tmp_magic
+	var atk := s.attack + eq_atk + _tmp_atk
+	var df := s.defense + eq_def + _tmp_def
+	var spd := s.speed + eq_spd + _tmp_spd
+
 	_set_attr("名称", s.character_name, Color(1, 0.85, 0.2))
 	_set_attr("等级", "%d" % s.level, Color.WHITE)
-	_set_attr("气血", "%d" % (s.max_hp + _tmp_hp + _tmp_magic), _green_if(_tmp_hp > 0 or _tmp_magic > 0))
-	_set_attr("蓝量", "%d" % (s.max_mp + _tmp_mp + _tmp_magic), _green_if(_tmp_mp > 0 or _tmp_magic > 0))
+	_set_attr("气血", "%d/%d" % [s.saved_hp if s.saved_hp > 0 else hp, hp], _green_if(_tmp_hp > 0 or _tmp_magic > 0))
+	_set_attr("蓝量", "%d/%d" % [s.saved_mp if s.saved_mp > 0 else mp, mp], _green_if(_tmp_mp > 0 or _tmp_magic > 0))
 	_set_attr("升级经验", "%d" % s.exp, Color.WHITE)
 	_set_attr("所需经验", "%d" % s.exp_to_next, Color.WHITE)
 
-	_set_attr("体质", "%d" % (s.max_hp + _tmp_hp + _tmp_magic), _green_if(_tmp_hp > 0 or _tmp_magic > 0))
-	_set_attr("魔力", "%d" % (s.max_mp + _tmp_mp + _tmp_magic), _green_if(_tmp_mp > 0 or _tmp_magic > 0))
-	_set_attr("力量", "%d" % (s.attack + _tmp_atk), _green_if(_tmp_atk > 0))
-	_set_attr("耐力", "%d" % (s.defense + _tmp_def), _green_if(_tmp_def > 0))
-	_set_attr("敏捷", "%d" % (s.speed + _tmp_spd), _green_if(_tmp_spd > 0))
+	_set_attr("体质", "%d" % hp, _green_if(_tmp_hp > 0 or _tmp_magic > 0))
+	_set_attr("魔力", "%d" % mp, _green_if(_tmp_mp > 0 or _tmp_magic > 0))
+	_set_attr("力量", "%d" % atk, _green_if(_tmp_atk > 0))
+	_set_attr("耐力", "%d" % df, _green_if(_tmp_def > 0))
+	_set_attr("敏捷", "%d" % spd, _green_if(_tmp_spd > 0))
 
 	set_label("潜力", "%d" % _potential())
 
@@ -200,3 +240,8 @@ func _load_portrait(s: CharacterStats) -> void:
 	if not r.load_from_file(p): _portrait.texture = null; return
 	var d := r.decode_frame(0, 0)
 	_portrait.texture = d.get("texture", null) if not d.is_empty() else null
+
+
+func _on_close_button_pressed() -> void:
+	closed.emit()
+	queue_free()

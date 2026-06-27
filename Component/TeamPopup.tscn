@@ -2,8 +2,22 @@
 
 [ext_resource type="Texture2D" uid="uid://dj4rhydpdamyf" path="res://Graphic/UI/队伍列表.png" id="1_wkpjs"]
 [ext_resource type="Script" uid="uid://rycqu6r3qo7e" path="res://Script/Class/TeamPopup.gd" id="2_script"]
+[ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="3_5g5em"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cx57q"]
+atlas = ExtResource("3_5g5em")
+region = Rect2(0, 0, 42.200043, 21.399994)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rnutr"]
+atlas = ExtResource("3_5g5em")
+region = Rect2(84.65245, 0, 41.34755, 21.511547)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_33jaq"]
+atlas = ExtResource("3_5g5em")
+region = Rect2(42.56493, 0, 40.23701, 21.74393)
 
 [node name="TeamPopUp" type="Node2D" unique_id=821199285]
+position = Vector2(121, 23)
 script = ExtResource("2_script")
 
 [node name="队伍列表" type="Sprite2D" parent="." unique_id=27760796]
@@ -168,3 +182,26 @@ theme_override_font_sizes/font_size = 10
 text = "LV:50"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="CloseButton" type="TextureButton" parent="." unique_id=13385872]
+unique_name_in_owner = true
+offset_left = 900.0
+offset_top = 186.0
+offset_right = 942.0
+offset_bottom = 207.0
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_cx57q")
+texture_pressed = SubResource("AtlasTexture_rnutr")
+texture_hover = SubResource("AtlasTexture_33jaq")
+
+[node name="Label" type="Label" parent="CloseButton" unique_id=85890662]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "X"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="pressed" from="CloseButton" to="." method="_on_close_button_pressed"]

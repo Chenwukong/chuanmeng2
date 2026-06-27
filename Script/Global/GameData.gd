@@ -6,6 +6,8 @@ extends Node
 var item_db:  Dictionary = {}  # { item_id: ItemData }
 var party_db: Dictionary = {}  # { member_id: CharacterStats }
 var party_order: Array[String] = []  # 队伍出场顺序
+var world_log: RichTextLabel = null   # 战斗外日志（MainScene 注入）
+var world_log_text: String = ""       # 日志内容持久化
 var pet_db:   Dictionary = {}     # { pet_id: PetData }
 var pet_team: Array[String] = []  # 最多6只出战宠物ID
 var mech_db:  Dictionary = {}     # { name: { name, was_base_path, level, exp, atk, def_, spd, skills } }
@@ -96,7 +98,7 @@ var DIALOGUE_DB = {
 	"剑侠客": {
 		"index": 0,
 		"entries": [
-			{ "chapter": 0, "title": "剑侠客",    "type": "normal",  "once": false  },
+			{ "chapter": 0, "title": "剑侠客",    "type": "team",  "once": false  },
 			{ "chapter": 1, "title": "d", "type": "normal", "once": false },
 		]
 	},
@@ -657,6 +659,7 @@ const CHARACTER_DB := {
 		"was_base_path": "res://WAS/二郎神",
 		"skills": ["普通攻击","御剑气","雷霆诀","破防击","金刚护体"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"traits": {"愈战愈勇": {"dmg_pct": 0.02, "spd_pct": 0.02}},
 	},
 	"dingdong": {
 		"name": "叮咚", "class": "灵师", "elem": "水", "role": "召",
@@ -671,8 +674,18 @@ const CHARACTER_DB := {
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/剑侠客",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"],
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"traits": {"横扫不休": {"chance": 1}},
+	},
+	"hutouguai": {
+		"name": "虎头怪", "class": "灵师", "elem": "木", "role": "召",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": "res://WAS/虎头怪",
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"traits": {"召唤共鸣": {"hp_per_pet": 10, "atk_per_pet": 5, "def_per_pet": 5, "spd_per_pet": 3}},
 	},
 }
 

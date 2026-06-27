@@ -111,6 +111,16 @@ func add_summoned_character(bc: BattleCharacter, stats: CharacterStats, pet_id: 
 	party.append(bc)
 	if not pet_id.is_empty():
 		summoned_pet_ids.append(pet_id)
+	# 召唤共鸣：虎头怪按场上存活宠物加属性
+	var pet_count := 0
+	for c in party:
+		if c.is_summoned_pet and not c.is_dead: pet_count += 1
+	for c in party:
+		if c.member_id == "hutouguai":
+			c.buffs.erase("_summon_buff")
+			if pet_count > 0:
+				c.add_buff("atk_up", 99, maxf(1.0, 1.0 + pet_count * 0.1))
+				c.add_buff("haste", 99, maxf(1.0, 1.0 + pet_count * 0.05))
 	_push_log(GameData._T("LOG_JOIN_BATTLE") % bc.stats.character_name, "system")
 
 ## 移除角色（替换宠物时使用）
@@ -118,6 +128,16 @@ func remove_character(bc: BattleCharacter) -> void:
 	party.erase(bc)
 	if not bc.pet_id.is_empty():
 		summoned_pet_ids.erase(bc.pet_id)
+	# 召唤共鸣更新
+	var pet_count := 0
+	for c in party:
+		if c.is_summoned_pet and not c.is_dead: pet_count += 1
+	for c in party:
+		if c.member_id == "hutouguai":
+			c.buffs.erase("_summon_buff")
+			if pet_count > 0:
+				c.add_buff("atk_up", 99, maxf(1.0, 1.0 + pet_count * 0.1))
+				c.add_buff("haste", 99, maxf(1.0, 1.0 + pet_count * 0.05))
 
 func start_battle() -> void:
 	_battle_ended_flag = false
@@ -248,6 +268,12 @@ func player_use_normal_attack(target: BattleCharacter) -> void:
 	_change_state(BattleState.PLAYER_ACTION)
 	var result = SkillManager.execute(_current_actor, target, "普通攻击")
 	await _apply_skill_result(result, _current_actor, target)
+	# 愈战愈勇：普攻永久叠伤+速（二郎神）
+	if _current_actor.member_id == "erlang":
+		var stacks: int = _current_actor.trait_data.get("_stacks", 0) + 1
+		_current_actor.trait_data["_stacks"] = stacks
+		_current_actor.add_buff("atk_up", 99, 1.0 + stacks * 0.02)
+		_current_actor.add_buff("haste", 99, 1.0 + stacks * 0.02)
 	# 高级连击：45% 概率追加一次普通攻击
 	if _current_actor.has_book_skill("高级连击") and not target.is_dead:
 		if randf() < 0.45:
@@ -272,6 +298,11 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		return
 	if data.cooldown_turns > 0:
 		skill_cooldowns[cd_key] = data.cooldown_turns
+	# 横扫不休：剑侠客横扫千军30%不冷却
+	if skill_id == "横扫千军" and _current_actor.member_id == "jianxiake":
+		if randf() < 0.3:
+			skill_cooldowns.erase(cd_key)
+			_push_log(_current_actor.stats.character_name + " 横扫不休，冷却免除！", "player_action")
 	# 慧根：MP 消耗减免
 	var actual_mp_cost = data.mp_cost
 	if _current_actor.get_mp_cost_reduction() > 0:
@@ -1187,4 +1218,15 @@ func _on_character_died(character: BattleCharacter) -> void:
 	if not character.pet_id.is_empty() and character.is_summoned_pet:
 		summoned_mech_ids.erase(character.pet_id)
 	_threat_mgr.clear_threat(character)
+	# 召唤共鸣：宠物死亡后更新
+	if character.is_summoned_pet:
+		var pet_count := 0
+		for c in party:
+			if c.is_summoned_pet and not c.is_dead: pet_count += 1
+		for c in party:
+			if c.member_id == "hutouguai":
+				c.buffs.erase("_summon_buff")
+				if pet_count > 0:
+					c.add_buff("atk_up", 99, maxf(1.0, 1.0 + pet_count * 0.1))
+					c.add_buff("haste", 99, maxf(1.0, 1.0 + pet_count * 0.05))
 	await _check_battle_end()

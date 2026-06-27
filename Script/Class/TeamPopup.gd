@@ -115,3 +115,7 @@ func _play_idle(player: Node2D, sprite: Sprite2D, stats: CharacterStats) -> void
 	was.load_all()
 	sprite.centered = true
 	was.play("idle")
+
+
+func _on_close_button_pressed() -> void:
+	close()

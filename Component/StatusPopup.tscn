@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://5metpqydibfe"]
 
 [ext_resource type="Texture2D" uid="uid://ta1c4t7dypmq" path="res://Graphic/UI/ChatGPT Image 2026年6月25日 07_17_05.png" id="1_3kagr"]
-[ext_resource type="Script" uid="uid://bq5x5k1fyyt1v" path="res://Script/Class/StatusPopup.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bmc8mfeju3wx2" path="res://Script/Class/StatusPopup.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="2_ggtfs"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_xxkj8"]
@@ -132,6 +132,26 @@ offset_top = 526.4043
 offset_right = 741.0
 offset_bottom = 550.4043
 text = "123"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CloseButton" type="TextureButton" parent="." unique_id=166543326]
+offset_left = 851.0
+offset_top = 123.0
+offset_right = 893.0
+offset_bottom = 144.0
+scale = Vector2(0.7, 0.7)
+texture_normal = SubResource("AtlasTexture_xxkj8")
+texture_pressed = SubResource("AtlasTexture_ycfhy")
+texture_hover = SubResource("AtlasTexture_mp7lv")
+
+[node name="Label" type="Label" parent="CloseButton" unique_id=1549683304]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "X"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -323,3 +343,5 @@ offset_bottom = 21.571428
 text = "取消"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[connection signal="pressed" from="CloseButton" to="." method="_on_close_button_pressed"]

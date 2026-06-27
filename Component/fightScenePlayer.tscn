@@ -25,6 +25,14 @@ script = ExtResource("2_em3j7")
 script = ExtResource("3_i42p")
 target_sprite = NodePath("../Sprite2D")
 
+[node name="WASAnimationPlayerWeapon" type="Node" parent="." unique_id=1088868822]
+script = ExtResource("3_i42p")
+target_sprite = NodePath("../Sprite2D")
+
+[node name="WASAnimationPlayerMagicEffect" type="Node" parent="." unique_id=2057534750]
+script = ExtResource("3_i42p")
+target_sprite = NodePath("../Sprite2D")
+
 [node name="Area2D" type="Area2D" parent="." unique_id=503895841]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=64339134]
@@ -100,3 +108,6 @@ scale = Vector2(0.6, 0.6)
 [node name="Animation" type="AnimatedSprite2D" parent="." unique_id=217638345]
 visible = false
 position = Vector2(0, -15)
+
+[node name="CastSprite" type="Sprite2D" parent="." unique_id=46390833]
+position = Vector2(47, 51)

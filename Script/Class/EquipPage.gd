@@ -596,6 +596,19 @@ func _on_equip_slot_rightclick(event: InputEvent, slot_key: String) -> void:
 func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 	if not (event is InputEventMouseButton and event.pressed):
 		return
+
+	# 右键：直接装备
+	if event.button_index == MOUSE_BUTTON_RIGHT:
+		var bag_idx := _current_page * SLOTS_PER_PAGE + slot_index
+		if _current_tab == ItemTab.EQUIP and bag_idx < GameData.equip_bag.size():
+			var eq: Dictionary = GameData.equip_bag[bag_idx]
+			var slot := EquipData.slot_key(eq.get("slot", 0))
+			GameData.equip_item_by_index(slot, bag_idx)
+			equip_bag = GameData.equip_bag
+			_refresh_equip_slots()
+			_render_page()
+		return
+
 	if event.button_index != MOUSE_BUTTON_LEFT:
 		return
 

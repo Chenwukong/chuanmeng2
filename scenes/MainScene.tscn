@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://bdnyaf3an4i7y"]
 
+[ext_resource type="Texture2D" uid="uid://b3tfm0m8lvwta" path="res://Graphic/UI/1 (2).png" id="2_0ehpd"]
 [ext_resource type="PackedScene" uid="uid://bfae01uhe8v0p" path="res://scenes/东海湾.tscn" id="2_c6dvc"]
+[ext_resource type="Texture2D" uid="uid://dk02silgv4ldf" path="res://Graphic/UI/3ca286469b5327a9855d7d23cb8f4b35.png" id="3_8wjpf"]
 [ext_resource type="Texture2D" uid="uid://c8bjei15u3cio" path="res://Graphic/UI/坐标图.png" id="3_611at"]
 [ext_resource type="Texture2D" uid="uid://byq6qqxlf8y5b" path="res://Graphic/UI/12.png" id="3_k24pf"]
 [ext_resource type="Script" uid="uid://c5j30odg7dboj" path="res://Script/Class/MainScene.gd" id="3_main"]
@@ -585,6 +587,24 @@ autoplay = true
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1727158976]
 layer = 6
+
+[node name="信息框" type="Sprite2D" parent="UI" unique_id=744331066]
+position = Vector2(216.00002, 707.25006)
+rotation = -3.1415925
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("2_0ehpd")
+
+[node name="提示" type="Sprite2D" parent="UI" unique_id=2053021110]
+position = Vector2(238, 785.25006)
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("3_8wjpf")
+
+[node name="BattleLog" type="RichTextLabel" parent="UI" unique_id=78390071]
+offset_left = 4.0
+offset_top = 620.7501
+offset_right = 475.0
+offset_bottom = 784.0834
+scale = Vector2(0.9, 0.9)
 
 [node name="按钮底图" type="Sprite2D" parent="UI" unique_id=622019536]
 position = Vector2(1113, 773)

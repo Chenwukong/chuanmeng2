@@ -53,9 +53,13 @@ func _ready() -> void:
 	bounty_btn.pressed.connect(_on_bounty_pressed)
 	_setup_ui_buttons()
 	GameData.set_language("en")
+	_world_log = $UI/BattleLog
+	_world_log.bbcode_enabled = true
+	GameData.world_log = _world_log
 	add_child(load("res://Script/Class/CursorController.gd").new())
-#	GameData.add_party_by_name("二郎神")
-
+	GameData.add_party_by_name("二郎神")
+	GameData.add_party_by_name("剑侠客")
+	GameData.add_party_by_name("虎头怪")
 # ════════════════════════════
 # UI 按钮系统
 # ════════════════════════════
@@ -335,6 +339,8 @@ func _process(delta: float) -> void:
 		$UI/坐标图.visible = false
 		$UI/按钮底图.visible = false
 		if bounty_btn: bounty_btn.visible = false
+		if has_node("UI/信息框"): $UI/信息框.visible = false
+		if has_node("UI/提示"): $UI/提示.visible = false
 		return
 
 	if _was_in_battle:
@@ -342,6 +348,12 @@ func _process(delta: float) -> void:
 		$UI/坐标图.visible = true
 		$UI/按钮底图.visible = true
 		if bounty_btn: bounty_btn.visible = true
+		if has_node("UI/信息框"): $UI/信息框.visible = true
+		if has_node("UI/提示"): $UI/提示.visible = true
+		if _world_log:
+			_world_log.scroll_to_line(_world_log.get_line_count())
+
+	# 外部 BattleLog 由 battleUI 通过 GameData.world_log_text 更新，MainScene 只读不写
 
 	_shichen_accum += delta
 	if _shichen_accum >= SECONDS_PER_SHICHEN:
@@ -463,6 +475,97 @@ func show_normal_chat(dialogue_file: String, title: String, flag: String = "") -
 func show_story_chat(dialogue_file: String, title: String, flag: String = "") -> void:
 	_show_dialogue_balloon("res://addons/dialogue_manager/example_balloon/storyChat.tscn", dialogue_file, title, flag)
 
+func show_team_chat(dialogue_file: String, title: String, flag: String = "") -> void:
+	# 读对话文件 → 逐行生成独立气泡
+	var res := load(dialogue_file) as DialogueResource
+	if res == null: return
+	var next_id := title
+	var y := 200.0
+	var last_speaker := ""
+	var on_left := false  # false = 右边, true = 左边
+	while true:
+		var dl := await res.get_next_dialogue_line(next_id, [])
+		if dl == null: break
+		next_id = dl.next_id
+		if dl.character.is_empty() and dl.text.is_empty(): continue
+		if dl.next_id.is_empty(): break
+
+		# 换人说话 → 换边
+		if dl.character != last_speaker:
+			on_left = not on_left
+			last_speaker = dl.character
+
+		var x := 50 if on_left else 350
+
+		# 每行一个新气泡
+		var bubble: CanvasLayer = load("res://addons/dialogue_manager/example_balloon/teamChat.tscn").instantiate()
+		bubble.layer = 60
+		bubble.remove_from_group(&"ballon")
+		bubble.will_block_other_input = false
+		y += 90
+		$UI.add_child(bubble)
+
+		var dlabel := bubble.get_node_or_null("%DialogueLabel") as RichTextLabel
+		var clabel := bubble.get_node_or_null("%CharacterLabel") as RichTextLabel
+		var balloon := bubble.get_node_or_null("%Balloon") as Control
+
+		if balloon:
+			balloon.offset_left = x; balloon.offset_top = int(y)
+			balloon.offset_right = x + 400; balloon.offset_bottom = int(y) + 110
+			balloon.show()
+			balloon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if dlabel:
+			dlabel.bbcode_enabled = true
+			dlabel.text = dl.text
+			dlabel.visible = true
+			dlabel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if clabel:
+			clabel.text = dl.character
+			clabel.visible = true
+			clabel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var panel := bubble.get_node_or_null("%Panel") as Panel
+		if panel:
+			panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+		# 同步到战斗外日志
+		var log_line := "[color=lightgreen]%s: %s[/color]\n" % [dl.character, dl.text]
+		GameData.world_log_text += log_line
+		if _world_log:
+			_world_log.append_text(log_line)
+			_world_log.scroll_to_line(_world_log.get_line_count())
+
+		# 头像
+		var pt := bubble.get_node_or_null("%portrait") as TextureRect
+		if pt:
+			var was_path := ""
+			for mid in GameData.CHARACTER_DB:
+				if GameData.CHARACTER_DB[mid].name == dl.character:
+					was_path = GameData.CHARACTER_DB[mid].get("was_base_path", "")
+					break
+			if was_path.is_empty(): was_path = "res://WAS/" + dl.character
+			var pp := was_path.path_join("头像/头像.was")
+			if FileAccess.file_exists(pp):
+				var r := WASReader.new()
+				if r.load_from_file(pp):
+					var d := r.decode_frame(0, 0)
+					if not d.is_empty(): pt.texture = d.get("texture", null)
+
+		# 隐藏不需要的
+		for hide_name in ["ResponsesMenu", "Control"]:
+			var h := bubble.get_node_or_null("Balloon/" + hide_name)
+			if h is CanvasItem: h.visible = false
+		var h := bubble.get_node_or_null("AudioStreamPlayer")
+		if h is CanvasItem: h.visible = false
+
+		# 自动淡出
+		var tw := balloon.create_tween() if balloon else null
+		if tw:
+			tw.tween_interval(5.0)
+			tw.tween_property(balloon, "modulate:a", 0.0, 0.5)
+			tw.tween_callback(bubble.queue_free)
+
+		var delay := maxf(1.5, dl.text.length() * 0.08)
+		await get_tree().create_timer(delay).timeout
 
 func _show_dialogue_balloon(balloon_scene: String, dialogue_file: String, title: String, flag: String) -> void:
 	var res := load(dialogue_file) as DialogueResource
@@ -478,6 +581,8 @@ func _show_dialogue_balloon(balloon_scene: String, dialogue_file: String, title:
 	balloon.start(res, title)
 	# 等 DialogueManager 发出对话结束信号
 	await Engine.get_singleton("DialogueManager").dialogue_ended
+	balloon.remove_from_group(&"ballon")
+	_unregister_popup()
 	if is_instance_valid(balloon):
 		balloon.queue_free()
 	if not flag.is_empty():
@@ -486,3 +591,7 @@ func _show_dialogue_balloon(balloon_scene: String, dialogue_file: String, title:
 
 func _on_bounty_pressed() -> void:
 	_open_bounty_popup()
+
+
+## 战斗外 BattleLog
+var _world_log: RichTextLabel = null

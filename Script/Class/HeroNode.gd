@@ -9,6 +9,9 @@ extends Node2D
 @onready var _audio_atk:  AudioStreamPlayer = $Audio_Attack
 @onready var _audio_cast: AudioStreamPlayer = $Audio_Cast
 @onready var _select_indicator: Sprite2D = $SelectIndicator
+## 武器层（如果角色有配套武器 WAS 文件夹则自动创建）
+var _weapon_sprite: Sprite2D = null
+var _weapon_was: WASAnimationPlayer = null
 
 ## 是否可被点击（选保护目标时）
 var selectable: bool = false
@@ -49,15 +52,93 @@ func _on_mouse_exited() -> void:
 	if selectable: sprite.modulate = COLOR_NORMAL
 	mouse_left.emit()
 
-## 传入 WAS 文件路径，由外部在 setup 后调用
-func setup_was(was_path: String) -> void:
-	was_player.load_file(was_path)
+## 检测并加载武器 WAS（如 was_base_path = "res://WAS/剑侠客" → 武器 = "res://WAS/剑侠客武器/"）
+func setup_weapon(was_base: String) -> void:
+	var weapon_dir := was_base.trim_suffix("/") + "武器"
+	if not DirAccess.dir_exists_absolute(weapon_dir):
+		return
+	var idle_path := weapon_dir + "/待机.was"
+	if not FileAccess.file_exists(idle_path):
+		return
+	# 创建武器层
+	_weapon_sprite = Sprite2D.new()
+	_weapon_sprite.name = "WeaponSprite"
+	_weapon_sprite.centered = true
+	_weapon_sprite.z_index = sprite.z_index + 1
+	add_child(_weapon_sprite)
+
+	_weapon_was = WASAnimationPlayer.new()
+	_weapon_was.name = "WeaponWAS"
+	_weapon_was.target_sprite = NodePath("../WeaponSprite")
+	_weapon_was.direction = was_player.direction
+	_weapon_was.frame_time = was_player.frame_time
+	add_child(_weapon_was)
+
+	var names := {"idle":"待机","attack":"攻击","hit":"挨打","die":"死亡","cast":"施法","move":"移动","walk":"行走"}
+	for anim in names:
+		var p = weapon_dir + "/" + names[anim] + ".was"
+		if FileAccess.file_exists(p):
+			_weapon_was.add_anim(anim, p)
+	_weapon_was.load_all()
+	_weapon_was.play("idle")
 
 # ─────────────────────────────────────────────
 # 动画
 # ─────────────────────────────────────────────
+## 攻击命中特效（在敌人身上播放攻击_2.was，如果有武器文件夹）
+func _spawn_hit_effect(on_target: Node2D) -> void:
+	if _weapon_was == null or _weapon_was.anim_files.is_empty(): return
+	var first_path: String = _weapon_was.anim_files.values()[0]
+	var weapon_dir := first_path.get_base_dir()
+	var effect_path := weapon_dir.path_join("攻击_2.was")
+	if not FileAccess.file_exists(effect_path): return
+
+	var fx_sprite := Sprite2D.new()
+	fx_sprite.name = "HitEffectSprite"
+	fx_sprite.centered = true
+	fx_sprite.z_index = 100
+#	fx_sprite.scale = Vector2(0.6, 0.6)
+	on_target.add_child(fx_sprite)
+	fx_sprite.position.x += 50
+	fx_sprite.position.y += 30
+	var fx_was := WASAnimationPlayer.new()
+	fx_was.name = "HitEffectWAS"
+	fx_was.target_sprite = NodePath("../HitEffectSprite")
+	fx_was.direction = was_player.direction
+	fx_was.add_anim("hit2", effect_path)
+	fx_was.load_all()
+	on_target.add_child(fx_was)
+	fx_was.play("hit2", false)
+	fx_was.animation_finished.connect(func(_a): fx_sprite.queue_free(); fx_was.queue_free(), CONNECT_ONE_SHOT)
+
+
+## 施法特效（在施法者身上播放施法_2.was）
+func _spawn_cast_effect() -> void:
+	var was := get_node_or_null("WASAnimationPlayerMagicEffect") as WASAnimationPlayer
+	if was == null: return
+	if _weapon_was == null or _weapon_was.anim_files.is_empty(): return
+	var first_path: String = _weapon_was.anim_files.values()[0]
+	var eff_path := first_path.get_base_dir().path_join("施法_2.was")
+	if not FileAccess.file_exists(eff_path): return
+
+	# 指向场景里的 CastSprite
+	var spr := get_node_or_null("CastSprite") as Sprite2D
+	if spr == null: return
+	was.target_sprite = NodePath("../CastSprite")
+	was._sprite = spr
+	was.stop()
+	was.anim_files.clear()
+	was.direction = was_player.direction
+	was.frame_time = 0.15
+	was.add_anim("cast2", eff_path)
+	was.load_all()
+	was.play("cast2", false)
+
+
 func play_animation(anim_name: String) -> void:
 	was_player.play(anim_name, anim_name == "idle")
+	if _weapon_was and _weapon_was.anim_files.has(anim_name):
+		_weapon_was.play(anim_name, anim_name == "idle")
 
 ## 播放施法音效（降级：施法音效→攻击音效→通用音效）
 func _play_cast_voice() -> void:
@@ -77,21 +158,31 @@ func _play_cast_voice() -> void:
 
 ## 原地播放 WAS 施法动作（不放法术特效）
 ## spell_name 仅用于记录，不在此方法显示 Animation sprite
+## 原地播放施法动画（带施法_2特效）
 func play_cast_sequence(spell_name: String = "") -> void:
 	_play_cast_voice()
 	_current_spell_anim = spell_name
+	_spawn_cast_effect()
 	was_player.play("cast", false)
+	if _weapon_was and _weapon_was.anim_files.has("cast"):
+		_weapon_was.play("cast", false)
 	await was_player.play_frames_direct("cast")
 	_current_spell_anim = ""
 	was_player.play("idle")
+	if _weapon_was:
+		_weapon_was.play("idle")
 
 
 ## 远程攻击 — 原地播放攻击动画，不走动
 func play_ranged_attack() -> void:
 	_audio_atk.play()
 	was_player.play("attack", false)
+	if _weapon_was and _weapon_was.anim_files.has("attack"):
+		_weapon_was.play("attack", false)
 	await was_player.play_frames_direct("attack")
 	was_player.play("idle")
+	if _weapon_was:
+		_weapon_was.play("idle")
 
 
 ## 完整攻击序列：走过去 → 攻击(同时触发目标受击) → 走回来
@@ -104,6 +195,8 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 	# 走过去（隐藏 buff/debuff 装饰）
 	$BuffSprite.visible = false
 	was_player.play("move", false)
+	if _weapon_was and _weapon_was.anim_files.has("move"):
+		_weapon_was.play("move", false)
 	var tween = create_tween()
 	tween.tween_property(self, "position", approach, 0.35)
 	tween.set_ease(Tween.EASE_IN_OUT)
@@ -113,7 +206,11 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 	_audio_atk.play()
 	if hit_target and hit_target.has_method("play_hit_reaction"):
 		hit_target.play_hit_reaction()
+	if _weapon_was and _weapon_was.anim_files.has("attack"):
+		_weapon_was.play("attack", false)
 	await was_player.play_frames_direct("attack")
+	if _weapon_was:
+		_weapon_was.play("idle")
 
 	# ── 攻击命中后、走回前：执行回调（扣血+斩杀） ──
 	if on_hit.is_valid():
@@ -121,11 +218,15 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 
 	# 走回来
 	was_player.play("move", false)
+	if _weapon_was and _weapon_was.anim_files.has("move"):
+		_weapon_was.play("move", false)
 	tween = create_tween()
 	tween.tween_property(self, "position", _original_pos, 0.3)
 	tween.set_ease(Tween.EASE_IN_OUT)
 	await tween.finished
 	was_player.play("idle")
+	if _weapon_was:
+		_weapon_was.play("idle")
 	# 恢复 buff/debuff 显示
 	if $BattleCharacter.buffs.size() > 0:
 		$BuffSprite.visible = true
@@ -145,6 +246,8 @@ func play_multihit_sequence(target_pos: Vector2, hit_target: Node2D, hit_count: 
 	# 走过去（隐藏 buff/debuff 装饰）
 	$BuffSprite.visible = false
 	was_player.play("move", false)
+	if _weapon_was and _weapon_was.anim_files.has("move"):
+		_weapon_was.play("move", false)
 	var tween = create_tween()
 	tween.tween_property(self, "position", approach, 0.35)
 	tween.set_ease(Tween.EASE_IN_OUT)
@@ -163,7 +266,13 @@ func play_multihit_sequence(target_pos: Vector2, hit_target: Node2D, hit_count: 
 		_audio_atk.play()
 		if hit_target and hit_target.has_method("play_hit_flash"):
 			hit_target.play_hit_flash()
+		if hit_target:
+			_spawn_hit_effect(hit_target)
+		if _weapon_was and _weapon_was.anim_files.has("attack"):
+			_weapon_was.play("attack", false)
 		await was_player.play_frames_direct("attack")
+		if _weapon_was:
+			_weapon_was.play("idle")
 		# 攻击动画播完后才推退
 		var step_target = target_orig_pos + push_dir * (i + 1)
 		var pt = create_tween()
@@ -187,11 +296,15 @@ func play_multihit_sequence(target_pos: Vector2, hit_target: Node2D, hit_count: 
 
 	# 走回来
 	was_player.play("move", false)
+	if _weapon_was and _weapon_was.anim_files.has("move"):
+		_weapon_was.play("move", false)
 	tween = create_tween()
 	tween.tween_property(self, "position", _original_pos, 0.3)
 	tween.set_ease(Tween.EASE_IN_OUT)
 	await tween.finished
 	was_player.play("idle")
+	if _weapon_was:
+		_weapon_was.play("idle")
 	if $BattleCharacter.buffs.size() > 0:
 		$BuffSprite.visible = true
 	if $BattleCharacter.is_frozen:
@@ -202,6 +315,8 @@ func play_multihit_sequence(target_pos: Vector2, hit_target: Node2D, hit_count: 
 ## 播放一次挨打动画，停住不循环
 func play_hit_once() -> void:
 	was_player.play("hit", false)
+	if _weapon_was and _weapon_was.anim_files.has("hit"):
+		_weapon_was.play("hit", false)
 
 ## 受击反应：闪白 + 后退一步 + 短暂停顿 + 归位 + 恢复待机
 func play_hit_reaction() -> void:
@@ -210,9 +325,13 @@ func play_hit_reaction() -> void:
 	# 被控制时（冰冻/虚弱）只播挨打动画，不后退不归位，不回 idle
 	if $BattleCharacter.is_frozen or $BattleCharacter.is_weakened:
 		was_player.play("hit", false)
+		if _weapon_was and _weapon_was.anim_files.has("hit"):
+			_weapon_was.play("hit", false)
 		return
 	var orig_pos = position
 	was_player.play("hit", false)
+	if _weapon_was and _weapon_was.anim_files.has("hit"):
+		_weapon_was.play("hit", false)
 	play_hit_flash()
 	# 后退（我方朝右退）
 	var tween = create_tween()
@@ -224,6 +343,8 @@ func play_hit_reaction() -> void:
 	if $BattleCharacter.is_dead:
 		return
 	was_player.play("idle")
+	if _weapon_was:
+		_weapon_was.play("idle")
 
 ## 加速抖动效果 — 覆盖整个施法过程
 var _shake_tween: Tween = null
@@ -289,6 +410,8 @@ func _on_died() -> void:
 	var wui = get_node_or_null("WorldUI")
 	if wui: wui.visible = false
 	was_player.play("die", false)
+	if _weapon_was and _weapon_was.anim_files.has("die"):
+		_weapon_was.play("die", false)
 
 func _on_revived() -> void:
 	# 显示头顶UI

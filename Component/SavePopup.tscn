@@ -58,10 +58,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -117.0
-offset_top = 158.0
-offset_right = 189.0
-offset_bottom = 245.0
+offset_left = -118.0
+offset_top = 170.0
+offset_right = 188.0
+offset_bottom = 244.69226
 grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(1.1, 1.3)
@@ -109,10 +109,10 @@ mouse_filter = 2
 
 [node name="LoadBtn" type="TextureButton" parent="Slot_0" unique_id=2143503821]
 layout_mode = 0
-offset_left = 261.0
-offset_top = 20.0
-offset_right = 303.0
-offset_bottom = 41.0
+offset_left = 259.09094
+offset_top = 3.8461528
+offset_right = 301.09094
+offset_bottom = 24.846153
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
@@ -127,10 +127,10 @@ vertical_alignment = 1
 
 [node name="SaveBtn" type="TextureButton" parent="Slot_0" unique_id=576979900]
 layout_mode = 0
-offset_left = 261.0
-offset_top = 43.0
-offset_right = 303.0
-offset_bottom = 64.0
+offset_left = 259.09094
+offset_top = 26.846153
+offset_right = 301.09094
+offset_bottom = 47.846153
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
@@ -145,10 +145,10 @@ vertical_alignment = 1
 
 [node name="DelBtn" type="TextureButton" parent="Slot_0" unique_id=114028953]
 layout_mode = 0
-offset_left = 261.0
-offset_top = 66.0
-offset_right = 303.0
-offset_bottom = 87.0
+offset_left = 259.09094
+offset_top = 49.846153
+offset_right = 301.09094
+offset_bottom = 70.84615
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
@@ -161,23 +161,23 @@ text = "删除"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Slot_1" type="Control" parent="." unique_id=1114246211]
+[node name="Slot_1" type="Control" parent="." unique_id=972200132]
 layout_mode = 3
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -117.0
-offset_top = 38.0
-offset_right = 188.0
-offset_bottom = 105.0
+offset_left = -112.0
+offset_top = 63.0
+offset_right = 193.0
+offset_bottom = 130.0
 grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(1.1, 1.3)
 mouse_filter = 2
 
-[node name="Title" type="Label" parent="Slot_1" unique_id=337890377]
+[node name="Title" type="Label" parent="Slot_1" unique_id=1232774633]
 visible = false
 layout_mode = 0
 offset_left = 8.0
@@ -186,14 +186,14 @@ offset_right = 360.0
 offset_bottom = 26.0
 text = "存档 1"
 
-[node name="TimeVal" type="Label" parent="Slot_1" unique_id=1916150235]
+[node name="TimeVal" type="Label" parent="Slot_1" unique_id=954326061]
 layout_mode = 0
-offset_left = 113.0
-offset_top = -26.0
-offset_right = 225.0
-offset_bottom = -3.0
+offset_left = 119.09092
+offset_top = -11.53846
+offset_right = 231.09093
+offset_bottom = 11.46154
 
-[node name="GoldVal" type="Label" parent="Slot_1" unique_id=1773685845]
+[node name="GoldVal" type="Label" parent="Slot_1" unique_id=2017106641]
 visible = false
 layout_mode = 0
 offset_left = 130.0
@@ -201,33 +201,33 @@ offset_top = 30.0
 offset_right = 220.0
 offset_bottom = 50.0
 
-[node name="ChVal" type="Label" parent="Slot_1" unique_id=211474348]
+[node name="ChVal" type="Label" parent="Slot_1" unique_id=22644096]
 layout_mode = 0
-offset_left = 6.0
-offset_top = -24.0
-offset_right = 136.0
-offset_bottom = -1.0
+offset_left = 5.454568
+offset_top = -10.769233
+offset_right = 135.45457
+offset_bottom = 12.230767
 
-[node name="Portraits" type="Control" parent="Slot_1" unique_id=1510393425]
+[node name="Portraits" type="Control" parent="Slot_1" unique_id=439248483]
 anchors_preset = 0
-offset_left = 1.0000002
-offset_top = 11.000001
-offset_right = 171.0
-offset_bottom = 58.0
+offset_left = 7.2727494
+offset_top = 20.769228
+offset_right = 177.27275
+offset_bottom = 67.769226
 scale = Vector2(0.7, 0.7)
 mouse_filter = 2
 
-[node name="LoadBtn" type="TextureButton" parent="Slot_1" unique_id=2120969638]
+[node name="LoadBtn" type="TextureButton" parent="Slot_1" unique_id=1175258504]
 layout_mode = 0
-offset_left = 260.0
-offset_top = -12.0
-offset_right = 302.0
-offset_bottom = 9.0
+offset_left = 266.36365
+offset_top = -5.3846164
+offset_right = 308.36365
+offset_bottom = 15.615383
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
 
-[node name="Label" type="Label" parent="Slot_1/LoadBtn" unique_id=1485314546]
+[node name="Label" type="Label" parent="Slot_1/LoadBtn" unique_id=2026028563]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
@@ -235,17 +235,17 @@ text = "读取"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SaveBtn" type="TextureButton" parent="Slot_1" unique_id=1248638311]
+[node name="SaveBtn" type="TextureButton" parent="Slot_1" unique_id=1003762201]
 layout_mode = 0
-offset_left = 260.0
-offset_top = 11.0
-offset_right = 302.0
-offset_bottom = 32.0
+offset_left = 266.36365
+offset_top = 17.615383
+offset_right = 308.36365
+offset_bottom = 38.615383
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
 
-[node name="Label" type="Label" parent="Slot_1/SaveBtn" unique_id=332299257]
+[node name="Label" type="Label" parent="Slot_1/SaveBtn" unique_id=296172807]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
@@ -253,17 +253,17 @@ text = "保存"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="DelBtn" type="TextureButton" parent="Slot_1" unique_id=788787491]
+[node name="DelBtn" type="TextureButton" parent="Slot_1" unique_id=1936063251]
 layout_mode = 0
-offset_left = 260.0
-offset_top = 34.0
-offset_right = 302.0
-offset_bottom = 55.0
+offset_left = 266.36365
+offset_top = 40.615383
+offset_right = 308.36365
+offset_bottom = 61.615383
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
 
-[node name="Label" type="Label" parent="Slot_1/DelBtn" unique_id=207577630]
+[node name="Label" type="Label" parent="Slot_1/DelBtn" unique_id=833601645]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
@@ -271,23 +271,23 @@ text = "删除"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Slot_2" type="Control" parent="." unique_id=1503908086]
+[node name="Slot_2" type="Control" parent="." unique_id=2099236084]
 layout_mode = 3
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -116.0
-offset_top = -59.0
-offset_right = 189.0
-offset_bottom = 8.0
+offset_left = -112.0
+offset_top = -55.0
+offset_right = 193.0
+offset_bottom = 12.0
 grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(1.1, 1.3)
 mouse_filter = 2
 
-[node name="Title" type="Label" parent="Slot_2" unique_id=2045193242]
+[node name="Title" type="Label" parent="Slot_2" unique_id=1412077805]
 visible = false
 layout_mode = 0
 offset_left = 8.0
@@ -296,14 +296,14 @@ offset_right = 360.0
 offset_bottom = 26.0
 text = "存档 1"
 
-[node name="TimeVal" type="Label" parent="Slot_2" unique_id=277892784]
+[node name="TimeVal" type="Label" parent="Slot_2" unique_id=1307739722]
 layout_mode = 0
-offset_left = 113.0
-offset_top = -26.0
-offset_right = 225.0
-offset_bottom = -3.0
+offset_left = 119.09092
+offset_top = -11.53846
+offset_right = 231.09093
+offset_bottom = 11.46154
 
-[node name="GoldVal" type="Label" parent="Slot_2" unique_id=1053702391]
+[node name="GoldVal" type="Label" parent="Slot_2" unique_id=1028799732]
 visible = false
 layout_mode = 0
 offset_left = 130.0
@@ -311,33 +311,33 @@ offset_top = 30.0
 offset_right = 220.0
 offset_bottom = 50.0
 
-[node name="ChVal" type="Label" parent="Slot_2" unique_id=1749234708]
+[node name="ChVal" type="Label" parent="Slot_2" unique_id=558410958]
 layout_mode = 0
-offset_left = 6.0
-offset_top = -24.0
-offset_right = 136.0
-offset_bottom = -1.0
+offset_left = 5.454568
+offset_top = -10.769233
+offset_right = 135.45457
+offset_bottom = 12.230767
 
-[node name="Portraits" type="Control" parent="Slot_2" unique_id=1775914267]
+[node name="Portraits" type="Control" parent="Slot_2" unique_id=891197802]
 anchors_preset = 0
-offset_left = 1.0000002
-offset_top = 11.000001
-offset_right = 171.0
-offset_bottom = 58.0
+offset_left = 7.2727494
+offset_top = 20.769228
+offset_right = 177.27275
+offset_bottom = 67.769226
 scale = Vector2(0.7, 0.7)
 mouse_filter = 2
 
-[node name="LoadBtn" type="TextureButton" parent="Slot_2" unique_id=1506801506]
+[node name="LoadBtn" type="TextureButton" parent="Slot_2" unique_id=1261362839]
 layout_mode = 0
-offset_left = 260.0
-offset_top = -12.0
-offset_right = 302.0
-offset_bottom = 9.0
+offset_left = 266.36365
+offset_top = -5.3846164
+offset_right = 308.36365
+offset_bottom = 15.615383
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
 
-[node name="Label" type="Label" parent="Slot_2/LoadBtn" unique_id=1951590713]
+[node name="Label" type="Label" parent="Slot_2/LoadBtn" unique_id=594706512]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
@@ -345,17 +345,17 @@ text = "读取"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SaveBtn" type="TextureButton" parent="Slot_2" unique_id=411672055]
+[node name="SaveBtn" type="TextureButton" parent="Slot_2" unique_id=1809854131]
 layout_mode = 0
-offset_left = 260.0
-offset_top = 11.0
-offset_right = 302.0
-offset_bottom = 32.0
+offset_left = 266.36365
+offset_top = 17.615383
+offset_right = 308.36365
+offset_bottom = 38.615383
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
 
-[node name="Label" type="Label" parent="Slot_2/SaveBtn" unique_id=337771644]
+[node name="Label" type="Label" parent="Slot_2/SaveBtn" unique_id=1973256809]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
@@ -363,17 +363,17 @@ text = "保存"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="DelBtn" type="TextureButton" parent="Slot_2" unique_id=986419408]
+[node name="DelBtn" type="TextureButton" parent="Slot_2" unique_id=180514124]
 layout_mode = 0
-offset_left = 260.0
-offset_top = 34.0
-offset_right = 302.0
-offset_bottom = 55.0
+offset_left = 266.36365
+offset_top = 40.615383
+offset_right = 308.36365
+offset_bottom = 61.615383
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
 
-[node name="Label" type="Label" parent="Slot_2/DelBtn" unique_id=599402958]
+[node name="Label" type="Label" parent="Slot_2/DelBtn" unique_id=1088644187]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
@@ -381,23 +381,23 @@ text = "删除"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Slot_3" type="Control" parent="." unique_id=842863179]
+[node name="Slot_3" type="Control" parent="." unique_id=1901400594]
 layout_mode = 3
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -115.0
-offset_top = -154.0
-offset_right = 190.0
-offset_bottom = -87.0
+offset_left = -112.0
+offset_top = -170.0
+offset_right = 193.0
+offset_bottom = -103.0
 grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(1.1, 1.3)
 mouse_filter = 2
 
-[node name="Title" type="Label" parent="Slot_3" unique_id=1459793077]
+[node name="Title" type="Label" parent="Slot_3" unique_id=594314985]
 visible = false
 layout_mode = 0
 offset_left = 8.0
@@ -406,14 +406,14 @@ offset_right = 360.0
 offset_bottom = 26.0
 text = "存档 1"
 
-[node name="TimeVal" type="Label" parent="Slot_3" unique_id=1635251620]
+[node name="TimeVal" type="Label" parent="Slot_3" unique_id=16496081]
 layout_mode = 0
-offset_left = 113.0
-offset_top = -26.0
-offset_right = 225.0
-offset_bottom = -3.0
+offset_left = 119.09092
+offset_top = -11.53846
+offset_right = 231.09093
+offset_bottom = 11.46154
 
-[node name="GoldVal" type="Label" parent="Slot_3" unique_id=1977246796]
+[node name="GoldVal" type="Label" parent="Slot_3" unique_id=207408179]
 visible = false
 layout_mode = 0
 offset_left = 130.0
@@ -421,33 +421,33 @@ offset_top = 30.0
 offset_right = 220.0
 offset_bottom = 50.0
 
-[node name="ChVal" type="Label" parent="Slot_3" unique_id=978338441]
+[node name="ChVal" type="Label" parent="Slot_3" unique_id=1268989928]
 layout_mode = 0
-offset_left = 6.0
-offset_top = -24.0
-offset_right = 136.0
-offset_bottom = -1.0
+offset_left = 5.454568
+offset_top = -10.769233
+offset_right = 135.45457
+offset_bottom = 12.230767
 
-[node name="Portraits" type="Control" parent="Slot_3" unique_id=540909073]
+[node name="Portraits" type="Control" parent="Slot_3" unique_id=1827256940]
 anchors_preset = 0
-offset_left = 1.0000002
-offset_top = 11.000001
-offset_right = 171.0
-offset_bottom = 58.0
+offset_left = 7.2727494
+offset_top = 20.769228
+offset_right = 177.27275
+offset_bottom = 67.769226
 scale = Vector2(0.7, 0.7)
 mouse_filter = 2
 
-[node name="LoadBtn" type="TextureButton" parent="Slot_3" unique_id=1145228885]
+[node name="LoadBtn" type="TextureButton" parent="Slot_3" unique_id=1096368433]
 layout_mode = 0
-offset_left = 260.0
-offset_top = -12.0
-offset_right = 302.0
-offset_bottom = 9.0
+offset_left = 266.36365
+offset_top = -5.3846164
+offset_right = 308.36365
+offset_bottom = 15.615383
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
 
-[node name="Label" type="Label" parent="Slot_3/LoadBtn" unique_id=1482655049]
+[node name="Label" type="Label" parent="Slot_3/LoadBtn" unique_id=1781453944]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
@@ -455,17 +455,17 @@ text = "读取"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SaveBtn" type="TextureButton" parent="Slot_3" unique_id=1999094912]
+[node name="SaveBtn" type="TextureButton" parent="Slot_3" unique_id=626561611]
 layout_mode = 0
-offset_left = 260.0
-offset_top = 11.0
-offset_right = 302.0
-offset_bottom = 32.0
+offset_left = 266.36365
+offset_top = 17.615383
+offset_right = 308.36365
+offset_bottom = 38.615383
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
 
-[node name="Label" type="Label" parent="Slot_3/SaveBtn" unique_id=643251795]
+[node name="Label" type="Label" parent="Slot_3/SaveBtn" unique_id=1842338009]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
@@ -473,17 +473,17 @@ text = "保存"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="DelBtn" type="TextureButton" parent="Slot_3" unique_id=1113180192]
+[node name="DelBtn" type="TextureButton" parent="Slot_3" unique_id=169210611]
 layout_mode = 0
-offset_left = 260.0
-offset_top = 34.0
-offset_right = 302.0
-offset_bottom = 55.0
+offset_left = 266.36365
+offset_top = 40.615383
+offset_right = 308.36365
+offset_bottom = 61.615383
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
 
-[node name="Label" type="Label" parent="Slot_3/DelBtn" unique_id=673607184]
+[node name="Label" type="Label" parent="Slot_3/DelBtn" unique_id=486268786]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
@@ -498,10 +498,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -116.0
-offset_top = -252.0
-offset_right = 189.0
-offset_bottom = -185.0
+offset_left = -112.0
+offset_top = -291.0
+offset_right = 193.0
+offset_bottom = -224.0
 grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(1.1, 1.3)
@@ -518,10 +518,10 @@ text = "存档 1"
 
 [node name="TimeVal" type="Label" parent="Slot_4" unique_id=46619270]
 layout_mode = 0
-offset_left = 113.0
-offset_top = -26.0
-offset_right = 225.0
-offset_bottom = -3.0
+offset_left = 119.09092
+offset_top = -11.53846
+offset_right = 231.09093
+offset_bottom = 11.46154
 
 [node name="GoldVal" type="Label" parent="Slot_4" unique_id=1785209493]
 visible = false
@@ -533,26 +533,26 @@ offset_bottom = 50.0
 
 [node name="ChVal" type="Label" parent="Slot_4" unique_id=505817629]
 layout_mode = 0
-offset_left = 6.0
-offset_top = -24.0
-offset_right = 136.0
-offset_bottom = -1.0
+offset_left = 5.454568
+offset_top = -10.769233
+offset_right = 135.45457
+offset_bottom = 12.230767
 
 [node name="Portraits" type="Control" parent="Slot_4" unique_id=722990182]
 anchors_preset = 0
-offset_left = 1.0000002
-offset_top = 11.000001
-offset_right = 171.0
-offset_bottom = 58.0
+offset_left = 7.2727494
+offset_top = 20.769228
+offset_right = 177.27275
+offset_bottom = 67.769226
 scale = Vector2(0.7, 0.7)
 mouse_filter = 2
 
 [node name="LoadBtn" type="TextureButton" parent="Slot_4" unique_id=1420585723]
 layout_mode = 0
-offset_left = 260.0
-offset_top = -12.0
-offset_right = 302.0
-offset_bottom = 9.0
+offset_left = 266.36365
+offset_top = -5.3846164
+offset_right = 308.36365
+offset_bottom = 15.615383
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
@@ -567,10 +567,10 @@ vertical_alignment = 1
 
 [node name="SaveBtn" type="TextureButton" parent="Slot_4" unique_id=1679891650]
 layout_mode = 0
-offset_left = 260.0
-offset_top = 11.0
-offset_right = 302.0
-offset_bottom = 32.0
+offset_left = 266.36365
+offset_top = 17.615383
+offset_right = 308.36365
+offset_bottom = 38.615383
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")
@@ -585,10 +585,10 @@ vertical_alignment = 1
 
 [node name="DelBtn" type="TextureButton" parent="Slot_4" unique_id=303867031]
 layout_mode = 0
-offset_left = 260.0
-offset_top = 34.0
-offset_right = 302.0
-offset_bottom = 55.0
+offset_left = 266.36365
+offset_top = 40.615383
+offset_right = 308.36365
+offset_bottom = 61.615383
 texture_normal = SubResource("AtlasTexture_ipkfc")
 texture_pressed = SubResource("AtlasTexture_iabk2")
 texture_hover = SubResource("AtlasTexture_u8gsm")

@@ -21,7 +21,7 @@ signal closed()
 @onready var page_label: Label = $Panel/PageLabel
 @onready var btn_prev: Button = $Panel/BtnPrev
 @onready var btn_next: Button = $Panel/BtnNext
-@onready var btn_close: Button = $Panel/CloseBtn
+@onready var btn_close: TextureButton = $Panel/CloseBtn
 @onready var btn_mech: Button = $Panel/BtnMech
 @onready var preview_sprite: Sprite2D = $Panel/WASPreview/Sprite2D
 @onready var preview_was: WASAnimationPlayer = $Panel/WASPreview/WASAnimationPlayer
@@ -151,6 +151,7 @@ func _refresh_deploy() -> void:
 				var sid = pid
 				slot.gui_input.connect(func(event):
 					if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+						if _devour_pid != "": return  # 吞噬模式下忽略上场格的点击
 						GameData.pet_team.erase(sid)
 						_pool_ids = _build_pool()
 						_selected_pid = ""

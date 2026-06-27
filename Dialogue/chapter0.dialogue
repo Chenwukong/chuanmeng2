@@ -11,8 +11,12 @@ Nathan: For more information see the online documentation.
 => END
 
 ~ 剑侠客
-剑侠客: 最强单体输出
-	
+剑侠客: 你们听说了吗？
+二郎神: 什么？
+剑侠客: 传梦2国庆出
+二郎神: 哪年国庆？
+剑侠客: 你猜
+
 - 加入队伍
 	加入了！
 	set GameData.add_party_by_name("剑侠客")

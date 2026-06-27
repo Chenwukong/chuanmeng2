@@ -525,7 +525,10 @@ func showStoryChat(resource: DialogueResource, title: String = "", extra_game_st
 	var balloon: Node = load("res://addons/dialogue_manager/example_balloon/storyChat.tscn").instantiate()
 	_start_balloon.call_deferred(balloon, resource, title, extra_game_states)
 	return balloon	
-	
+func showTeamChat(resource: DialogueResource, title: String = "", extra_game_states: Array = []) -> CanvasLayer:
+	var balloon: Node = load("res://addons/dialogue_manager/example_balloon/teamChat.tscn").instantiate()
+	_start_balloon.call_deferred(balloon, resource, title, extra_game_states)
+	return balloon		
 	
 
 ## Show the configured dialogue balloon

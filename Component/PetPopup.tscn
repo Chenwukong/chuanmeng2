@@ -2,27 +2,47 @@
 
 [ext_resource type="Script" uid="uid://dq0jba5y01sow" path="res://Script/Class/PetPopup.gd" id="1_root"]
 [ext_resource type="Script" uid="uid://bvynqpeueed4w" path="res://Script/Class/WASAnimationPlayer.gd" id="2_was"]
+[ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="3_rj83a"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6n1tj"]
+atlas = ExtResource("3_rj83a")
+region = Rect2(0, 0, 42.200043, 21.399994)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xsfje"]
+atlas = ExtResource("3_rj83a")
+region = Rect2(84.65245, 0, 41.34755, 21.511547)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3et87"]
+atlas = ExtResource("3_rj83a")
+region = Rect2(42.56493, 0, 40.23701, 21.74393)
 
 [node name="PetPopup" type="CanvasLayer" unique_id=1086906977]
 layer = 3
 script = ExtResource("1_root")
 
 [node name="Bg" type="ColorRect" parent="." unique_id=1361394303]
-modulate = Color(0, 1, 1, 0.78431374)
+modulate = Color(0, 1, 1, 0.7254902)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 214.0
+offset_top = 30.0
+offset_right = -193.875
+offset_bottom = -113.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Panel" type="Control" parent="." unique_id=1915849641]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 60.0
-offset_top = 40.0
-offset_right = 760.0
-offset_bottom = 540.0
+offset_left = 168.0
+offset_top = 54.0
+offset_right = 868.0
+offset_bottom = 554.0
 mouse_filter = 2
 
 [node name="Title" type="Label" parent="Panel" unique_id=858221146]
+visible = false
 layout_mode = 0
 offset_left = -42.0
 offset_top = -29.0
@@ -30,20 +50,12 @@ offset_right = 146.0
 offset_bottom = 1.0
 text = "✦ 宠物"
 
-[node name="CloseBtn" type="Button" parent="Panel" unique_id=1615468605]
-layout_mode = 0
-offset_left = 853.0
-offset_top = -16.0
-offset_right = 883.0
-offset_bottom = 15.0
-text = "✕"
-
 [node name="DeployLabel" type="Label" parent="Panel" unique_id=1688129553]
 layout_mode = 0
-offset_left = 136.0
-offset_top = 1.0
-offset_right = 222.0
-offset_bottom = 24.0
+offset_left = 142.0
+offset_top = 95.0
+offset_right = 228.0
+offset_bottom = 118.0
 text = "已上场"
 
 [node name="DeployGrid" type="HBoxContainer" parent="Panel" unique_id=2104017670]
@@ -196,3 +208,22 @@ offset_top = 569.0
 offset_right = 598.0
 offset_bottom = 600.0
 text = "→"
+
+[node name="CloseBtn" type="TextureButton" parent="Panel" unique_id=1463821923]
+layout_mode = 0
+offset_left = 938.0
+offset_top = -22.0
+offset_right = 980.0
+offset_bottom = -1.0
+texture_normal = SubResource("AtlasTexture_6n1tj")
+texture_pressed = SubResource("AtlasTexture_xsfje")
+texture_hover = SubResource("AtlasTexture_3et87")
+
+[node name="Label" type="Label" parent="Panel/CloseBtn" unique_id=1581766146]
+layout_mode = 0
+offset_top = -4.0
+offset_right = 42.0
+offset_bottom = 23.0
+text = "x"
+horizontal_alignment = 1
+vertical_alignment = 1

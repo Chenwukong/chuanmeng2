@@ -104,12 +104,15 @@ func _input(event: InputEvent):
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	print( GameData.ui_blocked, GameData.is_dialogue_active())
 	if GameData.in_battle or GameData.ui_blocked or GameData.is_dialogue_active():
 		return
 	if event.is_action_pressed("ui_accept"):
 		_try_talk_to_nearest_npc()
 		return
+	
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		print(456)
 		var click_pos := get_global_mouse_position()
 		# 优先检查是否点中 NPC
 		for child in get_parent().get_children():
@@ -148,6 +151,8 @@ func _talk_to_npc(npc: NpcNode) -> void:
 		return
 	if balloon == "story":
 		main_scene.show_story_chat(file_path, title, "")
+	elif balloon == "team":
+		main_scene.show_team_chat(file_path, title, "")
 	else:
 		main_scene.show_normal_chat(file_path, title, "")
 	if once and idx + 1 < entries.size():

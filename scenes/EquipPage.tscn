@@ -20,29 +20,36 @@ region = Rect2(42.56493, 0, 40.23701, 21.74393)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -76.0
+offset_top = -1.0
+offset_right = 176.0
+offset_bottom = -1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_script")
 
 [node name="道具行囊" type="Sprite2D" parent="." unique_id=643242025]
-position = Vector2(560, 332)
+position = Vector2(729, 391)
 texture = ExtResource("2_t4dqs")
 
 [node name="TitleLabel" type="Label" parent="." unique_id=1756298854]
 unique_name_in_owner = true
+visible = false
 layout_mode = 0
-offset_left = 40.0
-offset_top = 16.0
-offset_right = 300.0
-offset_bottom = 48.0
+offset_left = 209.0
+offset_top = 75.0
+offset_right = 469.0
+offset_bottom = 112.0
 theme_override_font_sizes/font_size = 26
 text = "装备 & 道具"
 
 [node name="RightArea" type="Control" parent="." unique_id=157082940]
 unique_name_in_owner = true
 anchors_preset = 0
-offset_left = 300.0
-offset_top = 60.0
-offset_right = 300.0
-offset_bottom = 60.0
+offset_left = 469.0
+offset_top = 119.0
+offset_right = 469.0
+offset_bottom = 119.0
 
 [node name="Tab_Equip" type="TextureButton" parent="RightArea" unique_id=1232248213]
 unique_name_in_owner = true
@@ -319,6 +326,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 3.4416318
+offset_bottom = 3.4416351
 grow_horizontal = 2
 grow_vertical = 2
 expand_mode = 1
@@ -574,12 +583,13 @@ vertical_alignment = 1
 [node name="LeftArea" type="Control" parent="." unique_id=1382578124]
 unique_name_in_owner = true
 anchors_preset = 0
-offset_left = 40.0
-offset_top = 61.0
-offset_right = 40.0
-offset_bottom = 61.0
+offset_left = 209.0
+offset_top = 120.0
+offset_right = 209.0
+offset_bottom = 120.0
 
 [node name="PortraitLabel" type="Label" parent="LeftArea" unique_id=283554649]
+visible = false
 layout_mode = 0
 offset_right = 240.0
 offset_bottom = 26.0
@@ -1018,11 +1028,12 @@ grow_vertical = 2
 flat = true
 
 [node name="RightArea_Tap_Equip#Label" type="Label" parent="." unique_id=1306715836]
+visible = false
 layout_mode = 0
-offset_left = 2.0
-offset_top = -1.0
-offset_right = 42.0
-offset_bottom = 22.0
+offset_left = 171.0
+offset_top = 58.0
+offset_right = 211.0
+offset_bottom = 81.0
 text = "装备"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -1030,20 +1041,20 @@ vertical_alignment = 1
 [node name="DetailLabel" type="Label" parent="." unique_id=560615060]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 40.0
-offset_top = 590.0
-offset_right = 900.0
-offset_bottom = 620.0
+offset_left = 209.0
+offset_top = 649.0
+offset_right = 1069.0
+offset_bottom = 679.0
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
 
 [node name="CloseBtn" type="TextureButton" parent="." unique_id=310000000]
 layout_mode = 0
-offset_left = 712.0
-offset_top = 108.0
-offset_right = 792.0
-offset_bottom = 138.0
+offset_left = 881.0
+offset_top = 167.0
+offset_right = 961.0
+offset_bottom = 197.0
 texture_normal = SubResource("AtlasTexture_yg1gl")
 texture_pressed = SubResource("AtlasTexture_g38kl")
 texture_hover = SubResource("AtlasTexture_8cftm")
@@ -1065,17 +1076,17 @@ horizontal_alignment = 1
 [node name="银两" type="Label" parent="." unique_id=2102782228]
 modulate = Color(1, 1, 0, 1)
 layout_mode = 0
-offset_left = 462.0
-offset_top = 253.0
-offset_right = 502.00003
-offset_bottom = 276.0
+offset_left = 631.0
+offset_top = 312.0
+offset_right = 671.0
+offset_bottom = 335.0
 text = "银两:"
 
 [node name="gold" type="Label" parent="." unique_id=280769330]
 layout_mode = 0
-offset_left = 499.0
-offset_top = 256.0
-offset_right = 568.0
-offset_bottom = 279.0
+offset_left = 668.0
+offset_top = 315.0
+offset_right = 737.0
+offset_bottom = 338.0
 theme_override_font_sizes/font_size = 14
 text = "0"

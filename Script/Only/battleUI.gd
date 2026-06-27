@@ -21,7 +21,7 @@ var _mech_summon_popup: MechSummonPopup = null
 const LOG_COLORS = {
 	"player_action":"cyan", "enemy_action":"tomato",
 	"heal":"lightgreen",    "system":"gold",
-	"turn":"white",         "debuff":"orchid",
+	"turn":"gold",         "debuff":"orchid",
 }
 const BUFF_ICONS = {
 	"shield": "🛡️",
@@ -156,6 +156,7 @@ var _tooltip_hover_count: int = 0     # 当前悬停的角色数（进入+1，�
 # ══════════════════════════════════════════════
 func _ready() -> void:
 	# 连接 BattleManager 信号
+	get_tree().current_scene.get_node("UI/BattleLog").visible = false
 	battle_manager.log_pushed.connect(_on_log_pushed)
 	battle_manager.damage_floated.connect(_on_damage_floated)
 	battle_manager.state_changed.connect(_on_state_changed)
@@ -177,6 +178,11 @@ func init_ui() -> void:
 	# 重置仇恨 eye
 	_threat_eye_first = true
 	_last_top_threat_key = ""
+	# 把外部 log 历史复制进战场 log
+	battle_log.bbcode_enabled = true
+	if not GameData.world_log_text.is_empty():
+		battle_log.text = GameData.world_log_text
+		battle_log.scroll_to_line(battle_log.get_line_count())
 	# 连接敌人点击信号
 	for ch in battle_manager.enemies:
 		var nd = ch.get_parent()
@@ -683,7 +689,7 @@ func _process(_delta: float) -> void:
 
 
 func _push_log_to_battle(text: String):
-	battle_log.append_text("[color=gold]%s[/color]\n" % text)
+	battle_manager._push_log(text, "turn")
 
 func _on_ally_sprite_clicked(ch: BattleCharacter) -> void:
 	if battle_manager.state != BattleManager.BattleState.PLAYER_TURN: return
@@ -1478,9 +1484,21 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 # ══════════════════════════════════════════════
 
 func _on_log_pushed(text: String, log_type: String) -> void:
-	battle_log.append_text("[color=%s]%s[/color]\n" % [LOG_COLORS.get(log_type, "white"), text])
+	var line := "[color=%s]%s[/color]\n" % [LOG_COLORS.get(log_type, "white"), text]
+	battle_log.append_text(line)
+	if battle_log.text.length() > 5000:
+		battle_log.text = battle_log.text.substr(battle_log.text.length() - 5000)
 	await get_tree().process_frame
 	battle_log.scroll_to_line(battle_log.get_line_count())
+	GameData.world_log_text += line
+	# 限制长度，超了从前面截
+	if GameData.world_log_text.length() > 5000:
+		GameData.world_log_text = GameData.world_log_text.substr(GameData.world_log_text.length() - 5000)
+	var log_node := get_tree().current_scene.get_node_or_null("UI/BattleLog") as RichTextLabel
+	if log_node:
+		log_node.append_text(line)
+		if log_node.text.length() > 5000:
+			log_node.text = log_node.text.substr(log_node.text.length() - 5000)
 
 func _on_state_changed(new_state: BattleManager.BattleState) -> void:
 	if new_state != BattleManager.BattleState.PLAYER_TURN:
@@ -1539,6 +1557,7 @@ func _on_actor_turn_started(actor: BattleCharacter, is_player: bool) -> void:
 	_update_turn_order()
 
 func _on_battle_ended(player_won: bool, exp_gained: int, gold_gained: int, level_ups: Array) -> void:
+	
 	action_panel.set_enabled(false)
 	_enable_enemy_selection(false)
 	_pending_action = Callable()
@@ -1553,13 +1572,13 @@ func _on_battle_ended(player_won: bool, exp_gained: int, gold_gained: int, level
 		snd.finished.connect(snd.queue_free)
 		get_tree().root.add_child(snd)
 		snd.play()
-		battle_log.append_text("[color=gold]" + GameData._T("BATTLE_VICTORY") + "[/color]\n")
+		battle_manager._push_log(GameData._T("BATTLE_VICTORY"), "turn")
 		await _show_reward_popup(exp_gained, gold_gained)
 		for lu in level_ups:
 			await _show_level_up_popup(lu)
 		await _show_battle_summary()
 	else:
-		battle_log.append_text("[color=red]" + GameData._T("BATTLE_DEFEAT") + "[/color]\n")
+		battle_manager._push_log(GameData._T("BATTLE_DEFEAT"), "system")
 		await get_tree().create_timer(1.0).timeout
 		await _show_battle_summary()
 	var battle_scene = get_parent()
@@ -1577,7 +1596,7 @@ func _on_battle_ended(player_won: bool, exp_gained: int, gold_gained: int, level
 		# 战后保存战损 + 恢复 5% 血蓝
 		for c in battle_manager.party:
 			if c.member_id.is_empty(): continue
-			var s := GameData.party_db.get(c.member_id)
+			var s = GameData.party_db.get(c.member_id)
 			if s == null: continue
 			s.saved_hp = mini(c.current_hp + int(s.max_hp * 0.05), s.max_hp)
 			s.saved_mp = mini(c.current_mp + int(s.max_mp * 0.05), s.max_mp)
@@ -1585,7 +1604,10 @@ func _on_battle_ended(player_won: bool, exp_gained: int, gold_gained: int, level
 			if s.saved_mp >= s.max_mp: s.saved_mp = 0
 		_damage_stats.clear()
 		_healing_stats.clear()
-
+	get_tree().current_scene.get_node("UI/BattleLog").visible = true
+	var out_log := get_tree().current_scene.get_node_or_null("UI/BattleLog") as RichTextLabel
+	if out_log:
+		out_log.scroll_to_line(out_log.get_line_count())
 
 ## 战斗统计总结弹窗（胜/负后显示伤害和治疗排行）
 func _show_battle_summary() -> void:
@@ -1687,6 +1709,7 @@ func _add_threat_summary(parent: Control) -> void:
 
 ## 停掉战斗场景的 BGM
 func _stop_battle_bgm() -> void:
+	
 	var battle_scene = get_parent()
 	if battle_scene == null: return
 	for c in battle_scene.get_children():
@@ -1858,6 +1881,8 @@ func _check_threat_eye() -> void:
 func _show_threat_eye(target: BattleCharacter) -> void:
 	if target == null:
 		return
+	# 等攻击动画结束角色归位
+	await get_tree().create_timer(0.5).timeout
 	# 懒加载 eye 精灵
 	if _threat_eye == null:
 		_threat_eye = Sprite2D.new()

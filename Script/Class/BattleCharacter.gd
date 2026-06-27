@@ -11,6 +11,7 @@ var is_player: bool = false
 var member_id: String = ""  # 玩家角色 ID（用于永久存档）
 var pet_id: String = ""      # 如果是宠物，记录 pet_id
 var summoner_member_id: String = ""  # 宠物/召唤物的主人 member_id（用于统计归因）
+var trait_data: Dictionary = {}       # 特性运行时状态
 
 ## 运行时战斗状态
 var current_hp: int = 0
@@ -91,6 +92,9 @@ func setup(character_stats: CharacterStats, for_player: bool = false) -> void:
 		if was:
 			was.direction = stats.was_direction
 			_register_was_anims(was, stats.was_base_path)
+		# 检测武器 WAS
+		if parent.has_method("setup_weapon"):
+			parent.setup_weapon(stats.was_base_path)
 
 	# 加载角色专属攻击音效
 	if not stats.attack_sound_path.is_empty():
@@ -670,3 +674,43 @@ func get_book_value(skill_name: String, fallback: float = 1.0) -> float:
 		return fallback
 	var db = GameData.BOOK_SKILL_DB.get(skill_name, {})
 	return db.get("value", fallback)
+
+
+# ══ 特性系统 ══
+
+## 横扫不休：横扫千军有概率不冷却
+func check_no_cooldown_after_skill(skill_id: String) -> bool:
+	if skill_id != "横扫千军": return false
+	var cfg = trait_data.get("横扫不休", {})
+	if cfg.is_empty(): return false
+	return randf() < cfg.get("chance", 0.0)
+
+
+## 愈战愈勇：普攻永久叠伤+速
+func apply_stacking_buff() -> void:
+	var cfg = trait_data.get("愈战愈勇", {})
+	if cfg.is_empty(): return
+	var stacks: int = trait_data.get("_yzyy_stacks", 0) + 1
+	trait_data["_yzyy_stacks"] = stacks
+	var dmg_pct: float = cfg.get("dmg_pct", 0.0)
+	var spd_pct: float = cfg.get("spd_pct", 0.0)
+	if dmg_pct > 0:
+		add_buff("atk_up", 99, 1.0 + stacks * dmg_pct)
+	if spd_pct > 0:
+		add_buff("haste", 99, 1.0 + stacks * spd_pct)
+
+
+## 召唤共鸣：场上每只宠物加属性
+func recalc_summon_buffs(pet_count: int) -> void:
+	var cfg = trait_data.get("召唤共鸣", {})
+	if cfg.is_empty(): return
+	# 清除旧的共鸣 buff
+	buffs.erase("_summon_buff_hp")
+	buffs.erase("_summon_buff_atk")
+	buffs.erase("_summon_buff_def")
+	buffs.erase("_summon_buff_spd")
+	if pet_count <= 0: return
+	add_buff("_summon_buff_hp", 99, pet_count * cfg.get("hp_per_pet", 0))
+	add_buff("_summon_buff_atk", 99, pet_count * cfg.get("atk_per_pet", 0))
+	add_buff("_summon_buff_def", 99, pet_count * cfg.get("def_per_pet", 0))
+	add_buff("_summon_buff_spd", 99, pet_count * cfg.get("spd_per_pet", 0))
