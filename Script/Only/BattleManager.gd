@@ -98,6 +98,12 @@ func setup(
 
 	player_inventory = inventory
 	enemy_ai.setup(self)
+	# 兽王血脉：初始化所有角色的宠物计数
+	var pet_count := 0
+	for c in party:
+		if c.is_summoned_pet and not c.is_dead: pet_count += 1
+	for c in party:
+		c.recalc_summon_buffs(pet_count)
 	# SP 系统：不再需要预建队列，_process 中自动积累
 
 ## 战斗中召唤宠物：注册到队伍
@@ -111,16 +117,12 @@ func add_summoned_character(bc: BattleCharacter, stats: CharacterStats, pet_id: 
 	party.append(bc)
 	if not pet_id.is_empty():
 		summoned_pet_ids.append(pet_id)
-	# 召唤共鸣：虎头怪按场上存活宠物加属性
+	# 兽王血脉：更新所有角色的宠物计数
 	var pet_count := 0
 	for c in party:
 		if c.is_summoned_pet and not c.is_dead: pet_count += 1
 	for c in party:
-		if c.member_id == "hutouguai":
-			c.buffs.erase("_summon_buff")
-			if pet_count > 0:
-				c.add_buff("atk_up", 99, maxf(1.0, 1.0 + pet_count * 0.1))
-				c.add_buff("haste", 99, maxf(1.0, 1.0 + pet_count * 0.05))
+		c.recalc_summon_buffs(pet_count)
 	_push_log(GameData._T("LOG_JOIN_BATTLE") % bc.stats.character_name, "system")
 
 ## 移除角色（替换宠物时使用）
@@ -128,16 +130,12 @@ func remove_character(bc: BattleCharacter) -> void:
 	party.erase(bc)
 	if not bc.pet_id.is_empty():
 		summoned_pet_ids.erase(bc.pet_id)
-	# 召唤共鸣更新
+	# 兽王血脉更新
 	var pet_count := 0
 	for c in party:
 		if c.is_summoned_pet and not c.is_dead: pet_count += 1
 	for c in party:
-		if c.member_id == "hutouguai":
-			c.buffs.erase("_summon_buff")
-			if pet_count > 0:
-				c.add_buff("atk_up", 99, maxf(1.0, 1.0 + pet_count * 0.1))
-				c.add_buff("haste", 99, maxf(1.0, 1.0 + pet_count * 0.05))
+		c.recalc_summon_buffs(pet_count)
 
 func start_battle() -> void:
 	_battle_ended_flag = false
@@ -268,12 +266,6 @@ func player_use_normal_attack(target: BattleCharacter) -> void:
 	_change_state(BattleState.PLAYER_ACTION)
 	var result = SkillManager.execute(_current_actor, target, "普通攻击")
 	await _apply_skill_result(result, _current_actor, target)
-	# 愈战愈勇：普攻永久叠伤+速（二郎神）
-	if _current_actor.member_id == "erlang":
-		var stacks: int = _current_actor.trait_data.get("_stacks", 0) + 1
-		_current_actor.trait_data["_stacks"] = stacks
-		_current_actor.add_buff("atk_up", 99, 1.0 + stacks * 0.02)
-		_current_actor.add_buff("haste", 99, 1.0 + stacks * 0.02)
 	# 高级连击：45% 概率追加一次普通攻击
 	if _current_actor.has_book_skill("高级连击") and not target.is_dead:
 		if randf() < 0.45:
@@ -287,7 +279,13 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 	if state != BattleState.PLAYER_TURN:
 		return
 	var cd_key = _cd_key(_current_actor, skill_id)
-	if skill_cooldowns.get(cd_key, 0) > 0:
+	# 横扫不休：跳过冷却
+	var no_cd := _current_actor.check_no_cooldown_after_skill(skill_id)
+	if no_cd:
+		_push_log(_current_actor.stats.character_name + " 横扫不休，冷却免除！", "player_action")
+		_current_actor.show_trait_float("横扫不休")
+	print("横扫不休 check: ", no_cd)
+	if not no_cd and skill_cooldowns.get(cd_key, 0) > 0:
 		_push_log(GameData._T("LOG_SKILL_CD") % [skill_id, skill_cooldowns[cd_key]], "system")
 		return
 	_change_state(BattleState.PLAYER_ACTION)
@@ -296,13 +294,8 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		_push_log(GameData._T("BATTLE_SKILL_NOT_FOUND"), "system")
 		await _finish_player_action()
 		return
-	if data.cooldown_turns > 0:
+	if data.cooldown_turns > 0 and not no_cd:
 		skill_cooldowns[cd_key] = data.cooldown_turns
-	# 横扫不休：剑侠客横扫千军30%不冷却
-	if skill_id == "横扫千军" and _current_actor.member_id == "jianxiake":
-		if randf() < 0.3:
-			skill_cooldowns.erase(cd_key)
-			_push_log(_current_actor.stats.character_name + " 横扫不休，冷却免除！", "player_action")
 	# 慧根：MP 消耗减免
 	var actual_mp_cost = data.mp_cost
 	if _current_actor.get_mp_cost_reduction() > 0:
@@ -312,6 +305,10 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		await _finish_player_action()
 		return
 
+	# 愈战愈勇：伤害类技能才叠层（BUFF/HEAL 不算）
+	if data.skill_type != SkillData.SkillType.BUFF and data.skill_type != SkillData.SkillType.HEAL:
+		_current_actor.apply_stacking_buff()
+
 	# 播放技能音效
 	if not data.sound_path.is_empty() and ResourceLoader.exists(data.sound_path):
 		var snd := AudioStreamPlayer.new()
@@ -320,6 +317,33 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		add_child(snd)
 		snd.play()
 		snd.finished.connect(snd.queue_free)
+
+	# 千变万化：变身成一名队友（外观+技能，保留属性）
+	if skill_id == "千变万化":
+		if target == _current_actor or target.is_dead or CharacterStats.has_role(target.stats.role, CharacterStats.Role.MAIN):
+			_push_log("不能变成该目标！", "system")
+			await _finish_player_action()
+			return
+		# 变外观
+		var nd = _current_actor.get_parent()
+		if nd and nd.has_method("reload_was"):
+			nd.reload_was(target.stats.was_base_path)
+		# 变技能（保留千变万化）
+		var new_skills = target.stats.skill_ids.duplicate()
+		if "千变万化" not in new_skills:
+			new_skills.append("千变万化")
+		_current_actor.stats.skill_ids = new_skills
+		# 变远程/近战属性
+		_current_actor.stats.is_ranged = target.stats.is_ranged
+		_current_actor.stats.role = target.stats.role
+		_current_actor.stats.element = target.stats.element
+		_current_actor.trait_data = target.trait_data.duplicate()
+		_current_actor.stats.traits = target.stats.traits.duplicate()
+		_current_actor.stats.was_base_path = target.stats.was_base_path
+		_push_log(_current_actor.stats.character_name + " 化为 " + target.stats.character_name + " 的模样！", "player_action")
+		_current_actor.show_trait_float("千变万化")
+		await _finish_player_action()
+		return
 
 	# 寂静剑法：全屏序列帧动画 + 对所有敌人造成物理伤害
 	if skill_id == "寂静剑法":
@@ -369,6 +393,10 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			_push_log(GameData._T("LOG_MECH_NO_LAUNCH"), "system")
 			await _finish_player_action()
 			return
+		# 施法者播放施法动画
+		var caster_node = _current_actor.get_parent()
+		if caster_node and caster_node.has_method("play_cast_sequence"):
+			caster_node.play_cast_sequence(skill_id)
 		_push_log(GameData._T("LOG_MECH_LAUNCH") % _current_actor.stats.character_name, "player_action")
 		for mech in mechs:
 			var target_pos = target.get_parent().global_position
@@ -423,30 +451,33 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		else:
 			await on_hit.call()
 			await get_tree().create_timer(0.3).timeout
-		# 施法者进入虚弱状态
-		_current_actor.is_weakened = true
-		_current_actor.show_debuff("虚弱")
-		_push_log(GameData._T("LOG_SELF_WEAK") % _current_actor.stats.character_name, "system")
+		# 施法者进入虚弱状态（横扫不休则跳过）
+		if not no_cd:
+			_current_actor.is_weakened = true
+			_current_actor.show_debuff("虚弱")
+			_push_log(GameData._T("LOG_SELF_WEAK") % _current_actor.stats.character_name, "system")
 		await _finish_player_action()
 		return
 
 	# 一苇渡江：目标必加速 + 随机3个未加速队友加速
 	if skill_id == "一苇渡江":
-		_apply_aoe_buff(target, "haste", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.3)
+		_apply_aoe_buff(target, "haste", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.3, skill_id)
 		return
-
+	if skill_id == "神行步":
+		_apply_aoe_buff(target, "haste", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.3, skill_id)
+		return
 	# 达摩护体 / 金刚护体 / 金刚护法：目标 + 随机3个队友
 	if skill_id == "达摩护体":
-		_apply_aoe_buff(target, "hp_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.3)
+		_apply_aoe_buff(target, "hp_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.3, skill_id)
 		return
 	if skill_id == "金刚护体":
-		_apply_aoe_buff(target, "def_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.5)
+		_apply_aoe_buff(target, "def_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.5, skill_id)
 		return
 	if skill_id == "金刚护法":
-		_apply_aoe_buff(target, "atk_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.5)
+		_apply_aoe_buff(target, "atk_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.5, skill_id)
 		return
 	if skill_id == "金刚护魂":
-		_apply_aoe_buff(target, "mdef_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.5)
+		_apply_aoe_buff(target, "mdef_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.5, skill_id)
 		return
 
 	# 如沐春风：群体治疗
@@ -578,6 +609,14 @@ func player_flee() -> void:
 		await _finish_player_action()
 
 func _finish_player_action() -> void:
+	# 愈战愈勇特效（走回原地后播放）
+	if _current_actor:
+		var yzyy_stacks: int = _current_actor.trait_data.get("_yzyy_pending", 0)
+		if yzyy_stacks > 0:
+			_current_actor.trait_data.erase("_yzyy_pending")
+			_current_actor.play_dual_spell_effect()
+			_current_actor.show_trait_float("愈战愈勇")
+			_push_log(_current_actor.stats.character_name + " 愈战愈勇，攻击速度提升！（第%d层）" % yzyy_stacks, "player_action")
 	await _check_battle_end()
 	if state in [BattleState.BATTLE_WIN, BattleState.BATTLE_LOSE]:
 		return
@@ -585,25 +624,17 @@ func _finish_player_action() -> void:
 		_current_actor.reset_sp()
 	_change_state(BattleState.CHECK_BATTLE_END)
 
-## 通用群体 buff（一苇渡江/达摩护体/金刚护体/金刚护法）
-func _apply_aoe_buff(target: BattleCharacter, buff_id: String, turns: int, value: float) -> void:
-	var skill_id = ""
-	match buff_id:
-		"haste":   skill_id = "一苇渡江"
-		"hp_up":   skill_id = "达摩护体"
-		"def_up":  skill_id = "金刚护体"
-		"atk_up":  skill_id = "金刚护法"
-		"mdef_up": skill_id = "金刚护魂"
-
+## 通用群体 buff（一苇渡江/达摩护体/金刚护体/金刚护法等）
+func _apply_aoe_buff(target: BattleCharacter, buff_id: String, turns: int, value: float, skill_id: String) -> void:
 	var anim_names := {
 		"haste": "加速", "hp_up": "加血上限", "def_up": "加物防", "atk_up": "加力", "mdef_up": "加魔防"
-	}
+	} 
 
 	# 受益者列表
 	var beneficiaries: Array[BattleCharacter] = [target]
 	var candidates: Array[BattleCharacter] = []
 	for c in party:
-		if c != target and not c.is_dead and not c.has_buff(buff_id):
+		if c != target and not c.is_dead and c.get_buff_layer_count(buff_id) < 3 and not c.has_buff_source(buff_id, skill_id):
 			candidates.append(c)
 	candidates.shuffle()
 	for j in mini(3, candidates.size()):
@@ -613,7 +644,7 @@ func _apply_aoe_buff(target: BattleCharacter, buff_id: String, turns: int, value
 	for b in beneficiaries:
 		b.play_spell_effect(skill_id)
 		# 提前上 buff（不等施法动画），触发头像变化
-		b.add_buff(buff_id, turns, value)
+		b.add_buff(buff_id, turns, value, skill_id)
 		# 加速抖动
 		if buff_id == "haste":
 			var visual = b.get_parent()
@@ -673,11 +704,16 @@ func player_summon(pet: PetData, prefer_pos: Vector2 = Vector2.INF) -> void:
 		return
 	
 	# 只有召系角色能召唤
-	if _current_actor.stats.role != CharacterStats.Role.SUMMON:
+	if not CharacterStats.has_role(_current_actor.stats.role, CharacterStats.Role.SUMMON):
 		_push_log(GameData._T("LOG_ONLY_SUMMONER"), "system")
 		return
 	
 	_change_state(BattleState.PLAYER_ACTION)
+
+	# 施法者播放施法动画
+	var caster_node = _current_actor.get_parent()
+	if caster_node and caster_node.has_method("play_cast_sequence"):
+		caster_node.play_cast_sequence("召唤宠物")
 
 	_push_log(GameData._T("LOG_SUMMON_PET") % [
 		_current_actor.stats.character_name, pet.character_name, PetData.apt_name(pet.aptitude)
@@ -742,6 +778,10 @@ func player_summon_mech(mech_name: String, replace_bc: BattleCharacter = null) -
 		if skill_data.cooldown_turns > 0:
 			skill_cooldowns[_cd_key(_current_actor, "召唤铁甲兽")] = skill_data.cooldown_turns
 	_change_state(BattleState.PLAYER_ACTION)
+	# 施法者播放施法动画
+	var caster_node = _current_actor.get_parent()
+	if caster_node and caster_node.has_method("play_cast_sequence"):
+		caster_node.play_cast_sequence("召唤铁甲兽")
 	_push_log(GameData._T("LOG_SUMMON_MEHC") % [_current_actor.stats.character_name, mech_data.name], "player_action")
 	var stats = CharacterStats.new()
 	stats.character_name = mech_data.name; stats.character_class = "铁甲"
@@ -793,6 +833,10 @@ func player_summon_mech(mech_name: String, replace_bc: BattleCharacter = null) -
 func player_summon_fallback() -> void:
 	if state != BattleState.PLAYER_TURN: return
 	_change_state(BattleState.PLAYER_ACTION)
+	# 施法者播放施法动画
+	var caster_node = _current_actor.get_parent()
+	if caster_node and caster_node.has_method("play_cast_sequence"):
+		caster_node.play_cast_sequence("")
 	_push_log(GameData._T("LOG_FALLBACK") % _current_actor.stats.character_name, "system")
 	var target = _pick_random_enemy()
 	if target == null:
@@ -1179,6 +1223,7 @@ func _change_state(new_state: BattleState) -> void:
 	state = new_state
 	if new_state == BattleState.CHECK_BATTLE_END:
 		_tick_all_cooldowns()
+		_tick_all_buffs()
 	state_changed.emit(new_state)
 
 func _push_log(text: String, log_type: String = "system") -> void:
@@ -1218,15 +1263,11 @@ func _on_character_died(character: BattleCharacter) -> void:
 	if not character.pet_id.is_empty() and character.is_summoned_pet:
 		summoned_mech_ids.erase(character.pet_id)
 	_threat_mgr.clear_threat(character)
-	# 召唤共鸣：宠物死亡后更新
+	# 兽王血脉：宠物死亡后更新
 	if character.is_summoned_pet:
 		var pet_count := 0
 		for c in party:
 			if c.is_summoned_pet and not c.is_dead: pet_count += 1
 		for c in party:
-			if c.member_id == "hutouguai":
-				c.buffs.erase("_summon_buff")
-				if pet_count > 0:
-					c.add_buff("atk_up", 99, maxf(1.0, 1.0 + pet_count * 0.1))
-					c.add_buff("haste", 99, maxf(1.0, 1.0 + pet_count * 0.05))
+			c.recalc_summon_buffs(pet_count)
 	await _check_battle_end()

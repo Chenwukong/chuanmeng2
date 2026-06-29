@@ -211,19 +211,19 @@ offset_bottom = 644.0
 position = Vector2(1171, 685)
 
 [node name="AllieSlot1" type="Marker2D" parent="." unique_id=1116384823]
-position = Vector2(893, 694)
+position = Vector2(836, 729)
 
 [node name="AllieSlot2" type="Marker2D" parent="." unique_id=2117312284]
-position = Vector2(966, 639)
+position = Vector2(929, 661)
 
 [node name="AllieSlot3" type="Marker2D" parent="." unique_id=683828840]
-position = Vector2(1036, 578)
+position = Vector2(1016, 588)
 
 [node name="AllieSlot4" type="Marker2D" parent="." unique_id=101417203]
 position = Vector2(1102, 513)
 
 [node name="AllieSlot5" type="Marker2D" parent="." unique_id=1396494869]
-position = Vector2(1156, 450)
+position = Vector2(1180, 430)
 
 [node name="PetSlot1" type="Marker2D" parent="." unique_id=704794187]
 position = Vector2(861, 585)

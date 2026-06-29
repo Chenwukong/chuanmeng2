@@ -165,15 +165,19 @@ func _refresh() -> void:
 	var s := _current_stats()
 	if s == null: return
 
-	# 套用装备属性
+	# 套用装备属性（只取当前查看角色的装备）
 	var eq_hp := 0; var eq_mp := 0; var eq_atk := 0
 	var eq_def := 0; var eq_spd := 0; var eq_matk := 0
-	for eq in GameData.player_equipment.values():
-		if eq is Dictionary:
-			var b = eq.get("base", {})
-			eq_hp += b.get("hp", 0); eq_mp += b.get("mp", 0)
-			eq_atk += b.get("atk", 0); eq_def += b.get("def", 0)
-			eq_spd += b.get("spd", 0); eq_matk += b.get("matk", 0)
+	if _current_idx < _members.size():
+		var mid = _members[_current_idx]
+		var char_equip = GameData.player_equipment.get(mid, {})
+		if char_equip is Dictionary:
+			for eq in char_equip.values():
+				if eq is Dictionary:
+					var b = eq.get("base", {})
+					eq_hp += b.get("hp", 0); eq_mp += b.get("mp", 0)
+					eq_atk += b.get("atk", 0); eq_def += b.get("def", 0)
+					eq_spd += b.get("spd", 0); eq_matk += b.get("matk", 0)
 
 	var hp := s.max_hp + eq_hp + _tmp_hp + _tmp_magic
 	var mp := s.max_mp + eq_mp + _tmp_mp + _tmp_magic

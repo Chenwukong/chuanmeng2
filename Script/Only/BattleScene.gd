@@ -1,7 +1,7 @@
 # BattleScene.gd
 extends CanvasLayer
 
-var party_ids: Array = [ "yuling", "erlang", "dingdong"]  # 兜底，正式走 GameData.party_order
+var party_ids: Array = [ "yuling", "erlang"]  # 兜底，正式走 GameData.party_order
 var enemy_ids: Array = ["超级赤焰兽",]
 
 @onready var battle_manager = $BattleManager
@@ -111,13 +111,15 @@ func _ready() -> void:
 			GameData.add_party_by_name("羽灵神")
 			GameData.add_party_by_name("二郎神")
 			GameData.add_party_by_name("叮咚")
-		party_ids = ["yuling", "erlang", "dingdong"]
+		party_ids = ["yuling", "erlang"]
 
 	# ── 构建队伍数据 ──
 	var party_stats: Array[CharacterStats] = []
+	var valid_ids: Array[String] = []  # 只含成功加载的ID，避免和party_stats错位
 	for pid in party_ids:
 		var s = GameData.get_party_member(pid)
 		if s:
+			valid_ids.append(pid)
 			# 合并技能库
 			var merged = s.duplicate_for_battle()
 			# 战损血蓝（战斗持续）
@@ -125,17 +127,19 @@ func _ready() -> void:
 			if s.saved_mp > 0: merged.saved_mp = s.saved_mp
 			var full_skills = GameData.get_all_skills(pid)
 			merged.skill_ids = full_skills
-			# 套用装备属性
-			for eq in GameData.player_equipment.values():
-				if eq is Dictionary:
-					var b = eq.get("base", {})
-					merged.max_hp += b.get("hp", 0)
-					merged.max_mp += b.get("mp", 0)
-					merged.attack += b.get("atk", 0)
-					merged.magic_attack += b.get("matk", 0)
-					merged.defense += b.get("def", 0)
-					merged.magic_defense += b.get("mdef", 0)
-					merged.speed += b.get("spd", 0)
+			# 套用装备属性（只取该角色的装备）
+			var char_equip = GameData.player_equipment.get(pid, {})
+			if char_equip is Dictionary:
+				for eq in char_equip.values():
+					if eq is Dictionary:
+						var b = eq.get("base", {})
+						merged.max_hp += b.get("hp", 0)
+						merged.max_mp += b.get("mp", 0)
+						merged.attack += b.get("atk", 0)
+						merged.magic_attack += b.get("matk", 0)
+						merged.defense += b.get("def", 0)
+						merged.magic_defense += b.get("mdef", 0)
+						merged.speed += b.get("spd", 0)
 			party_stats.append(merged)
 
 	var enemy_stats: Array[CharacterStats] = []
@@ -171,7 +175,6 @@ func _ready() -> void:
 	var all_chars:  Array[BattleCharacter] = []
 	var all_stats:  Array[CharacterStats]  = []
 	var all_ids:    Array[String] = []
-	var pet_queue:  Array[PetData] = _collect_battle_pets()
 
 	# ① 找出定位为「主」的角色 → 右下角主角位
 	var main_stat: CharacterStats = null
@@ -180,8 +183,8 @@ func _ready() -> void:
 	var team_ids: Array[String] = []
 	for i in party_stats.size():
 		var st = party_stats[i]
-		var pid = party_ids[i]
-		if st.role == CharacterStats.Role.MAIN:
+		var pid = valid_ids[i]
+		if CharacterStats.has_role(st.role, CharacterStats.Role.MAIN):
 			main_stat = st
 			main_id = pid
 		else:
@@ -197,36 +200,16 @@ func _ready() -> void:
 		all_stats.append(main_stat)
 		all_ids.append(main_id)
 
-	# ③ 左下 + 右上：宠物专用位（优先）
-	for i in _pet_slots.size():
-		if pet_queue.is_empty():
-			break
-		var pet = pet_queue.pop_front()
-		var node = _spawn_pet_node(pet, "PetSlot_%d" % i)
-		party_group.add_child(node)
-		node.position = _pet_slots[i]
-		all_chars.append(node.get_node("BattleCharacter"))
-		all_stats.append(pet.to_character_stats())
-		all_ids.append("")
-
-	# ④ 前排中间5个：其他队友 → 剩余宠物补位
+	# ③ 前排中间：其他队友（宠物不再自动上场，等战斗中召唤）
 	for i in _front_slots.size():
-		var slot_pos = _front_slots[i]
-		if i < team_stats.size():
-			var node = _spawn_hero("Front_%d" % i)
-			party_group.add_child(node)
-			node.position = slot_pos
-			all_chars.append(node.get_node("BattleCharacter"))
-			all_stats.append(team_stats[i])
-			all_ids.append(team_ids[i])
-		elif not pet_queue.is_empty():
-			var pet = pet_queue.pop_front()
-			var node = _spawn_pet_node(pet, "FrontPet_%d" % i)
-			party_group.add_child(node)
-			node.position = slot_pos
-			all_chars.append(node.get_node("BattleCharacter"))
-			all_stats.append(pet.to_character_stats())
-			all_ids.append("")
+		if i >= team_stats.size():
+			break
+		var node = _spawn_hero("Front_%d" % i)
+		party_group.add_child(node)
+		node.position = _front_slots[i]
+		all_chars.append(node.get_node("BattleCharacter"))
+		all_stats.append(team_stats[i])
+		all_ids.append(team_ids[i])
 
 	# ── 生成敌人（不变） ──
 	var enemy_chars = _spawn_enemies(enemy_stats.size())

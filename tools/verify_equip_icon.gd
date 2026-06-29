@@ -6,7 +6,16 @@ func _init() -> void:
 	root.add_child(page)
 	await process_frame
 
-	page.set_equipment(GameData.player_equipment)
+	var first_mid := ""
+	for mid in GameData.party_order:
+		if GameData.party_db.has(mid):
+			first_mid = mid
+			break
+	if first_mid.is_empty():
+		for mid in GameData.party_db:
+			first_mid = mid
+			break
+	page.set_member_id(first_mid)
 	page.set_equip_bag(GameData.equip_bag)
 	page.set_inventory(GameData.player_inventory._slots)
 	page.full_refresh()

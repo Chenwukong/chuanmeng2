@@ -111,6 +111,26 @@ func _spawn_hit_effect(on_target: Node2D) -> void:
 	fx_was.play("hit2", false)
 	fx_was.animation_finished.connect(func(_a): fx_sprite.queue_free(); fx_was.queue_free(), CONNECT_ONE_SHOT)
 
+## 远程攻击命中特效（在敌人身上播放角色 WAS 目录下的 攻击_2.was）
+func play_ranged_hit_effect(on_target: Node2D, was_base_path: String) -> void:
+	var effect_path := was_base_path.trim_suffix("/") + "/攻击_2.was"
+	if not FileAccess.file_exists(effect_path): return
+	var fx_sprite := Sprite2D.new()
+	fx_sprite.name = "HitEffectSprite"
+	fx_sprite.centered = true
+	fx_sprite.z_index = 100
+	on_target.add_child(fx_sprite)
+	fx_sprite.position.x -= 90
+	fx_sprite.position.y += 20
+	var fx_was := WASAnimationPlayer.new()
+	fx_was.name = "HitEffectWAS"
+	fx_was.target_sprite = NodePath("../HitEffectSprite")
+	fx_was.add_anim("hit2", effect_path)
+	fx_was.load_all()
+	on_target.add_child(fx_was)
+	fx_was.play("hit2", false)
+	fx_was.animation_finished.connect(func(_a): fx_sprite.queue_free(); fx_was.queue_free(), CONNECT_ONE_SHOT)
+
 
 ## 施法特效（在施法者身上播放施法_2.was）
 func _spawn_cast_effect() -> void:
@@ -268,6 +288,12 @@ func play_multihit_sequence(target_pos: Vector2, hit_target: Node2D, hit_count: 
 			hit_target.play_hit_flash()
 		if hit_target:
 			_spawn_hit_effect(hit_target)
+			# 每刀都播 gotHit
+			var hit_ani := hit_target.get_node_or_null("gotHit") as AnimatedSprite2D
+			if hit_ani:
+				hit_ani.visible = true
+				hit_ani.play("default")
+				hit_ani.animation_finished.connect(func(): hit_ani.visible = false, CONNECT_ONE_SHOT)
 		if _weapon_was and _weapon_was.anim_files.has("attack"):
 			_weapon_was.play("attack", false)
 		await was_player.play_frames_direct("attack")
@@ -317,11 +343,25 @@ func play_hit_once() -> void:
 	was_player.play("hit", false)
 	if _weapon_was and _weapon_was.anim_files.has("hit"):
 		_weapon_was.play("hit", false)
+	# 播放 gothit 动画精灵（如果存在）
+	var hit_ani := get_node_or_null("gotHit") as AnimatedSprite2D
+	if hit_ani:
+		hit_ani.visible = true
+		hit_ani.play("default")
+		hit_ani.animation_finished.connect(func():
+			hit_ani.visible = false
+		, CONNECT_ONE_SHOT)
 
 ## 受击反应：闪白 + 后退一步 + 短暂停顿 + 归位 + 恢复待机
 func play_hit_reaction() -> void:
 	if $BattleCharacter.is_dead:
 		return
+	# 播放 gotHit 动画
+	var hit_ani := get_node_or_null("gotHit") as AnimatedSprite2D
+	if hit_ani:
+		hit_ani.visible = true
+		hit_ani.play("default")
+		hit_ani.animation_finished.connect(func(): hit_ani.visible = false, CONNECT_ONE_SHOT)
 	# 被控制时（冰冻/虚弱）只播挨打动画，不后退不归位，不回 idle
 	if $BattleCharacter.is_frozen or $BattleCharacter.is_weakened:
 		was_player.play("hit", false)
@@ -423,6 +463,53 @@ func _on_revived() -> void:
 ## 当前回合高亮（已禁用青色发光）
 func set_active_turn(_is_active: bool) -> void:
 	pass
+
+## 重新加载 WAS 动画（变身用）
+func reload_was(was_base_path: String) -> void:
+	was_player.anim_files.clear()
+	was_player._readers.clear()
+	was_player.stop()
+	var anim_names = {
+		"idle":   ["待机", "idle"],
+		"attack": ["攻击", "attack"],
+		"hit":    ["挨打", "hit"],
+		"die":    ["死亡", "die"],
+		"cast":   ["施法", "cast"],
+		"move":   ["移动", "move", "行走", "walk"],
+	}
+	for anim_name in anim_names:
+		for candidate in anim_names[anim_name]:
+			var full = was_base_path.path_join(candidate + ".was")
+			if FileAccess.file_exists(full):
+				was_player.add_anim(anim_name, full)
+				break
+	was_player.load_all()
+	was_player.play("idle")
+	setup_weapon(was_base_path)
+	# 烟雾特效：用多个半透明 Sprite 扩散
+	var smoke_tex := load("res://Graphic/RANDOM/shadow (2).png")
+	for i in 6:
+		var smoke := Sprite2D.new()
+		smoke.texture = smoke_tex
+		smoke.centered = true
+		smoke.z_index = 150
+		smoke.modulate = Color(0.5, 0.55, 0.6, 0.3)
+		var dur := randf_range(0.5, 0.8)
+		var start_scale := randf_range(0.2, 0.4)
+		smoke.scale = Vector2(start_scale, start_scale)
+		var angle := randf_range(0, TAU)
+		var dist := randf_range(15, 50)
+		smoke.position = Vector2(cos(angle) * dist, sin(angle) * dist - 10)
+		add_child(smoke)
+		var tween := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		tween.tween_property(smoke, "scale", Vector2(2.0, 2.0) * start_scale, dur)
+		tween.parallel().tween_property(smoke, "modulate:a", 0.0, dur)
+		tween.tween_callback(smoke.queue_free)
+	# 变身特效：放大 → 闪烁 → 缩小
+	scale = Vector2(1.4, 1.4)
+	play_hit_flash()
+	var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tw.tween_property(self, "scale", Vector2(1.0, 1.0), 0.6)
 
 ## 受击闪白
 func play_hit_flash() -> void:

@@ -257,6 +257,10 @@ func init_ui() -> void:
 func _action_attack() -> void:
 	_set_pending(func(target: BattleCharacter):
 		_last_attack_target = target
+		# 愈战愈勇：普攻永久叠伤+速
+		var actor := battle_manager.current_actor()
+		if actor:
+			actor.apply_stacking_buff()
 		battle_manager.player_use_normal_attack(target)
 	)
 
@@ -334,7 +338,7 @@ func _action_summon() -> void:
 		action_panel.btn_attack.grab_focus()
 		return
 	# 只有召唤系角色才能召唤	
-	if battle_manager.current_actor().stats.role != CharacterStats.Role.SUMMON:
+	if not CharacterStats.has_role(battle_manager.current_actor().stats.role, CharacterStats.Role.SUMMON):
 		battle_manager._push_log(GameData._T("BATTLE_ONLY_SUMMONER"), "system")
 		action_panel.set_enabled(true)
 		action_panel.slide_in()
@@ -589,6 +593,10 @@ func _on_enemy_sprite_clicked(char: BattleCharacter) -> void:
 	else:
 		# 没有选择任何指令 → 直接普通攻击
 		_last_attack_target = char
+		# 愈战愈勇
+		var actor := battle_manager.current_actor()
+		if actor:
+			actor.apply_stacking_buff()
 		battle_manager.player_use_normal_attack(char)
 
 func _clear_enemy_selection() -> void:
@@ -1092,14 +1100,22 @@ func _show_tooltip(ch: BattleCharacter) -> void:
 	var buf_text := ""
 	var has_debuff := false
 	for bid in ch.buffs:
-		var b = ch.buffs[bid]
-		var turns: int = b.get("turns", 0)
+		var entry: Dictionary = ch.buffs[bid]
+		var layers: Array = entry.get("layers", [])
+		if layers.is_empty(): continue
 		var name := _buff_display_name(bid)
+		var layer_count := layers.size()
 		if bid in ["burn", "freeze", "slow", "poison", "weakened"]:
 			has_debuff = true
-		if buf_text != "":
-			buf_text += "\n"
-		buf_text += "%s (%d)" % [name, turns]
+		for l in layers:
+			var turns: int = l.get("turns", 0)
+			var src: String = l.get("source", "")
+			if buf_text != "":
+				buf_text += "\n"
+			if not src.is_empty():
+				buf_text += "%s·%s (%d)" % [name, src, turns]
+			else:
+				buf_text += "%s (%d)" % [name, turns]
 	_tooltip_labels["buffs"].add_theme_color_override("font_color", Color(1, 0.4, 0.2) if has_debuff else Color(0.5, 1, 0.4))
 	_tooltip_labels["buffs"].text = buf_text if buf_text else ""
 	_tooltip_labels["buffs"].visible = not buf_text.is_empty()
@@ -1387,23 +1403,36 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 						else:
 							target_node.play_idle()
 			elif anim_name == "ranged_attack" and target:
-				# 远程攻击：原地播放攻击动画 → 发射投射物 → 命中结算
+				# 远程攻击：原地播放攻击动画 → 命中结算
 				var target_pos = target.get_parent().global_position
 				var caster_pos = actor.get_parent().global_position if actor.get_parent() else Vector2.ZERO
-				var from_pos = caster_pos
 			
 				var ee = _turn_entries.get(target)
 				if ee != null:
 					var tex := _portrait_texture(target.stats.was_base_path, "x44")
 					if tex: ee["avatar"].texture = tex
 				nd.play_ranged_attack()
-				var on_hit := func():
-					battle_manager.flush_pending_damage()
-				await get_tree().create_timer(0.5).timeout
-				await SpellProjectile.shoot(from_pos, target_pos, target.get_parent(), on_hit, self, actor, actor.stats.talisman_type, _get_talisman_texture(actor))
-				
+				# 目标受击（与施法者动画同时进行）
+				var target_node: Node2D = target.get_parent()
+				if target_node:
+					if target_node.has_method("play_hit_once"):
+						target_node.play_hit_once()
+					if target_node.has_method("play_hit_flash"):
+						target_node.play_hit_flash()
+				# 主角（主）用符咒飞行，其他远程直接播命中特效
+				if CharacterStats.has_role(actor.stats.role, CharacterStats.Role.MAIN):
+					var on_hit := func():
+						battle_manager.flush_pending_damage()
+					await SpellProjectile.shoot(caster_pos, target_pos, target.get_parent(), on_hit, self, actor, actor.stats.talisman_type, _get_talisman_texture(actor))
+				else:
+					if nd.has_method("play_ranged_hit_effect"):
+						nd.play_ranged_hit_effect(target.get_parent(), actor.stats.was_base_path)
 				battle_manager.flush_pending_damage()
+				# 等施法者攻击动画播完再结束回合
+				await nd.was_player.animation_finished
 				battle_manager.ranged_attack_completed.emit()
+				if target_node and target_node.has_method("play_idle"):
+					target_node.play_idle()
 				if ee != null:
 					_update_avatar_for(target)
 			else:
@@ -1460,20 +1489,33 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 				var hit_target: Node2D = hero_nd if (hero_nd and not has_guard) else null
 				var target_pos = target.get_parent().global_position
 				var caster_pos = actor.get_parent().global_position if actor.get_parent() else Vector2.ZERO
-				var from_pos = caster_pos
 				var ee = _turn_entries.get(target)
 				if ee != null:
 					var tex := _portrait_texture(target.stats.was_base_path, "x44")
 					if tex: ee["avatar"].texture = tex
 				nd.play_ranged_attack()
-				var on_hit := func():
-					battle_manager.flush_pending_damage()
-					battle_manager.flush_guard_return()
-				await get_tree().create_timer(0.5).timeout
-				await SpellProjectile.shoot(from_pos, target_pos, hit_target, on_hit, self)
+				# 目标受击动画
+				var tgt_node: Node2D = target.get_parent()
+				if tgt_node:
+					if tgt_node.has_method("play_hit_once"):
+						tgt_node.play_hit_once()
+					if tgt_node.has_method("play_hit_flash"):
+						tgt_node.play_hit_flash()
+				if CharacterStats.has_role(actor.stats.role, CharacterStats.Role.MAIN):
+					var on_hit := func():
+						battle_manager.flush_pending_damage()
+						battle_manager.flush_guard_return()
+					await SpellProjectile.shoot(caster_pos, target_pos, hit_target, on_hit, self)
+				else:
+					if hit_target and nd.has_method("play_ranged_hit_effect"):
+						nd.play_ranged_hit_effect(hit_target, actor.stats.was_base_path)
 				battle_manager.flush_pending_damage()
 				battle_manager.flush_guard_return()
+				await nd.was_player.animation_finished
 				battle_manager.ranged_attack_completed.emit()
+				await get_tree().create_timer(0.4).timeout
+				if tgt_node and tgt_node.has_method("play_idle"):
+					tgt_node.play_idle()
 				if ee != null:
 					_update_avatar_for(target)
 			else:

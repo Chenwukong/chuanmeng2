@@ -63,7 +63,7 @@ static func execute(
 	# ── 附带效果（伤害型技能也可携带 Buff）──
 	if data.apply_buff_id != "" and result.success:
 		if randf() <= data.apply_buff_chance:
-			target.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value)
+			target.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
 			result.applied_buff = data.apply_buff_id
 
 	return result
@@ -178,7 +178,7 @@ static func _apply_buff(
 	if data.apply_buff_id != "":
 		var success = randf() <= data.apply_buff_chance
 		if success:
-			target.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value)
+			target.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
 			result.applied_buff = data.apply_buff_id
 			result.log_text = "%s 施展【%s】，%s%s！" % [
 				caster.stats.character_name,

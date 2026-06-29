@@ -104,7 +104,7 @@ func _input(event: InputEvent):
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	print( GameData.ui_blocked, GameData.is_dialogue_active())
+	
 	if GameData.in_battle or GameData.ui_blocked or GameData.is_dialogue_active():
 		return
 	if event.is_action_pressed("ui_accept"):
@@ -112,7 +112,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		print(456)
 		var click_pos := get_global_mouse_position()
 		# 优先检查是否点中 NPC
 		for child in get_parent().get_children():
@@ -122,6 +121,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _nav_cd > 0.0:
 			return
 		_nav_cd = 0.5
+		_spawn_click_ripple(click_pos)
 		_navigate_to(click_pos)
 
 
@@ -323,3 +323,26 @@ func _set_dir(dir: Vector2) -> void:
 		_dir_idx = n
 		_wasp.direction = _dir_idx
 		_mount_wasp.direction = _dir_idx
+
+## 鼠标点击水面波纹特效
+func _spawn_click_ripple(pos: Vector2) -> void:
+	# 生成圆形环纹理
+	var img := Image.create(48, 48, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for x in 48:
+		for y in 48:
+			var dx := x - 24; var dy := y - 24
+			var dist := sqrt(dx * dx + dy * dy)
+			if dist <= 22 and dist >= 18:
+				img.set_pixel(x, y, Color.WHITE)
+	var tex := ImageTexture.create_from_image(img)
+	var sprite := Sprite2D.new()
+	sprite.texture = tex
+	sprite.global_position = pos
+	sprite.z_index = 100
+	sprite.modulate = Color(0.5, 0.75, 1, 0.8)
+	get_parent().add_child(sprite)
+	var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.tween_property(sprite, "scale", Vector2(2.5, 2.5), 0.5)
+	tw.parallel().tween_property(sprite, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(sprite.queue_free)

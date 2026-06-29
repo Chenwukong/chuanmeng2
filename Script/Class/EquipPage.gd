@@ -17,6 +17,9 @@ const SLOT_NODE_MAP := {
 var equipment: Dictionary = {}
 var equip_bag: Array[Dictionary] = []
 var inventory_items: Dictionary = {}
+var _member_id: String = ""
+var _member_ids: Array[String] = []
+var _member_idx: int = 0
 
 @onready var portrait: TextureRect = %Portrait
 @onready var detail_label: Label = %DetailLabel
@@ -27,6 +30,7 @@ var inventory_items: Dictionary = {}
 @onready var prev_button: TextureButton = %PrevButton
 @onready var next_button: TextureButton = %NextButton
 @onready var page_label: Label = %PageLabel
+@onready var char_name_label: Label = null
 
 var _item_slots: Array[Panel] = []
 var _item_icons: Array[TextureRect] = []
@@ -45,6 +49,7 @@ var _tooltip_label: RichTextLabel
 
 func _ready() -> void:
 	_collect_item_slots()
+	char_name_label = get_node_or_null("LeftArea/PortraitLabel") as Label
 	_connect_signals()
 	get_node("CloseBtn").pressed.connect(func(): hide(); closed.emit())
 	_refresh_gold()
@@ -114,6 +119,11 @@ func _connect_signals() -> void:
 	tab_material.pressed.connect(_on_tab_pressed.bind(ItemTab.MATERIAL))
 	prev_button.pressed.connect(_on_prev_page)
 	next_button.pressed.connect(_on_next_page)
+	# 角色切换按钮
+	var char_prev := get_node_or_null("PrevBtn") as TextureButton
+	var char_next := get_node_or_null("NextBtn") as TextureButton
+	if char_prev: char_prev.pressed.connect(_prev_char)
+	if char_next: char_next.pressed.connect(_next_char)
 
 	for node_name in SLOT_NODE_MAP:
 		var slot := get_node_or_null("LeftArea/%s" % node_name) as Panel
@@ -154,6 +164,82 @@ func set_equipment(eq: Dictionary) -> void:
 	equipment = eq
 	if is_node_ready():
 		_refresh_equip_slots()
+
+## 设置当前装备的角色
+func set_member_id(mid: String) -> void:
+	_member_id = mid
+	# 构建队伍列表
+	_member_ids.clear()
+	for pid in GameData.party_order:
+		if GameData.party_db.has(pid):
+			_member_ids.append(pid)
+	if _member_ids.is_empty():
+		for pid in GameData.party_db:
+			_member_ids.append(pid)
+	_member_idx = _member_ids.find(mid)
+	if _member_idx < 0:
+		_member_idx = 0
+	_load_member_portrait()
+	_refresh_char_label()
+	equipment = GameData.player_equipment.get(mid, {})
+	if is_node_ready():
+		_refresh_equip_slots()
+
+var _animating: bool = false
+
+func _prev_char() -> void:
+	if _member_ids.is_empty() or _animating: return
+	_animating = true
+	var orig := position.x
+	await _shift_x(orig + 30)
+	_member_idx = (_member_idx - 1 + _member_ids.size()) % _member_ids.size()
+	_switch_to_member(_member_ids[_member_idx])
+	await _unshift_x(orig)
+	_animating = false
+
+func _next_char() -> void:
+	if _member_ids.is_empty() or _animating: return
+	_animating = true
+	var orig := position.x
+	await _shift_x(orig - 30)
+	_member_idx = (_member_idx + 1) % _member_ids.size()
+	_switch_to_member(_member_ids[_member_idx])
+	await _unshift_x(orig)
+	_animating = false
+
+func _shift_x(to: float) -> void:
+	var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tw.tween_property(self, "position:x", to, 0.08)
+	await tw.finished
+
+func _unshift_x(orig: float) -> void:
+	var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tw.tween_property(self, "position:x", orig, 0.15)
+
+func _switch_to_member(mid: String) -> void:
+	_member_id = mid
+	_load_member_portrait()
+	_refresh_char_label()
+	equipment = GameData.player_equipment.get(mid, {})
+	_selected_equip_idx = -1
+	_refresh_equip_slots()
+
+func _refresh_char_label() -> void:
+	if char_name_label:
+		var s = GameData.party_db.get(_member_id)
+		char_name_label.text = s.character_name if s else ""
+
+func _load_member_portrait() -> void:
+	if _member_id.is_empty() or not portrait: return
+	var s = GameData.party_db.get(_member_id)
+	if s == null or s.was_base_path.is_empty(): return
+	var p = s.was_base_path + "/头像/头像.was"
+	if not FileAccess.file_exists(p): return
+	var r := WASReader.new()
+	if not r.load_from_file(p): return
+	var d := r.decode_frame(0, 0)
+	if not d.is_empty():
+		portrait.texture = d.get("texture", null)
 
 
 func set_portrait(tex: Texture2D) -> void:
@@ -562,10 +648,11 @@ func _on_equip_slot_pressed(slot_key: String) -> void:
 		if expected_key != slot_key:
 			detail_label.text = "不能放在 %s 槽，该装备只能放在 %s 槽" % [slot_key, expected_key]
 			return
-		GameData.equip_item_by_index(slot_key, _selected_equip_idx)
+		GameData.equip_item_by_index(_member_id, slot_key, _selected_equip_idx)
 		equip_bag = GameData.equip_bag
 		_selected_equip_idx = -1
 		detail_label.text = "已装备 %s 到 %s" % [selected.get("display_name", ""), slot_key]
+		equipment = GameData.player_equipment.get(_member_id, {})
 		_refresh_equip_slots()
 		_render_page()
 		return
@@ -586,9 +673,10 @@ func _on_equip_slot_rightclick(event: InputEvent, slot_key: String) -> void:
 		return
 	var eq: Dictionary = equipment.get(slot_key, {})
 	if not eq.is_empty():
-		GameData.unequip_item(slot_key)
+		GameData.unequip_item(_member_id, slot_key)
 		equip_bag = GameData.equip_bag
 		detail_label.text = "%s 已卸下" % slot_key
+		equipment = GameData.player_equipment.get(_member_id, {})
 		_refresh_equip_slots()
 		_render_page()
 
@@ -603,8 +691,9 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 		if _current_tab == ItemTab.EQUIP and bag_idx < GameData.equip_bag.size():
 			var eq: Dictionary = GameData.equip_bag[bag_idx]
 			var slot := EquipData.slot_key(eq.get("slot", 0))
-			GameData.equip_item_by_index(slot, bag_idx)
+			GameData.equip_item_by_index(_member_id, slot, bag_idx)
 			equip_bag = GameData.equip_bag
+			equipment = GameData.player_equipment.get(_member_id, {})
 			_refresh_equip_slots()
 			_render_page()
 		return
@@ -630,10 +719,11 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 		var slot_key := EquipData.slot_key(eq.get("slot", -1))
 		if slot_key.is_empty():
 			return
-		GameData.equip_item_by_index(slot_key, idx)
+		GameData.equip_item_by_index(_member_id, slot_key, idx)
 		equip_bag = GameData.equip_bag
 		_selected_equip_idx = -1
 		detail_label.text = "已装备 %s" % eq.get("display_name", "")
+		equipment = GameData.player_equipment.get(_member_id, {})
 		_refresh_equip_slots()
 		_render_page()
 		return

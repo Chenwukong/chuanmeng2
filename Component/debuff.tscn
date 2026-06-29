@@ -531,8 +531,8 @@ scale = Vector2(0.92187506, 0.7493316)
 sprite_frames = SubResource("SpriteFrames_a81tu")
 
 [node name="虚弱" type="AnimatedSprite2D" parent="." unique_id=1059771703]
-position = Vector2(39.5, 36)
-scale = Vector2(0.8854167, 0.8854167)
+position = Vector2(39.5, 37)
+scale = Vector2(0.7317708, 0.7317708)
 sprite_frames = SubResource("SpriteFrames_nqwn8")
 
 [node name="失魂" type="AnimatedSprite2D" parent="." unique_id=118545696]

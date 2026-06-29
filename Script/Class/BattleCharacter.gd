@@ -55,9 +55,10 @@ var _mp_tween_node: Node
 func setup(character_stats: CharacterStats, for_player: bool = false) -> void:
 	stats = character_stats.duplicate_for_battle()
 	is_player = for_player
-	current_hp = stats.saved_hp if stats.saved_hp > 0 else stats.max_hp
-	current_mp = stats.saved_mp if stats.saved_mp > 0 else stats.max_mp
 	book_skills = stats.book_skills.duplicate()
+	trait_data = stats.traits.duplicate()
+	current_hp = stats.saved_hp if stats.saved_hp > 0 else get_effective_max_hp()
+	current_mp = stats.saved_mp if stats.saved_mp > 0 else stats.max_mp
 
 	# 初始化专用 tween 容器（避免 HP/MP 互相覆盖）
 	if not _hp_tween_node:
@@ -75,7 +76,7 @@ func setup(character_stats: CharacterStats, for_player: bool = false) -> void:
 	_sp_bar     = parent.get_node_or_null("WorldUI/SPBar") as TextureProgressBar
 	_name_label = parent.get_node_or_null("WorldUI/NameLabel")
 	if _hp_bar:
-		_hp_bar.max_value = stats.max_hp
+		_hp_bar.max_value = get_effective_max_hp()
 		_hp_bar.value     = current_hp
 	if _mp_bar:
 		_mp_bar.max_value = stats.max_mp
@@ -193,6 +194,66 @@ func play_spell_effect(anim_name: String) -> void:
 	ss.play(anim_name)
 	await ss.animation_finished
 	ss.visible = false
+
+## 同时播放两个法术特效（金刚护法 + 一苇渡江），调用方无需 await
+func play_dual_spell_effect() -> void:
+	var parent = get_parent()
+	if parent == null: return
+	var ss1 = parent.get_node_or_null("Animation") as AnimatedSprite2D
+	if ss1 == null or not ss1.sprite_frames: return
+	# 创建第二个动画精灵同时播放
+	var ss2 := AnimatedSprite2D.new()
+	ss2.name = "Animation_Dual"
+	ss2.sprite_frames = ss1.sprite_frames
+	ss2.position = ss1.position
+	ss2.offset = ss1.offset
+	ss2.scale = ss1.scale
+	ss2.centered = ss1.centered
+	parent.add_child(ss2)
+	# 播放
+	var has_jg = ss1.sprite_frames.has_animation("金刚护法")
+	var has_yw := ss2.sprite_frames.has_animation("一苇渡江")
+	if has_jg:
+		ss1.stop()
+		ss1.sprite_frames.set_animation_loop("金刚护法", false)
+		ss1.visible = true
+		ss1.play("金刚护法")
+	if has_yw:
+		ss2.sprite_frames.set_animation_loop("一苇渡江", false)
+		ss2.visible = true
+		ss2.play("一苇渡江")
+	# 用 Timer 等两个都播完（避免 animation_finished 信号竞态）
+	var max_frames := 0
+	if has_jg:
+		max_frames = maxi(max_frames, ss1.sprite_frames.get_frame_count("金刚护法"))
+	if has_yw:
+		max_frames = maxi(max_frames, ss2.sprite_frames.get_frame_count("一苇渡江"))
+	var duration := maxi(0.5, float(max_frames) / 15.0)
+	await get_tree().create_timer(duration).timeout
+	ss1.visible = false
+	if is_instance_valid(ss2):
+		ss2.queue_free()
+
+## 特性触发红字飘字：从角色身上浮起再消失
+func show_trait_float(trait_name: String) -> void:
+	var parent = get_parent()
+	if parent == null: return
+	var lbl := Label.new()
+	lbl.text = trait_name
+	lbl.add_theme_color_override("font_color", Color(1, 0.2, 0.2))
+	lbl.add_theme_font_size_override("font_size", 20)
+	lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.position = Vector2(-40, -70)
+	lbl.size = Vector2(80, 30)
+	parent.add_child(lbl)
+	var tw := lbl.create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tw.tween_property(lbl, "position:y", lbl.position.y - 50, 1)
+	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 1.5)
+	tw.tween_callback(lbl.queue_free)
 
 func show_buff(anim_name: String) -> void:
 	var parent = get_parent()
@@ -362,9 +423,10 @@ func reset_sp() -> void:
 const FREEZE_BUFF_IDS: Array[String] = ["frozen", "freeze", "冰封", "失魂"]
 const DEBUFF_IDS: Array[String] = ["poison", "burn", "slow", "def_broken", "atk_down", "frozen", "freeze", "冰封", "失魂", "weakened"]
 
-# ─── BUFF 系统 ────────────────────────────────
-## 添加 Buff，turns=-1 表示永久
-func add_buff(buff_id: String, turns: int, value: Variant = null) -> void:
+# ─── BUFF 系统（分层叠加，max 3 层，同源不重复） ───
+const MAX_BUFF_LAYERS := 3
+## 添加 Buff，turns=-1 表示永久，source 为技能名（空=不追踪来源）
+func add_buff(buff_id: String, turns: int, value: Variant = null, source: String = "") -> void:
 	# 神迹：免疫/抵抗异常状态
 	if buff_id in DEBUFF_IDS:
 		if is_immune_to_debuffs():
@@ -372,7 +434,19 @@ func add_buff(buff_id: String, turns: int, value: Variant = null) -> void:
 		var resist = get_debuff_resist_chance()
 		if resist > 0 and randf() < resist:
 			return
-	buffs[buff_id] = { "turns": turns, "value": value }
+	if not buffs.has(buff_id):
+		buffs[buff_id] = { "layers": [] }
+	var layers: Array = buffs[buff_id]["layers"]
+	# 同源刷新回合，不新增
+	if not source.is_empty():
+		for l in layers:
+			if l.get("source", "") == source:
+				l["turns"] = maxi(l["turns"], turns)
+				return
+	# 已达最大层数
+	if layers.size() >= MAX_BUFF_LAYERS:
+		return
+	layers.append({ "source": source, "turns": turns, "value": value })
 	buff_added.emit(buff_id)
 
 	if buff_id in FREEZE_BUFF_IDS:
@@ -401,10 +475,30 @@ func remove_buff(buff_id: String) -> void:
 func has_buff(buff_id: String) -> bool:
 	return buff_id in buffs
 
+## 检查是否有来自某技能的 buff 层
+func has_buff_source(buff_id: String, source: String) -> bool:
+	if not buffs.has(buff_id): return false
+	for l in buffs[buff_id]["layers"]:
+		if l.get("source", "") == source:
+			return true
+	return false
+
+## 返回 buff 总层数
+func get_buff_layer_count(buff_id: String) -> int:
+	if not buffs.has(buff_id): return 0
+	return buffs[buff_id]["layers"].size()
+
+## 返回 buff 叠加后的综合值（各层乘积）
 func get_buff_value(buff_id: String) -> Variant:
-	if buff_id in buffs:
-		return buffs[buff_id]["value"]
-	return null
+	if not buffs.has(buff_id): return null
+	var layers: Array = buffs[buff_id]["layers"]
+	if layers.is_empty(): return null
+	var prod: float = 1.0
+	for l in layers:
+		var v = l.get("value")
+		if v is float or v is int:
+			prod *= float(v)
+	return prod
 
 ## 设置头顶名字颜色（用于标识当前行动者）
 func set_name_label_color(color: Color) -> void:
@@ -445,10 +539,15 @@ func sync_freeze_anim() -> void:
 func tick_buffs() -> Array[String]:
 	var expired: Array[String] = []
 	for buff_id in buffs.keys():
-		if buffs[buff_id]["turns"] > 0:
-			buffs[buff_id]["turns"] -= 1
-			if buffs[buff_id]["turns"] == 0:
-				expired.append(buff_id)
+		var layers: Array = buffs[buff_id]["layers"]
+		for i in range(layers.size() - 1, -1, -1):
+			var l: Dictionary = layers[i]
+			if l["turns"] > 0:
+				l["turns"] -= 1
+				if l["turns"] == 0:
+					layers.remove_at(i)
+		if layers.is_empty():
+			expired.append(buff_id)
 	for buff_id in expired:
 		remove_buff(buff_id)
 	# buff 过期后刷新视觉（血条上限 tween 归位）
@@ -493,6 +592,18 @@ func get_effective_attack() -> int:
 	base = int(base * _book_mul("atk_up"))
 	if has_buff("atk_up"):   base = int(base * clamp(get_buff_value("atk_up") if get_buff_value("atk_up") != null else 1.5, 1.0, 3.0))
 	if has_buff("atk_down"): base = int(base * clamp(get_buff_value("atk_down") if get_buff_value("atk_down") != null else 0.7, 0.1, 1.0))
+	# 愈战愈勇：永久叠伤
+	var yzyy_cfg = trait_data.get("愈战愈勇", {})
+	if not yzyy_cfg.is_empty():
+		var yzyy_stacks: int = trait_data.get("_yzyy_stacks", 0)
+		if yzyy_stacks > 0:
+			base = int(base * (1.0 + yzyy_stacks * yzyy_cfg.get("dmg_pct", 0.0)))
+	# 兽王血脉：每只宠物加攻击%
+	var sw_cfg = trait_data.get("兽王血脉", {})
+	if not sw_cfg.is_empty():
+		var pet_count: int = trait_data.get("_summon_pet_count", 0)
+		if pet_count > 0:
+			base = int(base * (1.0 + pet_count * sw_cfg.get("atk_pct", 0.0)))
 	return base
 
 func get_effective_magic_attack() -> int:
@@ -507,6 +618,12 @@ func get_effective_defense() -> int:
 	if has_buff("shield"):     base = int(base * clamp(get_buff_value("shield") if get_buff_value("shield") != null else 2.0, 1.0, 5.0))
 	if has_buff("def_up"):     base = int(base * clamp(get_buff_value("def_up") if get_buff_value("def_up") != null else 1.5, 1.0, 5.0))
 	if has_buff("def_broken"): base = int(base * clamp(get_buff_value("def_broken") if get_buff_value("def_broken") != null else 0.5, 0.1, 1.0))
+	# 兽王血脉：每只宠物加防御%
+	var sw_cfg2 = trait_data.get("兽王血脉", {})
+	if not sw_cfg2.is_empty():
+		var pet_count: int = trait_data.get("_summon_pet_count", 0)
+		if pet_count > 0:
+			base = int(base * (1.0 + pet_count * sw_cfg2.get("def_pct", 0.0)))
 	return base
 
 func get_effective_magic_defense() -> int:
@@ -526,6 +643,18 @@ func get_effective_speed() -> int:
 			base = int(base * db.value.speed)
 	if has_buff("haste"): base = int(base * clamp(get_buff_value("haste") if get_buff_value("haste") != null else 1.3, 1.0, 3.0))
 	if has_buff("slow"):  base = int(base * clamp(get_buff_value("slow") if get_buff_value("slow") != null else 0.7, 0.1, 1.0))
+	# 愈战愈勇：永久叠速
+	var yzyy_cfg2 = trait_data.get("愈战愈勇", {})
+	if not yzyy_cfg2.is_empty():
+		var yzyy_stacks: int = trait_data.get("_yzyy_stacks", 0)
+		if yzyy_stacks > 0:
+			base = int(base * (1.0 + yzyy_stacks * yzyy_cfg2.get("spd_pct", 0.0)))
+	# 兽王血脉：每只宠物加速度%
+	var sw_cfg3 = trait_data.get("兽王血脉", {})
+	if not sw_cfg3.is_empty():
+		var pet_count: int = trait_data.get("_summon_pet_count", 0)
+		if pet_count > 0:
+			base = int(base * (1.0 + pet_count * sw_cfg3.get("spd_pct", 0.0)))
 	return base
 
 func get_effective_max_hp() -> int:
@@ -537,6 +666,12 @@ func get_effective_max_hp() -> int:
 		if db.get("type", "") == "slow_tank":
 			base = int(base * db.value.hp)
 	if has_buff("hp_up"): base = int(base * clamp(get_buff_value("hp_up") if get_buff_value("hp_up") != null else 1.3, 1.0, 3.0))
+	# 兽王血脉：每只宠物加气血%
+	var sw_cfg4 = trait_data.get("兽王血脉", {})
+	if not sw_cfg4.is_empty():
+		var pet_count: int = trait_data.get("_summon_pet_count", 0)
+		if pet_count > 0:
+			base = int(base * (1.0 + pet_count * sw_cfg4.get("hp_pct", 0.0)))
 	return base
 
 func get_effective_crit_rate() -> float:
@@ -686,31 +821,33 @@ func check_no_cooldown_after_skill(skill_id: String) -> bool:
 	return randf() < cfg.get("chance", 0.0)
 
 
-## 愈战愈勇：普攻永久叠伤+速
-func apply_stacking_buff() -> void:
+## 愈战愈勇：普攻永久叠伤+速，返回当前层数（0=无此特性）
+func apply_stacking_buff() -> int:
 	var cfg = trait_data.get("愈战愈勇", {})
-	if cfg.is_empty(): return
+	if cfg.is_empty(): return 0
 	var stacks: int = trait_data.get("_yzyy_stacks", 0) + 1
 	trait_data["_yzyy_stacks"] = stacks
-	var dmg_pct: float = cfg.get("dmg_pct", 0.0)
-	var spd_pct: float = cfg.get("spd_pct", 0.0)
-	if dmg_pct > 0:
-		add_buff("atk_up", 99, 1.0 + stacks * dmg_pct)
-	if spd_pct > 0:
-		add_buff("haste", 99, 1.0 + stacks * spd_pct)
+	trait_data["_yzyy_pending"] = stacks  # 等攻击走回原地后播特效
+	return stacks
 
 
-## 召唤共鸣：场上每只宠物加属性
+## 兽王血脉：场上每只宠物加属性百分比
 func recalc_summon_buffs(pet_count: int) -> void:
-	var cfg = trait_data.get("召唤共鸣", {})
+	var cfg = trait_data.get("兽王血脉", {})
 	if cfg.is_empty(): return
-	# 清除旧的共鸣 buff
-	buffs.erase("_summon_buff_hp")
-	buffs.erase("_summon_buff_atk")
-	buffs.erase("_summon_buff_def")
-	buffs.erase("_summon_buff_spd")
-	if pet_count <= 0: return
-	add_buff("_summon_buff_hp", 99, pet_count * cfg.get("hp_per_pet", 0))
-	add_buff("_summon_buff_atk", 99, pet_count * cfg.get("atk_per_pet", 0))
-	add_buff("_summon_buff_def", 99, pet_count * cfg.get("def_per_pet", 0))
-	add_buff("_summon_buff_spd", 99, pet_count * cfg.get("spd_per_pet", 0))
+	var old_count: int = trait_data.get("_summon_pet_count", 0)
+	trait_data["_summon_pet_count"] = pet_count
+	# 刷新 HP（等比缩放）
+	if pet_count != old_count:
+		var old_effective := get_effective_max_hp()
+		# 临时回退旧计数来算旧有效值
+		trait_data["_summon_pet_count"] = old_count
+		var old_max := get_effective_max_hp()
+		trait_data["_summon_pet_count"] = pet_count
+		var new_max := get_effective_max_hp()
+		if old_max > 0 and new_max != old_max:
+			current_hp = maxi(1, int(float(current_hp) * float(new_max) / float(old_max)))
+		if _hp_bar:
+			_hp_bar.max_value = new_max
+			_hp_bar.value = current_hp
+		show_trait_float("兽王血脉")

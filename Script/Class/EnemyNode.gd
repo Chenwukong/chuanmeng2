@@ -168,11 +168,25 @@ func play_idle() -> void:
 ## 播放一次挨打动画，停住不循环
 func play_hit_once() -> void:
 	was_player.play("hit", false)
+	# 播放 gotHit 动画精灵（如果存在）
+	var hit_ani := get_node_or_null("gotHit") as AnimatedSprite2D
+	if hit_ani:
+		hit_ani.visible = true
+		hit_ani.play("default")
+		hit_ani.animation_finished.connect(func():
+			hit_ani.visible = false
+		, CONNECT_ONE_SHOT)
 
 ## 受击反应：闪白 + 后退一步 + 短暂停顿 + 归位 + 恢复待机
 func play_hit_reaction() -> void:
 	if battle_character.is_dead:
 		return
+	# 播放 gotHit 动画
+	var hit_ani := get_node_or_null("gotHit") as AnimatedSprite2D
+	if hit_ani:
+		hit_ani.visible = true
+		hit_ani.play("default")
+		hit_ani.animation_finished.connect(func(): hit_ani.visible = false, CONNECT_ONE_SHOT)
 	# 被控制时（冰冻/虚弱）只播挨打动画，不后退不归位，不回 idle
 	if battle_character.is_frozen or battle_character.is_weakened:
 		was_player.play("hit", false)

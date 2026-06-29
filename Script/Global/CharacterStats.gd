@@ -20,15 +20,19 @@ static func element_name(e: Element) -> String:
 @export var element: Element = Element.METAL
 
 ## 定位：主、攻、辅、召、护
-enum Role { MAIN, ATTACK, SUPPORT, SUMMON, GUARD }
-static func role_name(r: Role) -> String:
-	match r:
-		Role.MAIN:    return "主"
-		Role.ATTACK:  return "攻"
-		Role.SUPPORT: return "辅"
-		Role.SUMMON:  return "召"
-		_:             return "护"
-@export var role: Role = Role.ATTACK
+enum Role { MAIN = 1 << 0, ATTACK = 1 << 1, SUPPORT = 1 << 2, SUMMON = 1 << 3, GUARD = 1 << 4 }
+## 判断是否拥有某个定位（位掩码）
+static func has_role(roles: int, r: Role) -> bool: return roles & r
+## 定位显示名（列出所有匹配的）
+static func role_name(roles: int) -> String:
+	var parts: Array[String] = []
+	if roles & Role.MAIN:    parts.append("主")
+	if roles & Role.ATTACK:  parts.append("攻")
+	if roles & Role.SUPPORT: parts.append("辅")
+	if roles & Role.SUMMON:  parts.append("召")
+	if roles & Role.GUARD:   parts.append("护")
+	return "".join(parts) if parts else "—"
+@export var role: int = Role.ATTACK
 
 ## 战斗属性
 @export var max_hp: int = 100
@@ -88,6 +92,9 @@ var capture_aptitude: int = -1
 ## 技能列表（技能 ID 数组）
 @export var skill_ids: Array = []
 
+## 特性数据（如横扫不休、愈战愈勇等）
+var traits: Dictionary = {}
+
 ## 宠物被动技能书
 @export var book_skills: Array[String] = []
 
@@ -143,6 +150,7 @@ func duplicate_for_battle() -> CharacterStats:
 	copy.element          = element
 	copy.role             = role
 	copy.skill_ids       = skill_ids.duplicate()
+	copy.traits         = traits.duplicate()
 	copy.book_skills     = book_skills.duplicate()
 	copy.is_ranged       = is_ranged
 	copy.talisman_type   = talisman_type
@@ -179,6 +187,7 @@ func save_to_dict() -> Dictionary:
 		"elem":    element,
 		"role":    role,
 		"skills":  skill_ids,
+		"traits":  traits,
 		"books":   book_skills,
 		"was":     was_base_path,
 		"wasdir":  was_direction,
@@ -220,6 +229,8 @@ func load_from_dict(d: Dictionary) -> void:
 	is_ranged       = d.get("ranged", false)
 	talisman_type   = d.get("talisman", TalismanType.FIRE)
 	rank            = d.get("rank", "")
+	var t: Dictionary = d.get("traits", {})
+	traits = t.duplicate()
 	var arr: Array = d.get("skills", [])
 	skill_ids.clear()
 	skill_ids.assign(arr)

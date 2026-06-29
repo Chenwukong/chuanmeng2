@@ -11,6 +11,7 @@
 [ext_resource type="Texture2D" uid="uid://i6krttp1uafy" path="res://Graphic/BattleAnimation/冰封.png" id="6_h6ms7"]
 [ext_resource type="Texture2D" uid="uid://cogd4isrovnwc" path="res://Graphic/BattleAnimation/失魂符.png" id="6_ibrwc"]
 [ext_resource type="Texture2D" uid="uid://bh0f3ewvmi3ie" path="res://Graphic/BattleAnimation/地府尸腐毒.png" id="7_wafci"]
+[ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="12_6bhlw"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ybeuf"]
 atlas = ExtResource("1_5qtyk")
@@ -1109,6 +1110,62 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_ybeuf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rvy6c")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_auh25")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1py3j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vjdo1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rfirr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4qf0t")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h6ms7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibrwc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wafci")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6bhlw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mq4bc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0bwni")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4rlyq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o5vn1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dvsnj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tf8pu")
+}],
+"loop": true,
+"name": &"神行步",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_o8y7p")
 }, {
 "duration": 1.0,
@@ -1323,6 +1380,36 @@ animations = [{
 "speed": 5.0
 }]
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_n7wrb"]
+atlas = ExtResource("12_6bhlw")
+region = Rect2(0, 0, 42.200043, 21.399994)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ylygb"]
+atlas = ExtResource("12_6bhlw")
+region = Rect2(84.65245, 0, 41.34755, 21.511547)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gq70v"]
+atlas = ExtResource("12_6bhlw")
+region = Rect2(42.56493, 0, 40.23701, 21.74393)
+
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" unique_id=788667032]
 sprite_frames = SubResource("SpriteFrames_tqbwg")
-animation = &"毒瘴"
+animation = &"神行步"
+
+[node name="CloseBtn" type="TextureButton" parent="." unique_id=1235512132]
+offset_left = 952.0
+offset_top = 56.0
+offset_right = 994.0
+offset_bottom = 77.0
+texture_normal = SubResource("AtlasTexture_n7wrb")
+texture_pressed = SubResource("AtlasTexture_ylygb")
+texture_hover = SubResource("AtlasTexture_gq70v")
+
+[node name="Label" type="Label" parent="CloseBtn" unique_id=1609377895]
+layout_mode = 0
+offset_top = -4.0
+offset_right = 42.0
+offset_bottom = 23.0
+text = "x"
+horizontal_alignment = 1
+vertical_alignment = 1

@@ -645,10 +645,10 @@ func _build_enemy_db() -> void:
 const CHARACTER_DB := {
 	"yuling": {
 		"name": "羽灵神", "class": "战神", "elem": "金", "role": "主",
-		"hp": 150, "mp": 80,  "atk": 3500, "matk": 25, "def": 14, "mdef": 10, "spd": 308,
+		"hp": 150, "mp": 80,  "atk": 3500, "matk": 25, "def": 14, "mdef": 10, "spd": 8,
 		"crit": 0.18, "crit_mult": 1.7,
 		"was_base_path": "res://WAS/羽灵神-弓/",
-		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴"],
+		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴","神行步"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg", "cast_sound": "res://Audio/SE/男-枪.ogg",
 		"ranged": true,
 	},
@@ -659,24 +659,42 @@ const CHARACTER_DB := {
 		"was_base_path": "res://WAS/二郎神",
 		"skills": ["普通攻击","御剑气","雷霆诀","破防击","金刚护体"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"愈战愈勇": {"dmg_pct": 0.02, "spd_pct": 0.02}},
+		"traits": {"愈战愈勇": {"dmg_pct": 0.05, "spd_pct": 0.05}},
+	},
+	"duoshiyi": {
+		"name": "堕十一", "class": "灵师", "elem": "金", "role": "攻",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": "res://WAS/堕十一",
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"],
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"traits": {"愈战愈勇": {"dmg_pct": 0.05, "spd_pct": 0.05}},
+	},
+	"qianmian": {
+		"name": "千面", "class": "灵师", "elem": "水", "role": "召",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": "res://WAS/千面",
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","千变万化"],
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
 	},
 	"dingdong": {
 		"name": "叮咚", "class": "灵师", "elem": "水", "role": "召",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/超级赤焰兽",
+		"was_base_path": "res://WAS/叮咚",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"ranged": true,
 	},
-	"jianxiake": {
-		"name": "剑侠客", "class": "灵师", "elem": "金", "role": "攻",
+	"lingfeng": {
+		"name": "凌风", "class": "灵师", "elem": "水", "role": "攻辅",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/剑侠客",
+		"was_base_path": "res://WAS/凌风",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"横扫不休": {"chance": 1}},
+		"traits": {"横扫不休": {"chance": 0.3}},
 	},
 	"hutouguai": {
 		"name": "虎头怪", "class": "灵师", "elem": "木", "role": "召",
@@ -685,8 +703,82 @@ const CHARACTER_DB := {
 		"was_base_path": "res://WAS/虎头怪",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"召唤共鸣": {"hp_per_pet": 10, "atk_per_pet": 5, "def_per_pet": 5, "spd_per_pet": 3}},
+		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
 	},
+	"shentianbing": {
+		"name": "神天兵", "class": "灵师", "elem": "金", "role": "护",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": "res://WAS/神天兵",
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
+	},
+	"xiaoyaosheng": {
+		"name": "逍遥生", "class": "灵师", "elem": "金", "role": "护",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": "res://WAS/逍遥生",
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
+	},	
+	"jumowang": {
+		"name": "巨魔王", "class": "灵师", "elem": "金", "role": "护",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": "res://WAS/巨魔王",
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
+	},		
+	"taoyaoyao": {
+		"name": "桃夭夭", "class": "灵师", "elem": "金", "role": "护",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": "res://WAS/桃夭夭",
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
+	},				
+	"yanwushi": {
+		"name": "偃无师", "class": "灵师", "elem": "金", "role": "护",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": "res://WAS/偃无师",
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
+	},			
+	"yingnvxia": {
+		"name": "英女侠", "class": "灵师", "elem": "金", "role": "护",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": "res://WAS/英女侠",
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
+	},
+	"yingjingling": {
+		"name": "影精灵", "class": "灵师", "elem": "金", "role": "护",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": "res://WAS/影精灵",
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
+	},		
+	"dajiangjun": {
+		"name": "大将军", "class": "灵师", "elem": "金", "role": "护",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"crit": 0.12, "crit_mult": 1.5,
+		"was_base_path": "res://WAS/大将军",
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
+		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"traits": {"横扫不休": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
+	},			
+	
+					
 }
 
 
@@ -711,6 +803,7 @@ func _add_member(member_id: String, d: Dictionary) -> void:
 	s.element = _parse_element(d.get("elem", "金"))
 	s.role    = _parse_role(d.get("role", "攻"))
 	s.skill_ids       = d.skills
+	s.traits          = d.get("traits", {})
 	party_db[member_id] = s
 
 
@@ -725,13 +818,16 @@ func _parse_element(s: String) -> CharacterStats.Element:
 
 
 ## 从字符串解析定位枚举
-func _parse_role(s: String) -> CharacterStats.Role:
-	match s:
-		"攻": return CharacterStats.Role.ATTACK
-		"辅": return CharacterStats.Role.SUPPORT
-		"召": return CharacterStats.Role.SUMMON
-		"护": return CharacterStats.Role.GUARD
-		_:    return CharacterStats.Role.MAIN
+func _parse_role(s: String) -> int:
+	var result := 0
+	for ch in s:
+		match ch:
+			"攻": result |= CharacterStats.Role.ATTACK
+			"辅": result |= CharacterStats.Role.SUPPORT
+			"召": result |= CharacterStats.Role.SUMMON
+			"护": result |= CharacterStats.Role.GUARD
+			_ :   result |= CharacterStats.Role.MAIN
+	return result if result != 0 else CharacterStats.Role.MAIN
 
 # ══════════════════════════════════════════════
 # 经验与升级（永久存档）
@@ -911,6 +1007,11 @@ const SKILL_DB := {
 		"mp": 15, "cd": 2, "buff": "haste", "bturn": 3, "bvalue": 1.3,
 		"desc": "选定目标加速并随机增益 3 名未加速队友，3 回合速度提升 30%",
 	},
+	"神行步": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
+		"mp": 15, "cd": 2, "buff": "haste", "bturn": 3, "bvalue": 1.3,
+		"desc": "选定目标加速并随机增益 3 名未加速队友，3 回合速度提升 30%",
+	},
 	"达摩护体": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
 		"mp": 20, "cd": 3, "buff": "hp_up", "bturn": 3, "bvalue": 1.3,
@@ -957,6 +1058,12 @@ const SKILL_DB := {
 		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
 		"mp": 10, "dmg": 0, "cd": 1,
 		"desc": "指挥所有铁甲兽对目标发动一次联合攻击",
+	},
+	# ── 变身技能 ──
+	"千变万化": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
+		"mp": 30, "cd": 5,
+		"desc": "千面千相，变化为一名队友的外貌和技能（不含主角）",
 	},
 	# ── 敌方技能 ──
 	"妖术": {
@@ -1182,35 +1289,48 @@ func _register_items() -> void:
 # 装备系统工具
 # ══════════════════════════════════════════════
 
+func _ensure_equip_dict(member_id: String) -> Dictionary:
+	if not player_equipment.has(member_id) or not player_equipment[member_id] is Dictionary:
+		player_equipment[member_id] = {}
+	return player_equipment[member_id]
+
 ## 穿上一件装备（by 背包索引，自动替换同槽位，旧装备退回背包）
-func equip_item_by_index(slot_key: String, bag_index: int) -> void:
+func equip_item_by_index(member_id: String, slot_key: String, bag_index: int) -> void:
 	if bag_index < 0 or bag_index >= equip_bag.size(): return
-	var equip_dict = equip_bag[bag_index]
-	var old = player_equipment.get(slot_key, {})
+	var eq_dict = _ensure_equip_dict(member_id)
+	var equip_item = equip_bag[bag_index]
+	var old = eq_dict.get(slot_key, {})
 	if not old.is_empty():
 		equip_bag.append(old)
-	player_equipment[slot_key] = equip_dict
+	eq_dict[slot_key] = equip_item
 	equip_bag.remove_at(bag_index)
 
 ## 卸下一件装备，退回背包
-func unequip_item(slot_key: String) -> Dictionary:
-	var old = player_equipment.get(slot_key, {})
+func unequip_item(member_id: String, slot_key: String) -> Dictionary:
+	var eq_dict = _ensure_equip_dict(member_id)
+	var old = eq_dict.get(slot_key, {})
 	if not old.is_empty():
 		equip_bag.append(old)
-	player_equipment.erase(slot_key)
+	eq_dict.erase(slot_key)
 	return old
 
 ## 往背包中添加一件装备
 func add_equip_to_bag(equip_dict: Dictionary) -> void:
 	equip_bag.append(equip_dict)
 
-## 获取某个槽位的装备
-func get_equipment(slot_key: String) -> Dictionary:
-	return player_equipment.get(slot_key, {})
+## 获取某个角色某个槽位的装备
+func get_equipment(member_id: String, slot_key: String) -> Dictionary:
+	var eq_dict = player_equipment.get(member_id, {})
+	if eq_dict is Dictionary:
+		return eq_dict.get(slot_key, {})
+	return {}
 
-## 全套装备属性合计
-func get_equipment_stats() -> Dictionary:
-	return EquipData.calc_full_stats(player_equipment)
+## 某个角色全套装备属性合计
+func get_equipment_stats(member_id: String) -> Dictionary:
+	var eq_dict = player_equipment.get(member_id, {})
+	if eq_dict is Dictionary:
+		return EquipData.calc_full_stats(eq_dict)
+	return {}
 
 ## 生成随机装备（测试用）
 func generate_random_equip(slot: EquipData.SlotType = EquipData.SlotType.WEAPON,

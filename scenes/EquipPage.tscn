@@ -1073,6 +1073,54 @@ grow_vertical = 2
 text = "x"
 horizontal_alignment = 1
 
+[node name="NextBtn" type="TextureButton" parent="." unique_id=541089489]
+layout_mode = 0
+offset_left = 882.0
+offset_top = 430.0
+offset_right = 962.0
+offset_bottom = 460.0
+texture_normal = SubResource("AtlasTexture_yg1gl")
+texture_pressed = SubResource("AtlasTexture_g38kl")
+texture_hover = SubResource("AtlasTexture_8cftm")
+
+[node name="Label" type="Label" parent="NextBtn" unique_id=1903963389]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -3.0
+offset_right = -40.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+text = ">"
+horizontal_alignment = 1
+
+[node name="PrevBtn" type="TextureButton" parent="." unique_id=925923698]
+layout_mode = 0
+offset_left = 532.0
+offset_top = 430.0
+offset_right = 612.0
+offset_bottom = 460.0
+texture_normal = SubResource("AtlasTexture_yg1gl")
+texture_pressed = SubResource("AtlasTexture_g38kl")
+texture_hover = SubResource("AtlasTexture_8cftm")
+
+[node name="Label" type="Label" parent="PrevBtn" unique_id=1576145387]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -3.0
+offset_right = -40.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "<"
+horizontal_alignment = 1
+
 [node name="银两" type="Label" parent="." unique_id=2102782228]
 modulate = Color(1, 1, 0, 1)
 layout_mode = 0

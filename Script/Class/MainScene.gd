@@ -57,9 +57,12 @@ func _ready() -> void:
 	_world_log.bbcode_enabled = true
 	GameData.world_log = _world_log
 	add_child(load("res://Script/Class/CursorController.gd").new())
-	GameData.add_party_by_name("二郎神")
-	GameData.add_party_by_name("剑侠客")
-	GameData.add_party_by_name("虎头怪")
+	GameData.add_party_by_name("羽灵神")
+	GameData.add_party_by_name("千面")
+	GameData.add_party_by_name("堕十一")
+	GameData.add_party_by_name("叮咚")
+	GameData.add_party_by_name("凌风")
+	GameData.add_party_by_name("大将军")
 # ════════════════════════════
 # UI 按钮系统
 # ════════════════════════════
@@ -206,25 +209,33 @@ func _open_equip_page():
 		return
 	_equip_page = preload("res://scenes/EquipPage.tscn").instantiate()
 	$UI.add_child(_equip_page)
-	_equip_page.set_equipment(GameData.player_equipment)
+	# 使用第一个队伍角色
+	var first_mid := ""
+	for mid in GameData.party_order:
+		if GameData.party_db.has(mid):
+			first_mid = mid
+			break
+	if first_mid.is_empty():
+		for mid in GameData.party_db:
+			first_mid = mid
+			break
+	_equip_page.set_member_id(first_mid)
 	_equip_page.set_equip_bag(GameData.equip_bag)
 	_equip_page.set_inventory(GameData.player_inventory._slots)
-	var tex = _load_hero_portrait()
-	if tex: _equip_page.set_portrait(tex)
 	_equip_page.full_refresh()
 	_equip_page.closed.connect(func(): _close_popup(_equip_page))
 	_register_popup(_equip_page)
 
 
 func _on_equip_page_equip(slot_key: String, bag_index: int) -> void:
-	GameData.equip_item_by_index(slot_key, bag_index)
-	_equip_page.set_equipment(GameData.player_equipment)
+	GameData.equip_item_by_index(_equip_page._member_id, slot_key, bag_index)
+	_equip_page.equipment = GameData.player_equipment.get(_equip_page._member_id, {})
 	_equip_page.set_equip_bag(GameData.equip_bag)
 	_equip_page.full_refresh()
 
 func _on_equip_page_unequip(slot_key: String) -> void:
-	GameData.unequip_item(slot_key)
-	_equip_page.set_equipment(GameData.player_equipment)
+	GameData.unequip_item(_equip_page._member_id, slot_key)
+	_equip_page.equipment = GameData.player_equipment.get(_equip_page._member_id, {})
 	_equip_page.set_equip_bag(GameData.equip_bag)
 	_equip_page.full_refresh()
 

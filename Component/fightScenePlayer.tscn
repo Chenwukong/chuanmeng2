@@ -9,9 +9,67 @@
 [ext_resource type="Texture2D" uid="uid://c8bjxm2witu1x" path="res://Graphic/UI/np.png" id="7_vr8dx"]
 [ext_resource type="Texture2D" uid="uid://dhv7omnogu1d4" path="res://Graphic/RANDOM/Mouse_DOWN.png" id="8_mouse"]
 [ext_resource type="Texture2D" uid="uid://ci1e7r1d47pma" path="res://Graphic/RANDOM/shadow (2).png" id="9_shadow"]
+[ext_resource type="Texture2D" uid="uid://dw5n6u0u8u1v1" path="res://Graphic/BattleAnimation/#十一弦攻击【敌】.png" id="10_vr8dx"]
 
 [sub_resource type="RectangleShape2D" id="Rect_click"]
 size = Vector2(100, 120)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8j3rf"]
+atlas = ExtResource("10_vr8dx")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qijw0"]
+atlas = ExtResource("10_vr8dx")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_63c5j"]
+atlas = ExtResource("10_vr8dx")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vo2sq"]
+atlas = ExtResource("10_vr8dx")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rnqyt"]
+atlas = ExtResource("10_vr8dx")
+region = Rect2(768, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ovimw"]
+atlas = ExtResource("10_vr8dx")
+region = Rect2(0, 192, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cvivd"]
+atlas = ExtResource("10_vr8dx")
+region = Rect2(192, 192, 192, 192)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_kn67w"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8j3rf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qijw0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_63c5j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vo2sq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rnqyt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ovimw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cvivd")
+}],
+"loop": false,
+"name": &"default",
+"speed": 7.0
+}]
 
 [node name="fightScenePlayer" type="Node2D" unique_id=350880952]
 script = ExtResource("1_15wyq")
@@ -111,3 +169,9 @@ position = Vector2(0, -15)
 
 [node name="CastSprite" type="Sprite2D" parent="." unique_id=46390833]
 position = Vector2(47, 51)
+
+[node name="gotHit" type="AnimatedSprite2D" parent="." unique_id=1392377132]
+visible = false
+sprite_frames = SubResource("SpriteFrames_kn67w")
+frame = 6
+frame_progress = 1.0
