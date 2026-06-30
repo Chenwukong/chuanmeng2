@@ -1,9 +1,26 @@
 [gd_scene format=3 uid="uid://dadxl6bku6ehp"]
 
 [ext_resource type="Script" uid="uid://c6hm4r3g4lm37" path="res://Script/Only/talent_tree.gd" id="1_tree"]
+[ext_resource type="Texture2D" uid="uid://cwuyacc2kpacn" path="res://Graphic/UI/天赋background.png" id="2_1ltyo"]
 [ext_resource type="Script" uid="uid://dsnwvygwgfbg1" path="res://Script/Only/talent_node.gd" id="2_node"]
 [ext_resource type="Script" uid="uid://dny03uato8wr3" path="res://Script/Only/talent_page.gd" id="3_page"]
+[ext_resource type="FontFile" uid="uid://dgudp2duoeeta" path="res://Graphic/UI/Font/aajiuzhongxiao.ttf" id="4_bgfmp"]
 [ext_resource type="Script" uid="uid://ctbocupnxj8ny" path="res://Script/Only/talent_requirement.gd" id="4_req"]
+[ext_resource type="FontFile" uid="uid://cfe8vm3np4ttx" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="6_rmcd0"]
+[ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="6_ul12i"]
+[ext_resource type="PackedScene" uid="uid://dno5u7h0tr5vo" path="res://scenes/tcp_sprite.tscn" id="9_2j32r"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rmcd0"]
+atlas = ExtResource("6_ul12i")
+region = Rect2(0, 0, 42.200043, 21.399994)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bgfmp"]
+atlas = ExtResource("6_ul12i")
+region = Rect2(84.65245, 0, 41.34755, 21.511547)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2j32r"]
+atlas = ExtResource("6_ul12i")
+region = Rect2(42.56493, 0, 40.23701, 21.74393)
 
 [sub_resource type="Resource" id="Req_Main_Flow"]
 script = ExtResource("4_req")
@@ -123,42 +140,219 @@ script = ExtResource("4_req")
 talent_path = NodePath("连斩")
 rank_required = 2
 
-[node name="TalentTree" type="Control" unique_id=1078991454]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 277.00003
-offset_top = 72.0
-offset_right = 277.0
-offset_bottom = 72.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="TalentTree" type="CanvasLayer" unique_id=1785358716]
+layer = 7
 scale = Vector2(0.7, 0.7)
+transform = Transform2D(0.7, 0, 0, 0.7, 0, 0)
 script = ExtResource("1_tree")
 
-[node name="Background" type="ColorRect" parent="." unique_id=1447545959]
-layout_mode = 1
+[node name="Background" type="TextureRect" parent="." unique_id=1857996321]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 144.28568
+offset_top = 88.57141
+offset_right = 430.28564
+offset_bottom = 280.5714
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.08, 0.075, 0.065, 1)
+texture = ExtResource("2_1ltyo")
+
+[node name="PageButtons" type="Control" parent="." unique_id=89513300]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Btn_Attack" type="TextureButton" parent="PageButtons" unique_id=150706735]
+layout_mode = 0
+offset_left = 1108.571
+offset_top = 205.0
+offset_right = 1150.571
+offset_bottom = 253.0
+scale = Vector2(2.5, 2.5)
+texture_normal = SubResource("AtlasTexture_rmcd0")
+texture_pressed = SubResource("AtlasTexture_bgfmp")
+texture_hover = SubResource("AtlasTexture_2j32r")
+
+[node name="Label" type="Label" parent="PageButtons/Btn_Attack" unique_id=1486477783]
+visible = false
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "攻"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="PageButtons/Btn_Attack" unique_id=1941296987]
+layout_mode = 0
+offset_left = 1.143014
+offset_top = -0.8571429
+offset_right = 831.32025
+offset_bottom = 864.1429
+scale = Vector2(0.047150224, 0.047150224)
+theme_override_fonts/font = ExtResource("4_bgfmp")
+theme_override_font_sizes/font_size = 400
+text = "攻"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Btn_Guard" type="TextureButton" parent="PageButtons" unique_id=1298815283]
+layout_mode = 0
+offset_left = 998.571
+offset_top = 205.0
+offset_right = 1040.571
+offset_bottom = 253.0
+scale = Vector2(2.5, 2.5)
+texture_normal = SubResource("AtlasTexture_rmcd0")
+texture_pressed = SubResource("AtlasTexture_bgfmp")
+texture_hover = SubResource("AtlasTexture_2j32r")
+
+[node name="Label" type="Label" parent="PageButtons/Btn_Guard" unique_id=895084862]
+visible = false
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "护"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="PageButtons/Btn_Guard" unique_id=1446082871]
+layout_mode = 0
+offset_left = 1.1430489
+offset_top = 0.28571415
+offset_right = 831.3203
+offset_bottom = 865.2857
+scale = Vector2(0.047150224, 0.047150224)
+theme_override_fonts/font = ExtResource("4_bgfmp")
+theme_override_font_sizes/font_size = 400
+text = "护"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Btn_Support" type="TextureButton" parent="PageButtons" unique_id=2059012795]
+layout_mode = 0
+offset_left = 888.571
+offset_top = 205.0
+offset_right = 930.571
+offset_bottom = 253.0
+scale = Vector2(2.5, 2.5)
+texture_normal = SubResource("AtlasTexture_rmcd0")
+texture_pressed = SubResource("AtlasTexture_bgfmp")
+texture_hover = SubResource("AtlasTexture_2j32r")
+
+[node name="Label" type="Label" parent="PageButtons/Btn_Support" unique_id=1583803827]
+visible = false
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "辅"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="PageButtons/Btn_Support" unique_id=9105892]
+layout_mode = 0
+offset_left = 1.1430489
+offset_top = -0.2857144
+offset_right = 831.3203
+offset_bottom = 864.7143
+scale = Vector2(0.047150224, 0.047150224)
+theme_override_fonts/font = ExtResource("4_bgfmp")
+theme_override_font_sizes/font_size = 400
+text = "辅"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Btn_Summon" type="TextureButton" parent="PageButtons" unique_id=1186211109]
+layout_mode = 0
+offset_left = 778.571
+offset_top = 205.0
+offset_right = 820.571
+offset_bottom = 253.0
+scale = Vector2(2.5, 2.5)
+texture_normal = SubResource("AtlasTexture_rmcd0")
+texture_pressed = SubResource("AtlasTexture_bgfmp")
+texture_hover = SubResource("AtlasTexture_2j32r")
+
+[node name="Label" type="Label" parent="PageButtons/Btn_Summon" unique_id=108664728]
+visible = false
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "召"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="PageButtons/Btn_Summon" unique_id=1639210842]
+layout_mode = 0
+offset_left = 1.1430489
+offset_top = -0.2857144
+offset_right = 831.3203
+offset_bottom = 864.7143
+scale = Vector2(0.047150224, 0.047150224)
+theme_override_fonts/font = ExtResource("4_bgfmp")
+theme_override_font_sizes/font_size = 400
+text = "召"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Btn_Main" type="TextureButton" parent="PageButtons" unique_id=2133512895]
+layout_mode = 0
+offset_left = 668.571
+offset_top = 205.0
+offset_right = 710.571
+offset_bottom = 253.00002
+scale = Vector2(2.5, 2.5)
+texture_normal = SubResource("AtlasTexture_rmcd0")
+texture_pressed = SubResource("AtlasTexture_bgfmp")
+texture_hover = SubResource("AtlasTexture_2j32r")
+
+[node name="Label" type="Label" parent="PageButtons/Btn_Main" unique_id=590522885]
+layout_mode = 0
+offset_left = 1.1430489
+offset_top = -0.8571429
+offset_right = 831.3203
+offset_bottom = 864.1429
+scale = Vector2(0.047150224, 0.047150224)
+theme_override_fonts/font = ExtResource("4_bgfmp")
+theme_override_font_sizes/font_size = 400
+text = "主"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PointLabel" type="Label" parent="." unique_id=1985124327]
+custom_minimum_size = Vector2(180, 42)
+offset_left = 1522.857
+offset_top = 202.85715
+offset_right = 1702.857
+offset_bottom = 244.85715
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 2
+vertical_alignment = 1
 
 [node name="Header" type="HBoxContainer" parent="." unique_id=542690605]
-layout_mode = 1
+visible = false
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 18.0
-offset_top = 14.0
-offset_right = -18.0
-offset_bottom = 62.0
+offset_left = 391.4286
+offset_top = 217.14285
+offset_right = 355.4286
+offset_bottom = 265.14285
 grow_horizontal = 2
+alignment = 1
 
 [node name="PageButtons" type="HBoxContainer" parent="Header" unique_id=1112779132]
 layout_mode = 2
 size_flags_horizontal = 3
+alignment = 1
 
 [node name="Btn_Main" type="Button" parent="Header/PageButtons" unique_id=272148559]
 custom_minimum_size = Vector2(72, 42)
@@ -190,22 +384,15 @@ layout_mode = 2
 toggle_mode = true
 text = "攻"
 
-[node name="PointLabel" type="Label" parent="Header" unique_id=1985124327]
-custom_minimum_size = Vector2(180, 42)
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-horizontal_alignment = 2
-vertical_alignment = 1
-
 [node name="Pages" type="Control" parent="." unique_id=157654490]
-layout_mode = 1
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 24.0
-offset_top = 78.0
-offset_right = -270.0
-offset_bottom = -24.0
+offset_left = 498.57135
+offset_top = 307.14282
+offset_right = 204.57129
+offset_bottom = 205.14282
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -679,15 +866,52 @@ description = "强力天赋：造成伤害时无视部分防御。"
 requirements = Array[Resource]([SubResource("Req_Attack_Slay")])
 
 [node name="DetailLabel" type="RichTextLabel" parent="." unique_id=1478702570]
-layout_mode = 1
 anchors_preset = 11
 anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -250.0
-offset_top = 78.0
-offset_right = -18.0
-offset_bottom = -24.0
+offset_left = 26.285645
+offset_top = 258.2857
+offset_right = 258.28564
+offset_bottom = 156.2857
 grow_horizontal = 0
 grow_vertical = 2
 bbcode_enabled = true
+
+[node name="Label" type="Label" parent="." unique_id=1649025293]
+offset_left = 730.0
+offset_top = 88.57144
+offset_right = 1150.0
+offset_bottom = 136.57144
+theme_override_fonts/font = ExtResource("6_rmcd0")
+theme_override_font_sizes/font_size = 40
+text = "天赋页面"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CloseButton" type="TextureButton" parent="." unique_id=1513911336]
+offset_left = 1730.0
+offset_top = 88.57143
+offset_right = 1772.0
+offset_bottom = 109.57143
+scale = Vector2(2, 2)
+texture_normal = SubResource("AtlasTexture_rmcd0")
+texture_pressed = SubResource("AtlasTexture_bgfmp")
+texture_hover = SubResource("AtlasTexture_2j32r")
+
+[node name="Label" type="Label" parent="CloseButton" unique_id=1615797317]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "X"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="天赋点图标" parent="." unique_id=1866989955 instance=ExtResource("9_2j32r")]
+position = Vector2(1554.2858, 225.71428)
+scale = Vector2(0.6, 0.6)
+tcp_path = "res://TCP/UI/2302.tcp"
+
+[connection signal="pressed" from="CloseButton" to="." method="_on_close_button_pressed"]

@@ -1,229 +1,917 @@
 [gd_scene format=3 uid="uid://gql60sqmap4s"]
 
-[ext_resource type="Script" uid="uid://dq0jba5y01sow" path="res://Script/Class/PetPopup.gd" id="1_root"]
-[ext_resource type="Script" uid="uid://bvynqpeueed4w" path="res://Script/Class/WASAnimationPlayer.gd" id="2_was"]
+[ext_resource type="Script" uid="uid://c6hm4r3g4lm37" path="res://Script/Only/talent_tree.gd" id="1_p7cqn"]
+[ext_resource type="Texture2D" uid="uid://cwuyacc2kpacn" path="res://Graphic/UI/天赋background.png" id="2_unjip"]
 [ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="3_rj83a"]
+[ext_resource type="FontFile" uid="uid://dgudp2duoeeta" path="res://Graphic/UI/Font/aajiuzhongxiao.ttf" id="4_qckry"]
+[ext_resource type="Script" uid="uid://dny03uato8wr3" path="res://Script/Only/talent_page.gd" id="5_6hx45"]
+[ext_resource type="Script" uid="uid://dsnwvygwgfbg1" path="res://Script/Only/talent_node.gd" id="6_8cb5k"]
+[ext_resource type="Script" uid="uid://ctbocupnxj8ny" path="res://Script/Only/talent_requirement.gd" id="7_e66g8"]
+[ext_resource type="FontFile" uid="uid://cfe8vm3np4ttx" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="8_k581l"]
+[ext_resource type="PackedScene" uid="uid://dno5u7h0tr5vo" path="res://scenes/tcp_sprite.tscn" id="9_ngcfk"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_6n1tj"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_rmcd0"]
 atlas = ExtResource("3_rj83a")
 region = Rect2(0, 0, 42.200043, 21.399994)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_xsfje"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_bgfmp"]
 atlas = ExtResource("3_rj83a")
 region = Rect2(84.65245, 0, 41.34755, 21.511547)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_3et87"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_2j32r"]
 atlas = ExtResource("3_rj83a")
 region = Rect2(42.56493, 0, 40.23701, 21.74393)
 
-[node name="PetPopup" type="CanvasLayer" unique_id=1086906977]
-layer = 3
-script = ExtResource("1_root")
+[sub_resource type="Resource" id="Req_Main_Flow"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("灵根初醒")
 
-[node name="Bg" type="ColorRect" parent="." unique_id=1361394303]
-modulate = Color(0, 1, 1, 0.7254902)
+[sub_resource type="Resource" id="Req_Main_Focus"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("灵根初醒")
+
+[sub_resource type="Resource" id="Resource_1ltyo"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("../凝神")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Main_Spirit_A"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("经脉流转")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Main_Spirit_B"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("凝神")
+
+[sub_resource type="Resource" id="Req_Main_Destiny"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("灵台清明")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Summon_Bond"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("唤灵")
+
+[sub_resource type="Resource" id="Req_Summon_Swarm"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("唤灵")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Summon_Guard"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("灵契")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Summon_Ancient_A"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("护主灵兽")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Summon_Ancient_B"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("群召")
+
+[sub_resource type="Resource" id="Req_Support_Cleanse"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("回春")
+
+[sub_resource type="Resource" id="Req_Support_Haste"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("回春")
+
+[sub_resource type="Resource" id="Req_Support_Revive_A"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("净心")
+
+[sub_resource type="Resource" id="Req_Support_Revive_B"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("轻身")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Support_Miracle"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("续命")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Guard_Shield"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("铁骨")
+
+[sub_resource type="Resource" id="Req_Guard_Resist"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("铁骨")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Guard_Counter"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("护盾")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Guard_Fortress_A"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("守中有攻")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Guard_Fortress_B"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("定心")
+
+[sub_resource type="Resource" id="Req_Attack_Crit"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("破势")
+
+[sub_resource type="Resource" id="Req_Attack_Bleed"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("破势")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Attack_Combo_A"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("会心")
+rank_required = 2
+
+[sub_resource type="Resource" id="Req_Attack_Combo_B"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("裂伤")
+
+[sub_resource type="Resource" id="Req_Attack_Slay"]
+script = ExtResource("7_e66g8")
+talent_path = NodePath("连斩")
+rank_required = 2
+
+[node name="TalentTree" type="CanvasLayer" unique_id=1785358716]
+layer = 7
+scale = Vector2(0.7, 0.7)
+transform = Transform2D(0.7, 0, 0, 0.7, 0, 0)
+script = ExtResource("1_p7cqn")
+
+[node name="Background" type="TextureRect" parent="." unique_id=1857996321]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 214.0
-offset_top = 30.0
-offset_right = -193.875
-offset_bottom = -113.0
+offset_left = 144.28568
+offset_top = 88.57141
+offset_right = 430.28564
+offset_bottom = 280.5714
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_unjip")
+
+[node name="PageButtons" type="Control" parent="." unique_id=89513300]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Btn_Attack" type="TextureButton" parent="PageButtons" unique_id=150706735]
+layout_mode = 0
+offset_left = 1108.571
+offset_top = 205.0
+offset_right = 1150.571
+offset_bottom = 253.0
+scale = Vector2(2.5, 2.5)
+texture_normal = SubResource("AtlasTexture_rmcd0")
+texture_pressed = SubResource("AtlasTexture_bgfmp")
+texture_hover = SubResource("AtlasTexture_2j32r")
+
+[node name="Label" type="Label" parent="PageButtons/Btn_Attack" unique_id=1486477783]
+visible = false
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "攻"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="PageButtons/Btn_Attack" unique_id=1941296987]
+layout_mode = 0
+offset_left = 1.143014
+offset_top = -0.8571429
+offset_right = 831.32025
+offset_bottom = 864.1429
+scale = Vector2(0.047150224, 0.047150224)
+theme_override_fonts/font = ExtResource("4_qckry")
+theme_override_font_sizes/font_size = 400
+text = "攻"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Btn_Guard" type="TextureButton" parent="PageButtons" unique_id=1298815283]
+layout_mode = 0
+offset_left = 998.571
+offset_top = 205.0
+offset_right = 1040.571
+offset_bottom = 253.0
+scale = Vector2(2.5, 2.5)
+texture_normal = SubResource("AtlasTexture_rmcd0")
+texture_pressed = SubResource("AtlasTexture_bgfmp")
+texture_hover = SubResource("AtlasTexture_2j32r")
+
+[node name="Label" type="Label" parent="PageButtons/Btn_Guard" unique_id=895084862]
+visible = false
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "护"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="PageButtons/Btn_Guard" unique_id=1446082871]
+layout_mode = 0
+offset_left = 1.1430489
+offset_top = 0.28571415
+offset_right = 831.3203
+offset_bottom = 865.2857
+scale = Vector2(0.047150224, 0.047150224)
+theme_override_fonts/font = ExtResource("4_qckry")
+theme_override_font_sizes/font_size = 400
+text = "护"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Btn_Support" type="TextureButton" parent="PageButtons" unique_id=2059012795]
+layout_mode = 0
+offset_left = 888.571
+offset_top = 205.0
+offset_right = 930.571
+offset_bottom = 253.0
+scale = Vector2(2.5, 2.5)
+texture_normal = SubResource("AtlasTexture_rmcd0")
+texture_pressed = SubResource("AtlasTexture_bgfmp")
+texture_hover = SubResource("AtlasTexture_2j32r")
+
+[node name="Label" type="Label" parent="PageButtons/Btn_Support" unique_id=1583803827]
+visible = false
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "辅"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="PageButtons/Btn_Support" unique_id=9105892]
+layout_mode = 0
+offset_left = 1.1430489
+offset_top = -0.2857144
+offset_right = 831.3203
+offset_bottom = 864.7143
+scale = Vector2(0.047150224, 0.047150224)
+theme_override_fonts/font = ExtResource("4_qckry")
+theme_override_font_sizes/font_size = 400
+text = "辅"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Btn_Summon" type="TextureButton" parent="PageButtons" unique_id=1186211109]
+layout_mode = 0
+offset_left = 778.571
+offset_top = 205.0
+offset_right = 820.571
+offset_bottom = 253.0
+scale = Vector2(2.5, 2.5)
+texture_normal = SubResource("AtlasTexture_rmcd0")
+texture_pressed = SubResource("AtlasTexture_bgfmp")
+texture_hover = SubResource("AtlasTexture_2j32r")
+
+[node name="Label" type="Label" parent="PageButtons/Btn_Summon" unique_id=108664728]
+visible = false
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "召"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="PageButtons/Btn_Summon" unique_id=1639210842]
+layout_mode = 0
+offset_left = 1.1430489
+offset_top = -0.2857144
+offset_right = 831.3203
+offset_bottom = 864.7143
+scale = Vector2(0.047150224, 0.047150224)
+theme_override_fonts/font = ExtResource("4_qckry")
+theme_override_font_sizes/font_size = 400
+text = "召"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Btn_Main" type="TextureButton" parent="PageButtons" unique_id=2133512895]
+layout_mode = 0
+offset_left = 668.571
+offset_top = 205.0
+offset_right = 710.571
+offset_bottom = 253.00002
+scale = Vector2(2.5, 2.5)
+texture_normal = SubResource("AtlasTexture_rmcd0")
+texture_pressed = SubResource("AtlasTexture_bgfmp")
+texture_hover = SubResource("AtlasTexture_2j32r")
+
+[node name="Label" type="Label" parent="PageButtons/Btn_Main" unique_id=590522885]
+layout_mode = 0
+offset_left = 1.1430489
+offset_top = -0.8571429
+offset_right = 831.3203
+offset_bottom = 864.1429
+scale = Vector2(0.047150224, 0.047150224)
+theme_override_fonts/font = ExtResource("4_qckry")
+theme_override_font_sizes/font_size = 400
+text = "主"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PointLabel" type="Label" parent="." unique_id=1985124327]
+custom_minimum_size = Vector2(180, 42)
+offset_left = 1522.857
+offset_top = 202.85715
+offset_right = 1702.857
+offset_bottom = 244.85715
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Header" type="HBoxContainer" parent="." unique_id=542690605]
+visible = false
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 391.4286
+offset_top = 217.14285
+offset_right = 355.4286
+offset_bottom = 265.14285
+grow_horizontal = 2
+alignment = 1
+
+[node name="PageButtons" type="HBoxContainer" parent="Header" unique_id=1112779132]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="Btn_Main" type="Button" parent="Header/PageButtons" unique_id=272148559]
+custom_minimum_size = Vector2(72, 42)
+layout_mode = 2
+toggle_mode = true
+text = "主"
+
+[node name="Btn_Summon" type="Button" parent="Header/PageButtons" unique_id=888577488]
+custom_minimum_size = Vector2(72, 42)
+layout_mode = 2
+toggle_mode = true
+text = "召"
+
+[node name="Btn_Support" type="Button" parent="Header/PageButtons" unique_id=302348734]
+custom_minimum_size = Vector2(72, 42)
+layout_mode = 2
+toggle_mode = true
+text = "辅"
+
+[node name="Btn_Guard" type="Button" parent="Header/PageButtons" unique_id=867879987]
+custom_minimum_size = Vector2(72, 42)
+layout_mode = 2
+toggle_mode = true
+text = "护"
+
+[node name="Btn_Attack" type="Button" parent="Header/PageButtons" unique_id=607203598]
+custom_minimum_size = Vector2(72, 42)
+layout_mode = 2
+toggle_mode = true
+text = "攻"
+
+[node name="Pages" type="Control" parent="." unique_id=157654490]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 498.57135
+offset_top = 307.14282
+offset_right = 204.57129
+offset_bottom = 205.14282
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="Control" parent="." unique_id=1915849641]
-layout_mode = 3
-anchors_preset = 0
-offset_left = 168.0
-offset_top = 54.0
-offset_right = 868.0
-offset_bottom = 554.0
-mouse_filter = 2
+[node name="Page_Main" type="Control" parent="Pages" unique_id=798522037]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("5_6hx45")
 
-[node name="Title" type="Label" parent="Panel" unique_id=858221146]
+[node name="灵根初醒" type="Button" parent="Pages/Page_Main" unique_id=1870477975]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 344.0
+offset_top = 219.0
+offset_right = 470.0
+offset_bottom = 289.0
+text = "灵根初醒
+0/3"
+script = ExtResource("6_8cb5k")
+talent_id = "main_root"
+talent_name = "灵根初醒"
+description = "生命和法力小幅提升。"
+max_rank = 3
+
+[node name="灵根初醒2" type="Button" parent="Pages/Page_Main" unique_id=438984309]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 630.0
+offset_top = 375.0
+offset_right = 756.0
+offset_bottom = 445.0
+text = "地图
+0/1"
+script = ExtResource("6_8cb5k")
+talent_id = "main_root"
+talent_name = "地图"
+description = "解锁小地图和小地图寻路"
+
+[node name="经脉流转" type="Button" parent="Pages/Page_Main" unique_id=597338863]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 158.0
+offset_top = 109.0
+offset_right = 284.0
+offset_bottom = 179.0
+text = "经脉流转
+0/3"
+script = ExtResource("6_8cb5k")
+talent_id = "main_flow"
+talent_name = "经脉流转"
+description = "每级提升少量速度。"
+max_rank = 3
+requirements = Array[Resource]([SubResource("Req_Main_Flow")])
+
+[node name="凝神" type="Button" parent="Pages/Page_Main" unique_id=988311328]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 135.0
+offset_top = 366.0
+offset_right = 261.0
+offset_bottom = 436.0
+text = "凝神
+0/2"
+script = ExtResource("6_8cb5k")
+talent_id = "main_focus"
+talent_name = "凝神"
+description = "提高技能命中和稳定性。"
+max_rank = 2
+requirements = Array[Resource]([SubResource("Req_Main_Focus")])
+
+[node name="聚气" type="Button" parent="Pages/Page_Main" unique_id=1790025053]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 353.0
+offset_top = 376.0
+offset_right = 479.0
+offset_bottom = 446.0
+text = "聚气
+0/2"
+script = ExtResource("6_8cb5k")
+talent_id = "main_recover"
+talent_name = "聚气"
+description = "提高技能命中和稳定性。"
+max_rank = 2
+requirements = Array[Resource]([SubResource("Resource_1ltyo")])
+
+[node name="灵台清明" type="Button" parent="Pages/Page_Main" unique_id=2013969612]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 585.0
+offset_top = 124.0
+offset_right = 711.0
+offset_bottom = 194.0
+text = "灵台清明
+0/2"
+script = ExtResource("6_8cb5k")
+talent_id = "main_spirit"
+talent_name = "灵台清明"
+description = "战斗开始时额外获得少量灵力。"
+max_rank = 2
+requirements = Array[Resource]([SubResource("Req_Main_Spirit_A"), SubResource("Req_Main_Spirit_B")])
+
+[node name="天命" type="Button" parent="Pages/Page_Main" unique_id=690700631]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 561.0
+offset_top = 221.0
+offset_right = 687.0
+offset_bottom = 291.0
+text = "天命
+0/1"
+script = ExtResource("6_8cb5k")
+talent_id = "main_destiny"
+talent_name = "天命"
+description = "强力天赋：全属性提升。"
+requirements = Array[Resource]([SubResource("Req_Main_Destiny")])
+
+[node name="Page_Summon" type="Control" parent="Pages" unique_id=1135551123]
 visible = false
-layout_mode = 0
-offset_left = -42.0
-offset_top = -29.0
-offset_right = 146.0
-offset_bottom = 1.0
-text = "✦ 宠物"
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("5_6hx45")
 
-[node name="DeployLabel" type="Label" parent="Panel" unique_id=1688129553]
+[node name="唤灵" type="Button" parent="Pages/Page_Summon" unique_id=166725862]
+custom_minimum_size = Vector2(126, 70)
 layout_mode = 0
-offset_left = 142.0
-offset_top = 95.0
-offset_right = 228.0
-offset_bottom = 118.0
-text = "已上场"
-
-[node name="DeployGrid" type="HBoxContainer" parent="Panel" unique_id=2104017670]
-layout_mode = 0
-offset_left = 142.0
-offset_top = 31.0
-offset_right = 817.0
-offset_bottom = 109.0
-mouse_filter = 2
-
-[node name="DetailBg" type="ColorRect" parent="Panel" unique_id=878033574]
-modulate = Color(0, 0, 0, 1)
-layout_mode = 0
-offset_left = 142.0
-offset_top = 121.0
-offset_right = 818.0
-offset_bottom = 329.0
-
-[node name="Name" type="Label" parent="Panel" unique_id=1409053020]
-layout_mode = 0
-offset_left = 152.0
-offset_top = 127.0
-offset_right = 578.0
-offset_bottom = 151.0
-
-[node name="Aptitude" type="Label" parent="Panel" unique_id=602881375]
-layout_mode = 0
-offset_left = 152.0
-offset_top = 153.0
-offset_right = 328.0
-offset_bottom = 176.0
-
-[node name="Info" type="Label" parent="Panel" unique_id=1168212820]
-layout_mode = 0
-offset_left = 152.0
-offset_top = 175.0
-offset_right = 578.0
-offset_bottom = 225.0
-
-[node name="Skills" type="Label" parent="Panel" unique_id=753855360]
-layout_mode = 0
-offset_left = 350.0
-offset_top = 254.0
-offset_right = 805.0
-offset_bottom = 292.0
-autowrap_mode = 2
-
-[node name="BtnDeploy" type="Button" parent="Panel" unique_id=1363890127]
-layout_mode = 0
-offset_left = 622.0
-offset_top = 161.0
-offset_right = 707.0
-offset_bottom = 199.0
-text = "上场"
-
-[node name="BtnRelease" type="Button" parent="Panel" unique_id=758337693]
-layout_mode = 0
-offset_left = 717.0
-offset_top = 161.0
-offset_right = 802.0
-offset_bottom = 199.0
-text = "放生"
-
-[node name="BtnDevour" type="Button" parent="Panel" unique_id=758337694]
-layout_mode = 0
-offset_left = 622.0
-offset_top = 206.0
-offset_right = 707.0
-offset_bottom = 244.0
-text = "吞噬"
-
-[node name="DevourTip" type="Label" parent="Panel" unique_id=758337695]
-layout_mode = 0
-offset_left = 625.0
-offset_top = 244.0
-offset_right = 710.0
-offset_bottom = 282.0
-text = "选择饲料..."
-
-[node name="DevourBarLabel" type="Label" parent="Panel" unique_id=1168212821]
-layout_mode = 0
-offset_left = 152.0
-offset_top = 300.0
-offset_right = 420.0
-offset_bottom = 323.0
-
-[node name="WASPreview" type="Control" parent="Panel" unique_id=1590281446]
-anchors_preset = 0
-offset_left = 387.0
-offset_top = 127.0
-offset_right = 543.0
+offset_left = 90.0
+offset_top = 210.0
+offset_right = 216.0
 offset_bottom = 280.0
-mouse_filter = 2
+text = "唤灵
+0/3"
+script = ExtResource("6_8cb5k")
+talent_id = "summon_call"
+talent_name = "唤灵"
+description = "召唤物基础属性提升。"
+max_rank = 3
 
-[node name="Sprite2D" type="Sprite2D" parent="Panel/WASPreview" unique_id=1263790387]
-position = Vector2(78, 76)
+[node name="灵契" type="Button" parent="Pages/Page_Summon" unique_id=1010789886]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 270.0
+offset_top = 120.0
+offset_right = 396.0
+offset_bottom = 190.0
+text = "灵契
+0/3"
+script = ExtResource("6_8cb5k")
+talent_id = "summon_bond"
+talent_name = "灵契"
+description = "召唤物持续时间增加。"
+max_rank = 3
+requirements = Array[Resource]([SubResource("Req_Summon_Bond")])
 
-[node name="WASAnimationPlayer" type="Node" parent="Panel/WASPreview" unique_id=1208917356]
-script = ExtResource("2_was")
-target_sprite = NodePath("../Sprite2D")
+[node name="群召" type="Button" parent="Pages/Page_Summon" unique_id=1434838571]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 270.0
+offset_top = 300.0
+offset_right = 396.0
+offset_bottom = 370.0
+text = "群召
+0/2"
+script = ExtResource("6_8cb5k")
+talent_id = "summon_swarm"
+talent_name = "群召"
+description = "召唤类技能消耗降低。"
+max_rank = 2
+requirements = Array[Resource]([SubResource("Req_Summon_Swarm")])
 
-[node name="EvolveOverlay" type="Label" parent="Panel" unique_id=1168212822]
+[node name="护主灵兽" type="Button" parent="Pages/Page_Summon" unique_id=198750309]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 470.0
+offset_top = 210.0
+offset_right = 596.0
+offset_bottom = 280.0
+text = "护主灵兽
+0/2"
+script = ExtResource("6_8cb5k")
+talent_id = "summon_guard_beast"
+talent_name = "护主灵兽"
+description = "召唤物可替主人承受少量伤害。"
+max_rank = 2
+requirements = Array[Resource]([SubResource("Req_Summon_Guard")])
+
+[node name="太古召临" type="Button" parent="Pages/Page_Summon" unique_id=852117610]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 700.0
+offset_top = 210.0
+offset_right = 826.0
+offset_bottom = 280.0
+text = "太古召临
+0/1"
+script = ExtResource("6_8cb5k")
+talent_id = "summon_ancient"
+talent_name = "太古召临"
+description = "强力天赋：召唤物大幅强化。"
+requirements = Array[Resource]([SubResource("Req_Summon_Ancient_A"), SubResource("Req_Summon_Ancient_B")])
+
+[node name="Page_Support" type="Control" parent="Pages" unique_id=1283011102]
 visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("5_6hx45")
+
+[node name="回春" type="Button" parent="Pages/Page_Support" unique_id=1378544905]
+custom_minimum_size = Vector2(126, 70)
 layout_mode = 0
-offset_left = 152.0
-offset_top = 280.0
-offset_right = 818.0
-offset_bottom = 320.0
+offset_left = 90.0
+offset_top = 210.0
+offset_right = 216.0
+offset_bottom = 280.0
+text = "回春
+0/3"
+script = ExtResource("6_8cb5k")
+talent_id = "support_heal"
+talent_name = "回春"
+description = "治疗效果提升。"
+max_rank = 3
+
+[node name="净心" type="Button" parent="Pages/Page_Support" unique_id=610326419]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 270.0
+offset_top = 120.0
+offset_right = 396.0
+offset_bottom = 190.0
+text = "净心
+0/2"
+script = ExtResource("6_8cb5k")
+talent_id = "support_cleanse"
+talent_name = "净心"
+description = "解除负面状态的成功率提升。"
+max_rank = 2
+requirements = Array[Resource]([SubResource("Req_Support_Cleanse")])
+
+[node name="轻身" type="Button" parent="Pages/Page_Support" unique_id=743504773]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 270.0
+offset_top = 300.0
+offset_right = 396.0
+offset_bottom = 370.0
+text = "轻身
+0/3"
+script = ExtResource("6_8cb5k")
+talent_id = "support_haste"
+talent_name = "轻身"
+description = "辅助技能可额外提升速度。"
+max_rank = 3
+requirements = Array[Resource]([SubResource("Req_Support_Haste")])
+
+[node name="续命" type="Button" parent="Pages/Page_Support" unique_id=1150643155]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 470.0
+offset_top = 210.0
+offset_right = 596.0
+offset_bottom = 280.0
+text = "续命
+0/2"
+script = ExtResource("6_8cb5k")
+talent_id = "support_revive"
+talent_name = "续命"
+description = "复活类效果额外恢复生命。"
+max_rank = 2
+requirements = Array[Resource]([SubResource("Req_Support_Revive_A"), SubResource("Req_Support_Revive_B")])
+
+[node name="妙手回天" type="Button" parent="Pages/Page_Support" unique_id=1066156575]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 700.0
+offset_top = 210.0
+offset_right = 826.0
+offset_bottom = 280.0
+text = "妙手回天
+0/1"
+script = ExtResource("6_8cb5k")
+talent_id = "support_miracle"
+talent_name = "妙手回天"
+description = "强力天赋：关键治疗效果大幅增强。"
+requirements = Array[Resource]([SubResource("Req_Support_Miracle")])
+
+[node name="Page_Guard" type="Control" parent="Pages" unique_id=227808064]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("5_6hx45")
+
+[node name="铁骨" type="Button" parent="Pages/Page_Guard" unique_id=1868431352]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 90.0
+offset_top = 210.0
+offset_right = 216.0
+offset_bottom = 280.0
+text = "铁骨
+0/3"
+script = ExtResource("6_8cb5k")
+talent_id = "guard_armor"
+talent_name = "铁骨"
+description = "防御提升。"
+max_rank = 3
+
+[node name="护盾" type="Button" parent="Pages/Page_Guard" unique_id=349603622]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 270.0
+offset_top = 120.0
+offset_right = 396.0
+offset_bottom = 190.0
+text = "护盾
+0/3"
+script = ExtResource("6_8cb5k")
+talent_id = "guard_shield"
+talent_name = "护盾"
+description = "获得战斗开始护盾。"
+max_rank = 3
+requirements = Array[Resource]([SubResource("Req_Guard_Shield")])
+
+[node name="定心" type="Button" parent="Pages/Page_Guard" unique_id=2096977451]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 270.0
+offset_top = 300.0
+offset_right = 396.0
+offset_bottom = 370.0
+text = "定心
+0/2"
+script = ExtResource("6_8cb5k")
+talent_id = "guard_resist"
+talent_name = "定心"
+description = "负面状态抗性提升。"
+max_rank = 2
+requirements = Array[Resource]([SubResource("Req_Guard_Resist")])
+
+[node name="守中有攻" type="Button" parent="Pages/Page_Guard" unique_id=1501025815]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 470.0
+offset_top = 210.0
+offset_right = 596.0
+offset_bottom = 280.0
+text = "守中有攻
+0/2"
+script = ExtResource("6_8cb5k")
+talent_id = "guard_counter"
+talent_name = "守中有攻"
+description = "受到攻击后有概率反击。"
+max_rank = 2
+requirements = Array[Resource]([SubResource("Req_Guard_Counter")])
+
+[node name="不动如山" type="Button" parent="Pages/Page_Guard" unique_id=1035161151]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 700.0
+offset_top = 210.0
+offset_right = 826.0
+offset_bottom = 280.0
+text = "不动如山
+0/1"
+script = ExtResource("6_8cb5k")
+talent_id = "guard_fortress"
+talent_name = "不动如山"
+description = "强力天赋：大幅降低爆发伤害。"
+requirements = Array[Resource]([SubResource("Req_Guard_Fortress_A"), SubResource("Req_Guard_Fortress_B")])
+
+[node name="Page_Attack" type="Control" parent="Pages" unique_id=1663873328]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("5_6hx45")
+
+[node name="破势" type="Button" parent="Pages/Page_Attack" unique_id=1827848705]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 90.0
+offset_top = 210.0
+offset_right = 216.0
+offset_bottom = 280.0
+text = "破势
+0/3"
+script = ExtResource("6_8cb5k")
+talent_id = "attack_strike"
+talent_name = "破势"
+description = "攻击提升。"
+max_rank = 3
+
+[node name="会心" type="Button" parent="Pages/Page_Attack" unique_id=5449846]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 270.0
+offset_top = 120.0
+offset_right = 396.0
+offset_bottom = 190.0
+text = "会心
+0/3"
+script = ExtResource("6_8cb5k")
+talent_id = "attack_crit"
+talent_name = "会心"
+description = "暴击率提升。"
+max_rank = 3
+requirements = Array[Resource]([SubResource("Req_Attack_Crit")])
+
+[node name="裂伤" type="Button" parent="Pages/Page_Attack" unique_id=716082284]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 270.0
+offset_top = 300.0
+offset_right = 396.0
+offset_bottom = 370.0
+text = "裂伤
+0/2"
+script = ExtResource("6_8cb5k")
+talent_id = "attack_bleed"
+talent_name = "裂伤"
+description = "攻击有概率附加持续伤害。"
+max_rank = 2
+requirements = Array[Resource]([SubResource("Req_Attack_Bleed")])
+
+[node name="连斩" type="Button" parent="Pages/Page_Attack" unique_id=806630066]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 470.0
+offset_top = 210.0
+offset_right = 596.0
+offset_bottom = 280.0
+text = "连斩
+0/2"
+script = ExtResource("6_8cb5k")
+talent_id = "attack_combo"
+talent_name = "连斩"
+description = "普通攻击有概率追加一次。"
+max_rank = 2
+requirements = Array[Resource]([SubResource("Req_Attack_Combo_A"), SubResource("Req_Attack_Combo_B")])
+
+[node name="一剑破万法" type="Button" parent="Pages/Page_Attack" unique_id=885317988]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 700.0
+offset_top = 210.0
+offset_right = 826.0
+offset_bottom = 280.0
+text = "一剑破万法
+0/1"
+script = ExtResource("6_8cb5k")
+talent_id = "attack_slay"
+talent_name = "一剑破万法"
+description = "强力天赋：造成伤害时无视部分防御。"
+requirements = Array[Resource]([SubResource("Req_Attack_Slay")])
+
+[node name="DetailLabel" type="RichTextLabel" parent="." unique_id=1478702570]
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 26.285645
+offset_top = 258.2857
+offset_right = 258.28564
+offset_bottom = 156.2857
+grow_horizontal = 0
+grow_vertical = 2
+bbcode_enabled = true
+
+[node name="Label" type="Label" parent="." unique_id=1649025293]
+offset_left = 730.0
+offset_top = 88.57144
+offset_right = 1150.0
+offset_bottom = 136.57144
+theme_override_fonts/font = ExtResource("8_k581l")
+theme_override_font_sizes/font_size = 40
+text = "天赋页面"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ListLabel" type="Label" parent="Panel" unique_id=649191781]
-layout_mode = 0
-offset_left = 142.0
-offset_top = 331.0
-offset_right = 228.0
-offset_bottom = 354.0
-text = "宠物仓库"
+[node name="CloseButton" type="TextureButton" parent="." unique_id=1513911336]
+offset_left = 1730.0
+offset_top = 88.57143
+offset_right = 1772.0
+offset_bottom = 109.57143
+scale = Vector2(2, 2)
+texture_normal = SubResource("AtlasTexture_rmcd0")
+texture_pressed = SubResource("AtlasTexture_bgfmp")
+texture_hover = SubResource("AtlasTexture_2j32r")
 
-[node name="PetGrid" type="GridContainer" parent="Panel" unique_id=1877935325]
+[node name="Label" type="Label" parent="CloseButton" unique_id=1615797317]
 layout_mode = 0
-offset_left = 142.0
-offset_top = 353.0
-offset_right = 818.0
-offset_bottom = 561.0
-mouse_filter = 2
-columns = 5
-
-[node name="BtnPrev" type="Button" parent="Panel" unique_id=1226611851]
-layout_mode = 0
-offset_left = 388.0
-offset_top = 569.0
-offset_right = 428.0
-offset_bottom = 600.0
-text = "←"
-
-[node name="PageLabel" type="Label" parent="Panel" unique_id=1524926053]
-layout_mode = 0
-offset_left = 438.0
-offset_top = 569.0
-offset_right = 548.0
-offset_bottom = 595.0
-text = "1 / 1"
-horizontal_alignment = 1
-
-[node name="BtnNext" type="Button" parent="Panel" unique_id=561006321]
-layout_mode = 0
-offset_left = 558.0
-offset_top = 569.0
-offset_right = 598.0
-offset_bottom = 600.0
-text = "→"
-
-[node name="CloseBtn" type="TextureButton" parent="Panel" unique_id=1463821923]
-layout_mode = 0
-offset_left = 938.0
-offset_top = -22.0
-offset_right = 980.0
-offset_bottom = -1.0
-texture_normal = SubResource("AtlasTexture_6n1tj")
-texture_pressed = SubResource("AtlasTexture_xsfje")
-texture_hover = SubResource("AtlasTexture_3et87")
-
-[node name="Label" type="Label" parent="Panel/CloseBtn" unique_id=1581766146]
-layout_mode = 0
-offset_top = -4.0
-offset_right = 42.0
-offset_bottom = 23.0
-text = "x"
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "X"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="天赋点图标" parent="." unique_id=1866989955 instance=ExtResource("9_ngcfk")]
+position = Vector2(1554.2858, 225.71428)
+scale = Vector2(0.6, 0.6)
+tcp_path = "res://TCP/UI/2302.tcp"
+
+[connection signal="pressed" from="CloseButton" to="." method="_on_close_button_pressed"]

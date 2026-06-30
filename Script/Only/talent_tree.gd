@@ -1,9 +1,9 @@
-extends Control
+extends CanvasLayer
 
 @export var starting_points: int = 20
 
-@onready var page_buttons: HBoxContainer = $Header/PageButtons
-@onready var point_label: Label = $Header/PointLabel
+@onready var page_buttons = $PageButtons
+@onready var point_label: Label = $PointLabel
 @onready var pages: Control = $Pages
 @onready var detail_label: RichTextLabel = $DetailLabel
 
