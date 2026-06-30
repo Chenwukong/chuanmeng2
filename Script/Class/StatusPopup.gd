@@ -185,7 +185,7 @@ func _refresh() -> void:
 	var df := s.defense + eq_def + _tmp_def
 	var spd := s.speed + eq_spd + _tmp_spd
 
-	_set_attr("名称", s.character_name, Color(1, 0.85, 0.2))
+	_set_attr("名称", s.get_display_name(), Color(1, 0.85, 0.2))
 	_set_attr("等级", "%d" % s.level, Color.WHITE)
 	_set_attr("气血", "%d/%d" % [s.saved_hp if s.saved_hp > 0 else hp, hp], _green_if(_tmp_hp > 0 or _tmp_magic > 0))
 	_set_attr("蓝量", "%d/%d" % [s.saved_mp if s.saved_mp > 0 else mp, mp], _green_if(_tmp_mp > 0 or _tmp_magic > 0))

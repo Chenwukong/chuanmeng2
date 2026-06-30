@@ -81,6 +81,10 @@ func play(anim_name: String, loop: bool = true) -> void:
 func stop() -> void:
 	_timer.stop()
 
+## 是否正在播放（Timer 运行中）
+func is_playing() -> bool:
+	return not _timer.is_stopped()
+
 func _on_timer_timeout() -> void:
 	var r = _readers.get(_current_anim)
 	if r == null: return

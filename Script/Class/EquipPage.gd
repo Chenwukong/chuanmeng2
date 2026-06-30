@@ -227,7 +227,7 @@ func _switch_to_member(mid: String) -> void:
 func _refresh_char_label() -> void:
 	if char_name_label:
 		var s = GameData.party_db.get(_member_id)
-		char_name_label.text = s.character_name if s else ""
+		char_name_label.text = s.get_display_name() if s else ""
 
 func _load_member_portrait() -> void:
 	if _member_id.is_empty() or not portrait: return

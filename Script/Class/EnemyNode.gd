@@ -165,6 +165,16 @@ func play_cast_sequence(spell_name: String = "") -> void:
 func play_idle() -> void:
 	was_player.play("idle")
 
+var _ranged_animating: bool = false
+
+## 远程攻击 — 原地播放攻击动画（不走动），内部 await 完自动切 idle
+func play_ranged_attack() -> void:
+	_ranged_animating = true
+	_audio_atk.play()
+	await was_player.play_frames_direct("attack")
+	was_player.play("idle")
+	_ranged_animating = false
+
 ## 播放一次挨打动画，停住不循环
 func play_hit_once() -> void:
 	was_player.play("hit", false)
@@ -263,6 +273,11 @@ func _on_died() -> void:
 
 	battle_character.sync_visual()
 	was_player.play("die", false)
+	# 如果没有 WAS 死亡动画（大多数敌人没有），用渐隐替代
+	if not was_player.is_playing():
+		var tw := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+		tw.tween_property(sprite, "modulate:a", 0.0, 0.5)
+		tw.tween_callback(func(): visible = false)
 
 var _shattered: bool = false
 

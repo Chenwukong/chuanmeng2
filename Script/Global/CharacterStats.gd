@@ -5,11 +5,25 @@ extends Resource
 
 ## 基础信息
 @export var character_name: String = "未命名"
+var en_name: String = ""  # 英文名（locale="en" 时使用）
 @export var character_class: String = "剑修"
 @export var emoji_icon: String = "🧙"
 
 ## 五行：金、木、水、火、土
 enum Element { METAL, WOOD, WATER, FIRE, EARTH }
+## 返回当前语言下的显示名
+static func display_name(s) -> String:
+	if s == null: return ""
+	if GameData.get_lang() == "en" and not s.en_name.is_empty():
+		return s.en_name
+	return s.character_name
+
+## 实例方法：返回当前语言下的显示名
+func get_display_name() -> String:
+	if GameData.get_lang() == "en" and not en_name.is_empty():
+		return en_name
+	return character_name
+
 static func element_name(e: Element) -> String:
 	match e:
 		Element.METAL: return "金"
@@ -120,6 +134,7 @@ static func calc_exp_to_next(lv: int) -> int:
 func duplicate_for_battle() -> CharacterStats:
 	var copy = CharacterStats.new()
 	copy.character_name  = character_name
+	copy.en_name = en_name
 	copy.character_class = character_class
 	copy.emoji_icon      = emoji_icon
 	copy.max_hp          = max_hp
@@ -163,6 +178,7 @@ func duplicate_for_battle() -> CharacterStats:
 func save_to_dict() -> Dictionary:
 	return {
 		"name":    character_name,
+		"en_name": en_name,
 		"class":   character_class,
 		"emoji":   emoji_icon,
 		"hp":      max_hp,
@@ -203,6 +219,7 @@ func save_to_dict() -> Dictionary:
 ## 存档 ← 字典
 func load_from_dict(d: Dictionary) -> void:
 	character_name  = d.get("name", "未命名")
+	en_name = d.get("en_name", "")
 	character_class = d.get("class", "")
 	emoji_icon      = d.get("emoji", "")
 	max_hp          = d.get("hp", 100)

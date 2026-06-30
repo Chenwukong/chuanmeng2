@@ -85,7 +85,7 @@ func setup(character_stats: CharacterStats, for_player: bool = false) -> void:
 		_sp_bar.max_value = 100
 		_sp_bar.value     = current_sp
 	if _name_label:
-		_name_label.text = stats.character_name
+		_name_label.text = stats.get_display_name()
 
 	# 加载 WAS 动画
 	if not stats.was_base_path.is_empty():
@@ -790,7 +790,7 @@ func _level_up() -> void:
 	_update_hp_bar()
 	_update_mp_bar()
 	if _name_label:
-		_name_label.text = stats.character_name
+		_name_label.text = stats.get_display_name()
 
 # ─── 工具 ────────────────────────────────────
 func hp_percent() -> float:

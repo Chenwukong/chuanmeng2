@@ -158,6 +158,7 @@ func _ready() -> void:
 	# 连接 BattleManager 信号
 	get_tree().current_scene.get_node("UI/BattleLog").visible = false
 	battle_manager.log_pushed.connect(_on_log_pushed)
+	battle_manager.skill_failed.connect(_on_skill_failed)
 	battle_manager.damage_floated.connect(_on_damage_floated)
 	battle_manager.state_changed.connect(_on_state_changed)
 	battle_manager.battle_ended.connect(_on_battle_ended)
@@ -384,6 +385,14 @@ func _show_floating_text(text: String, color: Color = Color(1, 0.85, 0.1)) -> vo
 	tw.tween_property(lbl, "position:y", lbl.position.y - 80, 1.2)
 	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 1.2)
 	tw.tween_callback(lbl.queue_free)
+
+func _play_wrong_sound() -> void:
+	var snd := AudioStreamPlayer.new()
+	snd.stream = load("res://Audio/SE/057-Wrong01.ogg")
+	snd.bus = "SFX"
+	add_child(snd)
+	snd.play()
+	snd.finished.connect(snd.queue_free)
 
 func _try_quick_cast() -> bool:
 	if battle_manager.state != BattleManager.BattleState.PLAYER_TURN:
@@ -693,7 +702,7 @@ func _process(_delta: float) -> void:
 			if pressed >= 0 and pressed != actor.stats.talisman_type:
 				var names = ["火焰", "雷电", "冰冻", "加速"]
 				switch_talisman(actor, pressed)
-				_push_log_to_battle("%s 切换符咒：%s" % [actor.stats.character_name, names[pressed]])
+				_push_log_to_battle("%s 切换符咒：%s" % [actor.stats.get_display_name(), names[pressed]])
 
 
 func _push_log_to_battle(text: String):
@@ -1088,7 +1097,7 @@ func _show_tooltip(ch: BattleCharacter) -> void:
 	if ch == null or _tooltip == null:
 		return
 	var eff_max_hp := ch.get_effective_max_hp()
-	_tooltip_labels["name"].text = ch.stats.character_name
+	_tooltip_labels["name"].text = ch.stats.get_display_name()
 	_tooltip_labels["name"].add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 
 	_tooltip_labels["hp"].text = "HP: %d / %d" % [ch.current_hp, eff_max_hp]
@@ -1396,7 +1405,9 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 				# 斩杀特效：died 信号会触发
 				if target_node and target_node.has_method("play_idle"):
 					if target and is_instance_valid(target):
-						if target.is_frozen:
+						if target.is_dead:
+							pass  # 已死亡，不覆盖死亡动画
+						elif target.is_frozen:
 							target.sync_freeze_anim()
 						elif target.is_weakened:
 							target.show_debuff("虚弱")
@@ -1412,26 +1423,26 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 					var tex := _portrait_texture(target.stats.was_base_path, "x44")
 					if tex: ee["avatar"].texture = tex
 				nd.play_ranged_attack()
-				# 目标受击（与施法者动画同时进行）
 				var target_node: Node2D = target.get_parent()
-				if target_node:
-					if target_node.has_method("play_hit_once"):
-						target_node.play_hit_once()
-					if target_node.has_method("play_hit_flash"):
-						target_node.play_hit_flash()
-				# 主角（主）用符咒飞行，其他远程直接播命中特效
+				# 主角（主）用符咒飞行，命中时触发受击+伤害
 				if CharacterStats.has_role(actor.stats.role, CharacterStats.Role.MAIN):
 					var on_hit := func():
+						if target_node:
+							if target_node.has_method("play_hit_once"):
+								target_node.play_hit_once()
+							if target_node.has_method("play_hit_flash"):
+								target_node.play_hit_flash()
 						battle_manager.flush_pending_damage()
 					await SpellProjectile.shoot(caster_pos, target_pos, target.get_parent(), on_hit, self, actor, actor.stats.talisman_type, _get_talisman_texture(actor))
 				else:
 					if nd.has_method("play_ranged_hit_effect"):
 						nd.play_ranged_hit_effect(target.get_parent(), actor.stats.was_base_path)
 				battle_manager.flush_pending_damage()
-				# 等施法者攻击动画播完再结束回合
-				await nd.was_player.animation_finished
+				# 等施法者攻击动画播完
+				while nd._ranged_animating:
+					await get_tree().process_frame
 				battle_manager.ranged_attack_completed.emit()
-				if target_node and target_node.has_method("play_idle"):
+				if target_node and target_node.has_method("play_idle") and target and not target.is_dead:
 					target_node.play_idle()
 				if ee != null:
 					_update_avatar_for(target)
@@ -1477,7 +1488,9 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 				# 斩杀特效：died 信号会触发
 				if target_node and target_node.has_method("play_idle"):
 					if target and is_instance_valid(target):
-						if target.is_frozen:
+						if target.is_dead:
+							pass  # 已死亡，不覆盖死亡动画
+						elif target.is_frozen:
 							target.sync_freeze_anim()
 						elif target.is_weakened:
 							target.show_debuff("虚弱")
@@ -1494,15 +1507,14 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 					var tex := _portrait_texture(target.stats.was_base_path, "x44")
 					if tex: ee["avatar"].texture = tex
 				nd.play_ranged_attack()
-				# 目标受击动画
 				var tgt_node: Node2D = target.get_parent()
-				if tgt_node:
-					if tgt_node.has_method("play_hit_once"):
-						tgt_node.play_hit_once()
-					if tgt_node.has_method("play_hit_flash"):
-						tgt_node.play_hit_flash()
 				if CharacterStats.has_role(actor.stats.role, CharacterStats.Role.MAIN):
 					var on_hit := func():
+						if tgt_node:
+							if tgt_node.has_method("play_hit_once"):
+								tgt_node.play_hit_once()
+							if tgt_node.has_method("play_hit_flash"):
+								tgt_node.play_hit_flash()
 						battle_manager.flush_pending_damage()
 						battle_manager.flush_guard_return()
 					await SpellProjectile.shoot(caster_pos, target_pos, hit_target, on_hit, self)
@@ -1511,10 +1523,12 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 						nd.play_ranged_hit_effect(hit_target, actor.stats.was_base_path)
 				battle_manager.flush_pending_damage()
 				battle_manager.flush_guard_return()
-				await nd.was_player.animation_finished
+				# 等攻击动画播完
+				while nd._ranged_animating:
+					await get_tree().process_frame
 				battle_manager.ranged_attack_completed.emit()
 				await get_tree().create_timer(0.4).timeout
-				if tgt_node and tgt_node.has_method("play_idle"):
+				if tgt_node and tgt_node.has_method("play_idle") and target and not target.is_dead:
 					tgt_node.play_idle()
 				if ee != null:
 					_update_avatar_for(target)
@@ -1542,6 +1556,10 @@ func _on_log_pushed(text: String, log_type: String) -> void:
 		if log_node.text.length() > 5000:
 			log_node.text = log_node.text.substr(log_node.text.length() - 5000)
 
+func _on_skill_failed(msg: String) -> void:
+	_show_floating_text(msg, Color(0.8, 0.8, 0.8))
+	_play_wrong_sound()
+
 func _on_state_changed(new_state: BattleManager.BattleState) -> void:
 	if new_state != BattleManager.BattleState.PLAYER_TURN:
 		action_panel.set_enabled(false)
@@ -1556,9 +1574,18 @@ func _on_state_changed(new_state: BattleManager.BattleState) -> void:
 	else:
 		# 恢复操作面板，敌人默认可点击（直接点 = 普通攻击）
 		action_panel.visible = true
+		action_panel.set_enabled(true)
 		_enable_enemy_selection(true)
 		_set_cursor_selecting_ally(false)
 		_check_threat_eye()
+		# 恢复角色指示文字和技能面板
+		var actor := battle_manager.current_actor()
+		if actor and not actor.is_dead:
+			actor_indicator.text = actor.stats.get_display_name() + " 选择行动"
+			var actor_node := actor.get_parent()
+			if actor_node:
+				action_panel.show_near(actor_node.global_position)
+			action_panel.refresh(actor, true)
 
 func _on_actor_turn_started(actor: BattleCharacter, is_player: bool) -> void:
 	for ch in battle_manager.party:
@@ -1582,7 +1609,7 @@ func _on_actor_turn_started(actor: BattleCharacter, is_player: bool) -> void:
 		var talisman_info = ""
 		if actor.stats.is_ranged:
 			talisman_info = " " + talisman_names[actor.stats.talisman_type]
-		actor_indicator.text = GameData._T("BATTLE_TURN_OF") % [actor.stats.character_name, talisman_info]
+		actor_indicator.text = GameData._T("BATTLE_TURN_OF") % [actor.stats.get_display_name(), talisman_info]
 		action_panel.refresh(actor, true)
 		_enable_enemy_selection(true)
 		# 自动聚焦攻击按钮
@@ -1708,7 +1735,7 @@ func _add_summary_section(parent: Control, label_text: String, stats: Dictionary
 	for key in stats:
 		var name = key
 		if GameData.party_db.has(key):
-			name = GameData.party_db[key].character_name
+			name = GameData.party_db[key].get_display_name()
 		entries.append({"name": name, "value": stats[key]})
 	entries.sort_custom(func(a, b): return a.value > b.value)
 	for e in entries:
@@ -1734,7 +1761,7 @@ func _add_threat_summary(parent: Control) -> void:
 		if c.is_dead:
 			continue
 		var val := tm.get_threat_value(c)
-		entries.append({"name": c.stats.character_name, "value": val})
+		entries.append({"name": c.stats.get_display_name(), "value": val})
 	if entries.is_empty():
 		var na := Label.new()
 		na.text = "-"
@@ -2315,7 +2342,7 @@ func _refresh_stats_display() -> void:
 		for c in alive:
 			var lbl := Label.new()
 			var state := tm.get_threat_state(c, alive)
-			lbl.text = "%s: %d" % [c.stats.character_name, tm.get_threat_value(c)]
+			lbl.text = "%s: %d" % [c.stats.get_display_name(), tm.get_threat_value(c)]
 			match state:
 				"red":    lbl.add_theme_color_override("font_color", Color(1, 0.3, 0.2))
 				"yellow": lbl.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
@@ -2344,7 +2371,7 @@ func _refresh_stats_display() -> void:
 		var value: int = src[key]
 		var name = key
 		if GameData.party_db.has(key):
-			name = GameData.party_db[key].character_name
+			name = GameData.party_db[key].get_display_name()
 		entries.append({ "name": name, "value": value })
 	entries.sort_custom(func(a, b): return a.value > b.value)
 	for e in entries:

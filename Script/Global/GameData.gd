@@ -47,6 +47,7 @@ var current_locale: String = "zh"  # 当前语言
 ## 多语言翻译表（JSON 加载，不依赖 Godot 的 tr()）
 static var _lang_cache: Dictionary = {}
 static var _current_lang: String = "zh"
+static func get_lang() -> String: return _current_lang
 
 
 ## 获取翻译 text = _T("KEY")，带 %s/%d 插值
@@ -645,6 +646,7 @@ func _build_enemy_db() -> void:
 const CHARACTER_DB := {
 	"yuling": {
 		"name": "羽灵神", "class": "战神", "elem": "金", "role": "主",
+		"en_name": "Yuling",
 		"hp": 150, "mp": 80,  "atk": 3500, "matk": 25, "def": 14, "mdef": 10, "spd": 8,
 		"crit": 0.18, "crit_mult": 1.7,
 		"was_base_path": "res://WAS/羽灵神-弓/",
@@ -654,6 +656,7 @@ const CHARACTER_DB := {
 	},
 	"erlang": {
 		"name": "二郎神", "class": "战神", "elem": "金", "role": "攻",
+		"en_name": "Erlang",
 		"hp": 150, "mp": 70,  "atk": 30, "matk": 20, "def": 14, "mdef": 10, "spd": 30,
 		"crit": 0.18, "crit_mult": 1.7,
 		"was_base_path": "res://WAS/二郎神",
@@ -663,6 +666,7 @@ const CHARACTER_DB := {
 	},
 	"duoshiyi": {
 		"name": "堕十一", "class": "灵师", "elem": "金", "role": "攻",
+		"en_name": "Duoshiyi",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/堕十一",
@@ -672,6 +676,7 @@ const CHARACTER_DB := {
 	},
 	"qianmian": {
 		"name": "千面", "class": "灵师", "elem": "水", "role": "召",
+		"en_name": "Qianmian",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/千面",
@@ -680,7 +685,8 @@ const CHARACTER_DB := {
 	},
 	"dingdong": {
 		"name": "叮咚", "class": "灵师", "elem": "水", "role": "召",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"en_name": "Dingdong",
+		"hp": 120, "mp": 100, "atk": 2000, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/叮咚",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"],
@@ -689,7 +695,8 @@ const CHARACTER_DB := {
 	},
 	"lingfeng": {
 		"name": "凌风", "class": "灵师", "elem": "水", "role": "攻辅",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"en_name": "Lingfeng",
+		"hp": 120, "mp": 100, "atk": 20000, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/凌风",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
@@ -698,6 +705,7 @@ const CHARACTER_DB := {
 	},
 	"hutouguai": {
 		"name": "虎头怪", "class": "灵师", "elem": "木", "role": "召",
+		"en_name": "Hutou",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/虎头怪",
@@ -707,6 +715,7 @@ const CHARACTER_DB := {
 	},
 	"shentianbing": {
 		"name": "神天兵", "class": "灵师", "elem": "金", "role": "护",
+		"en_name": "Shentianbing",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/神天兵",
@@ -716,6 +725,7 @@ const CHARACTER_DB := {
 	},
 	"xiaoyaosheng": {
 		"name": "逍遥生", "class": "灵师", "elem": "金", "role": "护",
+		"en_name": "Xiaoyaosheng",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/逍遥生",
@@ -725,6 +735,7 @@ const CHARACTER_DB := {
 	},	
 	"jumowang": {
 		"name": "巨魔王", "class": "灵师", "elem": "金", "role": "护",
+		"en_name": "Jumowang",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/巨魔王",
@@ -734,6 +745,7 @@ const CHARACTER_DB := {
 	},		
 	"taoyaoyao": {
 		"name": "桃夭夭", "class": "灵师", "elem": "金", "role": "护",
+		"en_name": "Taoyaoyao",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/桃夭夭",
@@ -743,6 +755,7 @@ const CHARACTER_DB := {
 	},				
 	"yanwushi": {
 		"name": "偃无师", "class": "灵师", "elem": "金", "role": "护",
+		"en_name": "Yanwushi",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/偃无师",
@@ -752,6 +765,7 @@ const CHARACTER_DB := {
 	},			
 	"yingnvxia": {
 		"name": "英女侠", "class": "灵师", "elem": "金", "role": "护",
+		"en_name": "Yingnvxia",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/英女侠",
@@ -761,6 +775,7 @@ const CHARACTER_DB := {
 	},
 	"yingjingling": {
 		"name": "影精灵", "class": "灵师", "elem": "金", "role": "护",
+		"en_name": "Yingjingling",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/影精灵",
@@ -770,6 +785,7 @@ const CHARACTER_DB := {
 	},		
 	"dajiangjun": {
 		"name": "大将军", "class": "灵师", "elem": "金", "role": "护",
+		"en_name": "Dajiangjun",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/大将军",
@@ -789,6 +805,7 @@ func _init_party() -> void:
 func _add_member(member_id: String, d: Dictionary) -> void:
 	var s = CharacterStats.new()
 	s.character_name  = d.name;   s.character_class = d.class
+	s.en_name         = d.get("en_name", "")
 	s.max_hp          = d.hp;     s.max_mp          = d.mp
 	s.attack          = d.atk;    s.magic_attack    = d.matk
 	s.defense         = d.def;    s.magic_defense   = d.mdef

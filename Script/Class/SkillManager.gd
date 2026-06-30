@@ -41,7 +41,7 @@ static func execute(
 	if caster.is_frozen:
 		caster.is_frozen = false
 		result.success = false
-		result.log_text = "【%s】被冰冻，无法行动！" % caster.stats.character_name
+		result.log_text = "【%s】被冰冻，无法行动！" % caster.stats.get_display_name()
 		return result
 
 	result.success = true
@@ -121,9 +121,9 @@ static func _calc_damage(
 
 	var crit_str = " 【暴击！】" if is_crit else ""
 	result.log_text = "%s 施展【%s】，对 %s 造成 %d 点%s伤害%s" % [
-		caster.stats.character_name,
+		caster.stats.get_display_name(),
 		data.skill_name,
-		target.stats.character_name,
+		target.stats.get_display_name(),
 		base_dmg,
 		"法术" if is_magic else "物理",
 		crit_str
@@ -146,7 +146,7 @@ static func _calc_multi_hit(
 		total += dmg
 
 	result.log_text = "%s 施展【%s】，%d 段连击共造成 %d 点伤害！" % [
-		caster.stats.character_name, data.skill_name, data.hit_count, total
+		caster.stats.get_display_name(), data.skill_name, data.hit_count, total
 	]
 
 static func _calc_heal(
@@ -161,9 +161,9 @@ static func _calc_heal(
 	result.heal_amount = amount
 
 	result.log_text = "%s 施展【%s】，为 %s 恢复 %d 点气血" % [
-		caster.stats.character_name,
+		caster.stats.get_display_name(),
 		data.skill_name,
-		target.stats.character_name,
+		target.stats.get_display_name(),
 		amount
 	]
 
@@ -181,15 +181,15 @@ static func _apply_buff(
 			target.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
 			result.applied_buff = data.apply_buff_id
 			result.log_text = "%s 施展【%s】，%s%s！" % [
-				caster.stats.character_name,
+				caster.stats.get_display_name(),
 				data.skill_name,
-				target.stats.character_name,
+				target.stats.get_display_name(),
 				"获得增益" if not is_debuff else "受到诅咒"
 			]
 		else:
-			result.log_text = "【%s】对 %s 无效！" % [data.skill_name, target.stats.character_name]
+			result.log_text = "【%s】对 %s 无效！" % [data.skill_name, target.stats.get_display_name()]
 	else:
-		result.log_text = "%s 施展【%s】" % [caster.stats.character_name, data.skill_name]
+		result.log_text = "%s 施展【%s】" % [caster.stats.get_display_name(), data.skill_name]
 
 
 # ──────────────────────────────────────────────────────

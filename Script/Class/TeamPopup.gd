@@ -72,7 +72,7 @@ func _setup_player(player: Node2D, stats: CharacterStats) -> void:
 	var sprite := player.get_node_or_null("sprite") as Sprite2D
 
 	if name_lbl:
-		name_lbl.text = stats.character_name
+		name_lbl.text = stats.get_display_name()
 	if role_lbl:
 		# 定位/五行，例如 主/金、护/土
 		role_lbl.text = "%s/%s" % [

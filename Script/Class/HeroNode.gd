@@ -194,15 +194,19 @@ func play_cast_sequence(spell_name: String = "") -> void:
 
 
 ## 远程攻击 — 原地播放攻击动画，不走动
+var _ranged_animating: bool = false
+
+## 远程攻击 — 原地播放攻击动画（不走动），内部 await 完自动切 idle
 func play_ranged_attack() -> void:
+	_ranged_animating = true
 	_audio_atk.play()
-	was_player.play("attack", false)
 	if _weapon_was and _weapon_was.anim_files.has("attack"):
 		_weapon_was.play("attack", false)
 	await was_player.play_frames_direct("attack")
 	was_player.play("idle")
 	if _weapon_was:
 		_weapon_was.play("idle")
+	_ranged_animating = false
 
 
 ## 完整攻击序列：走过去 → 攻击(同时触发目标受击) → 走回来
@@ -450,6 +454,10 @@ func _on_died() -> void:
 	var wui = get_node_or_null("WorldUI")
 	if wui: wui.visible = false
 	was_player.play("die", false)
+	if not was_player.is_playing():
+		var tw := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+		tw.tween_property(sprite, "modulate:a", 0.0, 0.5)
+		tw.tween_callback(func(): visible = false)
 	if _weapon_was and _weapon_was.anim_files.has("die"):
 		_weapon_was.play("die", false)
 
