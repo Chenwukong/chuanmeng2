@@ -32,9 +32,9 @@ var _nav_cd: float = 0.0
 
 
 func _ready() -> void:
-	_wasp.add_anim("idle",   "res://WAS/羽灵神-弓/待机.was")
-	_wasp.add_anim("move",   "res://WAS/羽灵神-弓/移动.was")
-	_wasp.add_anim("attack", "res://WAS/羽灵神-弓/攻击.was")
+	_wasp.add_anim("idle",   "res://WAS/游霄云/待机.was")
+	_wasp.add_anim("move",   "res://WAS/游霄云/移动.was")
+	_wasp.add_anim("attack", "res://WAS/游霄云/攻击.was")
 	_wasp.add_anim("ride_idle", "res://WAS/坐骑/羽灵神-坐骑-宝贝葫芦/站立.was")
 	_wasp.add_anim("ride_move", "res://WAS/坐骑/羽灵神-坐骑-宝贝葫芦/行走.was")
 	_wasp.load_all()

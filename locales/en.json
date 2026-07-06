@@ -191,5 +191,20 @@
   "EQUIP_RIGHT_CLICK_UNEQUIP": "Right-click to unequip",
   "EQUIP_INSTRUCTION": "[color=gray]Left-click select  Double-click equip[/color]",
   "EQUIP_RIGHT_CLICK_INST": "[color=gray]Right-click to unequip[/color]",
-  "EQUIP_EQUIPPED_SECTION": "[u]── Equipped ──[/u]"
+  "EQUIP_EQUIPPED_SECTION": "[u]── Equipped ──[/u]",
+  "LOG_SKILL_NOT_FOUND": "Skill not found: %s",
+  "LOG_FROZEN_CANT_ACT": "%s is frozen and cannot act!",
+  "LOG_DAMAGE_DEALT": "%s uses %s on %s, dealing %d %s damage%s",
+  "LOG_MULTI_HIT_DMG": "%s uses %s, %d hits dealing %d total damage!",
+  "LOG_HEAL_CAST": "%s uses %s, restoring %s for %d HP",
+  "LOG_BUFF_CAST": "%s uses %s, %s %s!",
+  "LOG_BUFF_FAIL": "%s has no effect on %s!",
+  "LOG_SKILL_CAST": "%s uses %s",
+  "LOG_CRIT": "[Critical!]",
+  "DMG_TYPE_PHYSICAL": "Physical",
+  "DMG_TYPE_MAGIC": "Magic",
+  "嘲讽": "Taunt",
+  "LOG_BOUNTY_KILL_DONE": "🎯 Bounty quest [%s] completed!",
+  "LOG_DOUBLE_ACTION": "%s Double Action! Extra attack available!",
+  "LOG_DOUBLE_BLOCKED": "%s cannot use the same skill type twice!"
 }

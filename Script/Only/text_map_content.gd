@@ -9,6 +9,7 @@ const MapConnectionScript := preload("res://Script/Only/map_connection.gd")
 @export var connections: Array[Resource] = []
 @export var line_color: Color = Color(0, 0, 0, 1)
 @export var line_width: float = 1.0
+@export var teleport_data: Array = []  # [{ label: String, pos: Vector2, color: Color }]
 
 
 func _ready() -> void:
@@ -18,15 +19,24 @@ func _ready() -> void:
 			var control := child as Control
 			control.resized.connect(queue_redraw)
 			control.item_rect_changed.connect(queue_redraw)
+	# 背景虚化：创建 Sprite2D 独立渲染背景纹理
+	if background_texture:
+		var bg := Sprite2D.new()
+		bg.name = "__BG_Blur"
+		bg.texture = background_texture
+		bg.centered = false
+		bg.position = background_rect.position
+		bg.scale = Vector2(background_rect.size.x / background_texture.get_width(), background_rect.size.y / background_texture.get_height())
+		var blur_mat := ShaderMaterial.new()
+		blur_mat.shader = preload("res://Shader/Blur.gdshader")
+		blur_mat.set_shader_parameter("blur_size", 3.0)
+		bg.material = blur_mat
+		add_child(bg)
+		move_child(bg, 0)
 	queue_redraw()
 
 
 func _draw() -> void:
-	if background_texture != null:
-		draw_texture_rect(background_texture, background_rect, false)
-	else:
-		draw_rect(background_rect, background_color, true)
-
 	var pairs := connections
 	if pairs.is_empty() and has_node("长安") and has_node("建邺"):
 		var default_connection := MapConnectionScript.new()
@@ -57,6 +67,18 @@ func _draw() -> void:
 		end -= dir * _node_radius(to_node)
 
 		draw_line(start, end, line_color, line_width, true)
+
+	# 传送圈
+	for tp in teleport_data:
+		var label: String = tp.get("label", "")
+		var pos: Vector2 = tp.get("pos", Vector2.ZERO)
+		var col: Color = tp.get("color", Color(0.3, 0.6, 1.0, 0.9))
+		draw_circle(pos, 10, Color(0, 0, 0, 0.3))
+		draw_circle(pos, 8, col)
+		if not label.is_empty():
+			var font := ThemeDB.fallback_font
+			var font_size := ThemeDB.fallback_font_size
+			draw_string(font, pos + Vector2(14, -4), label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color.WHITE)
 
 
 func _place_center(place: Node) -> Vector2:

@@ -13,7 +13,7 @@ signal closed()
 @onready var btn_confirm_yes: Button = $Panel/ConfirmDialog/BtnYes
 @onready var btn_confirm_no: Button = $Panel/ConfirmDialog/BtnNo
 @onready var bounty_grid: GridContainer = $Panel/ScrollContainer/BountyGrid
-@onready var close_btn: Button = $Panel/CloseBtn
+@onready var close_btn: TextureButton = $Panel/CloseBtn
 
 # ── 等级标识常量 ──
 const RANK_JIA := 3
@@ -182,21 +182,35 @@ func _create_task_card(task_dict: Dictionary) -> PanelContainer:
 	name_lbl.max_lines_visible = 2
 	vbox.add_child(name_lbl)
 
-	# 需求道具
+	# 需求
 	var item_id = task_dict.get("item_id", "")
-	var item_data = GameData.item_db.get(item_id) if not item_id.is_empty() else null
-	var item_name = item_data.item_name if item_data else item_id
-	var item_icon = item_data.icon_emoji if item_data else "📦"
-	var req_count = task_dict.get("count", 1)
+	var kill_target = task_dict.get("kill_target", "")
 	var req_lbl = Label.new()
-	req_lbl.text = "%s %s ×%d" % [item_icon, item_name, req_count]
+	if not kill_target.is_empty():
+		var kills = GameData.game_flags.get("bounty_kill_" + task_dict.get("id", ""), 0)
+		var req_kills = task_dict.get("kill_required", 1)
+		req_lbl.text = "击杀 %s %d/%d" % [kill_target, kills, req_kills]
+	else:
+		var item_data = GameData.item_db.get(item_id) if not item_id.is_empty() else null
+		var item_name = item_data.item_name if item_data else item_id
+		var item_icon = item_data.icon_emoji if item_data else "📦"
+		var req_count = task_dict.get("count", 1)
+		req_lbl.text = "%s %s ×%d" % [item_icon, item_name, req_count]
 	req_lbl.add_theme_font_size_override("font_size", 11)
 	req_lbl.add_theme_color_override("font_color", Color(0.7, 0.85, 1.0))
 	vbox.add_child(req_lbl)
 
-	# 金币奖励
+	# 奖励
 	var gold_lbl = Label.new()
-	gold_lbl.text = "💰 %d 金币" % task_dict.get("gold", 0)
+	var gold_val = task_dict.get("gold", 0)
+	var tp_val = task_dict.get("reward_talent_points", 0)
+	var reward_text = ""
+	if gold_val > 0: reward_text += "💰 %d 金币" % gold_val
+	if tp_val > 0:
+		if not reward_text.is_empty(): reward_text += " + "
+		reward_text += "🌟 天赋点×%d" % tp_val
+	if reward_text.is_empty(): reward_text = "💰 0 金币"
+	gold_lbl.text = reward_text
 	gold_lbl.add_theme_font_size_override("font_size", 12)
 	gold_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	vbox.add_child(gold_lbl)
@@ -244,6 +258,10 @@ func _update_all_card_states() -> void:
 func _can_complete_bounty(tid: String) -> bool:
 	var entry = _find_bounty_data(tid)
 	if entry.is_empty(): return false
+	var kill_target = entry.get("kill_target", "")
+	if not kill_target.is_empty():
+		var kills = GameData.game_flags.get("bounty_kill_" + entry.get("id", ""), 0)
+		return kills >= entry.get("kill_required", 1)
 	return GameData.check_bounty_items(entry.get("item_id", ""), entry.get("count", 1))
 
 
@@ -266,7 +284,10 @@ func _on_card_clicked(tid: String) -> void:
 		if _can_complete_bounty(tid):
 			_submit_bounty(entry)
 		else:
-			_show_notification("道具不足！请收集足够的任务道具后再来提交。")
+			if not entry.get("kill_target", "").is_empty():
+				_show_notification("击杀不足！请继续清理怪物。")
+			else:
+				_show_notification("道具不足！请收集足够的任务道具后再来提交。")
 		return
 
 	_pending_bounty = entry
@@ -279,19 +300,40 @@ func _submit_bounty(entry: Dictionary) -> void:
 	var gold = entry.get("gold", 0)
 	var repeatable = entry.get("repeatable", false)
 	var tid = entry.get("id", "")
+	var kill_target = entry.get("kill_target", "")
 
-	if not GameData.consume_bounty_items(item_id, count):
-		_show_notification("道具不足！")
-		return
+	if kill_target.is_empty():
+		# 物品型：消耗道具
+		if not GameData.consume_bounty_items(item_id, count):
+			_show_notification("道具不足！")
+			return
+	else:
+		# 击杀型：验证击杀数
+		var kills = GameData.game_flags.get("bounty_kill_" + tid, 0)
+		if kills < entry.get("kill_required", 1):
+			_show_notification("击杀不足！")
+			return
+		# 清空击杀计数
+		GameData.game_flags.erase("bounty_kill_" + tid)
 
 	GameData.give_bounty_reward(gold)
+	var tp = entry.get("reward_talent_points", 0)
+	if tp > 0:
+		GameData.talent_points += tp
 
 	if repeatable:
 		GameData.active_bounties.erase(tid)
-		_show_notification("✅ 任务完成！获得 %d 金币！" % gold)
+		var msg = "✅ 任务完成！"
+		if gold > 0: msg += "获得 %d 金币！" % gold
+		if tp > 0: msg += "天赋点 +%d！" % tp
+		_show_notification(msg)
 	else:
 		GameData.complete_bounty(tid)
-		_show_notification("🎉 任务完成！获得 %d 金币！\n此任务不再出现。" % gold)
+		var msg = "🎉 任务完成！"
+		if gold > 0: msg += "获得 %d 金币！" % gold
+		if tp > 0: msg += "天赋点 +%d！" % tp
+		msg += "\n此任务不再出现。"
+		_show_notification(msg)
 
 	_refresh_bounties()
 
@@ -303,6 +345,7 @@ func _show_confirm_dialog(entry: Dictionary) -> void:
 	var count = entry.get("count", 1)
 	var gold = entry.get("gold", 0)
 	var repeatable = entry.get("repeatable", false)
+	var kill_target = entry.get("kill_target", "")
 
 	var rank_br = entry.get("rank", BountyData.Rank.DING)
 	var rank_lbl = "?"
@@ -313,11 +356,33 @@ func _show_confirm_dialog(entry: Dictionary) -> void:
 		BountyData.Rank.DING: rank_lbl = "丁"
 
 	confirm_title.text = "📜 %s (%s级)" % [entry.get("name", "?"), rank_lbl]
-	confirm_desc.text = "%s\n\n需求：%s ×%d\n奖励：💰 %d 金币\n%s" % [
-		entry.get("desc", ""),
-		item_name, count, gold,
-		"⚠ 此任务不可重复" if not repeatable else "🔄 可重复领取"
-	]
+	var reward_str = ""
+	if gold > 0: reward_str += "💰 %d 金币" % gold
+	var tp = entry.get("reward_talent_points", 0)
+	if tp > 0:
+		if not reward_str.is_empty(): reward_str += " + "
+		reward_str += "🌟 天赋点 ×%d" % tp
+	if reward_str.is_empty(): reward_str = "💰 0 金币"
+	if not kill_target.is_empty():
+		var req_kills = entry.get("kill_required", 1)
+		confirm_desc.text = "%s\n\n需求：击杀 %s ×%d\n奖励：%s\n%s" % [
+			entry.get("desc", ""),
+			kill_target, req_kills, reward_str,
+			"⚠ 此任务不可重复" if not repeatable else "🔄 可重复领取"
+		]
+	else:
+		var reward_str2 = ""
+		if gold > 0: reward_str2 += "💰 %d 金币" % gold
+		var tp2 = entry.get("reward_talent_points", 0)
+		if tp2 > 0:
+			if not reward_str2.is_empty(): reward_str2 += " + "
+			reward_str2 += "🌟 天赋点 ×%d" % tp2
+		if reward_str2.is_empty(): reward_str2 = "💰 0 金币"
+		confirm_desc.text = "%s\n\n需求：%s ×%d\n奖励：%s\n%s" % [
+			entry.get("desc", ""),
+			item_name, count, reward_str2,
+			"⚠ 此任务不可重复" if not repeatable else "🔄 可重复领取"
+		]
 	confirm_dialog.show()
 
 

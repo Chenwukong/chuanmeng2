@@ -4,6 +4,46 @@
 # 合并了 MapViewerV2 的地图加载/渲染/障碍物/A*/遮罩逻辑
 extends Node2D
 
+# ═══ 预配置战斗数据库 ═══
+const BATTLE_PRESETS = {
+	"赤焰兽": { "enemies": ["超级赤焰兽", "超级赤焰兽", "超级赤焰兽"], "party": [] },
+}
+
+## 触发一场预配置的战斗（NPC 对话中用）
+func start_preset_battle(preset_id: String) -> void:
+	var cfg = BATTLE_PRESETS.get(preset_id)
+	if cfg == null:
+		push_error("未找到战斗预设: %s" % preset_id)
+		return
+	_encounter_active = true
+	_cleanup_chasers()
+	var player = get_player_node()
+	if player and player.has_method("set_process"):
+		player.set_process(false)
+		player.set_process_input(false)
+	if _bgm_player and is_instance_valid(_bgm_player):
+		_bgm_player.stop()
+	# 停止所有 BGM 总线播放器
+	var root = get_tree().current_scene
+	for c in root.get_children():
+		if c is AudioStreamPlayer and c.bus == "BGM":
+			c.stop()
+	$"../BGM".volume_db = -80
+	GameData.set_meta("pending_enemies", cfg.get("enemies", []))
+	var custom_party = cfg.get("party", [])
+	if not custom_party.is_empty():
+		GameData.set_meta("pending_party", custom_party)
+	else:
+		GameData.remove_meta("pending_party")
+	var bt = BattleTransition.play(get_tree().root)
+	await bt.finished
+	var enemies = cfg.get("enemies", [])
+	_launch_battle(enemies, player)
+	await bt.reverse()
+	var battle_scene = _find_battle_scene()
+	if battle_scene:
+		BattleTransition.shake_canvas(battle_scene, 14.0, 0.35)
+
 @onready var nav_region: NavigationRegion2D = $Nav
 @onready var exits_node: Node2D = $Exits
 
@@ -132,7 +172,6 @@ func _spawn_chase_batch() -> void:
 		m.set_meta("was_dir", was_dir)
 		m.global_position = pos
 		add_child(m)
-		print("[追踪怪] 生成 %s @ (%d,%d)" % [monster_name, int(pos.x), int(pos.y)])
 
 
 func _get_encounter_pool() -> Array:
@@ -250,7 +289,7 @@ func _build_obstacles_and_astar() -> void:
 	m2.load_obstacles()
 	var gs := m2.get_obstacle_size()
 	var g := m2.get_obstacle_grid()
-	print("障碍物网格: %dx%d, 阻挡格: %d" % [gs.x, gs.y, _count_solid(g, gs)])
+
 
 	obs_grid = g
 	obs_size = gs
@@ -390,7 +429,10 @@ func _trigger_encounter(pool: Array, cfg: Dictionary) -> void:
 
 	# 暂停地图 BGM
 	if _bgm_player and is_instance_valid(_bgm_player):
-		_bgm_player.stream_paused = true
+		_bgm_player.stop()
+	for c in get_tree().current_scene.get_children():
+		if c is AudioStreamPlayer and c.bus == "BGM":
+			c.stop()
 
 	var min_count: int = cfg.get("min", 3)
 	var max_count: int = min_count + 2
@@ -412,7 +454,7 @@ func _trigger_encounter(pool: Array, cfg: Dictionary) -> void:
 		BattleTransition.shake_canvas(battle_scene, 14.0, 0.35)
 
 
-func _launch_battle(picked: Array[String], player: Node2D) -> CanvasLayer:
+func _launch_battle(picked, player: Node2D) -> CanvasLayer:
 	player.visible = false
 
 	var overlay = ColorRect.new()
@@ -420,9 +462,10 @@ func _launch_battle(picked: Array[String], player: Node2D) -> CanvasLayer:
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	get_tree().root.add_child(overlay)
-
+	
 	GameData.set_meta("pending_enemies", picked)
-	GameData.set_meta("pending_party", ["yuling", "dingdong"])
+	if not GameData.has_meta("pending_party"):
+		GameData.set_meta("pending_party", ["youxiaoyun", "dingdong"])
 	GameData.in_battle = true
 	var battle = load("res://Class/battleField.tscn").instantiate()
 	get_tree().root.add_child(battle)
@@ -456,10 +499,18 @@ func _restore_after_battle(overlay: ColorRect) -> void:
 	_encounter_active = false
 	GameData.remove_meta("pending_enemies")
 	_cleanup_chasers()
-
-	# 恢复地图 BGM
-	if _bgm_player and is_instance_valid(_bgm_player):
-		_bgm_player.stream_paused = false
+	$"../BGM".volume_db = 0
+	# 恢复地图 BGM（重启所有被停止的 BGM 播放器）
+	if _bgm_player and is_instance_valid(_bgm_player) and not _bgm_player.playing:
+		_bgm_player.play()
+	#for c in get_tree().current_scene.get_children():
+		#if c is AudioStreamPlayer and c.bus == "BGM" and not c.playing:
+			#c.play()
+			
+	# 恢复 BGM 总线音量
+	var bgm_bus = AudioServer.get_bus_index("BGM")
+	if bgm_bus >= 0:
+		AudioServer.set_bus_volume_db(bgm_bus, 0)
 
 	# 重新获取 player 引用，不依赖 lambda 捕获（可能已失效）
 	var player := get_player_node()

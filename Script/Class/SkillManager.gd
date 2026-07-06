@@ -32,7 +32,7 @@ static func execute(
 
 	var data: SkillData = get_skill(skill_id)
 	if data == null:
-		result.log_text = "技能不存在: %s" % skill_id
+		result.log_text = GameData._T("LOG_SKILL_NOT_FOUND") % skill_id
 		return result
 
 	# ── 检查 MP（已在 player_use_skill / execute_enemy_skill 中扣除，此处只做防止冻结）──
@@ -41,7 +41,7 @@ static func execute(
 	if caster.is_frozen:
 		caster.is_frozen = false
 		result.success = false
-		result.log_text = "【%s】被冰冻，无法行动！" % caster.stats.get_display_name()
+		result.log_text = GameData._T("LOG_FROZEN_CANT_ACT") % caster.stats.get_display_name()
 		return result
 
 	result.success = true
@@ -100,7 +100,7 @@ static func _calc_damage(
 
 	# 法波动：法术伤害在 low%~high% 间浮动
 	if is_magic and caster._has_book_type("magic_fluctuate"):
-		var low_mul := 0.85; var high_mul := 1.15
+		var low_mul = 0.85; var high_mul = 1.15
 		for b in caster.book_skills:
 			var bdb = GameData.BOOK_SKILL_DB.get(b, {})
 			if bdb.get("type", "") == "magic_fluctuate":
@@ -119,15 +119,9 @@ static func _calc_damage(
 	result.damage_list.append(base_dmg)
 	result.is_crit = is_crit
 
-	var crit_str = " 【暴击！】" if is_crit else ""
-	result.log_text = "%s 施展【%s】，对 %s 造成 %d 点%s伤害%s" % [
-		caster.stats.get_display_name(),
-		data.skill_name,
-		target.stats.get_display_name(),
-		base_dmg,
-		"法术" if is_magic else "物理",
-		crit_str
-	]
+	var crit_str = " " + GameData._T("LOG_CRIT") if is_crit else ""
+	var dmg_type = GameData._T("DMG_TYPE_MAGIC") if is_magic else GameData._T("DMG_TYPE_PHYSICAL")
+	result.log_text = GameData._T("LOG_DAMAGE_DEALT") % [caster.stats.get_display_name(), GameData._T(data.skill_name), target.stats.get_display_name(), base_dmg, dmg_type, crit_str]
 
 static func _calc_multi_hit(
 	caster: BattleCharacter,
@@ -145,9 +139,7 @@ static func _calc_multi_hit(
 		result.damage_list.append(dmg)
 		total += dmg
 
-	result.log_text = "%s 施展【%s】，%d 段连击共造成 %d 点伤害！" % [
-		caster.stats.get_display_name(), data.skill_name, data.hit_count, total
-	]
+	result.log_text = GameData._T("LOG_MULTI_HIT_DMG") % [caster.stats.get_display_name(), GameData._T(data.skill_name), data.hit_count, total]
 
 static func _calc_heal(
 	caster: BattleCharacter,
@@ -156,16 +148,11 @@ static func _calc_heal(
 	result: SkillResult
 ) -> void:
 
-	var amount = int(target.stats.max_hp * data.heal_multiplier) + data.flat_heal
+	var amount = int(target.stats.max_hp * data.heal_multiplier * caster.get_effective_heal_rate()) + data.flat_heal
 	amount = maxi(1, amount)
 	result.heal_amount = amount
 
-	result.log_text = "%s 施展【%s】，为 %s 恢复 %d 点气血" % [
-		caster.stats.get_display_name(),
-		data.skill_name,
-		target.stats.get_display_name(),
-		amount
-	]
+	result.log_text = GameData._T("LOG_HEAL_CAST") % [caster.stats.get_display_name(), GameData._T(data.skill_name), target.stats.get_display_name(), amount]
 
 static func _apply_buff(
 	caster: BattleCharacter,
@@ -180,15 +167,10 @@ static func _apply_buff(
 		if success:
 			target.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
 			result.applied_buff = data.apply_buff_id
-			result.log_text = "%s 施展【%s】，%s%s！" % [
-				caster.stats.get_display_name(),
-				data.skill_name,
-				target.stats.get_display_name(),
-				"获得增益" if not is_debuff else "受到诅咒"
-			]
-		else:
-			result.log_text = "【%s】对 %s 无效！" % [data.skill_name, target.stats.get_display_name()]
-	else:
+			var buf_label = GameData._T("LOG_BUFF_GAIN") if not is_debuff else GameData._T("LOG_BUFF_CURSED")
+			result.log_text = GameData._T("LOG_BUFF_CAST") % [caster.stats.get_display_name(), GameData._T(data.skill_name), target.stats.get_display_name(), buf_label]
+			result.log_text = GameData._T("LOG_BUFF_FAIL") % [GameData._T(data.skill_name), target.stats.get_display_name()]
+		result.log_text = GameData._T("LOG_SKILL_CAST") % [caster.stats.get_display_name(), GameData._T(data.skill_name)]
 		result.log_text = "%s 施展【%s】" % [caster.stats.get_display_name(), data.skill_name]
 
 

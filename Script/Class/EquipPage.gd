@@ -20,6 +20,7 @@ var inventory_items: Dictionary = {}
 var _member_id: String = ""
 var _member_ids: Array[String] = []
 var _member_idx: int = 0
+var shop_mode: bool = false  # 商店模式下双击=售卖
 
 @onready var portrait: TextureRect = %Portrait
 @onready var detail_label: Label = %DetailLabel
@@ -43,6 +44,7 @@ var _tcp_icon_cache: Dictionary = {}
 signal closed()
 signal request_equip(slot_key: String, bag_index: int)
 signal request_unequip(slot_key: String)
+signal request_sell(bag_index: int)
 
 
 var _tooltip_label: RichTextLabel
@@ -144,7 +146,7 @@ func _connect_signals() -> void:
 			btn.gui_input.connect(_on_equip_slot_rightclick.bind(SLOT_NODE_MAP[node_name]))
 			btn.mouse_entered.connect(_on_equip_slot_hovered.bind(SLOT_NODE_MAP[node_name]))
 			btn.mouse_exited.connect(_hide_tooltip)
-			print("[EquipPage] 已连接 %s/ClickBtn size=%s" % [node_name, btn.size])
+		
 		var icon := slot.get_node_or_null("Icon") as TextureRect
 		# 不再调 _prepare_icon_rect，统一由 _refresh_equip_slots 管理布局
 		if icon != null:
@@ -282,7 +284,7 @@ func _load_tcp_icon(tcp_path: String) -> Texture2D:
 		return null
 
 	var tex := decoded.get("texture", null) as Texture2D
-	print("[EquipPage] TCP 解码成功: %s size=%s texture=%s" % [tcp_path, decoded.get("width"), "OK" if tex else "NULL"])
+
 	if tex != null:
 		_tcp_icon_cache[tcp_path] = tex
 	return tex
@@ -669,16 +671,18 @@ func _on_equip_slot_pressed(slot_key: String) -> void:
 
 
 func _on_equip_slot_rightclick(event: InputEvent, slot_key: String) -> void:
-	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT):
+	if not (event is InputEventMouseButton and event.pressed):
 		return
-	var eq: Dictionary = equipment.get(slot_key, {})
-	if not eq.is_empty():
-		GameData.unequip_item(_member_id, slot_key)
-		equip_bag = GameData.equip_bag
-		detail_label.text = "%s 已卸下" % slot_key
-		equipment = GameData.player_equipment.get(_member_id, {})
-		_refresh_equip_slots()
-		_render_page()
+	# 右键或双击都卸下
+	if event.button_index == MOUSE_BUTTON_RIGHT or event.double_click:
+		var eq: Dictionary = equipment.get(slot_key, {})
+		if not eq.is_empty():
+			GameData.unequip_item(_member_id, slot_key)
+			equip_bag = GameData.equip_bag
+			detail_label.text = "%s 已卸下" % slot_key
+			equipment = GameData.player_equipment.get(_member_id, {})
+			_refresh_equip_slots()
+			_render_page()
 
 
 func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
@@ -715,6 +719,9 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 
 	# 双击自动穿戴
 	if event.double_click:
+		if shop_mode:
+			request_sell.emit(idx)
+			return
 		var eq := equip_bag[idx]
 		var slot_key := EquipData.slot_key(eq.get("slot", -1))
 		if slot_key.is_empty():

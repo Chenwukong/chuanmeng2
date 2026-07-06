@@ -1040,6 +1040,7 @@ vertical_alignment = 1
 
 [node name="DetailLabel" type="Label" parent="." unique_id=560615060]
 unique_name_in_owner = true
+visible = false
 layout_mode = 0
 offset_left = 209.0
 offset_top = 649.0

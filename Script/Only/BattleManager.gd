@@ -39,6 +39,10 @@ var summoned_pet_ids: Array[String] = []  # 已召唤的宠物ID，防止重复�
 var summoned_mech_ids: Array[String] = []  # 已召唤的铁甲兽名，防止重复召唤
 
 var turn_count: int = 0
+var _double_action_active: bool = false
+enum DoubleActionType { NONE, DAMAGE, SUPPORT }
+var _双动_first_type: int = DoubleActionType.NONE
+var _双动_second_phase: bool = false
 
 @export var action_delay: float = 2.0
 
@@ -56,6 +60,7 @@ signal character_animated(actor: BattleCharacter, anim_name: String, target: Bat
 signal actor_turn_started(actor: BattleCharacter, is_player: bool)
 signal ranged_attack_completed()
 signal skill_failed(msg: String)
+signal bonus_attack_started
 signal battle_ended(player_won: bool, total_exp: int, total_gold: int, level_ups: Array)
 
 # ──────────────────────────────────────────────
@@ -100,30 +105,32 @@ func setup(
 	player_inventory = inventory
 	enemy_ai.setup(self)
 	# 兽王血脉：初始化所有角色的宠物计数
-	var pet_count := 0
+	var pet_count = 0
 	for c in party:
 		if c.is_summoned_pet and not c.is_dead: pet_count += 1
 	for c in party:
 		c.recalc_summon_buffs(pet_count)
+	_update_element_resonance()
 	# SP 系统：不再需要预建队列，_process 中自动积累
 
 ## 战斗中召唤宠物：注册到队伍
 func add_summoned_character(bc: BattleCharacter, stats: CharacterStats, pet_id: String = "") -> void:
-	bc.setup(stats, true)
 	bc.is_player = true
 	bc.is_summoned_pet = true
 	bc.pet_id = pet_id
+	bc.setup(stats, true)
 	bc.summoner_member_id = _current_actor.member_id
 	bc.died.connect(_on_character_died.bind(bc))
 	party.append(bc)
 	if not pet_id.is_empty():
 		summoned_pet_ids.append(pet_id)
 	# 兽王血脉：更新所有角色的宠物计数
-	var pet_count := 0
+	var pet_count = 0
 	for c in party:
 		if c.is_summoned_pet and not c.is_dead: pet_count += 1
 	for c in party:
 		c.recalc_summon_buffs(pet_count)
+	_update_element_resonance()
 	_push_log(GameData._T("LOG_JOIN_BATTLE") % bc.stats.get_display_name(), "system")
 
 ## 移除角色（替换宠物时使用）
@@ -132,17 +139,40 @@ func remove_character(bc: BattleCharacter) -> void:
 	if not bc.pet_id.is_empty():
 		summoned_pet_ids.erase(bc.pet_id)
 	# 兽王血脉更新
-	var pet_count := 0
+	var pet_count = 0
 	for c in party:
 		if c.is_summoned_pet and not c.is_dead: pet_count += 1
 	for c in party:
 		c.recalc_summon_buffs(pet_count)
+	_update_element_resonance()
 
 func start_battle() -> void:
 	_battle_ended_flag = false
+	# 爆冲天赋：全员开局增加行动条
+	var baochong_rank = GameData.get_talent_rank("baochong")
+	if baochong_rank > 0:
+		var bonus_sp = 20.0 if baochong_rank == 1 else 35.0
+		for c in party:
+			if not c.is_dead:
+				c.current_sp = mini(100, c.current_sp + bonus_sp)
 	_push_log(GameData._T("BATTLE_START"), "system")
 	_push_log(GameData._T("LOG_OUR_SIDE") % " / ".join(party.map(func(c): return CharacterStats.display_name(c.stats))), "system")
 	_push_log(GameData._T("LOG_ENEMY_SIDE") % " / ".join(enemies.map(func(c): return CharacterStats.display_name(c.stats))), "system")
+	_update_element_resonance()
+	# 晓之以理：敌人伤害降低
+	for c in party:
+		if not c.is_dead and c.trait_data.has("晓之以理"):
+			var cfg = c.trait_data["晓之以理"]
+			var rate = 1.0 - cfg.get("dmg_reduce", 0.10)
+			for e in enemies:
+				e.add_buff("atk_down", 99, rate, "晓之以理")
+			break
+	# 灵台清明：开局额外灵力
+	var spirit_rank = GameData.get_talent_rank("main_spirit")
+	if spirit_rank > 0:
+		for c in party:
+			if not c.is_dead:
+				c.current_mp = mini(c.get_effective_max_mp(), c.current_mp + 10 * spirit_rank)
 	_change_state(BattleState.BATTLE_START)
 	await get_tree().create_timer(1.0).timeout
 	_change_state(BattleState.CHECK_BATTLE_END)  # 开场结束，开始 SP 积累
@@ -228,6 +258,9 @@ func _run_actor_turn(actor: BattleCharacter) -> void:
 
 	if actor.is_player:
 		# 玩家角色：切换到等待输入状态
+		_double_action_active = false
+		_双动_first_type = DoubleActionType.NONE
+		_双动_second_phase = false
 		_change_state(BattleState.PLAYER_TURN)
 		actor_turn_started.emit(actor, true)
 		_push_log(GameData._T("LOG_TURN_OF") % actor.stats.get_display_name(), "turn")
@@ -267,6 +300,8 @@ func alive_party() -> Array[BattleCharacter]:
 func player_use_normal_attack(target: BattleCharacter) -> void:
 	if state != BattleState.PLAYER_TURN:
 		return
+	if _双动_first_type == DoubleActionType.NONE:
+		_双动_first_type = DoubleActionType.DAMAGE
 	_change_state(BattleState.PLAYER_ACTION)
 	var result = SkillManager.execute(_current_actor, target, "普通攻击")
 	await _apply_skill_result(result, _current_actor, target)
@@ -284,7 +319,7 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		return
 	var cd_key = _cd_key(_current_actor, skill_id)
 	# 横扫不休：跳过冷却
-	var no_cd := _current_actor.check_no_cooldown_after_skill(skill_id)
+	var no_cd = _current_actor.check_no_cooldown_after_skill(skill_id)
 	if no_cd:
 		_push_log(GameData._T("LOG_NO_CD") % [_current_actor.stats.get_display_name(), "横扫不休"], "player_action")
 		_current_actor.show_trait_float("横扫不休")
@@ -298,10 +333,30 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		_push_log(GameData._T("BATTLE_SKILL_NOT_FOUND"), "system")
 		await _finish_player_action()
 		return
-	
+
+	# 双动：记录首次行动类型，第二次限制不同类（在所有分支之前检查）
+	if _current_actor and _current_actor.trait_data.has("双动"):
+		var sk_type = DoubleActionType.NONE
+		match data.skill_type:
+			SkillData.SkillType.PHYSICAL, SkillData.SkillType.MAGIC, SkillData.SkillType.MULTI_HIT:
+				sk_type = DoubleActionType.DAMAGE
+			SkillData.SkillType.HEAL, SkillData.SkillType.BUFF, SkillData.SkillType.DEBUFF:
+				sk_type = DoubleActionType.SUPPORT
+		if sk_type == DoubleActionType.NONE:
+			pass  # 未分类技能（如召唤）不限制
+		elif _双动_first_type == DoubleActionType.NONE:
+			_双动_first_type = sk_type
+		elif _双动_second_phase and sk_type == _双动_first_type:
+			_push_log(GameData._T("LOG_DOUBLE_BLOCKED") % _current_actor.stats.get_display_name(), "system")
+			_play_error_sound()
+			_change_state(BattleState.PLAYER_TURN)
+			# 触发新回合的 UI 刷新和聚焦
+			actor_turn_started.emit(_current_actor, true)
+			return
+
 	# 预检查：铁甲出击无铁甲时直接失败，不消耗资源
 	if skill_id == "铁甲出击":
-		var has_mech := false
+		var has_mech = false
 		for c in party:
 			if not c.is_dead and c.stats.character_class == "铁甲":
 				has_mech = true
@@ -338,7 +393,7 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 
 	# 播放技能音效
 	if not data.sound_path.is_empty() and ResourceLoader.exists(data.sound_path):
-		var snd := AudioStreamPlayer.new()
+		var snd = AudioStreamPlayer.new()
 		snd.stream = load(data.sound_path)
 		snd.bus = "SFX"
 		add_child(snd)
@@ -363,6 +418,7 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		_current_actor.trait_data = target.trait_data.duplicate()
 		_current_actor.stats.traits = target.stats.traits.duplicate()
 		_current_actor.stats.was_base_path = target.stats.was_base_path
+		_update_element_resonance()
 		_push_log(GameData._T("LOG_TRANSFORM") % [_current_actor.stats.get_display_name(), target.stats.get_display_name()], "player_action")
 		_current_actor.show_trait_float("千变万化")
 		await _finish_player_action()
@@ -386,7 +442,7 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			if e.is_dead and e.stats.rank != "boss":
 				var nd = e.get_parent()
 				if nd and is_instance_valid(nd):
-					var tw := nd.create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+					var tw = nd.create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 					tw.tween_property(nd, "position", nd.position + Vector2(-600, -400), 0.8)
 					tw.parallel().tween_property(nd, "modulate:a", 0.0, 0.8)
 					tw.tween_callback(func(): nd.visible = false)
@@ -420,7 +476,7 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		for mech in mechs:
 			var target_pos = target.get_parent().global_position
 			var nd = mech.get_parent() as Node2D
-			var on_hit := func():
+			var on_hit = func():
 				var dmg = maxi(1, mech.stats.attack - int(target.get_effective_defense() * 0.5))
 				dmg = int(dmg * randf_range(0.95, 1.05))
 				var actual = target.take_damage(dmg)
@@ -453,7 +509,7 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		var hits = result.damage_list.size()
 		
 		# on_hit：命中后立刻结算伤害，不等走回来；斩杀特效由 died 信号自动触发
-		var on_hit := func():
+		var on_hit = func():
 			var total_dmg = 0
 			for dmg in result.damage_list:
 				total_dmg += dmg
@@ -572,6 +628,10 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 
 	var result = SkillManager.execute(_current_actor, target, skill_id)
 	await _apply_skill_result(result, _current_actor, target)
+	# 嘲讽
+	if skill_id == "嘲讽":
+		_threat_mgr.taunt(_current_actor)
+		_push_log(GameData._T("LOG_TAUNT") % _current_actor.stats.get_display_name(), "player_action")
 	# 高级魔法连击：35% 概率再施放一次法术
 	if not target.is_dead and _current_actor.has_book_skill("高级魔法连击"):
 		if data and (data.is_magic_damage or data.skill_type == SkillData.SkillType.MAGIC):
@@ -591,12 +651,12 @@ func player_use_item(item_id: String, target: BattleCharacter) -> void:
 	var slot = player_inventory._slots.get(item_id, {})
 	var item_data: ItemData = slot.get("data", null) as ItemData if slot.has("data") else null
 	if item_data != null:
-		var has_hp := item_data.hp_restore > 0 or item_data.hp_restore_percent > 0.0
-		var has_mp := item_data.mp_restore > 0 or item_data.mp_restore_percent > 0.0
-		var anim_name := "吃紫" if (has_hp and has_mp) else ("吃血" if has_hp else "吃蓝")
+		var has_hp = item_data.hp_restore > 0 or item_data.hp_restore_percent > 0.0
+		var has_mp = item_data.mp_restore > 0 or item_data.mp_restore_percent > 0.0
+		var anim_name = "吃紫" if (has_hp and has_mp) else ("吃血" if has_hp else "吃蓝")
 		# 同步播放音效和动画
 		if ResourceLoader.exists("res://Audio/SE/heal 1.ogg"):
-			var snd := AudioStreamPlayer.new()
+			var snd = AudioStreamPlayer.new()
 			snd.stream = load("res://Audio/SE/heal 1.ogg")
 			snd.bus = "SFX"
 			add_child(snd)
@@ -639,13 +699,24 @@ func _finish_player_action() -> void:
 	await _check_battle_end()
 	if state in [BattleState.BATTLE_WIN, BattleState.BATTLE_LOSE]:
 		return
+	# 双动特性：第一次行动后追加一次不同类别的行动
+	if _current_actor and _双动_first_type != DoubleActionType.NONE and not _双动_second_phase:
+		if _current_actor.trait_data.has("双动"):
+			_双动_second_phase = true
+			_change_state(BattleState.PLAYER_TURN)
+			bonus_attack_started.emit()
+			_current_actor.show_trait_float("双动")
+			_push_log(GameData._T("LOG_DOUBLE_ACTION") % _current_actor.stats.get_display_name(), "player_action")
+			return
 	if _current_actor:
 		_current_actor.reset_sp()
+	_double_action_active = false
+	_双动_first_type = DoubleActionType.NONE
 	_change_state(BattleState.CHECK_BATTLE_END)
 
 ## 通用群体 buff（一苇渡江/达摩护体/金刚护体/金刚护法等）
 func _apply_aoe_buff(target: BattleCharacter, buff_id: String, turns: int, value: float, skill_id: String) -> void:
-	var anim_names := {
+	var anim_names = {
 		"haste": "加速", "hp_up": "加血上限", "def_up": "加物防", "atk_up": "加力", "mdef_up": "加魔防"
 	} 
 
@@ -903,10 +974,53 @@ func player_capture(target: BattleCharacter) -> void:
 			target.stats.character_name,
 			PetData.apt_name(GameData.pet_db[pid].aptitude) if GameData.pet_db.has(pid) else "?"
 		], "system")
-		target.take_damage(999999)
-		target.sync_visual()
+		# 走过来再消失
+		var enemy_nd = target.get_parent() as Node2D
+		if enemy_nd:
+			var caster_nd = _current_actor.get_parent() as Node2D
+			if caster_nd:
+				# 播放走路动画
+				if enemy_nd.has_method("play_animation"):
+					enemy_nd.play_animation("move")
+				elif enemy_nd.get_node_or_null("WASAnimationPlayer"):
+					enemy_nd.get_node("WASAnimationPlayer").play("move", false)
+				var target_pos = caster_nd.global_position + Vector2(0, -40)
+				var tw = enemy_nd.create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_LINEAR)
+				tw.tween_property(enemy_nd, "global_position", target_pos, 1.5)
+				tw.tween_property(enemy_nd, "modulate:a", 0.0, 0.3)
+				tw.tween_callback(func(): enemy_nd.visible = false)
+		# 标记死亡（不发死亡信号）
+		target.is_dead = true
+		target.current_hp = 0
+		_threat_mgr.clear_threat(target)
+		target.hp_changed.emit(target.current_hp, target.current_hp, target.get_effective_max_hp())
+		await _check_battle_end()
 	else:
 		_push_log(GameData._T("LOG_CAPTURE_FAIL") % target.stats.get_display_name(), "system")
+		# 捕捉失败，目标反击（普攻或随机法术）
+		var pool = ["普通攻击"]
+		for sid in target.stats.skill_ids:
+			if sid == "普通攻击": continue
+			var sd = SkillManager.get_skill(sid)
+			if sd and target.current_mp >= sd.mp_cost:
+				pool.append(sid)
+		var counter_skill = pool[randi() % pool.size()]
+		# 播放怪物攻击音效
+		var enemy_nd2 = target.get_parent()
+		if enemy_nd2:
+			var atk_snd = enemy_nd2.get_node_or_null("Audio_Attack") as AudioStreamPlayer
+			if atk_snd: atk_snd.play()
+		var cd = SkillManager.get_skill(counter_skill)
+		if cd and not cd.sound_path.is_empty():
+			var snd = AudioStreamPlayer.new()
+			snd.stream = load(cd.sound_path)
+			snd.bus = "SFX"
+			add_child(snd)
+			snd.play()
+			snd.finished.connect(snd.queue_free)
+		var counter_result = SkillManager.execute(target, _current_actor, counter_skill)
+		if counter_result.success:
+			await _apply_skill_result(counter_result, target, _current_actor)
 	await get_tree().create_timer(action_delay).timeout
 	await _finish_player_action()
 
@@ -922,9 +1036,9 @@ func _pick_random_enemy() -> BattleCharacter:
 
 ## EnemyAI 决策后，调用此方法执行技能
 func execute_enemy_skill(actor: BattleCharacter, skill_id: String, target: BattleCharacter) -> void:
-	var data := SkillManager.get_skill(skill_id)
+	var data = SkillManager.get_skill(skill_id)
 	if data and not data.sound_path.is_empty() and ResourceLoader.exists(data.sound_path):
-		var snd := AudioStreamPlayer.new()
+		var snd = AudioStreamPlayer.new()
 		snd.stream = load(data.sound_path)
 		snd.bus = "SFX"
 		add_child(snd)
@@ -957,7 +1071,7 @@ func _apply_skill_result(
 		if guardian and not guardian.is_dead:
 			actual_target = guardian
 			# 守护仇恨：守卫承担的伤害 × 0.5
-			var total_dmg := 0
+			var total_dmg = 0
 			for dmg in result.damage_list:
 				total_dmg += dmg
 			_threat_mgr.add_guard_threat(guardian, total_dmg)
@@ -1027,6 +1141,7 @@ func flush_pending_damage() -> void:
 		if d.type == "heal":
 			d.target.heal(d.amount)
 		else:
+			d.target.last_attacker = d.get("attacker")
 			var actual = d.target.take_damage(d.amount)
 			d.amount = actual  # 用实际扣血替换原始值，后续统一 emit
 			# 反震：受到物理伤害反弹
@@ -1169,11 +1284,19 @@ func _check_battle_end() -> void:
 			total_exp += _calc_exp_reward(e)
 			total_gold += _calc_gold_reward(e)
 		# 来财：金币收益加成（所有存活队友的来财倍率累乘）
-		var gold_boost := 1.0
+		var gold_boost = 1.0
 		for c in party:
 			if not c.is_dead:
 				gold_boost *= c.get_gold_boost()
 		total_gold = maxi(1, int(total_gold * gold_boost))
+		# 天赋异禀：经验加成
+		var exp_talent_rank = GameData.get_talent_rank("main_exp_boost")
+		if exp_talent_rank > 0:
+			total_exp = int(total_exp * (1.0 + exp_talent_rank * 0.15))
+		# 财迷心窍：金币加成
+		var gold_talent_rank = GameData.get_talent_rank("main_gold_boost")
+		if gold_talent_rank > 0:
+			total_gold = int(total_gold * (1.0 + gold_talent_rank * 0.15))
 		var level_ups: Array = []
 		for i in party.size():
 			var c = party[i]
@@ -1253,7 +1376,7 @@ func _push_log(text: String, log_type: String = "system") -> void:
 	log_pushed.emit(text, log_type)
 
 func _play_error_sound() -> void:
-	var snd := AudioStreamPlayer.new()
+	var snd = AudioStreamPlayer.new()
 	snd.stream = load("res://Audio/SE/057-Wrong01.ogg")
 	snd.bus = "SFX"
 	add_child(snd)
@@ -1261,20 +1384,28 @@ func _play_error_sound() -> void:
 	snd.finished.connect(snd.queue_free)
 
 func _on_character_died(character: BattleCharacter) -> void:
-	# 敌人死亡音效 — 用角色身上的 AudioStreamPlayer2D 在敌人位置播放
+	# 敌人死亡音效
 	if not character.is_player:
-		var parent := character.get_parent()
+		var parent = character.get_parent()
 		if parent:
-			var die_snd := parent.get_node_or_null("Audio_Die") as AudioStreamPlayer2D
+			var die_snd = parent.get_node_or_null("Audio_Die") as AudioStreamPlayer2D
 			if die_snd:
 				die_snd.stream = load("res://Audio/SE/怪叫-1.ogg")
 				die_snd.volume_db = - 2
 				die_snd.play()
+	else:
+		# 友军死亡音效
+		var snd = AudioStreamPlayer.new()
+		snd.stream = load("res://Audio/SE/011-System11.ogg")
+		snd.bus = "SFX"
+		add_child(snd)
+		snd.play()
+		snd.finished.connect(snd.queue_free)
 
 	# 神佑复生：有概率复活
 	if character._has_book_type("revive"):
-		var revive_chance := 0.0
-		var revive_hp_pct := 0.5
+		var revive_chance = 0.0
+		var revive_hp_pct = 0.5
 		for b in character.book_skills:
 			var bdb = GameData.BOOK_SKILL_DB.get(b, {})
 			if bdb.get("type", "") == "revive":
@@ -1291,14 +1422,85 @@ func _on_character_died(character: BattleCharacter) -> void:
 			character.revived.emit()
 			return
 	_push_log(GameData._T("LOG_DEAD") % character.stats.get_display_name(), "system")
+	# 赏金任务：击杀追踪
+	if not character.is_player:
+		var enemy_name = character.stats.character_name
+		for rank in [BountyData.Rank.DING, BountyData.Rank.BING, BountyData.Rank.YI, BountyData.Rank.JIA]:
+			for b in BountyData.TASK_POOL.get(rank, []):
+				var bid = b.get("id", "")
+				if bid.is_empty(): continue
+				if not GameData.active_bounties.has(bid): continue
+				if b.get("kill_target", "") == enemy_name:
+					var flag_key = "bounty_kill_" + bid
+					var cur = GameData.game_flags.get(flag_key, 0)
+					GameData.game_flags[flag_key] = cur + 1
+					var req = b.get("kill_required", 1)
+					if cur + 1 >= req:
+						_push_log(GameData._T("LOG_BOUNTY_KILL_DONE") % b.get("name", ""), "system")
+	# 吞噬：击杀者永久获得 HP
+	if not character.is_player and character.last_attacker:
+		var killer = character.last_attacker
+		if killer.trait_data.has("吞噬") and not killer.is_dead:
+			var cfg = killer.trait_data["吞噬"]
+			var lv_floor = cfg.get("level_floor", 5)
+			if character.stats.level >= killer.stats.level - lv_floor:
+				var gain = cfg.get("hp_gain", 4)
+				killer.stats.max_hp += gain
+				killer.current_hp = mini(killer.get_effective_max_hp(), killer.current_hp + gain)
+				if not killer.member_id.is_empty() and GameData.party_db.has(killer.member_id):
+					GameData.party_db[killer.member_id].max_hp += gain
+				killer.sync_visual()
+				_push_log(GameData._T("LOG_DEVOUR") % [killer.stats.get_display_name(), gain], "system")
+	character.last_attacker = null
 	if not character.pet_id.is_empty() and character.is_summoned_pet:
 		summoned_pet_ids.erase(character.pet_id)
 	_threat_mgr.clear_threat(character)
 	# 兽王血脉：宠物死亡后更新
 	if character.is_summoned_pet:
-		var pet_count := 0
+		var pet_count = 0
 		for c in party:
 			if c.is_summoned_pet and not c.is_dead: pet_count += 1
 		for c in party:
 			c.recalc_summon_buffs(pet_count)
+	_update_element_resonance()
 	await _check_battle_end()
+
+# ══════════════════════════════════════════════
+# 五行共鸣
+# ══════════════════════════════════════════════
+const _ELEM_BUFFS := {
+	CharacterStats.Element.FIRE:  { "dmg": "matk_up", "name": "火之共鸣" },
+	CharacterStats.Element.METAL: { "dmg": "atk_up",  "name": "金之共鸣" },
+	CharacterStats.Element.WATER: { "dmg": "haste",   "name": "水之共鸣" },
+	CharacterStats.Element.EARTH: { "dmg": "def_up",  "name": "土之共鸣" },
+	CharacterStats.Element.WOOD:  { "dmg": "heal_up", "name": "木之共鸣" },
+}
+
+func _update_element_resonance() -> void:
+	for c in party:
+		c.trait_data.erase("_elem_resonance")
+	var counts: Dictionary = {}
+	for c in party:
+		if c.is_dead: continue
+		var e = c.stats.element
+		counts[e] = counts.get(e, 0) + 1
+	for elem in counts:
+		var count: int = counts[elem]
+		if count < 2: continue
+		var info: Dictionary = _ELEM_BUFFS.get(elem, {})
+		var buff_id: String = info.get("dmg", "")
+		if buff_id.is_empty(): continue
+		var value = 1.10 if count >= 3 else 1.05
+		for c in party:
+			if c.is_dead: continue
+			if not c.trait_data.has("_elem_resonance"):
+				c.trait_data["_elem_resonance"] = {}
+			c.trait_data["_elem_resonance"][buff_id] = value
+	# 五行齐全：额外小幅加成
+	if counts.keys().size() >= 5:
+		for c in party:
+			if c.is_dead: continue
+			if not c.trait_data.has("_elem_resonance"):
+				c.trait_data["_elem_resonance"] = {}
+			for k in ["atk_up", "matk_up", "def_up", "haste", "hp_up"]:
+				c.trait_data["_elem_resonance"]["all_" + k] = 1.03

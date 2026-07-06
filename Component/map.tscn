@@ -1,9 +1,10 @@
 [gd_scene format=3 uid="uid://bhwomruyunx4g"]
 
 [ext_resource type="Script" uid="uid://bel6jgbo5b861" path="res://Script/Only/map_container.gd" id="1_ey548"]
+[ext_resource type="Texture2D" uid="uid://ccurghj63acmd" path="res://Graphic/UI/ChatGPT Image 2026年7月1日 23_45_34.png" id="2_g324h"]
 [ext_resource type="Script" uid="uid://foiahoesyehg" path="res://Script/Only/text_map_content.gd" id="2_qm5gk"]
 [ext_resource type="Script" uid="uid://cb0m5sb236tus" path="res://Script/Only/map_connection.gd" id="3_03t57"]
-[ext_resource type="Texture2D" uid="uid://oya8wpn6jmc8" path="res://icon.svg" id="3_bgf2m"]
+[ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="5_n6ytx"]
 
 [sub_resource type="Resource" id="Connection_Changan_Jianye"]
 script = ExtResource("3_03t57")
@@ -20,30 +21,38 @@ script = ExtResource("3_03t57")
 from_place = NodePath("东海湾")
 to_place = NodePath("龙宫")
 
-[node name="MapPanel" type="ColorRect" unique_id=1978496414]
-modulate = Color(1, 1, 0, 1)
-offset_left = 277.0
-offset_top = 187.0
-offset_right = 497.0
-offset_bottom = 331.0
+[sub_resource type="AtlasTexture" id="AtlasTexture_g324h"]
+atlas = ExtResource("5_n6ytx")
+region = Rect2(0, 0, 42.200043, 21.399994)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xro14"]
+atlas = ExtResource("5_n6ytx")
+region = Rect2(84.65245, 0, 41.34755, 21.511547)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_posft"]
+atlas = ExtResource("5_n6ytx")
+region = Rect2(42.56493, 0, 40.23701, 21.74393)
+
+[node name="MapPanel" type="CanvasLayer" unique_id=343698034]
+metadata/_edit_horizontal_guides_ = [187.0]
 
 [node name="MapContainer" type="SubViewportContainer" parent="." unique_id=559140743]
-layout_mode = 0
-offset_left = -274.0
-offset_top = -191.0
-offset_right = 926.0
-offset_bottom = 609.0
+offset_left = 11.0
+offset_top = -3.0
+offset_right = 1299.0
+offset_bottom = 797.0
 script = ExtResource("1_ey548")
 
 [node name="MapViewport" type="SubViewport" parent="MapContainer" unique_id=79077987]
 handle_input_locally = false
-size = Vector2i(1200, 800)
+size = Vector2i(1100, 800)
 render_target_update_mode = 4
 
 [node name="MapContent" type="Node2D" parent="MapContainer/MapViewport" unique_id=1554904066]
-position = Vector2(427, 259)
+position = Vector2(278, 287)
 script = ExtResource("2_qm5gk")
-background_texture = ExtResource("3_bgf2m")
+background_texture = ExtResource("2_g324h")
+background_rect = Rect2(-200, -240, 1300, 960)
 connections = Array[Resource]([SubResource("Connection_Changan_Jianye"), SubResource("Connection_Jianye_Donghai"), SubResource("Connection_Donghai_Longgong")])
 
 [node name="MapBounds" type="ColorRect" parent="MapContainer/MapViewport/MapContent" unique_id=969886368]
@@ -93,3 +102,33 @@ offset_bottom = -79.000015
 scale = Vector2(0.5919065, 0.5919065)
 theme_override_font_sizes/font_size = 50
 text = "龙宫"
+
+[node name="CloseButton" type="TextureButton" parent="." unique_id=391123954]
+offset_left = 1211.0
+offset_right = 1253.0
+offset_bottom = 21.0
+scale = Vector2(2, 2)
+texture_normal = SubResource("AtlasTexture_g324h")
+texture_pressed = SubResource("AtlasTexture_xro14")
+texture_hover = SubResource("AtlasTexture_posft")
+
+[node name="Label" type="Label" parent="CloseButton" unique_id=108836703]
+layout_mode = 0
+offset_left = 1.4285713
+offset_top = -1.4285713
+offset_right = 41.42857
+offset_bottom = 21.571428
+text = "X"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="当前地图" type="Button" parent="." unique_id=1810419663]
+offset_right = 8.0
+offset_bottom = 8.0
+text = "当前地图"
+
+[node name="世界地图" type="Button" parent="." unique_id=1803580885]
+offset_left = 73.0
+offset_right = 145.0
+offset_bottom = 31.0
+text = "世界地图"

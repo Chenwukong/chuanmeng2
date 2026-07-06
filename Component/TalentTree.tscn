@@ -22,46 +22,132 @@ region = Rect2(84.65245, 0, 41.34755, 21.511547)
 atlas = ExtResource("6_ul12i")
 region = Rect2(42.56493, 0, 40.23701, 21.74393)
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_2j32r"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_10bu7"]
+
+[sub_resource type="Resource" id="Resource_1p3og"]
+script = ExtResource("4_req")
+talent_path = NodePath("../灵根初醒")
+rank_required = 5
+metadata/_custom_type_script = "uid://ctbocupnxj8ny"
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_w4ytg"]
+
 [sub_resource type="Resource" id="Req_Main_Flow"]
 script = ExtResource("4_req")
 talent_path = NodePath("灵根初醒")
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jrsr8"]
+
+[sub_resource type="Resource" id="Resource_jxx0w"]
+script = ExtResource("4_req")
+talent_path = NodePath("../与人为善")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_g5yin"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jxx0w"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1p3og"]
+
 [sub_resource type="Resource" id="Req_Main_Focus"]
 script = ExtResource("4_req")
 talent_path = NodePath("灵根初醒")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_7d1dy"]
+
+[sub_resource type="Resource" id="Resource_2j32r"]
+script = ExtResource("4_req")
+talent_path = NodePath("../灵根初醒")
+rank_required = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_xpo5b"]
 
 [sub_resource type="Resource" id="Resource_1ltyo"]
 script = ExtResource("4_req")
 talent_path = NodePath("../凝神")
 rank_required = 2
 
+[sub_resource type="Resource" id="Resource_10bu7"]
+script = ExtResource("4_req")
+talent_path = NodePath("../聚气")
+metadata/_custom_type_script = "uid://ctbocupnxj8ny"
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_to763"]
+
 [sub_resource type="Resource" id="Req_Main_Spirit_A"]
 script = ExtResource("4_req")
-talent_path = NodePath("经脉流转")
+talent_path = NodePath("../经脉流转")
+rank_required = 3
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_fpwt1"]
+
+[sub_resource type="Resource" id="Resource_1w5bu"]
+script = ExtResource("4_req")
+talent_path = NodePath("../探危")
+
+[sub_resource type="Resource" id="Resource_g5yin"]
+script = ExtResource("4_req")
+talent_path = NodePath("../广阔之地")
+metadata/_custom_type_script = "uid://ctbocupnxj8ny"
+
+[sub_resource type="Resource" id="Resource_7d1dy"]
+script = ExtResource("4_req")
+talent_path = NodePath("../火眼金睛")
+metadata/_custom_type_script = "uid://ctbocupnxj8ny"
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1w5bu"]
+
+[sub_resource type="Resource" id="Resource_dfnpb"]
+script = ExtResource("4_req")
+talent_path = NodePath("../二倍速")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_v02r3"]
+
+[sub_resource type="Resource" id="Resource_jrsr8"]
+script = ExtResource("4_req")
+talent_path = NodePath("../灵根初醒")
+rank_required = 3
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dfnpb"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_0ch3c"]
+
+[sub_resource type="Resource" id="Resource_w4ytg"]
+script = ExtResource("4_req")
+talent_path = NodePath("../爆冲")
 rank_required = 2
 
-[sub_resource type="Resource" id="Req_Main_Spirit_B"]
-script = ExtResource("4_req")
-talent_path = NodePath("凝神")
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_bevkp"]
 
 [sub_resource type="Resource" id="Req_Main_Destiny"]
 script = ExtResource("4_req")
 talent_path = NodePath("灵台清明")
 rank_required = 2
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dfwek"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nxk44"]
+
 [sub_resource type="Resource" id="Req_Summon_Bond"]
 script = ExtResource("4_req")
 talent_path = NodePath("唤灵")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_t42k4"]
 
 [sub_resource type="Resource" id="Req_Summon_Swarm"]
 script = ExtResource("4_req")
 talent_path = NodePath("唤灵")
 rank_required = 2
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6d05o"]
+
 [sub_resource type="Resource" id="Req_Summon_Guard"]
 script = ExtResource("4_req")
 talent_path = NodePath("灵契")
 rank_required = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_fqwak"]
 
 [sub_resource type="Resource" id="Req_Summon_Ancient_A"]
 script = ExtResource("4_req")
@@ -72,13 +158,21 @@ rank_required = 2
 script = ExtResource("4_req")
 talent_path = NodePath("群召")
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_div01"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_w7qvi"]
+
 [sub_resource type="Resource" id="Req_Support_Cleanse"]
 script = ExtResource("4_req")
 talent_path = NodePath("回春")
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_257nl"]
+
 [sub_resource type="Resource" id="Req_Support_Haste"]
 script = ExtResource("4_req")
 talent_path = NodePath("回春")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6uf7j"]
 
 [sub_resource type="Resource" id="Req_Support_Revive_A"]
 script = ExtResource("4_req")
@@ -89,24 +183,36 @@ script = ExtResource("4_req")
 talent_path = NodePath("轻身")
 rank_required = 2
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_b5dv8"]
+
 [sub_resource type="Resource" id="Req_Support_Miracle"]
 script = ExtResource("4_req")
 talent_path = NodePath("续命")
 rank_required = 2
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_p03mf"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_2v77q"]
+
 [sub_resource type="Resource" id="Req_Guard_Shield"]
 script = ExtResource("4_req")
 talent_path = NodePath("铁骨")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_eyj8f"]
 
 [sub_resource type="Resource" id="Req_Guard_Resist"]
 script = ExtResource("4_req")
 talent_path = NodePath("铁骨")
 rank_required = 2
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_d66pl"]
+
 [sub_resource type="Resource" id="Req_Guard_Counter"]
 script = ExtResource("4_req")
 talent_path = NodePath("护盾")
 rank_required = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_kj3cr"]
 
 [sub_resource type="Resource" id="Req_Guard_Fortress_A"]
 script = ExtResource("4_req")
@@ -117,14 +223,22 @@ rank_required = 2
 script = ExtResource("4_req")
 talent_path = NodePath("定心")
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_8kt4q"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_sufyc"]
+
 [sub_resource type="Resource" id="Req_Attack_Crit"]
 script = ExtResource("4_req")
 talent_path = NodePath("破势")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_a3kg0"]
 
 [sub_resource type="Resource" id="Req_Attack_Bleed"]
 script = ExtResource("4_req")
 talent_path = NodePath("破势")
 rank_required = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_buca1"]
 
 [sub_resource type="Resource" id="Req_Attack_Combo_A"]
 script = ExtResource("4_req")
@@ -134,6 +248,8 @@ rank_required = 2
 [sub_resource type="Resource" id="Req_Attack_Combo_B"]
 script = ExtResource("4_req")
 talent_path = NodePath("裂伤")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_sc800"]
 
 [sub_resource type="Resource" id="Req_Attack_Slay"]
 script = ExtResource("4_req")
@@ -147,6 +263,7 @@ transform = Transform2D(0.7, 0, 0, 0.7, 0, 0)
 script = ExtResource("1_tree")
 
 [node name="Background" type="TextureRect" parent="." unique_id=1857996321]
+z_index = -1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -338,52 +455,6 @@ theme_override_font_sizes/font_size = 22
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="Header" type="HBoxContainer" parent="." unique_id=542690605]
-visible = false
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 391.4286
-offset_top = 217.14285
-offset_right = 355.4286
-offset_bottom = 265.14285
-grow_horizontal = 2
-alignment = 1
-
-[node name="PageButtons" type="HBoxContainer" parent="Header" unique_id=1112779132]
-layout_mode = 2
-size_flags_horizontal = 3
-alignment = 1
-
-[node name="Btn_Main" type="Button" parent="Header/PageButtons" unique_id=272148559]
-custom_minimum_size = Vector2(72, 42)
-layout_mode = 2
-toggle_mode = true
-text = "主"
-
-[node name="Btn_Summon" type="Button" parent="Header/PageButtons" unique_id=888577488]
-custom_minimum_size = Vector2(72, 42)
-layout_mode = 2
-toggle_mode = true
-text = "召"
-
-[node name="Btn_Support" type="Button" parent="Header/PageButtons" unique_id=302348734]
-custom_minimum_size = Vector2(72, 42)
-layout_mode = 2
-toggle_mode = true
-text = "辅"
-
-[node name="Btn_Guard" type="Button" parent="Header/PageButtons" unique_id=867879987]
-custom_minimum_size = Vector2(72, 42)
-layout_mode = 2
-toggle_mode = true
-text = "护"
-
-[node name="Btn_Attack" type="Button" parent="Header/PageButtons" unique_id=607203598]
-custom_minimum_size = Vector2(72, 42)
-layout_mode = 2
-toggle_mode = true
-text = "攻"
-
 [node name="Pages" type="Control" parent="." unique_id=157654490]
 layout_mode = 3
 anchors_preset = 15
@@ -401,117 +472,503 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 21.428658
+offset_top = 85.7143
+offset_right = 21.42865
+offset_bottom = 85.714294
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("3_page")
 
 [node name="灵根初醒" type="Button" parent="Pages/Page_Main" unique_id=1870477975]
+self_modulate = Color(0, 0, 0, 1)
 custom_minimum_size = Vector2(126, 70)
 layout_mode = 0
-offset_left = 344.0
-offset_top = 219.0
-offset_right = 470.0
-offset_bottom = 289.0
+offset_left = 365.7144
+offset_top = 298.57147
+offset_right = 491.7144
+offset_bottom = 368.57147
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_2j32r")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_2j32r")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_2j32r")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_2j32r")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_2j32r")
 text = "灵根初醒
 0/3"
 script = ExtResource("2_node")
 talent_id = "main_root"
 talent_name = "灵根初醒"
-description = "生命和法力小幅提升。"
-max_rank = 3
+description = "全体生命和法力小幅提升。"
+max_rank = 5
 
-[node name="灵根初醒2" type="Button" parent="Pages/Page_Main" unique_id=438984309]
+[node name="天赋点背景" parent="Pages/Page_Main/灵根初醒" unique_id=1866989955 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
+
+[node name="广阔之地" type="Button" parent="Pages/Page_Main" unique_id=438984309]
 custom_minimum_size = Vector2(126, 70)
 layout_mode = 0
-offset_left = 630.0
-offset_top = 375.0
-offset_right = 756.0
-offset_bottom = 445.0
+offset_left = 620.0
+offset_top = 514.28577
+offset_right = 746.0
+offset_bottom = 584.28577
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_10bu7")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_10bu7")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_10bu7")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_10bu7")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_10bu7")
 text = "地图
 0/1"
 script = ExtResource("2_node")
-talent_id = "main_root"
+talent_id = "main_map"
 talent_name = "地图"
 description = "解锁小地图和小地图寻路"
+requirements = Array[Resource]([SubResource("Resource_1p3og")])
 
-[node name="经脉流转" type="Button" parent="Pages/Page_Main" unique_id=597338863]
+[node name="天赋点背景" parent="Pages/Page_Main/广阔之地" unique_id=1741532144 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
+
+[node name="与人为善" type="Button" parent="Pages/Page_Main" unique_id=597338863]
 custom_minimum_size = Vector2(126, 70)
 layout_mode = 0
-offset_left = 158.0
-offset_top = 109.0
-offset_right = 284.0
-offset_bottom = 179.0
-text = "经脉流转
+offset_left = 367.14285
+offset_top = 149.99997
+offset_right = 493.14285
+offset_bottom = 219.99997
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_w4ytg")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_w4ytg")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_w4ytg")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_w4ytg")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_w4ytg")
+text = "与人为善
 0/3"
 script = ExtResource("2_node")
-talent_id = "main_flow"
-talent_name = "经脉流转"
-description = "每级提升少量速度。"
+talent_id = "main_shop_discount"
+talent_name = "与人为善"
+description = "降低全部商店物品的价格"
 max_rank = 3
 requirements = Array[Resource]([SubResource("Req_Main_Flow")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/与人为善" unique_id=1260189288 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
+
+[node name="天赋异禀" type="Button" parent="Pages/Page_Main" unique_id=1700674991]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 221.42854
+offset_top = 22.85717
+offset_right = 347.42856
+offset_bottom = 92.85717
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_jrsr8")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_jrsr8")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_jrsr8")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_jrsr8")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_jrsr8")
+text = "天赋异禀
+0/3"
+script = ExtResource("2_node")
+talent_id = "main_exp_boost"
+talent_name = "天赋异禀"
+description = "战斗获取经验提升"
+max_rank = 3
+requirements = Array[Resource]([SubResource("Resource_jxx0w")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/天赋异禀" unique_id=869247663 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
+
+[node name="锻造大师" type="Button" parent="Pages/Page_Main" unique_id=810117962]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 364.28568
+offset_top = -79.99997
+offset_right = 490.2857
+offset_bottom = -9.9999695
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_g5yin")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_g5yin")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_g5yin")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_g5yin")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_g5yin")
+text = "锻造大师
+0/3"
+script = ExtResource("2_node")
+talent_id = "main_forge"
+talent_name = "锻造大师"
+description = "降低锻造所消耗的材料"
+max_rank = 3
+requirements = Array[Resource]([SubResource("Resource_jxx0w")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/锻造大师" unique_id=1677504799 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
+
+[node name="财迷心窍" type="Button" parent="Pages/Page_Main" unique_id=767917586]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 537.1429
+offset_top = 24.285746
+offset_right = 663.1429
+offset_bottom = 94.28574
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_jxx0w")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_jxx0w")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_jxx0w")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_jxx0w")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_jxx0w")
+text = "财迷心窍
+0/3"
+script = ExtResource("2_node")
+talent_id = "main_gold_boost"
+talent_name = "财迷心窍"
+description = "所有途径获取金币提升"
+max_rank = 3
+requirements = Array[Resource]([SubResource("Resource_jxx0w")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/财迷心窍" unique_id=116034304 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
 
 [node name="凝神" type="Button" parent="Pages/Page_Main" unique_id=988311328]
 custom_minimum_size = Vector2(126, 70)
 layout_mode = 0
-offset_left = 135.0
-offset_top = 366.0
-offset_right = 261.0
-offset_bottom = 436.0
+offset_left = 88.57138
+offset_top = 328.57144
+offset_right = 214.57138
+offset_bottom = 398.57144
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_1p3og")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_1p3og")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_1p3og")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_1p3og")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_1p3og")
 text = "凝神
 0/2"
 script = ExtResource("2_node")
 talent_id = "main_focus"
 talent_name = "凝神"
-description = "提高技能命中和稳定性。"
+description = "全体提高血量"
 max_rank = 2
 requirements = Array[Resource]([SubResource("Req_Main_Focus")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/凝神" unique_id=898351750 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
 
 [node name="聚气" type="Button" parent="Pages/Page_Main" unique_id=1790025053]
 custom_minimum_size = Vector2(126, 70)
 layout_mode = 0
-offset_left = 353.0
-offset_top = 376.0
-offset_right = 479.0
-offset_bottom = 446.0
+offset_left = 229.99995
+offset_top = 435.7142
+offset_right = 355.99994
+offset_bottom = 505.7142
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_7d1dy")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_7d1dy")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_7d1dy")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_7d1dy")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_7d1dy")
 text = "聚气
 0/2"
 script = ExtResource("2_node")
 talent_id = "main_recover"
 talent_name = "聚气"
-description = "提高技能命中和稳定性。"
+description = "全体提高蓝量"
 max_rank = 2
-requirements = Array[Resource]([SubResource("Resource_1ltyo")])
+requirements = Array[Resource]([SubResource("Resource_2j32r")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/聚气" unique_id=1210993684 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
+
+[node name="经脉流转" type="Button" parent="Pages/Page_Main" unique_id=1559972970]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 5.7142715
+offset_top = 455.7143
+offset_right = 131.71426
+offset_bottom = 525.71436
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_xpo5b")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_xpo5b")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_xpo5b")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_xpo5b")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_xpo5b")
+text = "经脉流传
+0/2"
+script = ExtResource("2_node")
+talent_id = "main_channel"
+talent_name = "经脉流传"
+description = "全体提高速度"
+max_rank = 2
+requirements = Array[Resource]([SubResource("Resource_1ltyo"), SubResource("Resource_10bu7")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/经脉流转" unique_id=1722769795 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
 
 [node name="灵台清明" type="Button" parent="Pages/Page_Main" unique_id=2013969612]
 custom_minimum_size = Vector2(126, 70)
 layout_mode = 0
-offset_left = 585.0
-offset_top = 124.0
-offset_right = 711.0
-offset_bottom = 194.0
+offset_left = -97.142876
+offset_top = 598.57135
+offset_right = 28.857124
+offset_bottom = 668.57135
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_to763")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_to763")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_to763")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_to763")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_to763")
 text = "灵台清明
 0/2"
 script = ExtResource("2_node")
 talent_id = "main_spirit"
 talent_name = "灵台清明"
-description = "战斗开始时额外获得少量灵力。"
+description = "战斗开始时额外获得少量灵力。 "
 max_rank = 2
-requirements = Array[Resource]([SubResource("Req_Main_Spirit_A"), SubResource("Req_Main_Spirit_B")])
+requirements = Array[Resource]([SubResource("Req_Main_Spirit_A")])
 
-[node name="天命" type="Button" parent="Pages/Page_Main" unique_id=690700631]
+[node name="天赋点背景2" parent="Pages/Page_Main/灵台清明" unique_id=1656815348 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
+
+[node name="二倍速" type="Button" parent="Pages/Page_Main" unique_id=377916910]
 custom_minimum_size = Vector2(126, 70)
 layout_mode = 0
-offset_left = 561.0
-offset_top = 221.0
-offset_right = 687.0
-offset_bottom = 291.0
-text = "天命
+offset_left = 925.71436
+offset_top = 494.28574
+offset_right = 1051.7144
+offset_bottom = 564.28577
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_fpwt1")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_fpwt1")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_fpwt1")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_fpwt1")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_fpwt1")
+text = "二倍速
+0/2"
+script = ExtResource("2_node")
+talent_id = "main_double_speed"
+talent_name = "二倍速"
+description = "可开启战斗二倍速"
+requirements = Array[Resource]([SubResource("Resource_1w5bu"), SubResource("Resource_g5yin"), SubResource("Resource_7d1dy")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/二倍速" unique_id=36727276 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
+
+[node name="避妖" type="Button" parent="Pages/Page_Main" unique_id=337171793]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 1095.7144
+offset_top = 572.85724
+offset_right = 1221.7144
+offset_bottom = 642.85724
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_1w5bu")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_1w5bu")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_1w5bu")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_1w5bu")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_1w5bu")
+text = "避妖
 0/1"
 script = ExtResource("2_node")
-talent_id = "main_destiny"
-talent_name = "天命"
-description = "强力天赋：全属性提升。"
+talent_id = "main_avoid_encounter"
+talent_name = "避妖"
+description = "开启避妖功能"
+requirements = Array[Resource]([SubResource("Resource_dfnpb")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/避妖" unique_id=1268804914 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
+
+[node name="探危" type="Button" parent="Pages/Page_Main" unique_id=1503951587]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 781.4286
+offset_top = 300.00003
+offset_right = 907.4286
+offset_bottom = 370.00003
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_v02r3")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_v02r3")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_v02r3")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_v02r3")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_v02r3")
+text = "探危
+0/1"
+script = ExtResource("2_node")
+talent_id = "main_detect_danger"
+talent_name = "探危"
+description = "可观测仇恨排行"
+requirements = Array[Resource]([SubResource("Resource_jrsr8")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/探危" unique_id=869328734 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
+
+[node name="火眼金睛" type="Button" parent="Pages/Page_Main" unique_id=1774365633]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = 702.8572
+offset_top = 414.28574
+offset_right = 828.8572
+offset_bottom = 484.28574
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_dfnpb")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_dfnpb")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_dfnpb")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_dfnpb")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_dfnpb")
+text = "火眼金睛
+0/1"
+script = ExtResource("2_node")
+talent_id = "main_true_sight"
+talent_name = "火眼金睛"
+description = "可观测怪物状态"
+requirements = Array[Resource]([SubResource("Resource_jrsr8")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/火眼金睛" unique_id=660739009 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
+
+[node name="多多益善" type="Button" parent="Pages/Page_Main" unique_id=377476716]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = -308.5713
+offset_top = 390.00003
+offset_right = -182.57129
+offset_bottom = 460.00003
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_0ch3c")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_0ch3c")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_0ch3c")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_0ch3c")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_0ch3c")
+text = "多多益善
+0/1"
+script = ExtResource("2_node")
+talent_id = "duoduoyishan"
+talent_name = "多多益善"
+description = "增加一个战斗席位"
+requirements = Array[Resource]([SubResource("Resource_w4ytg")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/多多益善" unique_id=1091185039 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
+
+[node name="爆冲" type="Button" parent="Pages/Page_Main" unique_id=690700631]
+custom_minimum_size = Vector2(126, 70)
+layout_mode = 0
+offset_left = -308.57144
+offset_top = 607.1428
+offset_right = -182.57144
+offset_bottom = 677.1428
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_bevkp")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_bevkp")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_bevkp")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_bevkp")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_bevkp")
+text = "爆冲
+0/1"
+script = ExtResource("2_node")
+talent_id = "baochong"
+talent_name = "爆冲"
+description = "战斗开始时额外获得行动条进度"
+max_rank = 2
 requirements = Array[Resource]([SubResource("Req_Main_Destiny")])
+
+[node name="天赋点背景2" parent="Pages/Page_Main/爆冲" unique_id=14077798 instance=ExtResource("9_2j32r")]
+z_index = -1
+position = Vector2(0.2857933, -36.142826)
+tcp_path = "res://TCP/UI/2305.tcp"
 
 [node name="Page_Summon" type="Control" parent="Pages" unique_id=1135551123]
 visible = false
@@ -530,6 +987,16 @@ offset_left = 90.0
 offset_top = 210.0
 offset_right = 216.0
 offset_bottom = 280.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_dfwek")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_dfwek")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_dfwek")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_dfwek")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_dfwek")
 text = "唤灵
 0/3"
 script = ExtResource("2_node")
@@ -545,6 +1012,16 @@ offset_left = 270.0
 offset_top = 120.0
 offset_right = 396.0
 offset_bottom = 190.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_nxk44")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_nxk44")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_nxk44")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_nxk44")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_nxk44")
 text = "灵契
 0/3"
 script = ExtResource("2_node")
@@ -561,6 +1038,16 @@ offset_left = 270.0
 offset_top = 300.0
 offset_right = 396.0
 offset_bottom = 370.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_t42k4")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_t42k4")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_t42k4")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_t42k4")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_t42k4")
 text = "群召
 0/2"
 script = ExtResource("2_node")
@@ -577,6 +1064,16 @@ offset_left = 470.0
 offset_top = 210.0
 offset_right = 596.0
 offset_bottom = 280.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6d05o")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_6d05o")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_6d05o")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_6d05o")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_6d05o")
 text = "护主灵兽
 0/2"
 script = ExtResource("2_node")
@@ -593,6 +1090,16 @@ offset_left = 700.0
 offset_top = 210.0
 offset_right = 826.0
 offset_bottom = 280.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_fqwak")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_fqwak")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_fqwak")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_fqwak")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_fqwak")
 text = "太古召临
 0/1"
 script = ExtResource("2_node")
@@ -618,6 +1125,16 @@ offset_left = 90.0
 offset_top = 210.0
 offset_right = 216.0
 offset_bottom = 280.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_div01")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_div01")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_div01")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_div01")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_div01")
 text = "回春
 0/3"
 script = ExtResource("2_node")
@@ -633,6 +1150,16 @@ offset_left = 270.0
 offset_top = 120.0
 offset_right = 396.0
 offset_bottom = 190.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_w7qvi")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_w7qvi")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_w7qvi")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_w7qvi")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_w7qvi")
 text = "净心
 0/2"
 script = ExtResource("2_node")
@@ -649,6 +1176,16 @@ offset_left = 270.0
 offset_top = 300.0
 offset_right = 396.0
 offset_bottom = 370.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_257nl")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_257nl")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_257nl")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_257nl")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_257nl")
 text = "轻身
 0/3"
 script = ExtResource("2_node")
@@ -665,6 +1202,16 @@ offset_left = 470.0
 offset_top = 210.0
 offset_right = 596.0
 offset_bottom = 280.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6uf7j")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_6uf7j")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_6uf7j")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_6uf7j")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_6uf7j")
 text = "续命
 0/2"
 script = ExtResource("2_node")
@@ -681,6 +1228,16 @@ offset_left = 700.0
 offset_top = 210.0
 offset_right = 826.0
 offset_bottom = 280.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_b5dv8")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_b5dv8")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_b5dv8")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_b5dv8")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_b5dv8")
 text = "妙手回天
 0/1"
 script = ExtResource("2_node")
@@ -706,6 +1263,16 @@ offset_left = 90.0
 offset_top = 210.0
 offset_right = 216.0
 offset_bottom = 280.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_p03mf")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_p03mf")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_p03mf")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_p03mf")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_p03mf")
 text = "铁骨
 0/3"
 script = ExtResource("2_node")
@@ -721,6 +1288,16 @@ offset_left = 270.0
 offset_top = 120.0
 offset_right = 396.0
 offset_bottom = 190.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_2v77q")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_2v77q")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_2v77q")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_2v77q")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_2v77q")
 text = "护盾
 0/3"
 script = ExtResource("2_node")
@@ -737,6 +1314,16 @@ offset_left = 270.0
 offset_top = 300.0
 offset_right = 396.0
 offset_bottom = 370.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_eyj8f")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_eyj8f")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_eyj8f")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_eyj8f")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_eyj8f")
 text = "定心
 0/2"
 script = ExtResource("2_node")
@@ -753,6 +1340,16 @@ offset_left = 470.0
 offset_top = 210.0
 offset_right = 596.0
 offset_bottom = 280.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_d66pl")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_d66pl")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_d66pl")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_d66pl")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_d66pl")
 text = "守中有攻
 0/2"
 script = ExtResource("2_node")
@@ -769,6 +1366,16 @@ offset_left = 700.0
 offset_top = 210.0
 offset_right = 826.0
 offset_bottom = 280.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_kj3cr")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_kj3cr")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_kj3cr")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_kj3cr")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_kj3cr")
 text = "不动如山
 0/1"
 script = ExtResource("2_node")
@@ -794,6 +1401,16 @@ offset_left = 90.0
 offset_top = 210.0
 offset_right = 216.0
 offset_bottom = 280.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_8kt4q")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_8kt4q")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_8kt4q")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_8kt4q")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_8kt4q")
 text = "破势
 0/3"
 script = ExtResource("2_node")
@@ -809,6 +1426,16 @@ offset_left = 270.0
 offset_top = 120.0
 offset_right = 396.0
 offset_bottom = 190.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_sufyc")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_sufyc")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_sufyc")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_sufyc")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_sufyc")
 text = "会心
 0/3"
 script = ExtResource("2_node")
@@ -825,6 +1452,16 @@ offset_left = 270.0
 offset_top = 300.0
 offset_right = 396.0
 offset_bottom = 370.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_a3kg0")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_a3kg0")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_a3kg0")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_a3kg0")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_a3kg0")
 text = "裂伤
 0/2"
 script = ExtResource("2_node")
@@ -841,6 +1478,16 @@ offset_left = 470.0
 offset_top = 210.0
 offset_right = 596.0
 offset_bottom = 280.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_buca1")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_buca1")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_buca1")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_buca1")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_buca1")
 text = "连斩
 0/2"
 script = ExtResource("2_node")
@@ -857,6 +1504,16 @@ offset_left = 700.0
 offset_top = 210.0
 offset_right = 826.0
 offset_bottom = 280.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_disabled_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_sc800")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_sc800")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_sc800")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_sc800")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_sc800")
 text = "一剑破万法
 0/1"
 script = ExtResource("2_node")
@@ -865,18 +1522,36 @@ talent_name = "一剑破万法"
 description = "强力天赋：造成伤害时无视部分防御。"
 requirements = Array[Resource]([SubResource("Req_Attack_Slay")])
 
-[node name="DetailLabel" type="RichTextLabel" parent="." unique_id=1478702570]
+[node name="DetailPanel" type="Panel" parent="." unique_id=1663350026]
+visible = false
+self_modulate = Color(1, 1, 1, 0)
+offset_left = 1271.4286
+offset_top = 194.28574
+offset_right = 1572.2858
+offset_bottom = 570.2418
+mouse_filter = 1
+
+[node name="ColorRect" type="ColorRect" parent="DetailPanel" unique_id=672308595]
+layout_mode = 0
+offset_right = 301.4286
+offset_bottom = 375.71423
+mouse_filter = 1
+color = Color(0, 0.7647059, 0.9882353, 0.8156863)
+
+[node name="DetailLabel" type="Label" parent="DetailPanel" unique_id=448036303]
+layout_mode = 1
 anchors_preset = 11
 anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 26.285645
-offset_top = 258.2857
-offset_right = 258.28564
-offset_bottom = 156.2857
+offset_left = -289.4286
+offset_top = 8.571406
+offset_right = -10.857178
+offset_bottom = -14.527557
 grow_horizontal = 0
 grow_vertical = 2
-bbcode_enabled = true
+mouse_filter = 1
+autowrap_mode = 3
 
 [node name="Label" type="Label" parent="." unique_id=1649025293]
 offset_left = 730.0
@@ -909,8 +1584,8 @@ text = "X"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="天赋点图标" parent="." unique_id=1866989955 instance=ExtResource("9_2j32r")]
-position = Vector2(1554.2858, 225.71428)
+[node name="天赋点图标" parent="." unique_id=15871649 instance=ExtResource("9_2j32r")]
+position = Vector2(1511.4287, 188.57143)
 scale = Vector2(0.6, 0.6)
 tcp_path = "res://TCP/UI/2302.tcp"
 

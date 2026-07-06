@@ -71,6 +71,8 @@ animations = [{
 "speed": 7.0
 }]
 
+[sub_resource type="SpriteFrames" id="SpriteFrames_vr8dx"]
+
 [node name="fightScenePlayer" type="Node2D" unique_id=350880952]
 script = ExtResource("1_15wyq")
 
@@ -175,3 +177,6 @@ visible = false
 sprite_frames = SubResource("SpriteFrames_kn67w")
 frame = 6
 frame_progress = 1.0
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=770575423]
+sprite_frames = SubResource("SpriteFrames_vr8dx")

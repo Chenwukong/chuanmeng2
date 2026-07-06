@@ -17,6 +17,7 @@ var _frame_textures: Array[Texture2D] = []
 
 
 func _ready() -> void:
+	self.position.y += 10
 	centered = true
 	_load_tcp()
 

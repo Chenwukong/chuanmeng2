@@ -108,7 +108,7 @@ func _ready() -> void:
 	else:
 		# 队伍完全空 → 兜底加载默认成员
 		if GameData.party_db.is_empty():
-			GameData.add_party_by_name("羽灵神")
+			GameData.add_party_by_name("游霄云")
 			GameData.add_party_by_name("二郎神")
 			GameData.add_party_by_name("叮咚")
 		party_ids = ["yuling", "erlang"]
@@ -116,9 +116,16 @@ func _ready() -> void:
 	# ── 构建队伍数据 ──
 	var party_stats: Array[CharacterStats] = []
 	var valid_ids: Array[String] = []  # 只含成功加载的ID，避免和party_stats错位
+	var max_teammates := 5 if GameData.has_talent("duoduoyishan") else 4
+	var non_main_count := 0
 	for pid in party_ids:
 		var s = GameData.get_party_member(pid)
 		if s:
+			# 限制非主角队员数量
+			if s.role != CharacterStats.Role.MAIN:
+				if non_main_count >= max_teammates:
+					continue
+				non_main_count += 1
 			valid_ids.append(pid)
 			# 合并技能库
 			var merged = s.duplicate_for_battle()
@@ -364,6 +371,7 @@ func _start_bgm() -> void:
 		if ResourceLoader.exists(path):
 			_bgm_player = AudioStreamPlayer.new()
 			_bgm_player.stream = load(path)
+			_bgm_player.bus = "BGM"
 			_bgm_player.autoplay = true
 			_bgm_player.finished.connect(func(): _bgm_player.play())
 			add_child(_bgm_player)

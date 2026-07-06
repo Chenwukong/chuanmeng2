@@ -31,6 +31,10 @@ window/per_pixel_transparency/allowed=true
 
 enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg")
 
+[global_group]
+
+map=""
+
 [input]
 
 ui_accept={

@@ -52,7 +52,12 @@ func _exit_tree() -> void:
 
 ## 按队伍顺序填充 5 个 Player 节点
 func _refresh() -> void:
-	var members: Array = GameData.get_full_party()  # 顺序即队伍顺序
+	var all: Array = GameData.get_full_party()
+	# 过滤掉主角（MAIN role 不显示）
+	var members: Array = []
+	for s in all:
+		if s is CharacterStats and not (CharacterStats.has_role(s.role, CharacterStats.Role.MAIN)):
+			members.append(s)
 	for i in 5:
 		var player := _list_root.get_node_or_null("Player%d" % (i + 1)) as Node2D
 		if player == null:

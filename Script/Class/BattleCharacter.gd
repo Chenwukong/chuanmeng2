@@ -17,6 +17,7 @@ var trait_data: Dictionary = {}       # 特性运行时状态
 var current_hp: int = 0
 var current_mp: int = 0
 var shattered: bool = false  # 被碎冰击杀，不可复活
+var last_attacker: BattleCharacter = null  # 最后一击的来源
 
 ## Buff / Debuff 列表  { buff_id: { "turns": int, "value": Variant } }
 var buffs: Dictionary = {}
@@ -57,8 +58,17 @@ func setup(character_stats: CharacterStats, for_player: bool = false) -> void:
 	is_player = for_player
 	book_skills = stats.book_skills.duplicate()
 	trait_data = stats.traits.duplicate()
+	_apply_talent_boosts()
+	# 废物觉醒：80级后解锁技能
+	if trait_data.has("废物") and stats.level >= trait_data["废物"].get("break_lv", 80):
+		var aw = trait_data["废物"].get("awaken_skills", [])
+		for sk in aw:
+			if sk not in stats.skill_ids:
+				stats.skill_ids.append(sk)
 	current_hp = stats.saved_hp if stats.saved_hp > 0 else get_effective_max_hp()
-	current_mp = stats.saved_mp if stats.saved_mp > 0 else stats.max_mp
+	current_hp = mini(current_hp, get_effective_max_hp())
+	current_mp = stats.saved_mp if stats.saved_mp > 0 else get_effective_max_mp()
+	current_mp = mini(current_mp, get_effective_max_mp())
 
 	# 初始化专用 tween 容器（避免 HP/MP 互相覆盖）
 	if not _hp_tween_node:
@@ -79,7 +89,7 @@ func setup(character_stats: CharacterStats, for_player: bool = false) -> void:
 		_hp_bar.max_value = get_effective_max_hp()
 		_hp_bar.value     = current_hp
 	if _mp_bar:
-		_mp_bar.max_value = stats.max_mp
+		_mp_bar.max_value = get_effective_max_mp()
 		_mp_bar.value     = current_mp
 	if _sp_bar:
 		_sp_bar.max_value = 100
@@ -345,7 +355,7 @@ func use_mp(amount: int) -> bool:
 	return true
 
 func restore_mp(amount: int) -> void:
-	current_mp = mini(stats.max_mp, current_mp + amount)
+	current_mp = mini(get_effective_max_mp(), current_mp + amount)
 	_tween_mp_bar()
 
 ## 动画结束后统一同步视觉（头顶条 + 面板信号）
@@ -355,7 +365,7 @@ func sync_visual() -> void:
 	_update_mp_bar()
 	# 面板通过信号同步，但不要覆盖头顶正在跑的 tween
 	hp_changed.emit(current_hp, current_hp, eff_max_hp)
-	mp_changed.emit(current_mp, current_mp, stats.max_mp)
+	mp_changed.emit(current_mp, current_mp, get_effective_max_mp())
 
 func _update_hp_bar() -> void:
 	if _hp_bar:
@@ -388,7 +398,7 @@ func play_hp_up_effect() -> void:
 
 func _update_mp_bar() -> void:
 	if _mp_bar:
-		_mp_bar.max_value = stats.max_mp
+		_mp_bar.max_value = get_effective_max_mp()
 
 func _update_sp_bar() -> void:
 	if _sp_bar:
@@ -493,12 +503,12 @@ func get_buff_value(buff_id: String) -> Variant:
 	if not buffs.has(buff_id): return null
 	var layers: Array = buffs[buff_id]["layers"]
 	if layers.is_empty(): return null
-	var prod: float = 1.0
+	var total: float = 1.0
 	for l in layers:
 		var v = l.get("value")
 		if v is float or v is int:
-			prod *= float(v)
-	return prod
+			total += (float(v) - 1.0)
+	return total
 
 ## 设置头顶名字颜色（用于标识当前行动者）
 func set_name_label_color(color: Color) -> void:
@@ -587,8 +597,61 @@ func _has_book_type(type: String) -> bool:
 			return true
 	return false
 
+func _waste_boost(stat: String) -> int:
+	if trait_data.has("废物") and stats.level >= trait_data["废物"].get("break_lv", 80):
+		return int(trait_data["废物"].get(stat, 1.0))
+	return 1
+
+func _apply_talent_boosts() -> void:
+	if not is_player:
+		return
+	var boosts := {
+		"main_root": {"hp_up": 0.03, "mp_up": 0.03},
+		"main_focus": {"hp_up": 0.05},
+		"main_recover": {"mp_up": 0.05},
+		"main_channel": {"haste": 0.04},
+		"guard_armor": {"def_up": 0.05},
+		"attack_strike": {"atk_up": 0.05},
+		"attack_crit": {"crit_up": 0.03},
+	}
+	# 召唤兽额外加成
+	var is_mech = stats.character_class == "铁甲"
+	var is_pet = is_summoned_pet
+	if is_pet:
+		boosts["summon_call"] = {"hp_up": 0.04, "atk_up": 0.04, "def_up": 0.04, "haste": 0.03}
+		if is_mech:
+			boosts["guard_armor"] = {"def_up": 0.06}
+			# 铁甲额外获得护盾和不动如山加成
+			if GameData.has_talent("guard_shield"):
+				trait_data["_has_shield"] = true
+	if not trait_data.has("_talent_boosts"):
+		trait_data["_talent_boosts"] = {}
+	var tb: Dictionary = trait_data["_talent_boosts"]
+	tb.clear()
+	for tid in boosts:
+		var rank := GameData.get_talent_rank(tid)
+		if rank <= 0: continue
+		for stat_key in boosts[tid]:
+			var val = boosts[tid][stat_key] * rank
+			tb[stat_key] = tb.get(stat_key, 0.0) + val
+
+func _talent_boost(stat: String) -> float:
+	var tb: Dictionary = trait_data.get("_talent_boosts", {})
+	return 1.0 + tb.get(stat, 0.0)
+
+func _elem_resonance_boost(buff_id: String) -> float:
+	var er: Dictionary = trait_data.get("_elem_resonance", {})
+	var total := 0.0
+	var v = er.get(buff_id)
+	if v is float or v is int:
+		total += float(v) - 1.0
+	v = er.get("all_" + buff_id)
+	if v is float or v is int:
+		total += float(v) - 1.0
+	return 1.0 + total
+
 func get_effective_attack() -> int:
-	var base = stats.attack
+	var base = stats.attack * _waste_boost("atk_mul")
 	base = int(base * _book_mul("atk_up"))
 	if has_buff("atk_up"):   base = int(base * clamp(get_buff_value("atk_up") if get_buff_value("atk_up") != null else 1.5, 1.0, 3.0))
 	if has_buff("atk_down"): base = int(base * clamp(get_buff_value("atk_down") if get_buff_value("atk_down") != null else 0.7, 0.1, 1.0))
@@ -604,16 +667,19 @@ func get_effective_attack() -> int:
 		var pet_count: int = trait_data.get("_summon_pet_count", 0)
 		if pet_count > 0:
 			base = int(base * (1.0 + pet_count * sw_cfg.get("atk_pct", 0.0)))
+	base = int(base * _elem_resonance_boost("atk_up") * _talent_boost("atk_up"))
 	return base
 
 func get_effective_magic_attack() -> int:
-	var base = stats.magic_attack
+	var base = stats.magic_attack * _waste_boost("atk_mul")
 	base = int(base * _book_mul("matk_up"))
 	if has_buff("matk_up"):  base = int(base * clamp(get_buff_value("matk_up") if get_buff_value("matk_up") != null else 1.5, 1.0, 3.0))
+	if has_buff("atk_down"): base = int(base * clamp(get_buff_value("atk_down") if get_buff_value("atk_down") != null else 0.7, 0.1, 1.0))
+	base = int(base * _elem_resonance_boost("matk_up") * _talent_boost("matk_up"))
 	return base
 
 func get_effective_defense() -> int:
-	var base = stats.defense
+	var base = stats.defense * _waste_boost("def_mul")
 	base = int(base * _book_mul("def_up"))
 	if has_buff("shield"):     base = int(base * clamp(get_buff_value("shield") if get_buff_value("shield") != null else 2.0, 1.0, 5.0))
 	if has_buff("def_up"):     base = int(base * clamp(get_buff_value("def_up") if get_buff_value("def_up") != null else 1.5, 1.0, 5.0))
@@ -624,16 +690,17 @@ func get_effective_defense() -> int:
 		var pet_count: int = trait_data.get("_summon_pet_count", 0)
 		if pet_count > 0:
 			base = int(base * (1.0 + pet_count * sw_cfg2.get("def_pct", 0.0)))
+	base = int(base * _elem_resonance_boost("def_up") * _talent_boost("def_up"))
 	return base
 
 func get_effective_magic_defense() -> int:
-	var base = stats.magic_defense
+	var base = stats.magic_defense * _waste_boost("def_mul")
 	base = int(base * _book_mul("mdef_up"))
 	if has_buff("mdef_up"): base = int(base * clamp(get_buff_value("mdef_up") if get_buff_value("mdef_up") != null else 1.5, 1.0, 5.0))
 	return base
 
 func get_effective_speed() -> int:
-	var base = stats.speed
+	var base = stats.speed * _waste_boost("spd_mul")
 	base = int(base * _book_mul("haste"))
 	base = int(base * get_night_spd_mul())
 	# 迟钝降速
@@ -655,10 +722,17 @@ func get_effective_speed() -> int:
 		var pet_count: int = trait_data.get("_summon_pet_count", 0)
 		if pet_count > 0:
 			base = int(base * (1.0 + pet_count * sw_cfg3.get("spd_pct", 0.0)))
+	# 舍己为妹
+	var sjjw_cfg = trait_data.get("舍己为妹", {})
+	if not sjjw_cfg.is_empty():
+		var sc := _has_sister_in_party(sjjw_cfg)
+		if sc > 0:
+			base = int(base * (1.0 + sc * sjjw_cfg.get("spd_pct", 0.0)))
+	base = int(base * _elem_resonance_boost("haste") * _talent_boost("haste"))
 	return base
 
 func get_effective_max_hp() -> int:
-	var base = stats.max_hp
+	var base = stats.max_hp * _waste_boost("hp_mul")
 	base = int(base * _book_mul("hp_up"))
 	# 迟钝加血
 	for b in book_skills:
@@ -672,7 +746,17 @@ func get_effective_max_hp() -> int:
 		var pet_count: int = trait_data.get("_summon_pet_count", 0)
 		if pet_count > 0:
 			base = int(base * (1.0 + pet_count * sw_cfg4.get("hp_pct", 0.0)))
+	# 舍己为妹
+	var sjjw_cfg2 = trait_data.get("舍己为妹", {})
+	if not sjjw_cfg2.is_empty():
+		var sc := _has_sister_in_party(sjjw_cfg2)
+		if sc > 0:
+			base = int(base * (1.0 + sc * sjjw_cfg2.get("hp_pct", 0.0)))
+	base = int(base * _elem_resonance_boost("hp_up") * _talent_boost("hp_up"))
 	return base
+
+func get_effective_max_mp() -> int:
+	return int(stats.max_mp * _talent_boost("mp_up"))
 
 func get_effective_crit_rate() -> float:
 	var rate = stats.crit_rate
@@ -680,6 +764,7 @@ func get_effective_crit_rate() -> float:
 		var db = GameData.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "crit_up":
 			rate += db.get("value", 0.0)
+	rate += _talent_boost("crit_up") - 1.0
 	return clampf(rate, 0.0, 1.0)
 
 func get_effective_magic_crit_rate() -> float:
@@ -693,6 +778,14 @@ func get_effective_magic_crit_rate() -> float:
 ## 慧根：MP 消耗减免比例
 func get_mp_cost_reduction() -> float:
 	return minf(_book_num("mp_save"), 0.8)  # 最多减免80%
+
+## 治疗加成
+func get_effective_heal_rate() -> float:
+	var rate := 1.0
+	if has_buff("heal_up"):
+		rate = get_buff_value("heal_up") if get_buff_value("heal_up") != null else 1.15
+	rate *= _elem_resonance_boost("heal_up") * _talent_boost("heal_up")
+	return rate
 
 ## 吸血比例
 func get_lifesteal_ratio() -> float:
@@ -784,9 +877,19 @@ func _level_up() -> void:
 	stats.exp -= stats.exp_to_next
 	stats.level += 1
 	stats.exp_to_next = CharacterStats.calc_exp_to_next(stats.level)
+	# 废物觉醒
+	if trait_data.has("废物") and stats.level >= trait_data["废物"].get("break_lv", 80):
+		var aw = trait_data["废物"].get("awaken_skills", [])
+		for sk in aw:
+			if sk not in stats.skill_ids:
+				stats.skill_ids.append(sk)
+		if not member_id.is_empty() and GameData.party_db.has(member_id):
+			for sk in aw:
+				if sk not in GameData.party_db[member_id].skill_ids:
+					GameData.party_db[member_id].skill_ids.append(sk)
 	# 升级时恢复部分 HP / MP
 	current_hp = mini(stats.max_hp, current_hp + stats.hp_growth)
-	current_mp = mini(stats.max_mp, current_mp + stats.mp_growth)
+	current_mp = mini(get_effective_max_mp(), current_mp + stats.mp_growth)
 	_update_hp_bar()
 	_update_mp_bar()
 	if _name_label:
@@ -797,7 +900,7 @@ func hp_percent() -> float:
 	return float(current_hp) / float(stats.max_hp)
 
 func mp_percent() -> float:
-	return float(current_mp) / float(stats.max_mp)
+	return float(current_mp) / float(get_effective_max_mp())
 
 ## 检查是否有某本书技能
 func has_book_skill(skill_name: String) -> bool:
@@ -851,3 +954,12 @@ func recalc_summon_buffs(pet_count: int) -> void:
 			_hp_bar.max_value = new_max
 			_hp_bar.value = current_hp
 		show_trait_float("兽王血脉")
+
+func _has_sister_in_party(cfg: Dictionary) -> int:
+	var sisters: Array = cfg.get("sisters", [])
+	if sisters.is_empty(): return 0
+	var count := 0
+	for mid in sisters:
+		if GameData.party_db.has(mid):
+			count += 1
+	return count

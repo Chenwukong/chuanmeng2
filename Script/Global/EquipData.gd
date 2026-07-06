@@ -113,7 +113,7 @@ static var named_db: Dictionary = {}
 ## 注册一件命名装备（TCP 路径可为空）
 static func register_named(id: String, slot: SlotType, rarity: Rarity,
 		name_str: String, base: Dictionary, tcp_path: String = "",
-		level: int = 1, affixes: Array = []) -> void:
+		level: int = 1, affixes: Array = [], price: int = 0) -> void:
 	named_db[id] = {
 		"id": id,
 		"slot": slot,
@@ -124,6 +124,7 @@ static func register_named(id: String, slot: SlotType, rarity: Rarity,
 		"base": base,
 		"affixes": affixes,
 		"tcp_path": tcp_path,
+		"price": price,
 	}
 
 ## 按 ID 取一件命名装备的副本（不影响原模板）

@@ -322,12 +322,18 @@ func _update_detail(index: int) -> void:
 	var parts := []
 	parts.append("%s · %s" % [type_str, target_str])
 	if data.mp_cost > 0:
-		parts.append(GameData._T("SKILL_DETAIL_MP") % data.mp_cost)
+		var mp_fmt := GameData._T("SKILL_DETAIL_MP")
+		if mp_fmt == "SKILL_DETAIL_MP": mp_fmt = "MP %d"
+		parts.append(mp_fmt % data.mp_cost)
 	if data.hp_cost > 0:
-		parts.append(GameData._T("SKILL_DETAIL_HP") % data.hp_cost)
+		var hp_fmt := GameData._T("SKILL_DETAIL_HP")
+		if hp_fmt == "SKILL_DETAIL_HP": hp_fmt = "HP %d"
+		parts.append(hp_fmt % data.hp_cost)
 	var cd = _get_cooldown.call(_actor, _skill_datas[index].skill_id) if _actor else 0
 	if cd > 0:
-		parts.append(GameData._T("SKILL_DETAIL_CD") % cd)
+		var cd_fmt := GameData._T("SKILL_DETAIL_CD")
+		if cd_fmt == "SKILL_DETAIL_CD": cd_fmt = "CD %d turns"
+		parts.append(cd_fmt % cd)
 	skill_meta_lb.text = " | ".join(parts)
 
 	# 描述

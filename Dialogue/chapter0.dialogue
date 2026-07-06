@@ -11,7 +11,9 @@ Nathan: For more information see the online documentation.
 => END
 
 ~ 剑侠客
-剑侠客: 你们听说了吗？
+#set get_tree().current_scene.open_shop("镖头")
+set GameData.bossFight("赤焰兽")
+凌风: 你们听说了吗？
 二郎神: 什么？
 剑侠客: 传梦2国庆出
 二郎神: 哪年国庆？

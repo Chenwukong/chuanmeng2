@@ -1,0 +1,385 @@
+[gd_scene format=3 uid="uid://bg7nf6dyk100k"]
+
+[ext_resource type="Texture2D" uid="uid://dv0e84a1ovr7" path="res://Graphic/UI/打造.png" id="1_nyvtx"]
+
+[node name="BuildPopup" type="CanvasLayer" unique_id=1487639906]
+
+[node name="打造" type="Sprite2D" parent="." unique_id=2027182334]
+position = Vector2(613, 332)
+texture = ExtResource("1_nyvtx")
+
+[node name="所需现金" type="Label" parent="打造" unique_id=637340968]
+offset_left = 57.0
+offset_top = -167.0
+offset_right = 97.0
+offset_bottom = -144.0
+
+[node name="现有现金" type="Label" parent="打造" unique_id=1102542309]
+offset_left = 58.0
+offset_top = -141.0
+offset_right = 98.0
+offset_bottom = -118.0
+
+[node name="ItemSlot_00" type="Panel" parent="打造" unique_id=513301110]
+unique_name_in_owner = true
+offset_left = -124.999985
+offset_top = -47.0
+offset_right = -28.999985
+offset_bottom = 37.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_00" unique_id=1591010480]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_01" type="Panel" parent="打造" unique_id=970380009]
+unique_name_in_owner = true
+offset_left = -72.999985
+offset_top = -47.0
+offset_right = 23.000015
+offset_bottom = 37.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_01" unique_id=460188257]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_02" type="Panel" parent="打造" unique_id=1115194497]
+unique_name_in_owner = true
+offset_left = -22.999985
+offset_top = -48.0
+offset_right = 73.000015
+offset_bottom = 36.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_02" unique_id=1083750515]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_03" type="Panel" parent="打造" unique_id=1141340776]
+unique_name_in_owner = true
+offset_left = 28.0
+offset_top = -48.0
+offset_right = 124.0
+offset_bottom = 36.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_03" unique_id=2060933091]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_04" type="Panel" parent="打造" unique_id=203897447]
+unique_name_in_owner = true
+offset_left = 79.0
+offset_top = -47.0
+offset_right = 175.0
+offset_bottom = 37.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_04" unique_id=335588243]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_05" type="Panel" parent="打造" unique_id=810544807]
+unique_name_in_owner = true
+offset_left = -124.999985
+offset_top = 3.0
+offset_right = -28.999985
+offset_bottom = 87.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_05" unique_id=532061770]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_06" type="Panel" parent="打造" unique_id=87051833]
+unique_name_in_owner = true
+offset_left = -72.999985
+offset_top = 3.0
+offset_right = 23.000015
+offset_bottom = 87.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_06" unique_id=73145428]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_07" type="Panel" parent="打造" unique_id=155198253]
+unique_name_in_owner = true
+offset_left = -21.999985
+offset_top = 4.0
+offset_right = 74.000015
+offset_bottom = 88.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_07" unique_id=1581402238]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_08" type="Panel" parent="打造" unique_id=55725856]
+unique_name_in_owner = true
+offset_left = 29.0
+offset_top = 4.0
+offset_right = 125.0
+offset_bottom = 88.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_08" unique_id=1938011022]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_09" type="Panel" parent="打造" unique_id=1998963959]
+unique_name_in_owner = true
+offset_left = 79.0
+offset_top = 3.0
+offset_right = 175.0
+offset_bottom = 87.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_09" unique_id=1484264714]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 3.4416318
+offset_bottom = 3.4416351
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_10" type="Panel" parent="打造" unique_id=249391168]
+unique_name_in_owner = true
+offset_left = -124.999985
+offset_top = 55.0
+offset_right = -28.999985
+offset_bottom = 139.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_10" unique_id=2144683971]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_11" type="Panel" parent="打造" unique_id=1637095692]
+unique_name_in_owner = true
+offset_left = -72.999985
+offset_top = 55.0
+offset_right = 23.000015
+offset_bottom = 139.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_11" unique_id=1906848343]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_12" type="Panel" parent="打造" unique_id=218340699]
+unique_name_in_owner = true
+offset_left = -21.999985
+offset_top = 56.0
+offset_right = 74.000015
+offset_bottom = 140.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_12" unique_id=1710471499]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_13" type="Panel" parent="打造" unique_id=555704903]
+unique_name_in_owner = true
+offset_left = 29.0
+offset_top = 56.0
+offset_right = 125.0
+offset_bottom = 140.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_13" unique_id=727129018]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_14" type="Panel" parent="打造" unique_id=1810293325]
+unique_name_in_owner = true
+offset_left = 79.0
+offset_top = 55.0
+offset_right = 175.0
+offset_bottom = 139.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_14" unique_id=174549716]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_15" type="Panel" parent="打造" unique_id=620846931]
+unique_name_in_owner = true
+offset_left = -124.999985
+offset_top = 106.0
+offset_right = -28.999985
+offset_bottom = 190.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_15" unique_id=1855435127]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_16" type="Panel" parent="打造" unique_id=2136596621]
+unique_name_in_owner = true
+offset_left = -72.999985
+offset_top = 106.0
+offset_right = 23.000015
+offset_bottom = 190.0
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_16" unique_id=1474658853]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_17" type="Panel" parent="打造" unique_id=1827350573]
+unique_name_in_owner = true
+offset_left = -21.999985
+offset_top = 105.99997
+offset_right = 74.000015
+offset_bottom = 189.99997
+scale = Vector2(0.5194795, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_17" unique_id=1929270881]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -1.7208158
+offset_bottom = -1.7208176
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_18" type="Panel" parent="打造" unique_id=1452720365]
+unique_name_in_owner = true
+offset_left = 28.0
+offset_top = 105.0
+offset_right = 124.0
+offset_bottom = 189.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_18" unique_id=1656439553]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSlot_19" type="Panel" parent="打造" unique_id=48886778]
+unique_name_in_owner = true
+offset_left = 79.0
+offset_top = 106.0
+offset_right = 175.0
+offset_bottom = 190.0
+scale = Vector2(0.5194796, 0.5811197)
+
+[node name="Icon" type="TextureRect" parent="打造/ItemSlot_19" unique_id=363757570]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5

@@ -164,6 +164,7 @@ func _ready() -> void:
 	battle_manager.battle_ended.connect(_on_battle_ended)
 	battle_manager.actor_turn_started.connect(_on_actor_turn_started)
 	battle_manager.character_animated.connect(_on_character_animated)
+	battle_manager.bonus_attack_started.connect(_on_bonus_attack_started)
 
 	actor_indicator.text = ""
 	action_panel.set_enabled(false)
@@ -1046,6 +1047,8 @@ func _highlight_enemy(ch: BattleCharacter) -> void:
 
 ## 鼠标悬停敌人 — 同步更新 keyboard 选中
 func _on_enemy_hovered(ch: BattleCharacter) -> void:
+	if not GameData.has_talent("main_detect_danger"):
+		return
 	_show_tooltip(ch)
 	# 选敌模式下同步键盘高亮
 	var enemies := battle_manager.alive_enemies()
@@ -1103,7 +1106,7 @@ func _show_tooltip(ch: BattleCharacter) -> void:
 	_tooltip_labels["hp"].text = "HP: %d / %d" % [ch.current_hp, eff_max_hp]
 	_tooltip_labels["hp"].add_theme_color_override("font_color", Color(0.3, 1, 0.4))
 
-	_tooltip_labels["mp"].text = "MP: %d / %d" % [ch.current_mp, ch.stats.max_mp]
+	_tooltip_labels["mp"].text = "MP: %d / %d" % [ch.current_mp, ch.get_effective_max_mp()]
 	_tooltip_labels["mp"].add_theme_color_override("font_color", Color(0.4, 0.7, 1))
 
 	var buf_text := ""
@@ -1435,6 +1438,12 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 						battle_manager.flush_pending_damage()
 					await SpellProjectile.shoot(caster_pos, target_pos, target.get_parent(), on_hit, self, actor, actor.stats.talisman_type, _get_talisman_texture(actor))
 				else:
+					# 非主角远程无弹道，直接受击
+					if target_node:
+						if target_node.has_method("play_hit_once"):
+							target_node.play_hit_once()
+						if target_node.has_method("play_hit_flash"):
+							target_node.play_hit_flash()
 					if nd.has_method("play_ranged_hit_effect"):
 						nd.play_ranged_hit_effect(target.get_parent(), actor.stats.was_base_path)
 				battle_manager.flush_pending_damage()
@@ -1519,6 +1528,12 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 						battle_manager.flush_guard_return()
 					await SpellProjectile.shoot(caster_pos, target_pos, hit_target, on_hit, self)
 				else:
+					# 非主角远程无弹道，直接受击
+					if tgt_node:
+						if tgt_node.has_method("play_hit_once"):
+							tgt_node.play_hit_once()
+						if tgt_node.has_method("play_hit_flash"):
+							tgt_node.play_hit_flash()
 					if hit_target and nd.has_method("play_ranged_hit_effect"):
 						nd.play_ranged_hit_effect(hit_target, actor.stats.was_base_path)
 				battle_manager.flush_pending_damage()
@@ -1624,6 +1639,14 @@ func _on_actor_turn_started(actor: BattleCharacter, is_player: bool) -> void:
 	actor.set_name_label_color(Color.RED)
 
 	_update_turn_order()
+
+func _on_bonus_attack_started() -> void:
+	var actor = battle_manager.current_actor()
+	if actor == null: return
+	actor_indicator.text = actor.stats.get_display_name() + " ⚡双动"
+	# 自动聚焦普通攻击按钮
+	if action_panel and action_panel.btn_attack:
+		action_panel.btn_attack.grab_focus()
 
 func _on_battle_ended(player_won: bool, exp_gained: int, gold_gained: int, level_ups: Array) -> void:
 	

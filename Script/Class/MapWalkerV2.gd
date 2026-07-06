@@ -19,9 +19,9 @@ func _ready() -> void:
 	var w := get_node_or_null("WASAnimationPlayer")
 	if w:
 		_wasp = w
-		w.add_anim("idle",  "res://WAS/队员/羽灵神-弓/待机.was")
-		w.add_anim("move",  "res://WAS/队员/羽灵神-弓/移动.was")
-		w.add_anim("attack","res://WAS/队员/羽灵神-弓/攻击.was")
+		w.add_anim("idle",  "res://WAS/队员/游霄云/待机.was")
+		w.add_anim("move",  "res://WAS/队员/游霄云/移动.was")
+		w.add_anim("attack","res://WAS/队员/游霄云/攻击.was")
 		w.load_all()
 		w.play("idle")
 

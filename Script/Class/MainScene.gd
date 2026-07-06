@@ -17,6 +17,7 @@ const SHICHEN_IMG: Array[String] = [
 
 var _bounty_popup = null
 var _bounty_open = false
+var _map_popup = null
 var _pet_popup = null
 var _save_popup = null
 var _talent_tree = null
@@ -37,6 +38,7 @@ const PERIOD_TINTS: Array = [
 
 @onready var _camera: Camera2D = $Camera2D
 @onready var bounty_btn = $UI/BountyBtn
+@onready var map_btn = $UI/按钮底图/地图 as AnimatedSprite2D
 @onready var _xy_label: Label = $UI/坐标图/xy
 @onready var _map_name_label: Label = $UI/坐标图/mapName
 @onready var _day_night_icon: TextureRect = $UI/坐标图/dayNightIcon
@@ -56,13 +58,36 @@ func _ready() -> void:
 	_world_log = $UI/BattleLog
 	_world_log.bbcode_enabled = true
 	GameData.world_log = _world_log
+	if map_btn:
+		map_btn.visible = true
+		map_btn.modulate = Color.WHITE
+		# 锁定状态灰色
+		if not GameData.has_talent("main_map"):
+			map_btn.modulate = Color(0.4, 0.4, 0.4, 0.6)
+		# tooltip Label
+		var tip := map_btn.get_node_or_null("LockHint") as Label
+		if tip == null and not GameData.has_talent("main_map"):
+			tip = Label.new()
+			tip.name = "LockHint"
+			tip.text = "未解锁"
+			tip.add_theme_color_override("font_color", Color(1, 0.5, 0.2))
+			tip.add_theme_font_size_override("font_size", 14)
+			tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			tip.position = Vector2(-10, -20)
+			tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			map_btn.add_child(tip)
+		elif tip:
+			tip.queue_free()
+	# 给所有按钮加名字标签
+	_add_btn_labels()
 	add_child(load("res://Script/Class/CursorController.gd").new())
-	GameData.add_party_by_name("羽灵神")
+	GameData.add_party_by_name("游霄云")
 	GameData.add_party_by_name("千面")
 	GameData.add_party_by_name("堕十一")
 	GameData.add_party_by_name("叮咚")
 	GameData.add_party_by_name("凌风")
 	GameData.add_party_by_name("大将军")
+	
 # ════════════════════════════
 # UI 按钮系统
 # ════════════════════════════
@@ -73,16 +98,46 @@ func _setup_ui_buttons() -> void:
 	var btn_base = $UI/按钮底图
 	if btn_base == null: return
 
-	for node_name in ["宠物", "天赋", "道具", "队伍", "系统", "存档", "悬赏", "剧情"]:
+	for node_name in ["宠物", "天赋", "道具", "队伍", "系统", "存档", "悬赏", "剧情", "地图"]:
 		var sprite = btn_base.get_node_or_null(node_name) as AnimatedSprite2D
 		if sprite == null: continue
 		_play_sprite_anim(sprite, "default")
 
 
+func _add_btn_labels() -> void:
+	var btn_base = $UI/按钮底图
+	if btn_base == null: return
+	# 从已有的 "打造/Label" 读取样式
+	var template_node = btn_base.get_node_or_null("打造/Label") as Label
+	var template_color = Color(1, 1, 0)
+	var template_size = 10
+	if template_node:
+		var c = template_node.get("theme_override_colors/font_color")
+		if c != null: template_color = c
+		var s = template_node.get("theme_override_font_sizes/font_size")
+		if s != null: template_size = s
+	for node_name in ["宠物", "天赋", "道具", "队伍", "系统", "存档", "悬赏", "剧情", "人物", "地图"]:
+		var sprite = btn_base.get_node_or_null(node_name) as Node2D
+		if sprite == null: continue
+		if sprite.has_node("Label"): continue
+		var lbl = Label.new()
+		lbl.name = "Label"
+		lbl.text = node_name
+		lbl.add_theme_color_override("font_color", template_color)
+		lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0))
+		lbl.add_theme_font_size_override("font_size", template_size)
+		lbl.size = Vector2(40, 24)
+		lbl.position = Vector2(-20, -13)
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		sprite.add_child(lbl)
+
+
 func _get_menu_sprite_at(pos: Vector2) -> AnimatedSprite2D:
 	var btn_base = $UI/按钮底图
 	if btn_base == null: return null
-	var buttons = ["宠物", "天赋", "道具", "队伍", "系统", "存档", "悬赏", "剧情", "人物"]
+	var buttons = ["宠物", "天赋", "道具", "队伍", "系统", "存档", "悬赏", "剧情", "人物", "地图"]
 	for node_name in buttons:
 		var sprite = btn_base.get_node_or_null(node_name) as AnimatedSprite2D
 		if sprite == null: continue
@@ -118,6 +173,8 @@ func _input(event: InputEvent):
 		var sprite = _get_menu_sprite_at(event.global_position)
 		if sprite:
 			var btn_name = sprite.name
+			if btn_name == "地图" and not GameData.has_talent("main_map"):
+				return
 			match btn_name:
 				"宠物": _open_pet_popup()
 				"天赋": _open_talent_tree()
@@ -126,6 +183,7 @@ func _input(event: InputEvent):
 				"悬赏": _open_bounty_popup()
 				"队伍": _open_team_popup()
 				"人物": _open_status_popup()
+				"地图": _open_map_popup()
 			_play_sprite_anim(sprite, "pressed")
 			get_viewport().set_input_as_handled()
 			await get_tree().create_timer(0.15).timeout
@@ -144,6 +202,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
 		_esc_close_or_save()
+	# 测试：F2 打开商店
+	if event is InputEventKey and event.is_pressed() and not event.is_echo():
+		if event.keycode == KEY_F2:
+			get_viewport().set_input_as_handled()
+			open_shop()
 
 
 ## ESC 依次关闭已打开的面板（队伍/道具/宠物/天赋/悬赏/存档），全关掉后开存档
@@ -164,6 +227,9 @@ func _esc_close_or_save() -> void:
 		return
 	if _talent_tree and is_instance_valid(_talent_tree):
 		_close_popup(_talent_tree)
+		return
+	if _map_popup and is_instance_valid(_map_popup):
+		_close_popup(_map_popup)
 		return
 	if _bounty_popup and is_instance_valid(_bounty_popup) and _bounty_open:
 		_bounty_popup.hide()
@@ -187,6 +253,10 @@ func _open_talent_tree():
 		return
 	_talent_tree = preload("res://Component/TalentTree.tscn").instantiate()
 	add_child(_talent_tree)
+	_talent_tree.closed.connect(func():
+		_talent_tree = null
+		_unregister_popup()
+	)
 	_register_popup(_talent_tree)
 
 
@@ -289,6 +359,39 @@ func _open_save_popup():
 	_register_popup()
 
 
+func _open_map_popup() -> void:
+	if _map_popup and is_instance_valid(_map_popup):
+		_close_popup(_map_popup)
+		return
+	if not GameData.has_talent("main_map"): return
+	_map_popup = preload("res://Component/map.tscn").instantiate()
+	add_child(_map_popup)
+	# 按钮
+	var close_btn = _map_popup.get_node_or_null("CloseButton") as TextureButton
+	if close_btn:
+		close_btn.pressed.connect(_close_map)
+	var world_btn = _map_popup.get_node_or_null("世界地图") as Button
+	var current_btn = _map_popup.get_node_or_null("当前地图") as Button
+	var map_container = _map_popup.get_node_or_null("MapContainer")
+	if world_btn and map_container:
+		world_btn.pressed.connect(func(): map_container.switch_to_world())
+	if current_btn and map_container:
+		current_btn.pressed.connect(func(): map_container.switch_to_current())
+	# 填充地图传送数据
+	var map_root = get_node_or_null("MapRoot")
+	var map_id = map_root.map_id if map_root and not map_root.map_id.is_empty() else ""
+	var tp_data = GameData.get_teleports(map_id)
+	if not tp_data.is_empty():
+		var content = _map_popup.get_node("MapContainer/MapViewport/MapContent")
+		if content:
+			content.teleport_data = tp_data
+	_register_popup()
+
+func _close_map() -> void:
+	if _map_popup and is_instance_valid(_map_popup):
+		_close_popup(_map_popup)
+
+
 func _open_bounty_popup():
 	if _bounty_popup == null or not is_instance_valid(_bounty_popup):
 		_bounty_popup = preload("res://Component/BountyPopup.tscn").instantiate()
@@ -311,6 +414,7 @@ func _open_bounty_popup():
 
 func _has_any_popup_open() -> bool:
 	if _bounty_open: return true
+	if _map_popup and is_instance_valid(_map_popup): return true
 	if _pet_popup and is_instance_valid(_pet_popup): return true
 	if _save_popup and is_instance_valid(_save_popup): return true
 	if _talent_tree and is_instance_valid(_talent_tree): return true
@@ -328,11 +432,37 @@ func _register_popup(_node: Node = null):
 func _unregister_popup(_node: Node = null):
 	if not _has_any_popup_open():
 		GameData.ui_blocked = false
+		if map_btn:
+			map_btn.visible = true
+			map_btn.modulate = Color.WHITE
+			if not GameData.has_talent("main_map"):
+				map_btn.modulate = Color(0.4, 0.4, 0.4, 0.6)
+			# tooltip Label
+			var tip := map_btn.get_node_or_null("LockHint") as Label
+			if tip == null and not GameData.has_talent("main_map"):
+				tip = Label.new()
+				tip.name = "LockHint"
+				tip.text = "未解锁"
+				tip.add_theme_color_override("font_color", Color(1, 0.5, 0.2))
+				tip.add_theme_font_size_override("font_size", 14)
+				tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				tip.position = Vector2(-10, -20)
+				tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				map_btn.add_child(tip)
+			elif tip:
+				tip.queue_free()
 		$UI/坐标图.visible = true
 		$UI/按钮底图.visible = true
 		if bounty_btn: bounty_btn.visible = true
 
 func _close_popup(node: Node):
+	if node == null or not is_instance_valid(node):
+		return
+	if node == _talent_tree and node.has_method("close"):
+		node.close()
+		_talent_tree = null
+		_unregister_popup()
+		return
 	if node.has_method("hide"): node.hide()
 	if node is CanvasLayer or node is Panel: node.queue_free()
 	# queue_free 是延迟的，必须先清引用再 _unregister_popup
@@ -340,6 +470,7 @@ func _close_popup(node: Node):
 	if node == _pet_popup:    _pet_popup = null
 	if node == _talent_tree:  _talent_tree = null
 	if node == _equip_page:   _equip_page = null
+	if node == _map_popup:    _map_popup = null
 	_unregister_popup()
 
 
@@ -480,6 +611,17 @@ static func current_language() -> String:
 ## 显示普通对话气泡（商店等无限对话 NPC）
 func show_normal_chat(dialogue_file: String, title: String, flag: String = "") -> void:
 	_show_dialogue_balloon("res://addons/dialogue_manager/example_balloon/normalChat.tscn", dialogue_file, title, flag)
+
+
+## 打开商店弹窗（由 NPC 对话调用）
+func open_shop(npc_name: String = "") -> void:
+	var shop = preload("res://Component/ShopPopup.tscn").instantiate()
+	add_child(shop)
+	shop.closed.connect(func(): shop.queue_free(); _unregister_popup())
+	var items = GameData.get_shop_items(npc_name)
+	if not items.is_empty():
+		shop.set_item_list(items)
+	_register_popup()
 
 
 ## 显示剧情对话气泡

@@ -32,7 +32,7 @@ var player_stats: CharacterStats:
 var _enemy_db_cache: Dictionary = {}
 
 ## 天赋树数据（talent_id → rank）
-var talent_ranks: Dictionary = {}
+static var talent_ranks: Dictionary = {}
 var talent_points: int = 20
 
 ## 游戏全局数据（存档用）
@@ -44,7 +44,14 @@ var ui_blocked: bool = false    # 弹窗打开时暂停地图操作/追踪怪
 var current_scene_path: String = ""
 var chapter_id: int = 1
 var current_locale: String = "zh"  # 当前语言
-## 多语言翻译表（JSON 加载，不依赖 Godot 的 tr()）
+static func has_talent(talent_id: String) -> bool:
+	return talent_ranks.get(talent_id, 0) > 0
+
+static func get_talent_rank(talent_id: String) -> int:
+	return talent_ranks.get(talent_id, 0)
+
+static func set_talent_rank(talent_id: String, rank: int) -> void:
+	talent_ranks[talent_id] = rank
 static var _lang_cache: Dictionary = {}
 static var _current_lang: String = "zh"
 static func get_lang() -> String: return _current_lang
@@ -189,7 +196,7 @@ func _init_debug_pets() -> void:
 	pet_team.clear()
 	for i in 6:
 		pet_team.append("debug_pet_%d" % i)
-	print("[宠物] 已生成 %d 只测试宠物，前6只默认上场" % pet_db.size())
+
 
 
 func _init_mech_pets() -> void:
@@ -204,7 +211,7 @@ func _init_mech_pets() -> void:
 		"atk_g": 3, "def_g": 1, "spd_g": 4, "skills": ["普通攻击", "三连击"],
 	}
 	mech_team = ["机关兽", "机关鸟"]
-	print("[铁甲] 已初始化 %d 只铁甲兽" % mech_db.size())
+
 
 
 # ══════════════════════════════════════════════
@@ -217,7 +224,6 @@ func unlock_skill(member_id: String, skill_id: String) -> void:
 		skill_library[member_id] = []
 	if skill_id not in skill_library[member_id]:
 		skill_library[member_id].append(skill_id)
-		print("[技能] %s 习得 %s" % [member_id, skill_id])
 	else:
 		print("[技能] %s 已掌握 %s，跳过" % [member_id, skill_id])
 
@@ -553,6 +559,10 @@ func add_party_by_name(p_name: String, p_class: String = "", p_role: String = ""
 
 ## 按 member_id 移除队员
 func remove_party_member(member_id: String) -> void:
+	if party_db.has(member_id) and party_db[member_id].traits.has("废物"):
+		party_db.erase(member_id)
+		party_order.erase(member_id)
+		return
 	party_db.erase(member_id)
 	party_order.erase(member_id)
 
@@ -644,19 +654,19 @@ func _build_enemy_db() -> void:
 # ══════════════════════════════════════════════
 
 const CHARACTER_DB := {
-	"yuling": {
-		"name": "羽灵神", "class": "战神", "elem": "金", "role": "主",
-		"en_name": "Yuling",
+	"youxiaoyun": {
+		"name": "游霄云", "class": "战神", "elem": "金", "role": "主",
+		"en_name": "YouXiaoYun",
 		"hp": 150, "mp": 80,  "atk": 3500, "matk": 25, "def": 14, "mdef": 10, "spd": 8,
 		"crit": 0.18, "crit_mult": 1.7,
-		"was_base_path": "res://WAS/羽灵神-弓/",
+		"was_base_path": "res://WAS/游霄云/",
 		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴","神行步"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg", "cast_sound": "res://Audio/SE/男-枪.ogg",
 		"ranged": true,
 	},
 	"erlang": {
 		"name": "二郎神", "class": "战神", "elem": "金", "role": "攻",
-		"en_name": "Erlang",
+		"en_name": "ErLang",
 		"hp": 150, "mp": 70,  "atk": 30, "matk": 20, "def": 14, "mdef": 10, "spd": 30,
 		"crit": 0.18, "crit_mult": 1.7,
 		"was_base_path": "res://WAS/二郎神",
@@ -666,7 +676,7 @@ const CHARACTER_DB := {
 	},
 	"duoshiyi": {
 		"name": "堕十一", "class": "灵师", "elem": "金", "role": "攻",
-		"en_name": "Duoshiyi",
+		"en_name": "DuoShiYi",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/堕十一",
@@ -676,7 +686,7 @@ const CHARACTER_DB := {
 	},
 	"qianmian": {
 		"name": "千面", "class": "灵师", "elem": "水", "role": "召",
-		"en_name": "Qianmian",
+		"en_name": "QianMian",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/千面",
@@ -685,23 +695,23 @@ const CHARACTER_DB := {
 	},
 	"dingdong": {
 		"name": "叮咚", "class": "灵师", "elem": "水", "role": "召",
-		"en_name": "Dingdong",
+		"en_name": "DingDong",
 		"hp": 120, "mp": 100, "atk": 2000, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/叮咚",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"attack_sound": "res://Audio/SE/137-Light03.ogg",
 		"ranged": true,
 	},
 	"lingfeng": {
 		"name": "凌风", "class": "灵师", "elem": "水", "role": "攻辅",
-		"en_name": "Lingfeng",
+		"en_name": "LingFeng",
 		"hp": 120, "mp": 100, "atk": 20000, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/凌风",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"横扫不休": {"chance": 0.3}},
+		"traits": {"横扫不休": {"chance": 0.3}, "双动": {}},
 	},
 	"hutouguai": {
 		"name": "虎头怪", "class": "灵师", "elem": "木", "role": "召",
@@ -715,7 +725,7 @@ const CHARACTER_DB := {
 	},
 	"shentianbing": {
 		"name": "神天兵", "class": "灵师", "elem": "金", "role": "护",
-		"en_name": "Shentianbing",
+		"en_name": "ShenTianBing",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/神天兵",
@@ -724,14 +734,14 @@ const CHARACTER_DB := {
 		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
 	},
 	"xiaoyaosheng": {
-		"name": "逍遥生", "class": "灵师", "elem": "金", "role": "护",
-		"en_name": "Xiaoyaosheng",
+		"name": "逍遥生", "class": "灵师", "elem": "木", "role": "辅",
+		"en_name": "XiaoYao",
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/逍遥生",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
+		"traits": {"舍己为妹": {"spd_pct": 0.15, "hp_pct": -0.02, "sisters": ["taoyaoyao", "yingjingling"]}},
 	},	
 	"jumowang": {
 		"name": "巨魔王", "class": "灵师", "elem": "金", "role": "护",
@@ -792,10 +802,69 @@ const CHARACTER_DB := {
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
 		"traits": {"横扫不休": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
-	},			
-	
+	},
+	"tunshishou": {
+		"name": "吞噬兽", "class": "灵师", "elem": "木", "role": "护",
+		"en_name": "Tunshishou",
+		"hp": 150, "mp": 80, "atk": 22, "matk": 20, "def": 18, "mdef": 14, "spd": 20,
+		"was_base_path": "res://WAS/吞噬兽",
+		"skills": ["普通攻击", "嘲讽", "护体真气", "回元术"],
+		"traits": {"吞噬": {"hp_gain": 4, "level_floor": 5}},
+	},
+	"longtaizi": {
+		"name": "龙太子", "class": "灵师", "elem": "水", "role": "攻",
+		"en_name": "Longtaizi",
+		"hp": 130, "mp": 90, "atk": 28, "matk": 25, "def": 12, "mdef": 10, "spd": 22,
+		"was_base_path": "res://WAS/龙太子",
+		"skills": ["普通攻击", "雷霆诀", "御剑气", "破防击"],
+		"traits": {"晓之以理": {"dmg_reduce": 0.10}},
+	},
+	"hun": {
+		"name": "魂", "class": "灵师", "elem": "土", "role": "攻",
+		"en_name": "Hun",
+		"hp": 30, "mp": 20, "atk": 5, "matk": 5, "def": 3, "mdef": 3, "spd": 5,
+		"was_base_path": "res://WAS/魂",
+		"skills": ["普通攻击"],
+		"traits": {"废物": {"break_lv": 80, "hp_mul": 8, "atk_mul": 8, "def_mul": 6, "spd_mul": 5,
+			"awaken_skills": ["雷霆诀", "寂静剑法", "横扫千军", "一苇渡江", "如沐春风"]}},
+	},
 					
 }
+
+# ═══ 商店 NPC 数据库 ═══
+const SHOP_NPC_DB = {
+		"镖头": { "items": ["equip_2952", "equip_2953", "equip_2902"],
+				  "prices": {"equip_2952": 60} },
+}
+
+static func get_shop_items(npc_name: String) -> Array[Dictionary]:
+	var entry = SHOP_NPC_DB.get(npc_name, {})
+	var item_ids: Array = entry.get("items", [])
+	var custom_prices: Dictionary = entry.get("prices", {})
+	var result: Array[Dictionary] = []
+	for eid in item_ids:
+		var eq = EquipData.get_named(eid)
+		if eq.is_empty(): continue
+		var price = custom_prices.get(eid, eq.get("price", 0))
+		result.append({
+			"name": eq.get("display_name", eq.get("name", "装备")),
+			"price": price,
+			"tcp_path": eq.get("tcp_path", ""),
+			"equip_data": eq,
+			"rarity": eq.get("rarity", 0),
+		})
+	return result
+
+
+# ═══ 传送圈位置数据库 ═══
+const TELEPORT_DB = {
+	"map_changan": [
+		{ "label": "建邺", "scene": "map_jianye", "pos": Vector2(500, 300) },
+	],
+}
+
+static func get_teleports(map_id: String) -> Array:
+	return TELEPORT_DB.get(map_id, []).duplicate()
 
 
 func _init_party() -> void:
@@ -1082,6 +1151,12 @@ const SKILL_DB := {
 		"mp": 30, "cd": 5,
 		"desc": "千面千相，变化为一名队友的外貌和技能（不含主角）",
 	},
+	# ── 防御技能 ──
+	"嘲讽": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
+		"mp": 10, "cd": 2,
+		"desc": "嘲讽全场敌人，强制攻击自己 2 回合",
+	},
 	# ── 敌方技能 ──
 	"妖术": {
 		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
@@ -1363,36 +1438,36 @@ func generate_random_equip(slot: EquipData.SlotType = EquipData.SlotType.WEAPON,
 func _init_equip_db() -> void:
 	# ── 腰带 ──
 	EquipData.register_named("equip_2902", EquipData.SlotType.BELT, EquipData.Rarity.COMMON,
-		"粗腰带", {"hp": 80}, "res://TCP/腰带/2902.tcp")
+		"粗腰带", {"hp": 80}, "res://TCP/腰带/2902.tcp", 1, [], 100)
 	EquipData.register_named("equip_2903", EquipData.SlotType.BELT, EquipData.Rarity.COMMON,
-		"细腰带", {"hp": 60}, "res://TCP/腰带/2903.tcp")
+		"细腰带", {"hp": 60}, "res://TCP/腰带/2903.tcp", 1, [], 80)
 	EquipData.register_named("equip_2906", EquipData.SlotType.BELT, EquipData.Rarity.UNCOMMON,
-		"牛皮腰带", {"hp": 140}, "res://TCP/腰带/2906.tcp")
+		"牛皮腰带", {"hp": 140}, "res://TCP/腰带/2906.tcp", 1, [], 300)
 	EquipData.register_named("equip_2908", EquipData.SlotType.BELT, EquipData.Rarity.UNCOMMON,
-		"犀皮腰带", {"hp": 180}, "res://TCP/腰带/2908.tcp")
+		"犀皮腰带", {"hp": 180}, "res://TCP/腰带/2908.tcp", 1, [], 400)
 	EquipData.register_named("equip_2910", EquipData.SlotType.BELT, EquipData.Rarity.RARE,
-		"虎筋腰带", {"hp": 260}, "res://TCP/腰带/2910.tcp")
+		"虎筋腰带", {"hp": 260}, "res://TCP/腰带/2910.tcp", 1, [], 800)
 	EquipData.register_named("equip_2912", EquipData.SlotType.BELT, EquipData.Rarity.RARE,
-		"龙鳞腰带", {"hp": 340}, "res://TCP/腰带/2912.tcp")
+		"龙鳞腰带", {"hp": 340}, "res://TCP/腰带/2912.tcp", 1, [], 1200)
 	EquipData.register_named("equip_2950", EquipData.SlotType.BELT, EquipData.Rarity.EPIC,
-		"玄武腰带", {"hp": 480}, "res://TCP/腰带/2950.tcp")
+		"玄武腰带", {"hp": 480}, "res://TCP/腰带/2950.tcp", 1, [], 2500)
 	EquipData.register_named("equip_2952", EquipData.SlotType.BELT, EquipData.Rarity.COMMON,
-		"布腰带", {"hp": 50}, "res://TCP/腰带/2952.tcp")
+		"布腰带", {"hp": 50}, "res://TCP/腰带/2952.tcp", 1, [], 50)
 	EquipData.register_named("equip_2953", EquipData.SlotType.BELT, EquipData.Rarity.COMMON,
-		"棉腰带", {"hp": 70}, "res://TCP/腰带/2953.tcp")
+		"棉腰带", {"hp": 70}, "res://TCP/腰带/2953.tcp", 1, [], 60)
 	EquipData.register_named("equip_2954", EquipData.SlotType.BELT, EquipData.Rarity.UNCOMMON,
-		"铁腰带", {"hp": 160}, "res://TCP/腰带/2954.tcp")
+		"铁腰带", {"hp": 160}, "res://TCP/腰带/2954.tcp", 1, [], 350)
 	EquipData.register_named("equip_2955", EquipData.SlotType.BELT, EquipData.Rarity.EPIC,
-		"朱雀腰带", {"hp": 440, "spd": 12}, "res://TCP/腰带/2955.tcp")
+		"朱雀腰带", {"hp": 440, "spd": 12}, "res://TCP/腰带/2955.tcp", 1, [], 3000)
 	EquipData.register_named("equip_2956", EquipData.SlotType.BELT, EquipData.Rarity.EPIC,
-		"白虎腰带", {"hp": 460, "atk": 15}, "res://TCP/腰带/2956.tcp")
+		"白虎腰带", {"hp": 460, "atk": 15}, "res://TCP/腰带/2956.tcp", 1, [], 3200)
 	EquipData.register_named("equip_2957", EquipData.SlotType.BELT, EquipData.Rarity.LEGENDARY,
-		"青龙腰带", {"hp": 600, "spd": 2000}, "res://TCP/腰带/2957.tcp")
+		"青龙腰带", {"hp": 600, "spd": 2000}, "res://TCP/腰带/2957.tcp", 1, [], 6000)
 	EquipData.register_named("equip_2958", EquipData.SlotType.BELT, EquipData.Rarity.LEGENDARY,
-		"九龙神腰带", {"hp": 750, "def": 30}, "res://TCP/腰带/2958.tcp")
+		"九龙神腰带", {"hp": 750, "def": 30}, "res://TCP/腰带/2958.tcp", 1, [], 8000)
 	# --- 武器
 	EquipData.register_named("equip_2958", EquipData.SlotType.WEAPON, EquipData.Rarity.LEGENDARY,
-		"九龙神腰带", {"hp": 750, "def": 30}, "res://TCP/腰带/2958.tcp")
+		"九龙神腰带", {"hp": 750, "def": 30}, "res://TCP/腰带/2958.tcp", 1, [], 8000)
 
 ## 调试：往背包放几件腰带看看效果
 func _debug_equip_belt() -> void:
@@ -1402,4 +1477,7 @@ func _debug_equip_belt() -> void:
 			var eq := EquipData.get_named(equip_id)
 			if not eq.is_empty():
 				equip_bag.append(eq)
-		print("[装备调试] 已往背包放入粗腰带、虎筋腰带、青龙腰带")
+
+func bossFight(boss):
+	var map = get_tree().get_first_node_in_group("map")
+	map.start_preset_battle(boss)

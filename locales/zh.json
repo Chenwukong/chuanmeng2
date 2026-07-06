@@ -190,5 +190,8 @@
   "EQUIP_RIGHT_CLICK_UNEQUIP": "右键卸下",
   "EQUIP_INSTRUCTION": "[color=gray]左键选中  双击装备[/color]",
   "EQUIP_RIGHT_CLICK_INST": "[color=gray]右键卸下[/color]",
-  "EQUIP_EQUIPPED_SECTION": "[u]── 已穿 ──[/u]"
+  "EQUIP_EQUIPPED_SECTION": "[u]── 已穿 ──[/u]",
+  "LOG_BOUNTY_KILL_DONE": "🎯 赏金任务【%s】已完成！",
+  "LOG_DOUBLE_ACTION": "%s 双动！可再行动一次",
+  "LOG_DOUBLE_BLOCKED": "%s 双动不能连续使用同类技能"
 }

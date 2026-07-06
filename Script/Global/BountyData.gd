@@ -9,10 +9,10 @@ enum Rank { DING, BING, YI, JIA }
 ## 全任务池：按等级分组
 static var TASK_POOL: Dictionary = {
 	Rank.DING: [
-		{ id = "bounty_ding_1", name = "除狐患",   desc = "最近妖狐在村落附近出没，带回狐尾以证功绩。", item_id = "quest_fox_tail",    count = 2, gold = 200,  repeatable = true },
+		{ id = "bounty_ding_1", name = "除狐患",   desc = "最近妖狐在村落附近出没，带回狐尾以证功绩。", item_id = "quest_fox_tail",    count = 2, gold = 200,  repeatable = false, reward_talent_points = 1 },
 		{ id = "bounty_ding_2", name = "驱山魈",   desc = "山魈骚扰路人，需要它的獠牙做护符。",        item_id = "quest_mandrill_fang", count = 1, gold = 250,  repeatable = true },
 		{ id = "bounty_ding_3", name = "收集蛛丝", desc = "幽蛛之丝是上好的纺织材料，大量收购。",        item_id = "quest_spider_silk", count = 3, gold = 300,  repeatable = true },
-		{ id = "bounty_ding_4", name = "清剿游魂", desc = "野外幽魂渐多，带回魂核以削弱其势力。",        item_id = "quest_ghost_core",  count = 1, gold = 350,  repeatable = false },
+		{ id = "bounty_ding_4", name = "清剿蛮兽", desc = "野外蛮兽渐多，诛杀以削弱其势力。",        item_id = "quest_ghost_core",  count = 1, gold = 350,  repeatable = true, kill_target = "超级赤焰兽", kill_required = 3 },
 	],
 	Rank.BING: [
 		{ id = "bounty_bing_1", name = "猎火鸦",   desc = "火鸦群在火山口筑巢，收集其赤羽。",              item_id = "quest_fire_feather", count = 3, gold = 500,  repeatable = true },

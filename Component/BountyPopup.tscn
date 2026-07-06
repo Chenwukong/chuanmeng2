@@ -3,6 +3,19 @@
 [ext_resource type="Script" uid="uid://dm7rivfqw71m7" path="res://Script/Class/BountyPopup.gd" id="1_root"]
 [ext_resource type="Texture2D" uid="uid://dogla7dqe8t0c" path="res://Graphic/UI/法术道具顶图.png" id="2_dposg"]
 [ext_resource type="Texture2D" uid="uid://cmb56qejeq2li" path="res://Graphic/UI/法术道具底图.png" id="3_q1kg6"]
+[ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="4_hqpej"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cgls6"]
+atlas = ExtResource("4_hqpej")
+region = Rect2(0, 0, 42.200043, 21.399994)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nk5td"]
+atlas = ExtResource("4_hqpej")
+region = Rect2(84.65245, 0, 41.34755, 21.511547)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fwt1c"]
+atlas = ExtResource("4_hqpej")
+region = Rect2(42.56493, 0, 40.23701, 21.74393)
 
 [node name="BountyPopup" type="CanvasLayer" unique_id=1509096698]
 layer = 5
@@ -15,7 +28,7 @@ scale = Vector2(0.7693896, 1.3822714)
 texture = ExtResource("2_dposg")
 
 [node name="法术道具底图" type="Sprite2D" parent="." unique_id=1629393740]
-position = Vector2(574.62964, 322.25)
+position = Vector2(663.37036, 376.75)
 scale = Vector2(0.6201696, 0.7926683)
 texture = ExtResource("3_q1kg6")
 
@@ -30,10 +43,10 @@ color = Color(0.02, 0.04, 0.12, 0.75)
 [node name="Panel" type="Control" parent="." unique_id=1490961015]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 188.0
-offset_top = 39.0
-offset_right = 988.0
-offset_bottom = 601.0
+offset_left = 276.74072
+offset_top = 93.5
+offset_right = 1076.7407
+offset_bottom = 655.5
 mouse_filter = 2
 
 [node name="PanelBg" type="ColorRect" parent="Panel" unique_id=880692002]
@@ -57,14 +70,6 @@ offset_top = 8.0
 offset_right = 300.0
 offset_bottom = 36.0
 text = "◆ 悬赏任务 ◆"
-
-[node name="CloseBtn" type="Button" parent="Panel" unique_id=1107894427]
-layout_mode = 0
-offset_left = 760.0
-offset_top = 5.0
-offset_right = 795.0
-offset_bottom = 35.0
-text = "✕"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="Panel" unique_id=1017890460]
 layout_mode = 0
@@ -122,3 +127,27 @@ offset_top = 215.0
 offset_right = 420.0
 offset_bottom = 250.0
 text = "取消"
+
+[node name="CloseBtn" type="TextureButton" parent="Panel" unique_id=2126576937]
+layout_mode = 0
+offset_left = 971.2593
+offset_top = -45.5
+offset_right = 1051.2593
+offset_bottom = -15.5
+texture_normal = SubResource("AtlasTexture_cgls6")
+texture_pressed = SubResource("AtlasTexture_nk5td")
+texture_hover = SubResource("AtlasTexture_fwt1c")
+
+[node name="Label" type="Label" parent="Panel/CloseBtn" unique_id=1680982884]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -3.0
+offset_right = -40.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "x"
+horizontal_alignment = 1
