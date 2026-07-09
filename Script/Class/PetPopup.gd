@@ -595,6 +595,13 @@ func _on_next() -> void:
 
 
 func _on_close() -> void:
+	# 关闭音效
+	var snd = AudioStreamPlayer.new()
+	snd.stream = load("res://Audio/SE/003-System03.ogg")
+	snd.bus = "SFX"
+	get_tree().root.add_child(snd)
+	snd.play()
+	snd.finished.connect(snd.queue_free)
 	_pop_out()
 	closed.emit()
 

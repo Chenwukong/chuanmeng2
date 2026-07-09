@@ -1,0 +1,199 @@
+[gd_scene format=3 uid="uid://der00hhnod11q"]
+
+[ext_resource type="Texture2D" uid="uid://cx3ww85muxjmc" path="res://Graphic/UI/系统设置.png" id="1_3keuf"]
+[ext_resource type="Script" uid="uid://dilfaq0qx0lkr" path="res://Script/Only/SettingPopup.gd" id="1_root"]
+[ext_resource type="Texture2D" uid="uid://iipe1m6xiay1" path="res://Graphic/UI/坐标-音乐.png" id="2_2m7h3"]
+[ext_resource type="Texture2D" uid="uid://tg504w20f2d3" path="res://Graphic/UI/坐标-小地图.png" id="3_v2mpt"]
+[ext_resource type="Texture2D" uid="uid://c30n1i1qxt8gl" path="res://Graphic/UI/0f8ae6f7607bc5cf6c5ae138f160fe5e.png" id="4_bc8t1"]
+[ext_resource type="Texture2D" uid="uid://dwclpmn3cvceo" path="res://Graphic/UI/传.png" id="5_ledqc"]
+[ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="7_bc8t1"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5jtpk"]
+atlas = ExtResource("2_2m7h3")
+region = Rect2(48, 0, 24, 24)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_dc5ia"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5jtpk")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2m7h3"]
+atlas = ExtResource("2_2m7h3")
+region = Rect2(48, 0, 24, 24)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_v2mpt"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2m7h3")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rwo25"]
+atlas = ExtResource("3_v2mpt")
+region = Rect2(48, 0, 24, 24)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ctlmb"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rwo25")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ledqc"]
+atlas = ExtResource("7_bc8t1")
+region = Rect2(0, 0, 42.200043, 21.399994)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dc5ia"]
+atlas = ExtResource("7_bc8t1")
+region = Rect2(84.65245, 0, 41.34755, 21.511547)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ctlmb"]
+atlas = ExtResource("7_bc8t1")
+region = Rect2(42.56493, 0, 40.23701, 21.74393)
+
+[node name="CanvasLayer" type="CanvasLayer" unique_id=166140506]
+script = ExtResource("1_root")
+
+[node name="系统设置" type="Sprite2D" parent="." unique_id=53772227]
+position = Vector2(668, 320)
+texture = ExtResource("1_3keuf")
+
+[node name="musicIcon" type="AnimatedSprite2D" parent="系统设置" unique_id=879563064]
+position = Vector2(-177, -13)
+sprite_frames = SubResource("SpriteFrames_dc5ia")
+
+[node name="HSlider" type="HSlider" parent="系统设置/musicIcon" unique_id=262165804]
+offset_left = 18.0
+offset_top = -6.0
+offset_right = 195.0
+offset_bottom = 10.0
+metadata/_edit_use_anchors_ = true
+
+[node name="Label" type="Label" parent="系统设置/musicIcon" unique_id=2044314833]
+offset_left = -51.0
+offset_top = -11.0
+offset_right = -11.0
+offset_bottom = 12.0
+text = "音乐"
+metadata/_edit_use_anchors_ = true
+
+[node name="soundIcon" type="AnimatedSprite2D" parent="系统设置" unique_id=981527786]
+self_modulate = Color(1, 0, 1, 1)
+position = Vector2(-177, -42)
+sprite_frames = SubResource("SpriteFrames_dc5ia")
+
+[node name="HSlider" type="HSlider" parent="系统设置/soundIcon" unique_id=1381721935]
+offset_left = 18.0
+offset_top = -6.0
+offset_right = 195.0
+offset_bottom = 10.0
+metadata/_edit_use_anchors_ = true
+
+[node name="Label" type="Label" parent="系统设置/soundIcon" unique_id=1585485758]
+offset_left = -51.0
+offset_top = -11.0
+offset_right = -11.0
+offset_bottom = 12.0
+text = "音量"
+metadata/_edit_use_anchors_ = true
+
+[node name="soundEffectIcon" type="AnimatedSprite2D" parent="系统设置" unique_id=1615736319]
+self_modulate = Color(0, 1, 0, 1)
+position = Vector2(-177, 16)
+sprite_frames = SubResource("SpriteFrames_v2mpt")
+
+[node name="HSlider" type="HSlider" parent="系统设置/soundEffectIcon" unique_id=2046679556]
+offset_left = 18.0
+offset_top = -6.0
+offset_right = 195.0
+offset_bottom = 10.0
+metadata/_edit_use_anchors_ = true
+
+[node name="Label" type="Label" parent="系统设置/soundEffectIcon" unique_id=319350793]
+offset_left = -51.0
+offset_top = -12.0
+offset_right = -11.0
+offset_bottom = 11.0
+text = "音效"
+metadata/_edit_use_anchors_ = true
+
+[node name="fullScreenIcon" type="AnimatedSprite2D" parent="系统设置" unique_id=348818169]
+position = Vector2(-178, 46)
+sprite_frames = SubResource("SpriteFrames_ctlmb")
+
+[node name="CheckBox" type="CheckBox" parent="系统设置/fullScreenIcon" unique_id=1926016624]
+offset_left = 14.0
+offset_top = -13.0
+offset_right = 38.0
+offset_bottom = 11.0
+
+[node name="全屏" type="Label" parent="系统设置/fullScreenIcon" unique_id=1194819564]
+offset_left = -49.0
+offset_top = -12.0
+offset_right = -17.0
+offset_bottom = 11.0
+text = "全屏"
+
+[node name="收款" type="Sprite2D" parent="." unique_id=168893773]
+position = Vector2(830, 333.00003)
+scale = Vector2(0.5080645, 0.5080645)
+texture = ExtResource("4_bc8t1")
+
+[node name="ColorRect" type="ColorRect" parent="收款" unique_id=2005259281]
+offset_left = -37.396828
+offset_top = -37.39682
+offset_right = 35.42861
+offset_bottom = 33.460358
+
+[node name="传" type="Sprite2D" parent="收款" unique_id=512688441]
+position = Vector2(-9.84127, -3.9365845)
+scale = Vector2(0.6219683, 0.6219683)
+texture = ExtResource("5_ledqc")
+
+[node name="Label" type="Label" parent="收款" unique_id=1764339516]
+modulate = Color(0, 0, 0, 1)
+offset_left = -66.92064
+offset_top = -188.95245
+offset_right = 53.07936
+offset_bottom = -146.95245
+theme_override_font_sizes/font_size = 30
+text = "友情赞助"
+
+[node name="CloseBtn" type="TextureButton" parent="." unique_id=1008409488]
+offset_left = 907.0
+offset_top = 204.0
+offset_right = 987.0
+offset_bottom = 234.0
+texture_normal = SubResource("AtlasTexture_ledqc")
+texture_pressed = SubResource("AtlasTexture_dc5ia")
+texture_hover = SubResource("AtlasTexture_ctlmb")
+
+[node name="Label" type="Label" parent="CloseBtn" unique_id=527469440]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -3.0
+offset_right = -40.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "x"
+horizontal_alignment = 1
+
+[connection signal="pressed" from="CloseBtn" to="." method="_on_close_btn_pressed"]

@@ -80,7 +80,7 @@ static func role_name(roles: int) -> String:
 @export var is_ranged: bool = false
 
 ## 符咒类型（主角羽灵神专用）
-enum TalismanType { FIRE, SLEEP, ICE, HASTE }
+enum TalismanType { FIRE, SLEEP, ICE, HASTE, CEASEFIRE }
 @export var talisman_type: TalismanType = TalismanType.FIRE
 
 ## 敌人等级标记（如 "boss" / "special" / ""）

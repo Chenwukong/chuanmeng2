@@ -12,7 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://dw5n6u0u8u1v1" path="res://Graphic/BattleAnimation/#十一弦攻击【敌】.png" id="10_vr8dx"]
 
 [sub_resource type="RectangleShape2D" id="Rect_click"]
-size = Vector2(100, 120)
+size = Vector2(71, 97.25)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_8j3rf"]
 atlas = ExtResource("10_vr8dx")
@@ -94,8 +94,10 @@ script = ExtResource("3_i42p")
 target_sprite = NodePath("../Sprite2D")
 
 [node name="Area2D" type="Area2D" parent="." unique_id=503895841]
+position = Vector2(-6, -221)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=64339134]
+position = Vector2(6.5, 189.625)
 shape = SubResource("Rect_click")
 
 [node name="WorldUI" type="Node2D" parent="." unique_id=338968377]

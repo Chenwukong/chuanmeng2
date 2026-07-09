@@ -75,7 +75,8 @@ func setup(
 	party_ids:    Array,
 	enemy_chars:  Array,
 	enemy_stats:  Array,
-	inventory:    Inventory
+	inventory:    Inventory,
+	weapon_specials: Array = []
 ) -> void:
 	party.clear()
 	enemies.clear()
@@ -94,6 +95,8 @@ func setup(
 		c.setup(party_stats[i], true)
 		c.died.connect(_on_character_died.bind(c))
 		party.append(c)
+		if weapon_specials and i < weapon_specials.size() and not weapon_specials[i].is_empty():
+			c.equip_special = weapon_specials[i].duplicate()
 
 	for i in enemy_chars.size():
 		var c: BattleCharacter = enemy_chars[i]
@@ -270,6 +273,8 @@ func _run_actor_turn(actor: BattleCharacter) -> void:
 		_change_state(BattleState.ENEMY_TURN)
 		actor_turn_started.emit(actor, false)
 		_push_log(GameData._T("LOG_TURN_ACT") % actor.stats.get_display_name(), "turn")
+		# 时辰喜好：根据当前时段给怪物加buff/debuff
+		_apply_time_pref(actor)
 		await get_tree().create_timer(0.4).timeout
 		await enemy_ai.execute_turn(actor)
 		await _check_battle_end()
@@ -418,6 +423,8 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		_current_actor.trait_data = target.trait_data.duplicate()
 		_current_actor.stats.traits = target.stats.traits.duplicate()
 		_current_actor.stats.was_base_path = target.stats.was_base_path
+		_current_actor.trait_data["_metamorphosis"] = true
+		_current_actor.metamorphosis_mod = 0.7
 		_update_element_resonance()
 		_push_log(GameData._T("LOG_TRANSFORM") % [_current_actor.stats.get_display_name(), target.stats.get_display_name()], "player_action")
 		_current_actor.show_trait_float("千变万化")
@@ -454,11 +461,11 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 				if tn.has_method("play_hit_once"): tn.play_hit_once()
 				if tn.has_method("play_hit_flash"): tn.play_hit_flash()
 			var dmg = maxi(1, int(_current_actor.get_effective_attack() * data.damage_multiplier) - int(t.get_effective_defense() * 0.6))
-			dmg = int(dmg * randf_range(0.95, 1.05))
+			dmg = int(dmg * randf_range(0.95, 1.05) * _current_actor.metamorphosis_mod)
 			var actual = t.take_damage(dmg)
 			t.sync_visual()
 			damage_floated.emit(t, actual, "normal")
-			if tn and tn.has_method("play_idle"): tn.play_idle()
+			if tn and tn.has_method("play_idle") and not t.is_dead: tn.play_idle()
 		await _finish_player_action()
 		return
 
@@ -478,7 +485,7 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			var nd = mech.get_parent() as Node2D
 			var on_hit = func():
 				var dmg = maxi(1, mech.stats.attack - int(target.get_effective_defense() * 0.5))
-				dmg = int(dmg * randf_range(0.95, 1.05))
+				dmg = int(dmg * randf_range(0.95, 1.05) * _current_actor.metamorphosis_mod)
 				var actual = target.take_damage(dmg)
 				target.sync_visual()
 				damage_floated.emit(target, actual, "normal")
@@ -507,14 +514,19 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		# 播放多段攻击动画
 		var nd = _current_actor.get_parent() as Node2D
 		var hits = result.damage_list.size()
+		var meta_mul = _current_actor.metamorphosis_mod
 		
-		# on_hit：命中后立刻结算伤害，不等走回来；斩杀特效由 died 信号自动触发
+		# on_hit：命中后立刻结算伤害
 		var on_hit = func():
 			var total_dmg = 0
-			for dmg in result.damage_list:
-				total_dmg += dmg
-			for dmg in result.damage_list:
-				actual_target.take_damage(dmg)
+			var dmg_list = result.damage_list.duplicate()
+			for i in range(dmg_list.size()):
+				dmg_list[i] = int(dmg_list[i] * meta_mul)
+				total_dmg += dmg_list[i]
+			var actual_total = 0
+			for dmg in dmg_list:
+				var actual = actual_target.take_damage(dmg)
+				actual_total += actual
 				if actual_target.is_dead:
 					break
 			actual_target.sync_visual()
@@ -558,12 +570,13 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 	# 如沐春风：群体治疗
 	if skill_id == "如沐春风":
 		var heal_targets: Array[BattleCharacter] = [target]
+		var max_targets := 4 + _get_extra_heal_target_count(_current_actor)
 		var candidates: Array[BattleCharacter] = []
 		for c in party:
 			if c != target and not c.is_dead:
 				candidates.append(c)
 		candidates.shuffle()
-		for j in mini(3, candidates.size()):
+		for j in mini(max_targets - 1, candidates.size()):
 			heal_targets.append(candidates[j])
 
 		for h in heal_targets:
@@ -575,6 +588,7 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 
 		for h in heal_targets:
 			var amt = int(h.stats.max_hp * 0.15) + 30
+			amt = int(amt * _current_actor.metamorphosis_mod)
 			var actual = h.heal(amt)
 			h.sync_visual()
 			damage_floated.emit(h, actual, "heal")
@@ -619,7 +633,7 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			damage_floated.emit(t, actual, "normal")
 			_push_log(GameData._T("LOG_GROUND_FIRE") % [t.stats.get_display_name(), actual], "enemy_action")
 			var tn = t.get_parent() as Node2D
-			if tn and tn.has_method("play_idle"):
+			if tn and tn.has_method("play_idle") and not t.is_dead:
 				tn.play_idle()
 			await get_tree().create_timer(0.3).timeout
 
@@ -671,6 +685,24 @@ func player_use_item(item_id: String, target: BattleCharacter) -> void:
 		target.sync_visual()
 	await get_tree().create_timer(action_delay).timeout
 	await _finish_player_action()
+
+
+func _apply_time_pref(enemy: BattleCharacter) -> void:
+	var pref = enemy.trait_data.get("_time_pref", "")
+	if pref.is_empty(): return
+	var period = GameData.current_period
+	var period_name = ""
+	match period:
+		0: period_name = "night"
+		1: period_name = "day"
+		2: period_name = "dusk"
+	if period_name == pref:
+		enemy.add_buff("atk_up", 3, 1.2, "time_pref")
+		enemy.add_buff("haste", 3, 1.15, "time_pref")
+	elif period_name == "day" and pref == "night":
+		enemy.add_buff("atk_down", 3, 0.85, "time_pref")
+		enemy.add_buff("slow", 3, 0.85, "time_pref")
+
 
 ## 逃跑
 func player_flee() -> void:
@@ -780,6 +812,9 @@ func player_guard(ally: BattleCharacter) -> void:
 	if state != BattleState.PLAYER_TURN: return
 	_change_state(BattleState.PLAYER_ACTION)
 	guard_relations[ally] = _current_actor
+	# 保护动画：守护者播放 buff 特效 + 飘字
+	_current_actor.show_trait_float("守护")
+	_current_actor.play_dual_spell_effect()
 	_push_log(GameData._T("LOG_GUARD_SET") % [_current_actor.stats.get_display_name(), ally.stats.get_display_name()], "player_action")
 	await get_tree().create_timer(action_delay).timeout
 	await _finish_player_action()
@@ -1053,6 +1088,78 @@ func execute_enemy_skill(actor: BattleCharacter, skill_id: String, target: Battl
 # ──────────────────────────────────────────────
 
 ## 结果应用（动画 + 飘字 + 日志）
+func _get_extra_heal_target_count(actor: BattleCharacter) -> int:
+	if actor == null or actor.is_dead:
+		return 0
+	return maxi(0, int(actor.equip_special.get("heal_targets", 0)))
+
+func _get_heal_side(actor: BattleCharacter) -> Array[BattleCharacter]:
+	if actor != null and actor.is_player:
+		return party
+	return enemies
+
+func _pick_extra_heal_targets(actor: BattleCharacter, used_targets: Array, count: int) -> Array[BattleCharacter]:
+	var picked: Array[BattleCharacter] = []
+	if count <= 0:
+		return picked
+	var wounded: Array[BattleCharacter] = []
+	var healthy: Array[BattleCharacter] = []
+	for c in _get_heal_side(actor):
+		if c == null or c.is_dead or c in used_targets:
+			continue
+		if c.hp_percent() < 1.0:
+			wounded.append(c)
+		else:
+			healthy.append(c)
+	wounded.sort_custom(func(a, b): return a.hp_percent() < b.hp_percent())
+	for c in wounded:
+		if picked.size() >= count:
+			return picked
+		picked.append(c)
+	for c in healthy:
+		if picked.size() >= count:
+			return picked
+		picked.append(c)
+	return picked
+
+func _calc_heal_amount_for_target(actor: BattleCharacter, target: BattleCharacter, skill_id: String, fallback_amount: int) -> int:
+	var skill_data := SkillManager.get_skill(skill_id)
+	if skill_data != null and skill_data.skill_type == SkillData.SkillType.HEAL:
+		return maxi(1, int(target.stats.max_hp * skill_data.heal_multiplier * actor.get_effective_heal_rate()) + skill_data.flat_heal)
+	if fallback_amount > 0:
+		return fallback_amount
+	return 0
+
+func _apply_extra_heal_targets(
+	actor: BattleCharacter,
+	primary_target: BattleCharacter,
+	base_amount: int,
+	heal_size: String,
+	skill_id: String = "",
+	already_healed: Array = []
+) -> void:
+	var extra_count := _get_extra_heal_target_count(actor)
+	if extra_count <= 0:
+		return
+	var used_targets: Array = []
+	if primary_target != null:
+		used_targets.append(primary_target)
+	for t in already_healed:
+		if t != null and t not in used_targets:
+			used_targets.append(t)
+	for extra_target in _pick_extra_heal_targets(actor, used_targets, extra_count):
+		var amount := _calc_heal_amount_for_target(actor, extra_target, skill_id, base_amount)
+		if amount <= 0:
+			continue
+		var actual := extra_target.heal(amount)
+		if actual <= 0:
+			continue
+		extra_target.sync_visual()
+		damage_floated.emit(extra_target, actual, "heal")
+		_push_log(GameData._T("LOG_SPLASH_HEAL") % [extra_target.stats.get_display_name(), actual], "heal")
+		if actor != null and _threat_mgr != null:
+			_threat_mgr.add_heal_threat(actor, heal_size)
+
 func _apply_skill_result(
 	result: SkillManager.SkillResult,
 	actor: BattleCharacter,
@@ -1100,13 +1207,16 @@ func _apply_skill_result(
 	await get_tree().create_timer(0.25).timeout
 
 	# 存入待显示伤害
+	var meta_mul = actor.metamorphosis_mod
 	for dmg in result.damage_list:
+		var is_aoe = result.skill_type == SkillData.SkillType.AOE
 		pending_damage.append({
 			"attacker": actor,
 			"target": actual_target,
-			"amount": dmg,
+			"amount": int(dmg * meta_mul),
 			"type": _damage_float_type(result),
 			"is_magic": result.is_magic,
+			"is_aoe": is_aoe,
 		})
 	if result.heal_amount > 0:
 		var skill_data = SkillManager.get_skill(result.skill_id)
@@ -1114,9 +1224,10 @@ func _apply_skill_result(
 		pending_damage.append({
 			"attacker": actor,
 			"target": actual_target,
-			"amount": result.heal_amount,
+			"amount": int(result.heal_amount * meta_mul),
 			"type": "heal",
 			"heal_size": hsize,
+			"skill_id": result.skill_id,
 		})
 
 	var log_type = "player_action" if actor.is_player else "enemy_action"
@@ -1140,34 +1251,61 @@ func flush_pending_damage() -> void:
 	for d in pending_damage:
 		if d.type == "heal":
 			d.target.heal(d.amount)
+			_apply_extra_heal_targets(d.get("attacker"), d.target, d.amount, d.get("heal_size", "medium"), d.get("skill_id", ""))
 		else:
 			d.target.last_attacker = d.get("attacker")
-			var actual = d.target.take_damage(d.amount)
-			d.amount = actual  # 用实际扣血替换原始值，后续统一 emit
-			# 反震：受到物理伤害反弹
-			if not d.get("is_magic", false) and d.target._has_book_type("reflect"):
-				var ratio = d.target.get_reflect_ratio()
-				if ratio > 0 and d.has("attacker") and d.attacker and not d.attacker.is_dead:
-					var reflect_dmg = maxi(1, int(d.amount * ratio))
-					d.attacker.take_damage(reflect_dmg)
-					d.attacker.sync_visual()
-					damage_floated.emit(d.attacker, reflect_dmg, "normal")
-					_push_log(GameData._T("LOG_REFLECT") % [d.target.stats.get_display_name(), d.attacker.stats.get_display_name(), reflect_dmg], "player_action" if d.target.is_player else "enemy_action")
-			# 吸血：物理攻击回复
-			if not d.get("is_magic", false) and d.has("attacker") and d.attacker and not d.attacker.is_dead:
-				var ls_ratio = d.attacker.get_lifesteal_ratio()
-				if ls_ratio > 0:
-					var heal_amt = maxi(1, int(d.amount * ls_ratio))
-					d.attacker.heal(heal_amt)
-					_push_log(GameData._T("LOG_LIFESTEAL") % [d.attacker.stats.get_display_name(), heal_amt], "heal")
-			# 毒：物理攻击概率挂毒
-			if not d.get("is_magic", false) and d.has("attacker") and d.attacker and not d.target.is_dead:
-				var venom_chance = d.attacker.get_venom_chance()
-				if venom_chance > 0 and randf() < venom_chance and not d.target.is_immune_to_debuffs():
-					d.target.add_buff("poison", 3)
-					_push_log(GameData._T("LOG_POISON") % d.target.stats.get_display_name(), "debuff")
-					d.target.sync_visual()
-		# 仇恨：伤害 / 治疗
+			# 闪避 / 魔法吸收检查（在 take_damage 之前）
+			var dodged = false
+			# 闪避：群攻概率闪避，单体法术必中
+			var can_dodge = d.get("is_aoe", false) or not d.get("is_magic", false)
+			if can_dodge:
+				# 闪避：物理攻击
+				var dodge_chance = d.target.trait_data.get("_dodge", 0)
+				var equip_dodge = d.target.equip_special.get("dodge", 0)
+				dodge_chance = max(dodge_chance, equip_dodge)
+				if dodge_chance > 0 and randi() % 100 < dodge_chance:
+					dodged = true
+			else:
+				# 魔法吸收
+				var absorb_chance = d.target.trait_data.get("_magic_absorb", 0)
+				if absorb_chance > 0 and randi() % 100 < absorb_chance:
+					var absorb_pct = 0.3  # 吸收 30% 为治疗
+					var heal_amt = maxi(1, int(d.amount * absorb_pct))
+					var remain = d.amount - heal_amt
+					d.target.heal(heal_amt)
+					d.amount = remain
+			if dodged:
+				d.amount = 0
+				damage_floated.emit(d.target, 0, "dodge")
+			else:
+				var actual = d.target.take_damage(d.amount)
+				# 反震（原逻辑 + 装备反震）
+				if not d.get("is_magic", false):
+					var reflect_all = d.target.equip_special.get("reflect", 0)
+					if d.target._has_book_type("reflect"):
+						reflect_all += int(d.target.get_reflect_ratio() * 100)
+					if reflect_all > 0 and d.has("attacker") and d.attacker and not d.attacker.is_dead:
+						var reflect_dmg = maxi(1, int(d.amount * reflect_all / 100.0))
+						d.attacker.take_damage(reflect_dmg)
+						d.attacker.sync_visual()
+						damage_floated.emit(d.attacker, reflect_dmg, "normal")
+						_push_log(GameData._T("LOG_REFLECT") % [d.target.stats.get_display_name(), d.attacker.stats.get_display_name(), reflect_dmg], "player_action" if d.target.is_player else "enemy_action")
+					# 吸血（原逻辑）
+					if d.has("attacker") and d.attacker and not d.attacker.is_dead:
+						var ls_ratio = d.attacker.get_lifesteal_ratio()
+						ls_ratio += d.attacker.equip_special.get("lifesteal", 0) / 100.0
+						if ls_ratio > 0:
+							var heal_amt = maxi(1, int(d.amount * ls_ratio))
+							d.attacker.heal(heal_amt)
+							_push_log(GameData._T("LOG_LIFESTEAL") % [d.attacker.stats.get_display_name(), heal_amt], "heal")
+					# 毒（原逻辑）
+					if not d.target.is_dead:
+						var venom_chance = d.attacker.get_venom_chance()
+						if venom_chance > 0 and randf() < venom_chance and not d.target.is_immune_to_debuffs():
+							d.target.add_buff("poison", 3)
+							_push_log(GameData._T("LOG_POISON") % d.target.stats.get_display_name(), "debuff")
+							d.target.sync_visual()
+		# 仇恨
 		if d.type == "heal":
 			if d.has("attacker") and d.attacker:
 				_threat_mgr.add_heal_threat(d.attacker, d.get("heal_size", "medium"))
@@ -1384,6 +1522,13 @@ func _play_error_sound() -> void:
 	snd.finished.connect(snd.queue_free)
 
 func _on_character_died(character: BattleCharacter) -> void:
+	# 清理保护关系
+	var to_erase: Array = []
+	for k in guard_relations:
+		if k == character or guard_relations[k] == character:
+			to_erase.append(k)
+	for k in to_erase:
+		guard_relations.erase(k)
 	# 敌人死亡音效
 	if not character.is_player:
 		var parent = character.get_parent()
@@ -1402,6 +1547,17 @@ func _on_character_died(character: BattleCharacter) -> void:
 		snd.play()
 		snd.finished.connect(snd.queue_free)
 
+	if not character.is_player:
+		var revive_chance_pct = character.trait_data.get("_revive", 0)
+		if revive_chance_pct > 0 and randi() % 100 < revive_chance_pct:
+			# 怪物复生：回满血
+			character.is_dead = false
+			character.current_hp = character.get_effective_max_hp()
+			character.sync_visual()
+			_push_log(GameData._T("LOG_REVIVE") % character.stats.get_display_name(), "system")
+			damage_floated.emit(character, character.get_effective_max_hp(), "heal")
+			character.revived.emit()
+			return
 	# 神佑复生：有概率复活
 	if character._has_book_type("revive"):
 		var revive_chance = 0.0

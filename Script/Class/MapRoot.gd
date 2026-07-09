@@ -93,7 +93,7 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	_set_camera_limits()
-	GameData.unlock_skill("er_lang", "烈焰诀")
+	GameData.unlock_skill("lingfeng", "烈焰诀")
 	_setup_chase_monster()
 	_start_map_bgm()
 	# 记下当前场景路径，存档/读档用
@@ -101,18 +101,16 @@ func _ready() -> void:
 #	DialogueManager.showStoryChat(load("res://Dialogue/chapter1.dialogue"),"start")
 
 func _start_map_bgm() -> void:
-	if map_bgm == null:
-		return
 	# 用 MainScene 的 BGM 节点播放，不自己新建
-	var root := get_tree().current_scene
+	var root = get_tree().current_scene
 	_bgm_player = root.get_node_or_null("BGM") as AudioStreamPlayer
-	if _bgm_player == null:
-		return
-	_bgm_player.stream = map_bgm
-	_bgm_player.bus = "BGM"
-	_bgm_player.autoplay = true
-	if not _bgm_player.playing:
-		_bgm_player.play()
+	if _bgm_player:
+		_bgm_player.bus = "BGM"
+		if map_bgm != null:
+			_bgm_player.stream = map_bgm
+			_bgm_player.autoplay = true
+			if not _bgm_player.playing:
+				_bgm_player.play()
 
 
 # ═══════════════════════════════════════

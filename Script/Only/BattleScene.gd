@@ -72,6 +72,34 @@ var _bgm_player: AudioStreamPlayer
 var _front_slots: Array[Vector2] = []
 var _pet_slots: Array[Vector2] = []
 var _main_slot: Vector2 = Vector2.ZERO
+var _base_offset: Vector2 = Vector2.ZERO
+var _shake_strength: float = 0.0
+var _shake_end_msec: int = 0
+var _shake_seed: float = 0.0
+
+func _process(_delta: float) -> void:
+	if _shake_end_msec <= 0:
+		return
+	var now := Time.get_ticks_msec()
+	if now >= _shake_end_msec:
+		offset = _base_offset
+		_shake_strength = 0.0
+		_shake_end_msec = 0
+		return
+	var remaining := float(_shake_end_msec - now) / 1000.0
+	var total := maxf(0.001, float(_shake_end_msec - int(_shake_seed)) / 1000.0)
+	var fade := clampf(remaining / total, 0.0, 1.0)
+	var t := float(now) * 0.08
+	offset = _base_offset + Vector2(
+		sin(t * 2.37 + _shake_seed),
+		cos(t * 3.11 + _shake_seed * 0.7)
+	) * _shake_strength * fade
+
+func _on_screen_shake_requested(strength: float, duration: float) -> void:
+	var now := Time.get_ticks_msec()
+	_shake_strength = maxf(_shake_strength, strength)
+	_shake_seed = float(now)
+	_shake_end_msec = maxi(_shake_end_msec, now + int(duration * 1000.0))
 
 ## 创建脚下彩色圆圈指示器
 func _create_slot_indicator(pos: Vector2, color: Color) -> void:
@@ -91,6 +119,9 @@ func _create_slot_indicator(pos: Vector2, color: Color) -> void:
 	node.queue_redraw()
 
 func _ready() -> void:
+	_base_offset = offset
+	if not GameData.screen_shake_requested.is_connected(_on_screen_shake_requested):
+		GameData.screen_shake_requested.connect(_on_screen_shake_requested)
 	var enterFightSound = AudioStreamPlayer.new()
 	enterFightSound.stream = load("res://Audio/SE/SWD 战斗开始.mp3")
 	enterFightSound.autoplay = true
@@ -115,9 +146,10 @@ func _ready() -> void:
 
 	# ── 构建队伍数据 ──
 	var party_stats: Array[CharacterStats] = []
+	var weapon_specials: Array[Dictionary] = []
 	var valid_ids: Array[String] = []  # 只含成功加载的ID，避免和party_stats错位
-	var max_teammates := 5 if GameData.has_talent("duoduoyishan") else 4
-	var non_main_count := 0
+	var max_teammates = 5 if GameData.has_talent("duoduoyishan") else 4
+	var non_main_count = 0
 	for pid in party_ids:
 		var s = GameData.get_party_member(pid)
 		if s:
@@ -136,6 +168,7 @@ func _ready() -> void:
 			merged.skill_ids = full_skills
 			# 套用装备属性（只取该角色的装备）
 			var char_equip = GameData.player_equipment.get(pid, {})
+			var weapon_special: Dictionary = {}
 			if char_equip is Dictionary:
 				for eq in char_equip.values():
 					if eq is Dictionary:
@@ -147,6 +180,14 @@ func _ready() -> void:
 						merged.defense += b.get("def", 0)
 						merged.magic_defense += b.get("mdef", 0)
 						merged.speed += b.get("spd", 0)
+						# 收集武器特殊属性（所有装备槽）
+						for sk in ["lifesteal", "true_dmg", "gold_boost", "reflect", "night_dmg", "dodge", "crit_rate", "heal_up", "heal_targets", "threat_reduce", "mdef"]:
+								var sv = eq.get(sk, 0)
+								if sv > 0: weapon_special[sk] = weapon_special.get(sk, 0) + sv
+				if not weapon_special.is_empty():
+					weapon_specials.append(weapon_special)
+				else:
+					weapon_specials.append({})
 			party_stats.append(merged)
 
 	var enemy_stats: Array[CharacterStats] = []
@@ -182,21 +223,26 @@ func _ready() -> void:
 	var all_chars:  Array[BattleCharacter] = []
 	var all_stats:  Array[CharacterStats]  = []
 	var all_ids:    Array[String] = []
+	var all_weapon_specials: Array[Dictionary] = []
 
 	# ① 找出定位为「主」的角色 → 右下角主角位
 	var main_stat: CharacterStats = null
 	var main_id: String = ""
+	var main_ws: Dictionary = {}
 	var team_stats: Array[CharacterStats] = []  # 其他队友
 	var team_ids: Array[String] = []
+	var team_ws: Array[Dictionary] = []
 	for i in party_stats.size():
 		var st = party_stats[i]
 		var pid = valid_ids[i]
 		if CharacterStats.has_role(st.role, CharacterStats.Role.MAIN):
 			main_stat = st
 			main_id = pid
+			main_ws = weapon_specials[i] if i < weapon_specials.size() else {}
 		else:
 			team_stats.append(st)
 			team_ids.append(pid)
+			team_ws.append(weapon_specials[i] if i < weapon_specials.size() else {})
 
 	# ② 右下主角位
 	if main_stat:
@@ -206,6 +252,7 @@ func _ready() -> void:
 		all_chars.append(node.get_node("BattleCharacter"))
 		all_stats.append(main_stat)
 		all_ids.append(main_id)
+		all_weapon_specials.append(main_ws)
 
 	# ③ 前排中间：其他队友（宠物不再自动上场，等战斗中召唤）
 	for i in _front_slots.size():
@@ -217,11 +264,12 @@ func _ready() -> void:
 		all_chars.append(node.get_node("BattleCharacter"))
 		all_stats.append(team_stats[i])
 		all_ids.append(team_ids[i])
+		all_weapon_specials.append(team_ws[i] if i < team_ws.size() else {})
 
 	# ── 生成敌人（不变） ──
 	var enemy_chars = _spawn_enemies(enemy_stats.size())
 
-	battle_manager.setup(all_chars, all_stats, all_ids, enemy_chars, enemy_stats, GameData.player_inventory)
+	battle_manager.setup(all_chars, all_stats, all_ids, enemy_chars, enemy_stats, GameData.player_inventory, all_weapon_specials)
 	battle_manager.start_battle()
 	# 让 CursorController 知道战斗管理器，以便鼠标悬停敌人切换龙泉剑
 	_inject_cursor_controller()
@@ -365,7 +413,7 @@ func _start_bgm() -> void:
 	if BGM_LIST.is_empty():
 		return
 	# 随机挑一首存在的
-	var shuffled := BGM_LIST.duplicate()
+	var shuffled = BGM_LIST.duplicate()
 	shuffled.shuffle()
 	for path in shuffled:
 		if ResourceLoader.exists(path):
@@ -383,7 +431,7 @@ func _exit_tree() -> void:
 	if _bgm_player:
 		_bgm_player.stop()
 	# 清除 CursorController 的 battle_manager 引用
-	var cc := _find_cursor_controller(get_tree().root)
+	var cc = _find_cursor_controller(get_tree().root)
 	if cc:
 		cc._battle_manager = null
 
@@ -422,7 +470,7 @@ func _spawn_enemies(count: int) -> Array[BattleCharacter]:
 
 ## 把 battle_manager 注入 CursorController，滚动敌人时切换龙泉剑光标
 func _inject_cursor_controller() -> void:
-	var cc := _find_cursor_controller(get_tree().root)
+	var cc = _find_cursor_controller(get_tree().root)
 	if cc:
 		cc._battle_manager = battle_manager
 
@@ -431,7 +479,7 @@ func _find_cursor_controller(from: Node) -> CursorController:
 	for child in from.get_children():
 		if child is CursorController:
 			return child
-		var found := _find_cursor_controller(child)
+		var found = _find_cursor_controller(child)
 		if found:
 			return found
 	return null

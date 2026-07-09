@@ -20,6 +20,16 @@ func execute_turn(actor: BattleCharacter) -> void:
 			await _healer(actor)
 		_:
 			await _balanced(actor)
+	# 连击：有概率再行动一次
+	var combo_chance = actor.trait_data.get("_combo", 0)
+	if combo_chance > 0 and randi() % 100 < combo_chance:
+		match strategy:
+			"aggressive":
+				await _aggressive(actor)
+			"healer":
+				await _healer(actor)
+			_:
+				await _balanced(actor)
 
 
 # ── 策略：均衡 ─────────────────────────────────

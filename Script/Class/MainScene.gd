@@ -17,6 +17,7 @@ const SHICHEN_IMG: Array[String] = [
 
 var _bounty_popup = null
 var _bounty_open = false
+var _disabled_buttons: Array = []
 var _map_popup = null
 var _pet_popup = null
 var _save_popup = null
@@ -24,11 +25,15 @@ var _talent_tree = null
 var _equip_page = null
 var _team_popup = null
 var _status_popup = null
+var _build_popup = null
+var _setting_popup = null
+var _shop_popup = null
 var _shichen_accum: float = 0.0
 var _shichen_idx: int = 10
 var _last_period: int = -1
 var _cached_map = null
 var _was_in_battle: bool = false
+var _play_time_accum: float = 0.0
 
 const PERIOD_TINTS: Array = [
 	Color(0.28, 0.32, 0.5),
@@ -52,32 +57,17 @@ var _tex_cache: Dictionary = {}
 
 
 func _ready() -> void:
+	
+	_play_time_accum = float(GameData.play_time_sec)
 	bounty_btn.pressed.connect(_on_bounty_pressed)
 	_setup_ui_buttons()
-	GameData.set_language("en")
+	GameData.set_language("zh")
 	_world_log = $UI/BattleLog
 	_world_log.bbcode_enabled = true
 	GameData.world_log = _world_log
 	if map_btn:
 		map_btn.visible = true
-		map_btn.modulate = Color.WHITE
-		# 锁定状态灰色
-		if not GameData.has_talent("main_map"):
-			map_btn.modulate = Color(0.4, 0.4, 0.4, 0.6)
-		# tooltip Label
-		var tip := map_btn.get_node_or_null("LockHint") as Label
-		if tip == null and not GameData.has_talent("main_map"):
-			tip = Label.new()
-			tip.name = "LockHint"
-			tip.text = "未解锁"
-			tip.add_theme_color_override("font_color", Color(1, 0.5, 0.2))
-			tip.add_theme_font_size_override("font_size", 14)
-			tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			tip.position = Vector2(-10, -20)
-			tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			map_btn.add_child(tip)
-		elif tip:
-			tip.queue_free()
+		# 锁定状态由 _refresh_btn_visuals 处理
 	# 给所有按钮加名字标签
 	_add_btn_labels()
 	add_child(load("res://Script/Class/CursorController.gd").new())
@@ -86,7 +76,7 @@ func _ready() -> void:
 	GameData.add_party_by_name("堕十一")
 	GameData.add_party_by_name("叮咚")
 	GameData.add_party_by_name("凌风")
-	GameData.add_party_by_name("大将军")
+	#ameData.add_party_by_name("大将军")
 	
 # ════════════════════════════
 # UI 按钮系统
@@ -98,11 +88,17 @@ func _setup_ui_buttons() -> void:
 	var btn_base = $UI/按钮底图
 	if btn_base == null: return
 
-	for node_name in ["宠物", "天赋", "道具", "队伍", "系统", "存档", "悬赏", "剧情", "地图"]:
+	for node_name in ["宠物", "天赋", "道具", "打造", "队伍", "系统", "存档", "悬赏", "剧情", "地图"]:
 		var sprite = btn_base.get_node_or_null(node_name) as AnimatedSprite2D
 		if sprite == null: continue
 		_play_sprite_anim(sprite, "default")
 
+	_refresh_btn_visuals()
+	# 从存档恢复按钮禁用状态
+	if GameData.disabled_buttons.size() > 0:
+		_disabled_buttons = GameData.disabled_buttons.duplicate()
+		_refresh_btn_visuals()
+	initUIBtn()
 
 func _add_btn_labels() -> void:
 	var btn_base = $UI/按钮底图
@@ -116,7 +112,7 @@ func _add_btn_labels() -> void:
 		if c != null: template_color = c
 		var s = template_node.get("theme_override_font_sizes/font_size")
 		if s != null: template_size = s
-	for node_name in ["宠物", "天赋", "道具", "队伍", "系统", "存档", "悬赏", "剧情", "人物", "地图"]:
+	for node_name in ["宠物", "天赋", "道具", "打造", "队伍", "系统", "存档", "悬赏", "剧情", "人物", "地图"]:
 		var sprite = btn_base.get_node_or_null(node_name) as Node2D
 		if sprite == null: continue
 		if sprite.has_node("Label"): continue
@@ -137,7 +133,7 @@ func _add_btn_labels() -> void:
 func _get_menu_sprite_at(pos: Vector2) -> AnimatedSprite2D:
 	var btn_base = $UI/按钮底图
 	if btn_base == null: return null
-	var buttons = ["宠物", "天赋", "道具", "队伍", "系统", "存档", "悬赏", "剧情", "人物", "地图"]
+	var buttons = ["宠物", "天赋", "道具", "打造", "队伍", "系统", "存档", "悬赏", "剧情", "人物", "地图"]
 	for node_name in buttons:
 		var sprite = btn_base.get_node_or_null(node_name) as AnimatedSprite2D
 		if sprite == null: continue
@@ -154,6 +150,46 @@ func _get_menu_sprite_at(pos: Vector2) -> AnimatedSprite2D:
 	return null
 
 var _hovered_sprite: AnimatedSprite2D = null
+
+func _refresh_btn_visuals() -> void:
+	var btn_base = $UI/按钮底图
+	if btn_base == null: return
+	var btn_list = ["宠物", "天赋", "道具", "队伍", "系统", "存档", "悬赏", "剧情", "人物", "打造", "地图"]
+	for bn in btn_list:
+		var sprite = btn_base.get_node_or_null(bn) as AnimatedSprite2D
+		if sprite == null: continue
+		if bn in _disabled_buttons:
+			sprite.modulate = Color(0.3, 0.3, 0.3, 0.4)
+			var lbl = sprite.get_node_or_null("Label") as Label
+			if lbl: lbl.visible = false
+			continue
+		# 地图特殊：未解锁天赋则禁用
+		if bn == "地图" and not GameData.has_talent("main_map"):
+			sprite.modulate = Color(0.3, 0.3, 0.3, 0.4)
+			var lbl = sprite.get_node_or_null("Label") as Label
+			if lbl: lbl.visible = false
+			continue
+		# 不在禁用列表 → 正常显示
+		sprite.modulate = Color.WHITE
+		var lbl = sprite.get_node_or_null("Label") as Label
+		if lbl: lbl.visible = true
+
+
+func disable_btn(name: String) -> void:
+	if name not in _disabled_buttons:
+		_disabled_buttons.append(name)
+		GameData.disabled_buttons = _disabled_buttons.duplicate()
+	_refresh_btn_visuals()
+
+func enable_btn(name: String) -> void:
+	_disabled_buttons.erase(name)
+	GameData.disabled_buttons = _disabled_buttons.duplicate()
+	_refresh_btn_visuals()
+
+func set_btn_enabled(name: String, enabled: bool) -> void:
+	if enabled: enable_btn(name)
+	else: disable_btn(name)
+
 
 func _input(event: InputEvent):
 	if GameData.in_battle or GameData.ui_blocked or GameData.is_dialogue_active(): return
@@ -173,6 +209,8 @@ func _input(event: InputEvent):
 		var sprite = _get_menu_sprite_at(event.global_position)
 		if sprite:
 			var btn_name = sprite.name
+			if btn_name in _disabled_buttons:
+				return
 			if btn_name == "地图" and not GameData.has_talent("main_map"):
 				return
 			match btn_name:
@@ -184,6 +222,8 @@ func _input(event: InputEvent):
 				"队伍": _open_team_popup()
 				"人物": _open_status_popup()
 				"地图": _open_map_popup()
+				"系统": _open_setting_popup()
+				"打造": _open_build_popup()
 			_play_sprite_anim(sprite, "pressed")
 			get_viewport().set_input_as_handled()
 			await get_tree().create_timer(0.15).timeout
@@ -192,10 +232,8 @@ func _input(event: InputEvent):
 			else:
 				_play_sprite_anim(sprite, "default")
 
-	# ESC — 开存档
-	if event.is_action_pressed("ui_cancel"):
-		get_viewport().set_input_as_handled()
-		_open_save_popup()
+	# ESC 由 _unhandled_input 处理
+	
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -231,7 +269,17 @@ func _esc_close_or_save() -> void:
 	if _map_popup and is_instance_valid(_map_popup):
 		_close_popup(_map_popup)
 		return
+	if _setting_popup and is_instance_valid(_setting_popup):
+		_setting_popup.close()
+		_setting_popup = null
+		return
 	if _bounty_popup and is_instance_valid(_bounty_popup) and _bounty_open:
+		var snd = AudioStreamPlayer.new()
+		snd.stream = load("res://Audio/SE/003-System03.ogg")
+		snd.bus = "SFX"
+		get_tree().root.add_child(snd)
+		snd.play()
+		snd.finished.connect(snd.queue_free)
 		_bounty_popup.hide()
 		_bounty_open = false
 		_unregister_popup()
@@ -345,8 +393,10 @@ func _open_team_popup():
 		if is_instance_valid(_team_popup):
 			_team_popup.queue_free()
 		_team_popup = null
+		_unregister_popup()
 	)
 	_team_popup.open()
+	_register_popup(_team_popup)
 
 
 func _open_save_popup():
@@ -392,6 +442,39 @@ func _close_map() -> void:
 		_close_popup(_map_popup)
 
 
+func _open_build_popup() -> void:
+	var popup = preload("res://Component/build_popup.tscn").instantiate()
+	add_child(popup)
+	popup.closed.connect(func(): popup.queue_free(); _unregister_popup())
+	# 传装备 + 材料
+	popup.set_materials(GameData.equip_bag.duplicate() + GameData.material_bag.duplicate() + _get_equipped_items())
+	_register_popup()
+
+
+func _get_equipped_items() -> Array:
+	var items: Array = []
+	for mid in GameData.party_order:
+		var eq = GameData.player_equipment.get(mid, {})
+		for slot_key in eq.values():
+			if slot_key is Dictionary:
+				var copy = slot_key.duplicate()
+				copy["_worn"] = true
+				items.append(copy)
+	return items
+
+
+func _open_setting_popup() -> void:
+	if _setting_popup and is_instance_valid(_setting_popup):
+		_setting_popup.close()
+		_setting_popup = null
+		return
+	var popup = preload("res://Component/SettingPopup.tscn").instantiate()
+	_setting_popup = popup
+	add_child(popup)
+	popup.closed.connect(func(): _setting_popup = null; _unregister_popup())
+	_register_popup()
+
+
 func _open_bounty_popup():
 	if _bounty_popup == null or not is_instance_valid(_bounty_popup):
 		_bounty_popup = preload("res://Component/BountyPopup.tscn").instantiate()
@@ -425,6 +508,7 @@ func _has_any_popup_open() -> bool:
 
 func _register_popup(_node: Node = null):
 	GameData.ui_blocked = true
+	_refresh_btn_visuals()
 	$UI/坐标图.visible = false
 	$UI/按钮底图.visible = false
 	if bounty_btn: bounty_btn.visible = false
@@ -432,25 +516,10 @@ func _register_popup(_node: Node = null):
 func _unregister_popup(_node: Node = null):
 	if not _has_any_popup_open():
 		GameData.ui_blocked = false
+		_refresh_btn_visuals()
 		if map_btn:
 			map_btn.visible = true
-			map_btn.modulate = Color.WHITE
-			if not GameData.has_talent("main_map"):
-				map_btn.modulate = Color(0.4, 0.4, 0.4, 0.6)
-			# tooltip Label
-			var tip := map_btn.get_node_or_null("LockHint") as Label
-			if tip == null and not GameData.has_talent("main_map"):
-				tip = Label.new()
-				tip.name = "LockHint"
-				tip.text = "未解锁"
-				tip.add_theme_color_override("font_color", Color(1, 0.5, 0.2))
-				tip.add_theme_font_size_override("font_size", 14)
-				tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-				tip.position = Vector2(-10, -20)
-				tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				map_btn.add_child(tip)
-			elif tip:
-				tip.queue_free()
+			# 锁定状态由 _refresh_btn_visuals 处理
 		$UI/坐标图.visible = true
 		$UI/按钮底图.visible = true
 		if bounty_btn: bounty_btn.visible = true
@@ -463,6 +532,13 @@ func _close_popup(node: Node):
 		_talent_tree = null
 		_unregister_popup()
 		return
+	# 关闭音效
+	var snd = AudioStreamPlayer.new()
+	snd.stream = load("res://Audio/SE/003-System03.ogg")
+	snd.bus = "SFX"
+	get_tree().root.add_child(snd)
+	snd.play()
+	snd.finished.connect(snd.queue_free)
 	if node.has_method("hide"): node.hide()
 	if node is CanvasLayer or node is Panel: node.queue_free()
 	# queue_free 是延迟的，必须先清引用再 _unregister_popup
@@ -501,12 +577,14 @@ func _process(delta: float) -> void:
 	if _shichen_accum >= SECONDS_PER_SHICHEN:
 		_shichen_accum -= SECONDS_PER_SHICHEN
 		_shichen_idx = (_shichen_idx + 1) % 12
-	GameData.play_time_sec = int(Time.get_ticks_msec() / 1000.0)
+	if not GameData.ui_blocked:
+		GameData.play_time_sec = int(Time.get_ticks_msec() / 1000.0)
 	_update_time_ui()
 
 	var period := _get_period()
 	if period != _last_period:
 		_last_period = period
+		GameData.current_period = period
 		_apply_day_tint()
 
 	if not camera_follow_player or _camera == null:
@@ -748,3 +826,12 @@ func _on_bounty_pressed() -> void:
 
 ## 战斗外 BattleLog
 var _world_log: RichTextLabel = null
+
+func initUIBtn():
+	disable_btn("打造")
+	disable_btn("天赋")
+	disable_btn("悬赏")
+	disable_btn("宠物")
+	disable_btn("打造")
+	disable_btn("人物")
+	

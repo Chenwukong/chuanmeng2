@@ -12,12 +12,14 @@ var member_id: String = ""  # 玩家角色 ID（用于永久存档）
 var pet_id: String = ""      # 如果是宠物，记录 pet_id
 var summoner_member_id: String = ""  # 宠物/召唤物的主人 member_id（用于统计归因）
 var trait_data: Dictionary = {}       # 特性运行时状态
+var metamorphosis_mod: float = 1.0   # 千变万化技能倍率（默认1.0，变身0.7）
 
 ## 运行时战斗状态
 var current_hp: int = 0
 var current_mp: int = 0
 var shattered: bool = false  # 被碎冰击杀，不可复活
 var last_attacker: BattleCharacter = null  # 最后一击的来源
+var equip_special: Dictionary = {}  # 武器特殊属性（吸血、反弹等）
 
 ## Buff / Debuff 列表  { buff_id: { "turns": int, "value": Variant } }
 var buffs: Dictionary = {}
@@ -326,8 +328,9 @@ func take_damage(amount: int) -> int:
 	current_hp = maxi(0, current_hp - amount)
 	hp_changed.emit(old, current_hp, get_effective_max_hp())
 	_tween_hp_bar()
-	if current_hp == 0:
+	if current_hp == 0 and not is_dead:
 		is_dead = true
+		GameData.death_hit_stop(stats.rank == "boss")
 		died.emit()
 	return old - current_hp  # 实际扣血量
 

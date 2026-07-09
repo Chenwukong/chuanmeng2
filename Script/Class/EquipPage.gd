@@ -53,7 +53,14 @@ func _ready() -> void:
 	_collect_item_slots()
 	char_name_label = get_node_or_null("LeftArea/PortraitLabel") as Label
 	_connect_signals()
-	get_node("CloseBtn").pressed.connect(func(): hide(); closed.emit())
+	get_node("CloseBtn").pressed.connect(func():
+		var snd = AudioStreamPlayer.new()
+		snd.stream = load("res://Audio/SE/003-System03.ogg")
+		snd.bus = "SFX"
+		get_tree().root.add_child(snd)
+		snd.play()
+		snd.finished.connect(snd.queue_free)
+		hide(); closed.emit())
 	_refresh_gold()
 	# 自定义 tooltip
 	_tooltip_label = RichTextLabel.new()
@@ -100,7 +107,7 @@ func _collect_item_slots() -> void:
 	_item_icons.clear()
 
 	for i in range(SLOTS_PER_PAGE):
-		var slot := get_node_or_null("RightArea/ItemSlot_%02d" % i) as Panel
+		var slot = get_node_or_null("RightArea/ItemSlot_%02d" % i) as Panel
 		_item_slots.append(slot)
 
 		var icon: TextureRect = null
@@ -122,20 +129,20 @@ func _connect_signals() -> void:
 	prev_button.pressed.connect(_on_prev_page)
 	next_button.pressed.connect(_on_next_page)
 	# 角色切换按钮
-	var char_prev := get_node_or_null("PrevBtn") as TextureButton
-	var char_next := get_node_or_null("NextBtn") as TextureButton
+	var char_prev = get_node_or_null("PrevBtn") as TextureButton
+	var char_next = get_node_or_null("NextBtn") as TextureButton
 	if char_prev: char_prev.pressed.connect(_prev_char)
 	if char_next: char_next.pressed.connect(_next_char)
 
 	for node_name in SLOT_NODE_MAP:
-		var slot := get_node_or_null("LeftArea/%s" % node_name) as Panel
+		var slot = get_node_or_null("LeftArea/%s" % node_name) as Panel
 		if slot == null:
 			continue
 		# 所有非 Button 子节点忽略鼠标，让 ClickBtn 捕获点击
 		for child in slot.get_children():
 			if not (child is Button) and child is Control:
 				child.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var btn := slot.get_node_or_null("ClickBtn") as Button
+		var btn = slot.get_node_or_null("ClickBtn") as Button
 		if btn:
 			
 			# Panel 是 layout_mode=0，子节点 anchors 无效，手动同步尺寸
@@ -147,7 +154,7 @@ func _connect_signals() -> void:
 			btn.mouse_entered.connect(_on_equip_slot_hovered.bind(SLOT_NODE_MAP[node_name]))
 			btn.mouse_exited.connect(_hide_tooltip)
 		
-		var icon := slot.get_node_or_null("Icon") as TextureRect
+		var icon = slot.get_node_or_null("Icon") as TextureRect
 		# 不再调 _prepare_icon_rect，统一由 _refresh_equip_slots 管理布局
 		if icon != null:
 			icon.layout_mode = 0
@@ -192,7 +199,7 @@ var _animating: bool = false
 func _prev_char() -> void:
 	if _member_ids.is_empty() or _animating: return
 	_animating = true
-	var orig := position.x
+	var orig = position.x
 	await _shift_x(orig + 30)
 	_member_idx = (_member_idx - 1 + _member_ids.size()) % _member_ids.size()
 	_switch_to_member(_member_ids[_member_idx])
@@ -202,7 +209,7 @@ func _prev_char() -> void:
 func _next_char() -> void:
 	if _member_ids.is_empty() or _animating: return
 	_animating = true
-	var orig := position.x
+	var orig = position.x
 	await _shift_x(orig - 30)
 	_member_idx = (_member_idx + 1) % _member_ids.size()
 	_switch_to_member(_member_ids[_member_idx])
@@ -210,12 +217,12 @@ func _next_char() -> void:
 	_animating = false
 
 func _shift_x(to: float) -> void:
-	var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	var tw = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 	tw.tween_property(self, "position:x", to, 0.08)
 	await tw.finished
 
 func _unshift_x(orig: float) -> void:
-	var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	var tw = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 	tw.tween_property(self, "position:x", orig, 0.15)
 
 func _switch_to_member(mid: String) -> void:
@@ -237,9 +244,9 @@ func _load_member_portrait() -> void:
 	if s == null or s.was_base_path.is_empty(): return
 	var p = s.was_base_path + "/头像/头像.was"
 	if not FileAccess.file_exists(p): return
-	var r := WASReader.new()
+	var r = WASReader.new()
 	if not r.load_from_file(p): return
-	var d := r.decode_frame(0, 0)
+	var d = r.decode_frame(0, 0)
 	if not d.is_empty():
 		portrait.texture = d.get("texture", null)
 
@@ -256,7 +263,7 @@ func full_refresh() -> void:
 
 
 func _refresh_gold() -> void:
-	var gold_label := get_node_or_null("gold") as Label
+	var gold_label = get_node_or_null("gold") as Label
 	if gold_label:
 		gold_label.text = "%d" % GameData.player_gold
 
@@ -270,20 +277,20 @@ func _load_tcp_icon(tcp_path: String) -> Texture2D:
 		push_warning("[EquipPage] TCP 文件不存在: %s" % tcp_path)
 		return null
 
-	var reader := TcpReader.new()
+	var reader = TcpReader.new()
 	if not reader.load_from_file(tcp_path):
 		push_warning("[EquipPage] TCP 加载失败: %s - %s" % [tcp_path, reader.get_last_error()])
 		return null
 
-	var decoded := reader.decode_frame(0)
+	var decoded = reader.decode_frame(0)
 	if decoded.is_empty():
 		push_warning("[EquipPage] TCP 解码为空: %s (frames=%d)" % [tcp_path, reader.total_frames])
 		# 尝试再解码一次，打印详情
-		var d2 := reader.decode_frame(0)
+		var d2 = reader.decode_frame(0)
 		print("[EquipPage]   重试: empty=%s keys=%s" % [d2.is_empty(), d2.keys()])
 		return null
 
-	var tex := decoded.get("texture", null) as Texture2D
+	var tex = decoded.get("texture", null) as Texture2D
 
 	if tex != null:
 		_tcp_icon_cache[tcp_path] = tex
@@ -316,7 +323,7 @@ func _rebuild_filtered_list() -> void:
 			_filtered_ids.append("")
 		return
 
-	var all_ids := inventory_items.keys()
+	var all_ids = inventory_items.keys()
 	all_ids.sort()
 	for item_id in all_ids:
 		var entry = inventory_items[item_id]
@@ -339,16 +346,16 @@ func _rebuild_filtered_list() -> void:
 func _render_page() -> void:
 	if _current_tab == ItemTab.EQUIP:
 		# 装备标签直接按 equip_bag 渲染，不用 _filtered_ids
-		var total_pages := maxi(1, ceili(float(equip_bag.size()) / SLOTS_PER_PAGE))
+		var total_pages = maxi(1, ceili(float(equip_bag.size()) / SLOTS_PER_PAGE))
 		page_label.text = "%d/%d" % [_current_page + 1, total_pages]
-		var start_idx := _current_page * SLOTS_PER_PAGE
+		var start_idx = _current_page * SLOTS_PER_PAGE
 
 		for i in range(SLOTS_PER_PAGE):
 			var slot: Panel = _item_slots[i] if i < _item_slots.size() else null
 			var icon: TextureRect = _item_icons[i] if i < _item_icons.size() else null
 			if slot == null or icon == null:
 				continue
-			var idx := start_idx + i
+			var idx = start_idx + i
 			if idx >= equip_bag.size():
 				_clear_item_slot(slot, icon)
 			else:
@@ -356,9 +363,9 @@ func _render_page() -> void:
 		return
 
 	# 消耗品/任务/材料走原逻辑
-	var total_pages := maxi(1, ceili(float(_filtered_ids.size()) / SLOTS_PER_PAGE))
+	var total_pages = maxi(1, ceili(float(_filtered_ids.size()) / SLOTS_PER_PAGE))
 	page_label.text = "%d/%d" % [_current_page + 1, total_pages]
-	var start_idx := _current_page * SLOTS_PER_PAGE
+	var start_idx = _current_page * SLOTS_PER_PAGE
 
 	for i in range(SLOTS_PER_PAGE):
 		var slot: Panel = _item_slots[i] if i < _item_slots.size() else null
@@ -366,7 +373,7 @@ func _render_page() -> void:
 		if slot == null or icon == null:
 			continue
 
-		var idx := start_idx + i
+		var idx = start_idx + i
 		if idx >= _filtered_ids.size():
 			_clear_item_slot(slot, icon)
 			continue
@@ -379,7 +386,7 @@ func _render_equip_item(idx: int, slot: Panel, icon: TextureRect) -> void:
 		_clear_item_slot(slot, icon)
 		return
 
-	var tex := _load_tcp_icon(str(eq.get("tcp_path", "")))
+	var tex = _load_tcp_icon(str(eq.get("tcp_path", "")))
 	icon.texture = tex
 	icon.visible = true
 	# layout_mode=0，不用 anchors
@@ -391,24 +398,35 @@ func _render_equip_item(idx: int, slot: Panel, icon: TextureRect) -> void:
 	# 背包格 tooltip：当前装备 vs 已穿装备对比
 	var lines: Array[String] = []
 	var name_str = eq.get("display_name", eq.get("name", ""))
-	var rarity_name := EquipData.rarity_name(eq.get("rarity", EquipData.Rarity.COMMON))
+	var lv = eq.get("_build_level", 0)
+	if lv > 0: name_str += " +%d" % lv
+	var rarity_name = EquipData.rarity_name(eq.get("rarity", EquipData.Rarity.COMMON))
 	lines.append("%s [%s]" % [name_str, rarity_name])
 
 	# 背包装备的基础属性
-	var base_labels := {"atk":"攻击", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"灵力", "spd":"速度"}
+	var base_labels = {"atk":"攻击", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度", "heal_up":"治疗量"}
 	for bk in eq.get("base", {}):
 		var val = eq.base[bk]
 		if val != 0:
 			lines.append("  %s +%d" % [base_labels.get(bk, bk), val])
 
+	# 武器特殊属性
+	var special_labels = {"lifesteal":"吸血","gold_boost":"金币加成","reflect":"反弹","night_dmg":"夜战增伤","dodge":"闪避","true_dmg":"真实伤害","crit_rate":"暴击率","heal_targets":"多目标治疗","threat_reduce":"减仇恨"}
+
+	if lv > 0: lines.append("  [color=#aaa]打造 +%d[/color]" % lv)
+	for sk in special_labels:
+		var sv = eq.get(sk, 0)
+		if sv > 0:
+			lines.append("  %s +%d" % [special_labels[sk], sv])
+
 	# 词缀
 	for af in eq.get("affixes", []):
-		var af_label := EquipData.affix_label(af.get("type", -1))
+		var af_label = EquipData.affix_label(af.get("type", -1))
 		if af_label != "":
 			lines.append("  %s +%d%%" % [af_label, int(af.get("value", 0))])
 
 	# 对比已穿装备
-	var slot_key := EquipData.slot_key(eq.get("slot", -1))
+	var slot_key = EquipData.slot_key(eq.get("slot", -1))
 	if not slot_key.is_empty():
 		var worn = equipment.get(slot_key, {})
 		if not worn.is_empty():
@@ -466,7 +484,7 @@ func _render_equip_item(idx: int, slot: Panel, icon: TextureRect) -> void:
 	slot.set_meta("tooltip_slot_key", EquipData.slot_key(eq.get("slot", -1)))
 
 	if idx == _selected_equip_idx:
-		var hl := StyleBoxFlat.new()
+		var hl = StyleBoxFlat.new()
 		hl.bg_color = Color(0.2, 0.4, 0.15, 0.7)
 		hl.border_color = Color(0.4, 0.9, 0.3, 0.8)
 		hl.border_width_top = 1
@@ -479,7 +497,7 @@ func _render_equip_item(idx: int, slot: Panel, icon: TextureRect) -> void:
 
 
 func _render_inventory_item(idx: int, slot: Panel, icon: TextureRect) -> void:
-	var item_id := _filtered_ids[idx]
+	var item_id = _filtered_ids[idx]
 	var entry = inventory_items.get(item_id, {})
 	var data: ItemData = entry.get("data")
 	icon.texture = null
@@ -495,7 +513,7 @@ func _clear_item_slot(slot: Panel, icon: TextureRect) -> void:
 
 
 func _format_base_stats(base: Dictionary) -> String:
-	var text := ""
+	var text = ""
 	for key in base:
 		if base[key] != 0:
 			text += "%s+%d " % [key, base[key]]
@@ -513,7 +531,7 @@ func _on_prev_page() -> void:
 
 
 func _on_next_page() -> void:
-	var total_pages := maxi(1, ceili(float(_filtered_ids.size()) / SLOTS_PER_PAGE))
+	var total_pages = maxi(1, ceili(float(_filtered_ids.size()) / SLOTS_PER_PAGE))
 	if _current_page < total_pages - 1:
 		_current_page += 1
 		_render_page()
@@ -522,12 +540,12 @@ func _on_next_page() -> void:
 func _refresh_equip_slots() -> void:
 	for node_name in SLOT_NODE_MAP:
 		var slot_key: String = SLOT_NODE_MAP[node_name]
-		var slot := get_node_or_null("LeftArea/%s" % node_name) as Panel
+		var slot = get_node_or_null("LeftArea/%s" % node_name) as Panel
 		if slot == null:
 			continue
 
-		var icon := slot.get_node_or_null("Icon") as TextureRect
-		var lbl := slot.get_node_or_null("SlotLabel") as Label
+		var icon = slot.get_node_or_null("Icon") as TextureRect
+		var lbl = slot.get_node_or_null("SlotLabel") as Label
 		var eq: Dictionary = equipment.get(slot_key, {})
 
 		slot.remove_theme_stylebox_override("panel")
@@ -538,8 +556,8 @@ func _refresh_equip_slots() -> void:
 				lbl.text = slot_key
 		else:
 			if icon:
-				var tcp := str(eq.get("tcp_path", ""))
-				var tex := _load_tcp_icon(tcp)
+				var tcp = str(eq.get("tcp_path", ""))
+				var tex = _load_tcp_icon(tcp)
 				icon.layout_mode = 0
 				icon.texture = tex
 				icon.visible = true
@@ -551,18 +569,18 @@ func _refresh_equip_slots() -> void:
 				lbl.text = ""  # 已装备不显示名字
 
 		# 装备信息 tooltip，挂在 ClickBtn 上让鼠标悬停弹窗
-		var btn := slot.get_node_or_null("ClickBtn") as Button
+		var btn = slot.get_node_or_null("ClickBtn") as Button
 		if btn:
 			if eq.is_empty():
 				btn.tooltip_text = "%s（空）" % slot_key
 			else:
 				var lines: Array[String] = []
 				var name_str = eq.get("display_name", eq.get("name", ""))
-				var rt := EquipData.rarity_name(eq.get("rarity", 0))
+				var rt = EquipData.rarity_name(eq.get("rarity", 0))
 				lines.append("%s [%s]" % [name_str, rt])
 
 				# 基础属性翻译
-				var base_labels := {"atk":"攻击", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"灵力", "spd":"速度"}
+				var base_labels = {"atk":"攻击", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度"}
 				for bk in eq.get("base", {}):
 					var val = eq.base[bk]
 					if val != 0:
@@ -570,7 +588,7 @@ func _refresh_equip_slots() -> void:
 
 				# 词缀
 				for af in eq.get("affixes", []):
-					var af_label := EquipData.affix_label(af.get("type", -1))
+					var af_label = EquipData.affix_label(af.get("type", -1))
 					if af_label != "":
 						lines.append("  %s +%d%%" % [af_label, int(af.get("value", 0))])
 
@@ -589,7 +607,7 @@ func _refresh_equip_slots() -> void:
 							lines.append("  ★ 暴击率 +3%")
 					else:
 						for wa in weapon_bonus:
-							var wlabel := EquipData.affix_label(wa.get("type", -1))
+							var wlabel = EquipData.affix_label(wa.get("type", -1))
 							if wlabel != "":
 								lines.append("  ★ %s +%d%%" % [wlabel, int(wa.get("value", 0))])
 
@@ -598,10 +616,10 @@ func _refresh_equip_slots() -> void:
 				btn.tooltip_text = "\n".join(lines)
 
 		if _selected_equip_idx >= 0 and _selected_equip_idx < equip_bag.size():
-			var selected_eq := equip_bag[_selected_equip_idx]
-			var selected_slot := EquipData.slot_key(selected_eq.get("slot", -1))
+			var selected_eq = equip_bag[_selected_equip_idx]
+			var selected_slot = EquipData.slot_key(selected_eq.get("slot", -1))
 			if selected_slot == slot_key:
-				var hl := StyleBoxFlat.new()
+				var hl = StyleBoxFlat.new()
 				hl.bg_color = Color(0.15, 0.35, 0.15, 0.5)
 				hl.border_color = Color(0.4, 0.9, 0.3, 0.7)
 				hl.border_width_top = 1
@@ -618,13 +636,13 @@ func _on_equip_slot_hovered(slot_key: String) -> void:
 	var lines: Array[String] = []
 	var name_str = eq.get("display_name", eq.get("name", ""))
 	lines.append("[b]%s[/b] [%s]" % [name_str, EquipData.rarity_name(eq.get("rarity", 0))])
-	var base_labels := {"atk":"攻击", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"灵力", "spd":"速度"}
+	var base_labels = {"atk":"攻击", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度"}
 	for bk in eq.get("base", {}):
 		var val = eq.base[bk]
 		if val != 0:
 			lines.append("  %s +%d" % [base_labels.get(bk, bk), val])
 	for af in eq.get("affixes", []):
-		var af_label := EquipData.affix_label(af.get("type", -1))
+		var af_label = EquipData.affix_label(af.get("type", -1))
 		if af_label != "":
 			lines.append("  %s +%d%%" % [af_label, int(af.get("value", 0))])
 	lines.append("")
@@ -633,9 +651,9 @@ func _on_equip_slot_hovered(slot_key: String) -> void:
 
 
 func _on_item_slot_hovered(slot_index: int) -> void:
-	var idx := _current_page * SLOTS_PER_PAGE + slot_index
+	var idx = _current_page * SLOTS_PER_PAGE + slot_index
 	if _current_tab != ItemTab.EQUIP or idx >= equip_bag.size(): return
-	var slot := _item_slots[slot_index] if slot_index < _item_slots.size() else null
+	var slot = _item_slots[slot_index] if slot_index < _item_slots.size() else null
 	if slot == null: return
 	var bbcode = slot.get_meta("tooltip_bbcode", "")
 	if bbcode.is_empty(): return
@@ -645,8 +663,8 @@ func _on_item_slot_hovered(slot_index: int) -> void:
 func _on_equip_slot_pressed(slot_key: String) -> void:
 	var eq: Dictionary = equipment.get(slot_key, {})
 	if _selected_equip_idx >= 0 and _selected_equip_idx < equip_bag.size():
-		var selected := equip_bag[_selected_equip_idx]
-		var expected_key := EquipData.slot_key(selected.get("slot", -1))
+		var selected = equip_bag[_selected_equip_idx]
+		var expected_key = EquipData.slot_key(selected.get("slot", -1))
 		if expected_key != slot_key:
 			detail_label.text = "不能放在 %s 槽，该装备只能放在 %s 槽" % [slot_key, expected_key]
 			return
@@ -691,10 +709,10 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 
 	# 右键：直接装备
 	if event.button_index == MOUSE_BUTTON_RIGHT:
-		var bag_idx := _current_page * SLOTS_PER_PAGE + slot_index
+		var bag_idx = _current_page * SLOTS_PER_PAGE + slot_index
 		if _current_tab == ItemTab.EQUIP and bag_idx < GameData.equip_bag.size():
 			var eq: Dictionary = GameData.equip_bag[bag_idx]
-			var slot := EquipData.slot_key(eq.get("slot", 0))
+			var slot = EquipData.slot_key(eq.get("slot", 0))
 			GameData.equip_item_by_index(_member_id, slot, bag_idx)
 			equip_bag = GameData.equip_bag
 			equipment = GameData.player_equipment.get(_member_id, {})
@@ -705,10 +723,10 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 	if event.button_index != MOUSE_BUTTON_LEFT:
 		return
 
-	var idx := _current_page * SLOTS_PER_PAGE + slot_index
+	var idx = _current_page * SLOTS_PER_PAGE + slot_index
 	if _current_tab != ItemTab.EQUIP:
 		if idx < _filtered_ids.size():
-			var item_id := _filtered_ids[idx]
+			var item_id = _filtered_ids[idx]
 			var data: ItemData = inventory_items[item_id].get("data")
 			if data:
 				detail_label.text = "%s ×%d -- %s" % [data.item_name, inventory_items[item_id].get("count", 0), data.description]
@@ -722,8 +740,8 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 		if shop_mode:
 			request_sell.emit(idx)
 			return
-		var eq := equip_bag[idx]
-		var slot_key := EquipData.slot_key(eq.get("slot", -1))
+		var eq = equip_bag[idx]
+		var slot_key = EquipData.slot_key(eq.get("slot", -1))
 		if slot_key.is_empty():
 			return
 		GameData.equip_item_by_index(_member_id, slot_key, idx)
@@ -737,7 +755,7 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 
 	# 单击选中
 	_selected_equip_idx = idx
-	var sel := equip_bag[idx]
+	var sel = equip_bag[idx]
 	detail_label.text = "已选中 %s [%s] -- 点击左侧槽位穿上或双击自动穿戴" % [
 		sel.get("display_name", ""),
 		EquipData.rarity_name(sel.get("rarity", EquipData.Rarity.COMMON)),

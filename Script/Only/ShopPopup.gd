@@ -269,7 +269,7 @@ func _play_sound(path: String) -> void:
 	var snd = AudioStreamPlayer.new()
 	snd.stream = load(path)
 	snd.bus = "SFX"
-	add_child(snd)
+	get_tree().root.add_child(snd)
 	snd.play()
 	snd.finished.connect(snd.queue_free)
 
@@ -287,6 +287,7 @@ func _reset_all() -> void:
 
 
 func _close() -> void:
+	_play_sound("res://Audio/SE/003-System03.ogg")
 	closed.emit()
 	queue_free()
 

@@ -132,7 +132,8 @@ func _is_over_ally() -> bool:
 			continue
 		var nd = ch.get_parent()
 		if nd and nd is Node2D:
-			var rect = Rect2(nd.global_position - Vector2(50, 60), Vector2(100, 120))
+			var rect = Rect2(nd.global_position - Vector2(50, 60), Vector2(100, 100))
+			rect.position.y -= 35
 			if rect.has_point(mouse_pos):
 				return true
 	return false

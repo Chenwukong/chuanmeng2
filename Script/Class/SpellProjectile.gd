@@ -52,6 +52,7 @@ func _process(delta):
 func _hit():
 	if _finished: return
 	_finished = true
+	GameData.hit_stop()
 	if on_hit.is_valid():
 		on_hit.call()
 	_apply_talisman_effect()
@@ -84,6 +85,12 @@ func _apply_talisman_effect():
 		3:
 			if not target_bc.is_dead:
 				target_bc.add_buff("haste", 3)
+		4:
+			# 止战符：削减敌人 30% MP
+			if not target_bc.is_dead:
+				var mp_loss = int(target_bc.current_mp * 0.3)
+				target_bc.current_mp = maxi(0, target_bc.current_mp - mp_loss)
+				target_bc.sync_visual()
 
 
 static func shoot(

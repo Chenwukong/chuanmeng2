@@ -639,6 +639,7 @@ func _enable_ally_selection(val: bool) -> void:
 		var btn = Button.new()
 		btn.flat = true
 		btn.custom_minimum_size = Vector2(80, 100)
+		
 		btn.modulate = Color(0, 0, 0, 0)
 		var idx := i
 		btn.mouse_entered.connect(func():
@@ -654,6 +655,7 @@ func _enable_ally_selection(val: bool) -> void:
 				action.call(ch)
 		)
 		btn.position = nd.global_position - btn.custom_minimum_size * 0.5
+	
 		add_child(btn)
 		_ally_pick_btns.append(btn)
 		_ally_pick_nodes.append(nd)
@@ -684,7 +686,8 @@ func _process(_delta: float) -> void:
 		var btn = _ally_pick_btns[i]
 		var nd = _ally_pick_nodes[i]
 		if is_instance_valid(btn) and is_instance_valid(nd):
-			btn.position = nd.global_position - btn.custom_minimum_size * 0.5
+			btn.position = nd.global_position - btn.custom_minimum_size * 0.5 
+			btn.position.y -= 45
 	for i in _dead_ally_pick_btns.size():
 		var btn = _dead_ally_pick_btns[i]
 		var nd = _dead_ally_pick_nodes[i]
@@ -1020,6 +1023,7 @@ func _is_mouse_over_selectable_target() -> bool:
 		if nd and nd.selectable:
 			var rect = Rect2(nd.global_position - Vector2(50, 60), Vector2(100, 120))
 			if rect.has_point(get_viewport().get_mouse_position()):
+		
 				return true
 	for btn in _ally_pick_btns:
 		if is_instance_valid(btn) and btn.get_global_rect().has_point(get_viewport().get_mouse_position()):
@@ -2225,6 +2229,7 @@ func _rebuild_mech_replace_buttons() -> void:
 		var btn = Button.new()
 		btn.flat = true
 		btn.custom_minimum_size = Vector2(80, 100)
+		btn.position.y += 45
 		btn.modulate = Color(0, 0, 0, 0)
 		var target_ch = ch
 		var mech_name = _pending_mech_name

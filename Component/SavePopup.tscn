@@ -100,10 +100,10 @@ offset_bottom = 28.0
 
 [node name="Portraits" type="Control" parent="Slot_0" unique_id=1670584601]
 anchors_preset = 0
-offset_left = 1.0
-offset_top = 41.0
-offset_right = 231.0
-offset_bottom = 92.0
+offset_left = -30.0
+offset_top = 34.615
+offset_right = 200.0
+offset_bottom = 85.615005
 scale = Vector2(0.7, 0.7)
 mouse_filter = 2
 
@@ -210,10 +210,10 @@ offset_bottom = 12.230767
 
 [node name="Portraits" type="Control" parent="Slot_1" unique_id=439248483]
 anchors_preset = 0
-offset_left = 7.2727494
-offset_top = 20.769228
-offset_right = 177.27275
-offset_bottom = 67.769226
+offset_left = -30.0
+offset_top = 20.769
+offset_right = 140.0
+offset_bottom = 67.769
 scale = Vector2(0.7, 0.7)
 mouse_filter = 2
 
@@ -320,10 +320,10 @@ offset_bottom = 12.230767
 
 [node name="Portraits" type="Control" parent="Slot_2" unique_id=891197802]
 anchors_preset = 0
-offset_left = 7.2727494
-offset_top = 20.769228
-offset_right = 177.27275
-offset_bottom = 67.769226
+offset_left = -30.0
+offset_top = 20.769
+offset_right = 140.0
+offset_bottom = 67.769
 scale = Vector2(0.7, 0.7)
 mouse_filter = 2
 
@@ -430,10 +430,10 @@ offset_bottom = 12.230767
 
 [node name="Portraits" type="Control" parent="Slot_3" unique_id=1827256940]
 anchors_preset = 0
-offset_left = 7.2727494
-offset_top = 20.769228
-offset_right = 177.27275
-offset_bottom = 67.769226
+offset_left = -30.0
+offset_top = 20.769
+offset_right = 140.0
+offset_bottom = 67.769
 scale = Vector2(0.7, 0.7)
 mouse_filter = 2
 
@@ -540,10 +540,10 @@ offset_bottom = 12.230767
 
 [node name="Portraits" type="Control" parent="Slot_4" unique_id=722990182]
 anchors_preset = 0
-offset_left = 7.2727494
-offset_top = 20.769228
-offset_right = 177.27275
-offset_bottom = 67.769226
+offset_left = -30.0
+offset_top = 20.769
+offset_right = 140.0
+offset_bottom = 67.769
 scale = Vector2(0.7, 0.7)
 mouse_filter = 2
 

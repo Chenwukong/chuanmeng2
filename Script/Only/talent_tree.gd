@@ -141,5 +141,11 @@ func close() -> void:
 			page.talent_pressed.disconnect(_try_upgrade_talent)
 		if page.talent_rank_removed.is_connected(_on_talent_removed):
 			page.talent_rank_removed.disconnect(_on_talent_removed)
+	var snd = AudioStreamPlayer.new()
+	snd.stream = load("res://Audio/SE/003-System03.ogg")
+	snd.bus = "SFX"
+	get_tree().root.add_child(snd)
+	snd.play()
+	snd.finished.connect(snd.queue_free)
 	closed.emit()
 	queue_free()

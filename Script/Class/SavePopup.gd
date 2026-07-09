@@ -21,7 +21,14 @@ func _ready() -> void:
 	add_child(_auto_timer)
 	_auto_timer.start()
 
-	get_node("CloseBtn").pressed.connect(func(): queue_free(); closed.emit())
+	get_node("CloseBtn").pressed.connect(func():
+		var snd = AudioStreamPlayer.new()
+		snd.stream = load("res://Audio/SE/003-System03.ogg")
+		snd.bus = "SFX"
+		get_tree().root.add_child(snd)
+		snd.play()
+		snd.finished.connect(snd.queue_free)
+		queue_free(); closed.emit())
 	_connect_slot_signals()
 	_refresh_all()
 
@@ -102,9 +109,12 @@ func _refresh_slot(slot: int) -> void:
 	ch_val.text = "第%d章" % data.get("chapter_id", 1)
 
 	var party_data: Dictionary = data.get("party", {})
+	var party_order: Array = data.get("party_order", party_data.keys())
 	var xoff := 0.0
-	for mid in party_data:
-		var was_base: String = party_data[mid].get("was", "")
+	for mid in party_order:
+		if not party_data.has(mid): continue
+		var member: Dictionary = party_data[mid]
+		var was_base: String = member.get("was", "")
 		if was_base.is_empty():
 			continue
 		var tex := _load_portrait(was_base)

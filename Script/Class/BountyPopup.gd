@@ -209,6 +209,11 @@ func _create_task_card(task_dict: Dictionary) -> PanelContainer:
 	if tp_val > 0:
 		if not reward_text.is_empty(): reward_text += " + "
 		reward_text += "🌟 天赋点×%d" % tp_val
+	var mat_id_val = task_dict.get("reward_material", "")
+	if not mat_id_val.is_empty():
+		if not reward_text.is_empty(): reward_text += " + "
+		var mat_db = GameData.MATERIAL_DB.get(mat_id_val, {})
+		reward_text += "🪨 %s×%d" % [mat_db.get("name", "材料"), task_dict.get("reward_mat_count", 1)]
 	if reward_text.is_empty(): reward_text = "💰 0 金币"
 	gold_lbl.text = reward_text
 	gold_lbl.add_theme_font_size_override("font_size", 12)
@@ -320,18 +325,33 @@ func _submit_bounty(entry: Dictionary) -> void:
 	var tp = entry.get("reward_talent_points", 0)
 	if tp > 0:
 		GameData.talent_points += tp
+	var mid = entry.get("reward_material", "")
+	if not mid.is_empty():
+		var mat = GameData.MATERIAL_DB.get(mid, {}).duplicate()
+		if not mat.is_empty():
+			var mat_count = entry.get("reward_mat_count", 1)
+			for _i in range(mat_count):
+				GameData.material_bag.append(mat.duplicate())
 
 	if repeatable:
 		GameData.active_bounties.erase(tid)
 		var msg = "✅ 任务完成！"
 		if gold > 0: msg += "获得 %d 金币！" % gold
 		if tp > 0: msg += "天赋点 +%d！" % tp
+		var mat_id = entry.get("reward_material", "")
+		if not mat_id.is_empty():
+			var mat_db = GameData.MATERIAL_DB.get(mat_id, {})
+			msg += "获得 %s ×%d！" % [mat_db.get("name", "材料"), entry.get("reward_mat_count", 1)]
 		_show_notification(msg)
 	else:
 		GameData.complete_bounty(tid)
 		var msg = "🎉 任务完成！"
 		if gold > 0: msg += "获得 %d 金币！" % gold
 		if tp > 0: msg += "天赋点 +%d！" % tp
+		var mat_id = entry.get("reward_material", "")
+		if not mat_id.is_empty():
+			var mat_db = GameData.MATERIAL_DB.get(mat_id, {})
+			msg += "获得 %s ×%d！" % [mat_db.get("name", "材料"), entry.get("reward_mat_count", 1)]
 		msg += "\n此任务不再出现。"
 		_show_notification(msg)
 
@@ -362,6 +382,12 @@ func _show_confirm_dialog(entry: Dictionary) -> void:
 	if tp > 0:
 		if not reward_str.is_empty(): reward_str += " + "
 		reward_str += "🌟 天赋点 ×%d" % tp
+	var mat_id = entry.get("reward_material", "")
+	if not mat_id.is_empty():
+		if not reward_str.is_empty(): reward_str += " + "
+		var mat_db = GameData.MATERIAL_DB.get(mat_id, {})
+		var mat_name = mat_db.get("name", "材料")
+		reward_str += "🪨 %s ×%d" % [mat_name, entry.get("reward_mat_count", 1)]
 	if reward_str.is_empty(): reward_str = "💰 0 金币"
 	if not kill_target.is_empty():
 		var req_kills = entry.get("kill_required", 1)
@@ -377,6 +403,11 @@ func _show_confirm_dialog(entry: Dictionary) -> void:
 		if tp2 > 0:
 			if not reward_str2.is_empty(): reward_str2 += " + "
 			reward_str2 += "🌟 天赋点 ×%d" % tp2
+		var mat_id2 = entry.get("reward_material", "")
+		if not mat_id2.is_empty():
+			if not reward_str2.is_empty(): reward_str2 += " + "
+			var mat_db2 = GameData.MATERIAL_DB.get(mat_id2, {})
+			reward_str2 += "🪨 %s ×%d" % [mat_db2.get("name", "材料"), entry.get("reward_mat_count", 1)]
 		if reward_str2.is_empty(): reward_str2 = "💰 0 金币"
 		confirm_desc.text = "%s\n\n需求：%s ×%d\n奖励：%s\n%s" % [
 			entry.get("desc", ""),
@@ -426,6 +457,13 @@ func _on_confirm_cancel() -> void:
 
 
 func _on_close() -> void:
+	# 关闭音效
+	var snd = AudioStreamPlayer.new()
+	snd.stream = load("res://Audio/SE/003-System03.ogg")
+	snd.bus = "SFX"
+	get_tree().root.add_child(snd)
+	snd.play()
+	snd.finished.connect(snd.queue_free)
 	_pop_out()
 	closed.emit()
 

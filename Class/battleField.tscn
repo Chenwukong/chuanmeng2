@@ -70,7 +70,7 @@ script = ExtResource("1_10qib")
 script = ExtResource("2_i8t6t")
 
 [node name="EnemyGroup" type="Node2D" parent="." unique_id=166236877]
-position = Vector2(262, 355)
+position = Vector2(369, 401)
 
 [node name="PartyGroup" type="Node2D" parent="." unique_id=772363209]
 position = Vector2(811, 382)

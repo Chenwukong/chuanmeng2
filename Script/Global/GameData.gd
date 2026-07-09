@@ -18,6 +18,8 @@ var player_inventory: Inventory
 ## 装备系统
 var player_equipment: Dictionary = {}   # { slot_key: EquipData 字典 }  已穿上的
 var equip_bag: Array[Dictionary] = []   # 未穿上的装备列表（在背包中显示）
+var material_bag: Array[Dictionary] = [] # 打造材料背包
+var disabled_buttons: Array = []  # 主界面禁用的按钮，从存档恢复
 
 ## 技能库：记录角色额外习得的技能  { member_id: [skill_id, ...] }
 var skill_library: Dictionary = {}
@@ -39,11 +41,15 @@ var talent_points: int = 20
 var gold: int = 0
 var game_flags: Dictionary = {}  # { flag_name: value } 剧情标记等
 var play_time_sec: int = 0
+var current_period: int = 0  # 0=夜间/傍晚, 1=白天, 2=黄昏
 var in_battle: bool = false
 var ui_blocked: bool = false    # 弹窗打开时暂停地图操作/追踪怪
 var current_scene_path: String = ""
+var _hit_stop_count: int = 0
+var _hit_stop_base_scale: float = 1.0
 var chapter_id: int = 1
 var current_locale: String = "zh"  # 当前语言
+signal screen_shake_requested(strength: float, duration: float)
 static func has_talent(talent_id: String) -> bool:
 	return talent_ranks.get(talent_id, 0) > 0
 
@@ -55,6 +61,26 @@ static func set_talent_rank(talent_id: String, rank: int) -> void:
 static var _lang_cache: Dictionary = {}
 static var _current_lang: String = "zh"
 static func get_lang() -> String: return _current_lang
+
+func hit_stop(duration: float = 0.1, scale: float = 0.05, shake_strength: float = 4.0, shake_duration: float = 0.14) -> void:
+	if duration <= 0.0:
+		return
+	if shake_strength > 0.0 and shake_duration > 0.0:
+		screen_shake_requested.emit(shake_strength, shake_duration)
+	if _hit_stop_count == 0:
+		_hit_stop_base_scale = Engine.time_scale
+	_hit_stop_count += 1
+	Engine.time_scale = minf(_hit_stop_base_scale, scale)
+	await get_tree().create_timer(duration, true, false, true).timeout
+	_hit_stop_count = maxi(0, _hit_stop_count - 1)
+	if _hit_stop_count == 0:
+		Engine.time_scale = _hit_stop_base_scale
+
+func death_hit_stop(is_boss: bool = false) -> void:
+	if is_boss:
+		hit_stop(0.5, 0.03, 12.0, 0.45)
+	else:
+		hit_stop(0.2, 0.04, 6.0, 0.22)
 
 
 ## 获取翻译 text = _T("KEY")，带 %s/%d 插值
@@ -103,7 +129,7 @@ var DIALOGUE_DB = {
 			{ "chapter": 1, "title": "d", "type": "normal", "once": false },
 		]
 	},
-	"剑侠客": {
+	"凌风": {
 		"index": 0,
 		"entries": [
 			{ "chapter": 0, "title": "剑侠客",    "type": "team",  "once": false  },
@@ -224,6 +250,17 @@ func unlock_skill(member_id: String, skill_id: String) -> void:
 		skill_library[member_id] = []
 	if skill_id not in skill_library[member_id]:
 		skill_library[member_id].append(skill_id)
+		# 也写入 party_db 确保战斗时加载（支持大小写容错）
+		var db_id = member_id
+		if not party_db.has(db_id):
+			for k in party_db:
+				if k.to_lower() == member_id.to_lower():
+					db_id = k
+					break
+		if party_db.has(db_id):
+			var mb = party_db[db_id]
+			if skill_id not in mb.skill_ids:
+				mb.skill_ids.append(skill_id)
 	else:
 		print("[技能] %s 已掌握 %s，跳过" % [member_id, skill_id])
 
@@ -298,7 +335,7 @@ const SAVE_PATH := "user://savegame.json"
 func save_game(slot: int = 0) -> void:
 	var path = "user://save_%d.json" % slot if slot > 0 else SAVE_PATH
 
-	var data := {
+	var data = {
 		"version": 3,
 		"gold": gold,
 		"talent_points": talent_points,
@@ -307,6 +344,9 @@ func save_game(slot: int = 0) -> void:
 		"play_time_sec": play_time_sec,
 		"chapter_id": chapter_id,
 		"scene_path": current_scene_path,
+		"vol_master": AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Master")),
+		"vol_music": AudioServer.get_bus_volume_db(AudioServer.get_bus_index("BGM")),
+		"vol_sfx": AudioServer.get_bus_volume_db(AudioServer.get_bus_index("SFX")),
 		"party": {},
 		"party_order": party_order.duplicate(),
 		"pets": {},
@@ -319,8 +359,10 @@ func save_game(slot: int = 0) -> void:
 		"active_bounties": active_bounties.duplicate(),
 		"completed_bounty_ids": completed_bounty_ids.duplicate(),
 		"equipment": player_equipment,
-		"equip_bag": equip_bag,  # 纯字典，直接存
+		"equip_bag": equip_bag,
+		"material_bag": material_bag,
 		"dialogue_indexes": _serialize_dialogue_indexes(),
+		"disabled_buttons": disabled_buttons,
 	}
 
 	for mid in party_db:
@@ -363,6 +405,14 @@ func load_game(slot: int = 0) -> bool:
 
 	gold           = data.get("gold", 0)
 	talent_points  = data.get("talent_points", 0)
+	disabled_buttons = data.get("disabled_buttons", []).duplicate()
+	# 恢复音量设置
+	var v_master = data.get("vol_master", 0.0)
+	var v_music = data.get("vol_music", 0.0)
+	var v_sfx = data.get("vol_sfx", 0.0)
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), v_master)
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("BGM"), v_music)
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("SFX"), v_sfx)
 	var d_talents: Dictionary = data.get("talent_ranks", {})
 	talent_ranks = {}
 	talent_ranks.merge(d_talents)
@@ -433,6 +483,9 @@ func load_game(slot: int = 0) -> bool:
 	var raw_bag: Array = data.get("equip_bag", [])
 	equip_bag.clear()
 	equip_bag.assign(raw_bag)
+	var raw_mat: Array = data.get("material_bag", [])
+	material_bag.clear()
+	material_bag.assign(raw_mat)
 	for pid in pet_team.duplicate():
 		if not pet_db.has(pid):
 			pet_team.erase(pid)  # 清理不存在的宠物
@@ -527,6 +580,9 @@ func add_party_by_name(p_name: String, p_class: String = "", p_role: String = ""
 	p_elem: String = "", p_level: int = 1, p_was: String = "") -> void:
 	# 先从数据库查
 
+	if teamIsFull():
+		return
+		
 	for mid in CHARACTER_DB:
 		if CHARACTER_DB[mid].name == p_name:
 			if party_db.has(mid):
@@ -670,7 +726,7 @@ const CHARACTER_DB := {
 		"hp": 150, "mp": 70,  "atk": 30, "matk": 20, "def": 14, "mdef": 10, "spd": 30,
 		"crit": 0.18, "crit_mult": 1.7,
 		"was_base_path": "res://WAS/二郎神",
-		"skills": ["普通攻击","御剑气","雷霆诀","破防击","金刚护体"],
+		"skills": ["普通攻击","御剑气","雷霆诀","破防击","金刚护体","寂静剑法"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
 		"traits": {"愈战愈勇": {"dmg_pct": 0.05, "spd_pct": 0.05}},
 	},
@@ -680,7 +736,7 @@ const CHARACTER_DB := {
 		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/堕十一",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"],
+		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","寂静剑法"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
 		"traits": {"愈战愈勇": {"dmg_pct": 0.05, "spd_pct": 0.05}},
 	},
@@ -855,6 +911,63 @@ static func get_shop_items(npc_name: String) -> Array[Dictionary]:
 		})
 	return result
 
+
+# ═══ 打造材料数据库 ═══
+const MATERIAL_DB = {
+	"black_ore": {
+		"name": "黑曜石", "tcp_path": "res://TCP/矿石/黑曜石.tcp",
+		"desc": "能增加武器伤害的矿石", "price": 200,
+		"craft_type": "weapon", "stat": "atk", "min_boost": 7, "max_boost": 10,
+	},
+	"red_shell": {
+		"name": "红壳", "tcp_path": "res://TCP/矿石/红壳.tcp",
+		"desc": "能增加武器伤害的矿石", "price": 200,
+		"craft_type": "weapon", "stat": "hp", "min_boost": 70, "max_boost": 100,
+	},
+	"cloud_herb": {
+		"name": "飞云草", "tcp_path": "res://TCP/草药/飞云草.tcp",
+		"desc": "能制造加速符咒的灵草", "price": 150,
+		"craft_type": "talisman", "stat": "spd", "min_boost": 3, "max_boost": 6,
+	},
+	"blood_stone": {
+		"name": "吸血石", "tcp_path": "res://TCP/矿石/吸血石.tcp",
+		"desc": "攻击时按伤害百分比吸取生命", "price": 500,
+		"craft_type": "weapon", "stat": "lifesteal", "min_boost": 5, "max_boost": 10,
+	},
+	"gold_ore": {
+		"name": "黄金", "tcp_path": "res://TCP/矿石/黄金.tcp",
+		"desc": "增加战斗获得的金币收益", "price": 400,
+		"craft_type": "weapon", "stat": "gold_boost", "min_boost": 10, "max_boost": 20,
+	},
+	"shattered_green": {
+		"name": "碎绿", "tcp_path": "res://TCP/矿石/碎绿.tcp",
+		"desc": "增加治疗技能可治疗的单位数量", "price": 350,
+		"craft_type": "weapon", "stat": "heal_targets", "min_boost": 1, "max_boost": 1,
+	},
+	"thorn_horn": {
+		"name": "棘角", "tcp_path": "res://TCP/矿石/棘角.tcp",
+		"desc": "受到物理攻击时反弹部分伤害", "price": 450,
+		"craft_type": "weapon", "stat": "reflect", "min_boost": 5, "max_boost": 10,
+	},
+	"moon_stone": {
+		"name": "月石", "tcp_path": "res://TCP/矿石/月石.tcp",
+		"desc": "增加夜间造成的伤害", "price": 400,
+		"craft_type": "weapon", "stat": "night_dmg", "min_boost": 10, "max_boost": 15,
+	},
+	"lake_heart": {
+		"name": "湖泊之心", "tcp_path": "res://TCP/矿石/湖泊之心.tcp",
+		"desc": "增加灵力上限", "price": 300,
+		"craft_type": "weapon", "stat": "mp_up", "min_boost": 30, "max_boost": 50,
+	},
+	"vitality": {
+		"name": "生机", "tcp_path": "res://TCP/矿石/生机.tcp",
+		"desc": "增加治疗量", "price": 350,
+		"craft_type": "weapon", "stat": "heal_up", "min_boost": 8, "max_boost": 15,
+	},
+}
+
+static func get_material(id: String) -> Dictionary:
+	return MATERIAL_DB.get(id, {}).duplicate()
 
 # ═══ 传送圈位置数据库 ═══
 const TELEPORT_DB = {
@@ -1467,17 +1580,27 @@ func _init_equip_db() -> void:
 		"九龙神腰带", {"hp": 750, "def": 30}, "res://TCP/腰带/2958.tcp", 1, [], 8000)
 	# --- 武器
 	EquipData.register_named("equip_2958", EquipData.SlotType.WEAPON, EquipData.Rarity.LEGENDARY,
-		"九龙神腰带", {"hp": 750, "def": 30}, "res://TCP/腰带/2958.tcp", 1, [], 8000)
+		"九龙神腰带", {"hp": 750, "def": 30,"spd": 2000}, "res://TCP/腰带/2958.tcp", 1, [], 8000)
 
 ## 调试：往背包放几件腰带看看效果
 func _debug_equip_belt() -> void:
 	equip_bag = equip_bag.filter(func(eq): return eq is Dictionary and not eq.is_empty())
 	if equip_bag.is_empty():
-		for equip_id in ["equip_2902", "equip_2910", "equip_2957"]:
+		for equip_id in ["equip_2958", "equip_2910", "equip_2957"]:
 			var eq := EquipData.get_named(equip_id)
 			if not eq.is_empty():
 				equip_bag.append(eq)
+	# 测试：放几件打造材料
+	if material_bag.is_empty():
+		for mid in ["black_ore", "gold_ore", "gold_ore", "red_shell", "cloud_herb", "blood_stone", "gold_ore", "shattered_green","shattered_green", "thorn_horn", "moon_stone", "lake_heart", "vitality"]:
+			var mat = MATERIAL_DB.get(mid, {}).duplicate()
+			if not mat.is_empty():
+				material_bag.append(mat)
 
 func bossFight(boss):
 	var map = get_tree().get_first_node_in_group("map")
 	map.start_preset_battle(boss)
+
+func teamIsFull():
+	if party_db.size() > 4 and !has_talent("duoduoyishan"):
+		return true
