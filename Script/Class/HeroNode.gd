@@ -39,7 +39,6 @@ func _ready() -> void:
 	_original_pos = position
 
 func _on_area_input_event(_viewport, event: InputEvent, _shape_idx: int) -> void:
-	if not selectable: return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		clicked.emit($BattleCharacter)
 
@@ -368,7 +367,12 @@ func play_hit_reaction() -> void:
 		hit_ani.play("default")
 		hit_ani.animation_finished.connect(func(): hit_ani.visible = false, CONNECT_ONE_SHOT)
 	# 被控制时（冰冻/虚弱）只播挨打动画，不后退不归位，不回 idle
-	if $BattleCharacter.is_frozen or $BattleCharacter.is_weakened:
+	if $BattleCharacter.is_frozen:
+		$BattleCharacter.sync_freeze_anim()
+		if _weapon_was and _weapon_was.anim_files.has("hit"):
+			_weapon_was.play("hit", false)
+		return
+	if $BattleCharacter.is_weakened:
 		was_player.play("hit", false)
 		if _weapon_was and _weapon_was.anim_files.has("hit"):
 			_weapon_was.play("hit", false)

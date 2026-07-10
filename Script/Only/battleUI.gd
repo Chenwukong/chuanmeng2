@@ -156,7 +156,7 @@ var _tooltip_hover_count: int = 0     # 当前悬停的角色数（进入+1，�
 # ══════════════════════════════════════════════
 func _ready() -> void:
 	# 连接 BattleManager 信号
-#	get_tree().current_scene.get_node("UI/BattleLog").visible = false
+	get_tree().current_scene.get_node("UI/BattleLog").visible = false
 	battle_manager.log_pushed.connect(_on_log_pushed)
 	battle_manager.skill_failed.connect(_on_skill_failed)
 	battle_manager.damage_floated.connect(_on_damage_floated)
@@ -247,20 +247,61 @@ func init_ui() -> void:
 	for c in battle_manager.party + battle_manager.enemies:
 		_make_turn_entry(c)
 	_update_turn_order()
-	_build_stats_panel()
 	_build_tooltip()
+	# 探危天赋：显示仇恨统计面板
+	if GameData.has_talent("main_detect_danger"):
+		_build_stats_panel()
 	# 延迟一帧确保 _threat_mgr 已创建，开局随机出 eye
 	call_deferred("_check_threat_eye")
+	_setup_talisman_display()
 
 # ══════════════════════════════════════════════
 # ActionPanel 回调
 # ══════════════════════════════════════════════
 
 func _action_attack() -> void:
+	var actor := battle_manager.current_actor()
+	# 加速符 → 选队友
+	if actor and actor.stats.talisman_type == CharacterStats.TalismanType.HASTE:
+		_set_pending_ally(func(ally: BattleCharacter):
+			if ally and not ally.is_dead and actor:
+				# 主角播放攻击动作
+				var caster_nd = actor.get_parent()
+				if caster_nd and caster_nd.has_method("play_ranged_attack"):
+					caster_nd.play_ranged_attack()
+				# 选出加速目标：选中的队友 + 随机2个队友
+				var targets: Array[BattleCharacter] = [ally]
+				var cands: Array[BattleCharacter] = []
+				for c in battle_manager.party:
+					if c != ally and not c.is_dead and c.get_buff_layer_count("haste") < 3:
+						cands.append(c)
+				cands.shuffle()
+				for j in mini(2, cands.size()):
+					targets.append(cands[j])
+				# 对每个目标射符咒
+				for t in targets:
+					var caster_pos = actor.get_parent().global_position if actor.get_parent() else Vector2.ZERO
+					caster_pos.x -= 500
+					var target_pos = t.get_parent().global_position
+					SpellProjectile.shoot(caster_pos, target_pos, t.get_parent(), func():
+						t.show_buff("加速")
+						t.add_buff("haste", 3, 1.3, "talisman_haste")
+						t.sync_visual()
+						var av = t.get_parent()
+						if av and av.has_method("shake"):
+							av.shake()
+							get_tree().create_timer(0.5).timeout.connect(func():
+								if is_instance_valid(av) and av.has_method("stop_shake"):
+									av.stop_shake()
+							, CONNECT_ONE_SHOT)
+					, self, actor, actor.stats.talisman_type, _get_talisman_texture(actor))
+				battle_manager._push_log("符咒加速 %d 人！" % targets.size(), "player_action")
+				battle_manager._finish_player_action()
+			)
+		return
+	# 普通攻击（火焰/雷电/冰冻/止战）
 	_set_pending(func(target: BattleCharacter):
 		_last_attack_target = target
-		# 愈战愈勇：普攻永久叠伤+速
-		var actor := battle_manager.current_actor()
 		if actor:
 			actor.apply_stacking_buff()
 		battle_manager.player_use_normal_attack(target)
@@ -593,7 +634,6 @@ func _on_enemy_sprite_clicked(char: BattleCharacter) -> void:
 	if not _dead_ally_pick_btns.is_empty(): return
 	_clear_enemy_selection()
 	var nd = char.get_parent()
-	if nd: nd.set_selected(true)
 	if _pending_action.is_valid():
 		_selection_mode = SelectionMode.NONE
 		var action = _pending_action
@@ -601,12 +641,24 @@ func _on_enemy_sprite_clicked(char: BattleCharacter) -> void:
 		_enable_enemy_selection(false)
 		action.call(char)
 	else:
-		# 没有选择任何指令 → 直接普通攻击
-		_last_attack_target = char
-		# 愈战愈勇
+		# 没有选择任何指令 → 直接普通攻击 / 符咒效果
 		var actor := battle_manager.current_actor()
-		if actor:
-			actor.apply_stacking_buff()
+		if actor == null:
+			return
+		var ttype = actor.stats.talisman_type
+		# 加速符 → 选队友 +buff
+		if ttype == CharacterStats.TalismanType.HASTE:
+			_set_pending_ally(func(ally: BattleCharacter):
+				if ally and not ally.is_dead:
+					ally.add_buff("haste", 3)
+					ally.play_spell_effect("haste")
+					battle_manager._push_log("%s 加速！" % ally.stats.get_display_name(), "player_action")
+			)
+			return
+		# 普通攻击（火焰符 = 默认）
+		if nd: nd.set_selected(true)
+		_last_attack_target = char
+		actor.apply_stacking_buff()
 		battle_manager.player_use_normal_attack(char)
 
 func _clear_enemy_selection() -> void:
@@ -851,6 +903,22 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 
+		# Q — 上一个符咒
+		if k.keycode == KEY_Q and not k.alt_pressed and not k.ctrl_pressed:
+			var act = battle_manager.current_actor()
+			if act and not act.is_dead and CharacterStats.has_role(act.stats.role, CharacterStats.Role.MAIN):
+				_on_talisman_prev()
+				get_viewport().set_input_as_handled()
+				return
+
+		# E — 下一个符咒
+		if k.keycode == KEY_E and not k.alt_pressed and not k.ctrl_pressed:
+			var act = battle_manager.current_actor()
+			if act and not act.is_dead and CharacterStats.has_role(act.stats.role, CharacterStats.Role.MAIN):
+				_on_talisman_next()
+				get_viewport().set_input_as_handled()
+				return
+
 	# ESC 取消替换模式
 	if event.is_action_pressed("ui_cancel") and _pending_summon_pet:
 		_pending_summon_pet = null
@@ -1049,9 +1117,9 @@ func _highlight_enemy(ch: BattleCharacter) -> void:
 	if nd: nd.set_selected(true)
 
 
-## 鼠标悬停敌人 — 同步更新 keyboard 选中
+## 鼠标悬停敌人 — 火眼金睛：显示怪物状态 tooltip + 同步键盘高亮
 func _on_enemy_hovered(ch: BattleCharacter) -> void:
-	if not GameData.has_talent("main_detect_danger"):
+	if not GameData.has_talent("main_true_sight"):
 		return
 	_show_tooltip(ch)
 	# 选敌模式下同步键盘高亮
@@ -1125,13 +1193,9 @@ func _show_tooltip(ch: BattleCharacter) -> void:
 			has_debuff = true
 		for l in layers:
 			var turns: int = l.get("turns", 0)
-			var src: String = l.get("source", "")
 			if buf_text != "":
 				buf_text += "\n"
-			if not src.is_empty():
-				buf_text += "%s·%s (%d)" % [name, src, turns]
-			else:
-				buf_text += "%s (%d)" % [name, turns]
+			buf_text += "%s (%d)" % [name, turns]
 	_tooltip_labels["buffs"].add_theme_color_override("font_color", Color(1, 0.4, 0.2) if has_debuff else Color(0.5, 1, 0.4))
 	_tooltip_labels["buffs"].text = buf_text if buf_text else ""
 	_tooltip_labels["buffs"].visible = not buf_text.is_empty()
@@ -1590,6 +1654,7 @@ func _on_state_changed(new_state: BattleManager.BattleState) -> void:
 		_set_cursor_selecting_ally(false)
 		# 非玩家回合隐藏操作面板		
 		action_panel.visible = false
+		_set_talisman_visible(false)
 	else:
 		# 恢复操作面板，敌人默认可点击（直接点 = 普通攻击）
 		action_panel.visible = true
@@ -1624,7 +1689,7 @@ func _on_actor_turn_started(actor: BattleCharacter, is_player: bool) -> void:
 			action_panel.show_near(actor_node.global_position)
 
 		# 远程角色显示当前符咒
-		var talisman_names = ["[火焰]", "[雷电]", "[冰冻]", "[加速]"]
+		var talisman_names = ["[火焰]", "[雷电]", "[冰冻]", "[加速]", "[止战]"]
 		var talisman_info = ""
 		if actor.stats.is_ranged:
 			talisman_info = " " + talisman_names[actor.stats.talisman_type]
@@ -1642,6 +1707,7 @@ func _on_actor_turn_started(actor: BattleCharacter, is_player: bool) -> void:
 		ch.set_name_label_color(Color.WHITE)
 	actor.set_name_label_color(Color.RED)
 
+	_update_talisman_display()
 	_update_turn_order()
 
 func _on_bonus_attack_started() -> void:
@@ -2412,36 +2478,168 @@ func _refresh_stats_display() -> void:
 # ══ 符咒系统 ══
 ## 获取当前符咒的飞行贴图 —— 从失魂符.png 5×4 雪碧图取第 0 帧
 func _get_talisman_texture(actor: BattleCharacter) -> Texture2D:
-	var tex_path = "res://Graphic/BattleAnimation/失魂符.png"
-
-	if !ResourceLoader.exists(tex_path):
-		return null
-
-	var sheet := load(tex_path)
-
-	var atlas := AtlasTexture.new()
-	atlas.atlas = sheet
-
-	var columns := 5
-	var rows := 4
-
-	var frame_width = sheet.get_width() / columns
-	var frame_height = sheet.get_height() / rows
-
-	var frame := 0  # 第 0 帧
-	var x := frame % columns
-	var y := frame / columns
-
-	atlas.region = Rect2(
-		x * frame_width,
-		y * frame_height,
-		frame_width,
-		frame_height
-	)
-
-	return atlas
+	return _tcp_to_texture("res://TCP/符咒/3290.tcp")
 
 ## 切换符咒类型
 func switch_talisman(actor: BattleCharacter, ttype: int) -> void:
+	var n1: Node2D = null
+	var n2: Node2D = null
+	var n3: Node2D = null
 	if actor and actor.stats:
 		actor.stats.talisman_type = ttype as CharacterStats.TalismanType
+		n1 = _find_talisman_node("符咒1")
+		n2 = _find_talisman_node("符咒2")
+		n3 = _find_talisman_node("符咒3")
+		for nd in [n1, n2, n3]:
+			if nd and nd.visible:
+				var tw = create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUINT)
+				tw.tween_property(nd, "scale", nd.scale * 0.3, 0.08)
+		await get_tree().create_timer(0.08).timeout
+	_update_talisman_display()
+	n1 = _find_talisman_node("符咒1")
+	n2 = _find_talisman_node("符咒2")
+	n3 = _find_talisman_node("符咒3")
+	for nd in [n1, n2, n3]:
+		if nd and nd.visible:
+			var tw = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+			tw.tween_property(nd, "scale", nd.get_meta("_orig_scale", nd.scale), 0.12)
+
+
+# ══ 三符咒显示 ══
+var _talisman_types: Array[int] = [CharacterStats.TalismanType.FIRE, CharacterStats.TalismanType.SLEEP, CharacterStats.TalismanType.ICE, CharacterStats.TalismanType.HASTE, CharacterStats.TalismanType.CEASEFIRE]
+var _talisman_names: Array[String] = ["火焰", "雷电", "冰冻", "加速", "止战"]
+
+func _setup_talisman_display() -> void:
+	for name_prefix in ["符咒1", "符咒2", "符咒3"]:
+		var nd = _find_talisman_node(name_prefix)
+		if nd:
+			nd.set_meta("_orig_pos", nd.position)
+			nd.set_meta("_orig_scale", nd.scale)
+			nd.visible = false
+			# 连接已有的按钮
+			var cb = nd.get_node_or_null("Button") as Button
+			if cb and not cb.pressed.is_connected(_on_talisman_prev):
+				match name_prefix:
+					"符咒1": cb.pressed.connect(_on_talisman_prev)
+					"符咒3": cb.pressed.connect(_on_talisman_next)
+	_update_talisman_display()
+
+
+func _find_talisman_node(name_prefix: String) -> Node2D:
+	var nd = get_node_or_null("/root/BattleScene/" + name_prefix)
+	if nd == null:
+		nd = get_node_or_null(name_prefix)
+	return nd
+
+func _update_talisman_display() -> void:
+	var actor = battle_manager.current_actor() if battle_manager else null
+	if actor == null or actor.is_dead:
+		_set_talisman_visible(false)
+		return
+	if not CharacterStats.has_role(actor.stats.role, CharacterStats.Role.MAIN):
+		_set_talisman_visible(false)
+		return
+	_set_talisman_visible(true)
+	var ttype = actor.stats.talisman_type
+	var total = _talisman_types.size()
+	var prev = (ttype - 1 + total) % total
+	var next = (ttype + 1) % total
+	# 如果只有一个可用符咒，只显示中间
+	var available = _talisman_types.duplicate()
+	var count = available.size()
+	_set_talisman_slot("符咒1", prev if count > 1 else -1)
+	_set_talisman_slot("符咒2", ttype)
+	_set_talisman_slot("符咒3", next if count > 1 else -1)
+	_float_talismans()
+
+func _set_talisman_slot(name_prefix: String, type_idx: int) -> void:
+	var nd = _find_talisman_node(name_prefix)
+	if nd == null: return
+	if type_idx < 0:
+		nd.visible = false
+		return
+	nd.visible = true
+	# 加载对应符咒贴图
+	var tcp_path = "res://TCP/符咒/3290.tcp"
+	if type_idx == 1:
+		tcp_path = "res://TCP/符咒/0865.tcp"
+	# 用 WASReader 加载
+	var tex = _tcp_to_texture(tcp_path)
+	if tex:
+		var sprite = nd.get_node_or_null("Sprite2D") as Sprite2D
+		if sprite:
+			sprite.texture = tex
+		else:
+			# 如果是 TCP 播放器
+			if nd.has_method("load_file"):
+				nd.load_file(tcp_path)
+	# 标签
+	var lbl = nd.get_node_or_null("Label") as Label
+	if lbl:
+		lbl.text = _talisman_names[type_idx] if type_idx < _talisman_names.size() else ""
+
+func _set_talisman_visible(val: bool) -> void:
+	for name_prefix in ["符咒1", "符咒2", "符咒3"]:
+		var nd = _find_talisman_node(name_prefix)
+		if nd: nd.visible = val
+
+func _float_talismans() -> void:
+	for name_prefix in ["符咒1", "符咒2", "符咒3"]:
+		var nd = _find_talisman_node(name_prefix)
+		if nd == null or not nd.visible: continue
+		# 清除旧 tween
+		var old_tw: Tween = nd.get_meta("_float_tween", null)
+		if old_tw and old_tw.is_valid():
+			old_tw.kill()
+		# 用存储的基准 Y，避免累积偏移
+		var base_y: float = nd.get_meta("_orig_pos", nd.position).y
+		# 先把位置复位到基准
+		nd.position.y = base_y
+		var tw = create_tween().set_loops()
+		tw.tween_property(nd, "position:y", base_y - 8, 0.8).set_ease(Tween.EASE_IN_OUT)
+		tw.tween_property(nd, "position:y", base_y + 8, 0.8).set_ease(Tween.EASE_IN_OUT)
+		nd.set_meta("_float_tween", tw)
+
+func _stop_float_talismans() -> void:
+	for name_prefix in ["符咒1", "符咒2", "符咒3"]:
+		var nd = _find_talisman_node(name_prefix)
+		if nd == null: continue
+		var ft = nd.get_meta("_float_tween", null)
+		if ft: ft.kill()
+
+func _tcp_to_texture(tcp_path: String) -> Texture2D:
+	if not FileAccess.file_exists(tcp_path): return null
+	var reader := WASReader.new()
+	if not reader.load_from_file(tcp_path): return null
+	var decoded = reader.decode_frame(0, 0)
+	if decoded == null or decoded.is_empty(): return null
+	var tex = decoded.get("texture")
+	return tex
+
+func _on_talisman_prev() -> void:
+	var actor = battle_manager.current_actor() if battle_manager else null
+	if actor == null or actor.is_dead: return
+	if not CharacterStats.has_role(actor.stats.role, CharacterStats.Role.MAIN): return
+	_play_talisman_switch_sound()
+	var ttype = actor.stats.talisman_type
+	var total = _talisman_types.size()
+	var prev = (ttype - 1 + total) % total
+	switch_talisman(actor, prev)
+
+func _on_talisman_next() -> void:
+	var actor = battle_manager.current_actor() if battle_manager else null
+	if actor == null or actor.is_dead: return
+	if not CharacterStats.has_role(actor.stats.role, CharacterStats.Role.MAIN): return
+	_play_talisman_switch_sound()
+	var ttype = actor.stats.talisman_type
+	var total = _talisman_types.size()
+	var next = (ttype + 1) % total
+	switch_talisman(actor, next)
+
+func _play_talisman_switch_sound() -> void:
+	var snd = AudioStreamPlayer.new()
+	snd.stream = load("res://Audio/SE/064-Swing03.ogg")
+	snd.bus = "SFX"
+	add_child(snd)
+	snd.play()
+	snd.finished.connect(snd.queue_free)

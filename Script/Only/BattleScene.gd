@@ -8,6 +8,7 @@ var enemy_ids: Array = ["超级赤焰兽",]
 @onready var battle_ui      = $BattleUI
 @onready var party_group    = $PartyGroup
 @onready var enemy_group    = $EnemyGroup
+@onready var double_speed_panel = $"二倍速"
 
 const HERO_SCENE  = preload("res://Component/fightScenePlayer.tscn")
 const ENEMY_SCENE = preload("res://Component/fightScenePlayer.tscn")
@@ -276,7 +277,46 @@ func _ready() -> void:
 	_sort_party_z_index()
 	# BGM 立刻启动，不等延迟（延迟可能在战斗结束时还未触发）
 	_start_bgm()
+	_setup_double_speed()
 
+## 二倍速面板
+func _setup_double_speed() -> void:
+	if not double_speed_panel:
+		return
+	if not GameData.has_talent("main_double_speed"):
+		double_speed_panel.visible = false
+		return
+	double_speed_panel.visible = true
+	# 保存背景原始 modulate
+	var bg = double_speed_panel.get_node_or_null("背景") if double_speed_panel else null
+	if bg and bg is CanvasItem:
+		double_speed_panel.set_meta("_bg_orig_modulate", bg.modulate)
+	var cb = double_speed_panel.get_node_or_null("CheckButton") as CheckButton
+	if cb:
+		# 断开旧连接避免重复
+		if cb.toggled.is_connected(_on_double_speed_toggled):
+			cb.toggled.disconnect(_on_double_speed_toggled)
+		cb.toggled.connect(_on_double_speed_toggled)
+		# 恢复上次状态
+		var saved = GameData.has_meta("battle_double_speed") and GameData.get_meta("battle_double_speed")
+		cb.button_pressed = saved
+		if saved:
+			_on_double_speed_toggled(true)
+
+func _on_double_speed_toggled(on: bool) -> void:
+	Engine.time_scale = 2.0 if on else 1.0
+	GameData.set_meta("battle_double_speed", on)
+	var bg = double_speed_panel.get_node_or_null("背景") if double_speed_panel else null
+	if bg and bg is CanvasItem:
+		bg.modulate = Color.WHITE if on else double_speed_panel.get_meta("_bg_orig_modulate", Color.WHITE)
+
+## F1 切换二倍速
+func _toggle_double_speed() -> void:
+	if not double_speed_panel or not double_speed_panel.visible:
+		return
+	var cb = double_speed_panel.get_node_or_null("CheckButton") as CheckButton
+	if cb:
+		cb.button_pressed = not cb.button_pressed
 
 ## 按 Y 坐标排序绘制层级（Y 越大越靠前）
 func _sort_party_z_index() -> void:
@@ -434,6 +474,8 @@ func _exit_tree() -> void:
 	var cc = _find_cursor_controller(get_tree().root)
 	if cc:
 		cc._battle_manager = null
+	# 还原速度
+	Engine.time_scale = 1.0
 
 
 ## 生成敌人（斜向站位）

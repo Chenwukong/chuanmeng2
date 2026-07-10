@@ -70,6 +70,15 @@ func play(anim_name: String, loop: bool = true) -> void:
 		if not _load_one(anim_name): return
 		r = _readers.get(anim_name)
 		if r == null: return
+
+	# 冻结守卫：角色被冰封/失魂时，不允许回 idle
+	if anim_name == "idle":
+		var parent = get_parent()
+		if parent and parent.has_node("BattleCharacter"):
+			var bc = parent.get_node("BattleCharacter") as Node
+			if bc and bc.has_method("has_buff") and (bc.has_buff("freeze") or bc.has_buff("frozen") or bc.has_buff("冰封") or bc.has_buff("失魂")):
+				return  # 封印中拒绝 idle，停在当前帧
+
 	_current_anim = anim_name
 	_current_frame = 0
 	_loop = loop

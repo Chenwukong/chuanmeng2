@@ -241,12 +241,18 @@ func _input(event: InputEvent):
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
+		if get_tree().root.get_node_or_null("BattleScene"):
+			return  # 战斗中不允许 ESC 打开存档
 		_esc_close_or_save()
-	# 测试：F2 打开商店
 	if event is InputEventKey and event.is_pressed() and not event.is_echo():
 		if event.keycode == KEY_F2:
 			get_viewport().set_input_as_handled()
 			open_shop()
+		if event.keycode == KEY_F1:
+			var bs = get_tree().root.get_node_or_null("BattleScene")
+			if bs and bs.has_method("_toggle_double_speed"):
+				get_viewport().set_input_as_handled()
+				bs._toggle_double_speed()
 
 
 ## ESC 依次关闭已打开的面板（队伍/道具/宠物/天赋/悬赏/存档），全关掉后开存档
@@ -844,7 +850,7 @@ var _world_log: RichTextLabel = null
 
 func initUIBtn():
 	disable_btn("打造")
-	disable_btn("天赋")
+	#disable_btn("天赋")
 	disable_btn("悬赏")
 	disable_btn("宠物")
 	disable_btn("打造")

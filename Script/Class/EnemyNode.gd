@@ -198,7 +198,10 @@ func play_hit_reaction() -> void:
 		hit_ani.play("default")
 		hit_ani.animation_finished.connect(func(): hit_ani.visible = false, CONNECT_ONE_SHOT)
 	# 被控制时（冰冻/虚弱）只播挨打动画，不后退不归位，不回 idle
-	if battle_character.is_frozen or battle_character.is_weakened:
+	if battle_character.is_frozen:
+		battle_character.sync_freeze_anim()
+		return
+	if battle_character.is_weakened:
 		was_player.play("hit", false)
 		return
 	var orig_pos = position

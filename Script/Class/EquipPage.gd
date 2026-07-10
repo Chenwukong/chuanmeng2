@@ -596,8 +596,6 @@ func _refresh_equip_slots() -> void:
 				if slot_key == "武器":
 					var weapon_bonus = eq.get("weapon_affixes", [])
 					if weapon_bonus.is_empty():
-						
-						return
 						var rarity_lv = eq.get("rarity", 0)
 						if rarity_lv >= 1:
 							lines.append("  ★ 吸血 +5%")

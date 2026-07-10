@@ -25,6 +25,7 @@ func _ready():
 	
 	if texture:
 		spr.texture = texture
+		spr.scale = Vector2(0.4, 0.4)
 	else:
 		var colors = [Color(1.0, 0.3, 0.2), Color(0.7, 0.3, 1.0), Color(0.3, 0.6, 1.0), Color(0.3, 1.0, 0.5)]
 		var c = colors[talisman_type] if talisman_type < colors.size() else Color.RED
@@ -53,18 +54,43 @@ func _hit():
 	if _finished: return
 	_finished = true
 	GameData.hit_stop()
-	if on_hit.is_valid():
-		on_hit.call()
+	# 先应用符咒效果，再扣血（否则敌人直接死了就冻不住了）
 	_apply_talisman_effect()
+	# 播放命中音效
+	var snd = AudioStreamPlayer.new()
+	snd.stream = load("res://Audio/SE/法术5.ogg")
+	snd.bus = "SFX"
+	get_tree().root.add_child(snd)
+	snd.play()
+	snd.finished.connect(snd.queue_free)
+	# 冰符：播放受击动画但不扣血
+	if talisman_type == 2:
+		var target_bc = target_node.get_node("BattleCharacter") as BattleCharacter if target_node else null
+		if target_node and is_instance_valid(target_node):
+			if target_node.has_method("play_hit_once"):
+				target_node.play_hit_once()
+			var flash = target_node.get_node_or_null("Sprite2D")
+			if flash:
+				var tw = create_tween()
+				tw.tween_property(flash, "modulate", Color(3, 3, 3), 0.08)
+				tw.tween_property(flash, "modulate", Color.WHITE, 0.1)
+		# 短暂等待让受击动画播放
+		await get_tree().create_timer(0.15).timeout
+		# 受击后检查冰冻状态，不要回 idle
+		if target_node and is_instance_valid(target_node) and target_node.has_method("play_idle"):
+			if target_bc and target_bc.is_frozen:
+				target_bc.sync_freeze_anim()
+			elif target_bc and target_bc.is_dead:
+				pass
+			else:
+				target_node.play_idle()
+	else:
+		if on_hit.is_valid():
+			on_hit.call()
 	if target_node and is_instance_valid(target_node):
-		var flash = target_node.get_node_or_null("Sprite2D")
-		if flash:
-			var tw = create_tween()
-			tw.tween_property(flash, "modulate", Color(3, 3, 3), 0.08)
-			tw.tween_property(flash, "modulate", Color.WHITE, 0.1)
-	var tw2 = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	tw2.tween_property(self, "modulate:a", 0.0, 0.2)
-	tw2.tween_callback(func(): hit.emit(); queue_free())
+		var tw2 = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+		tw2.tween_property(self, "modulate:a", 0.0, 0.2)
+		tw2.tween_callback(func(): hit.emit(); queue_free())
 
 
 func _apply_talisman_effect():
@@ -73,24 +99,29 @@ func _apply_talisman_effect():
 	if target_bc == null: return
 
 	match talisman_type:
-		0:
+		0:  # 火焰 → 灼烧
 			if not target_bc.is_dead:
 				target_bc.add_buff("burn", 3)
-		1:
-			if not target_bc.is_dead:
+			# 法术动画
+			target_bc.play_spell_effect("fire")
+		1:  # 雷电 → 概率麻痹
+			if not target_bc.is_dead and randf() < 0.3:
 				target_bc.add_buff("freeze", 1)
-		2:
+				target_bc.play_spell_effect("thunder")
+		2:  # 冰冻
 			if not target_bc.is_dead:
-				target_bc.add_buff("slow", 2)
-		3:
-			if not target_bc.is_dead:
-				target_bc.add_buff("haste", 3)
-		4:
-			# 止战符：削减敌人 30% MP
+				target_bc.add_buff("freeze", 1, null, "虚沉冰封")
+				target_bc.sync_freeze_anim()
+				target_bc.show_debuff("冰封")
+		3:  # 加速 → 在 battleUI 里已处理为选队友加速
+			# 此处投射物已命中，不额外处理
+			pass
+		4:  # 止战 → 削减敌人 30% MP
 			if not target_bc.is_dead:
 				var mp_loss = int(target_bc.current_mp * 0.3)
 				target_bc.current_mp = maxi(0, target_bc.current_mp - mp_loss)
 				target_bc.sync_visual()
+				target_bc.play_spell_effect("ceasefire")
 
 
 static func shoot(

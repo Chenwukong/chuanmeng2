@@ -539,8 +539,7 @@ func sync_freeze_anim() -> void:
 		show_debuff(debuff_name, true)
 		if parent.has_node("Sprite2D"):
 			parent.get_node("Sprite2D").modulate = body_color
-		if was._current_anim != "hit":
-			was.play("hit", true)
+		was.play("hit", false)
 	else:
 		hide_debuff()
 		# 恢复本色

@@ -23,6 +23,7 @@
 [ext_resource type="Texture2D" uid="uid://4gx7o0j46ltx" path="res://Graphic/UI/命令条S.png" id="16_ved5n"]
 [ext_resource type="Texture2D" uid="uid://b3tfm0m8lvwta" path="res://Graphic/UI/1 (2).png" id="21_8r2kx"]
 [ext_resource type="FontFile" uid="uid://dgudp2duoeeta" path="res://Graphic/UI/Font/aajiuzhongxiao.ttf" id="24_pd17h"]
+[ext_resource type="Texture2D" uid="uid://cisfuyciwa4h2" path="res://Graphic/UI/剧情回顾-removebg-preview.png" id="25_ag87l"]
 [ext_resource type="PackedScene" uid="uid://dno5u7h0tr5vo" path="res://scenes/tcp_sprite.tscn" id="25_pd17h"]
 
 [node name="BattleScene" type="CanvasLayer" unique_id=1995866063]
@@ -239,7 +240,7 @@ position = Vector2(1114, 281)
 texture = ExtResource("16_ved5n")
 
 [node name="符咒2" parent="." unique_id=960371219 instance=ExtResource("25_pd17h")]
-position = Vector2(1110, 489)
+position = Vector2(1127.9999, 489)
 scale = Vector2(0.6, 0.6)
 tcp_path = "res://TCP/符咒/3290.tcp"
 
@@ -254,7 +255,7 @@ text = "止战"
 metadata/_edit_use_anchors_ = true
 
 [node name="符咒1" parent="." unique_id=1866989955 instance=ExtResource("25_pd17h")]
-position = Vector2(1088.0001, 606)
+position = Vector2(1106, 606)
 scale = Vector2(0.35, 0.35)
 tcp_path = "res://TCP/符咒/3290.tcp"
 
@@ -268,8 +269,26 @@ theme_override_font_sizes/font_size = 40
 text = "止战"
 metadata/_edit_use_anchors_ = true
 
+[node name="Label2" type="Label" parent="符咒1" unique_id=1827625837]
+offset_left = 31.428429
+offset_top = -119.99998
+offset_right = 111.42843
+offset_bottom = -31.999977
+theme_override_fonts/font = ExtResource("24_pd17h")
+theme_override_font_sizes/font_size = 40
+text = "Q"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="Button" type="Button" parent="符咒1" unique_id=1038337634]
+self_modulate = Color(1, 1, 1, 0)
+offset_left = -8.571429
+offset_top = -159.99991
+offset_right = 139.99986
+offset_bottom = 128.5715
+
 [node name="符咒3" parent="." unique_id=289349604 instance=ExtResource("25_pd17h")]
-position = Vector2(1168, 603)
+position = Vector2(1185.9999, 603)
 scale = Vector2(0.35, 0.35)
 tcp_path = "res://TCP/符咒/3290.tcp"
 
@@ -281,3 +300,60 @@ offset_bottom = 39.428585
 theme_override_fonts/font = ExtResource("24_pd17h")
 theme_override_font_sizes/font_size = 40
 text = "止战"
+
+[node name="Label2" type="Label" parent="符咒3" unique_id=2091766813]
+offset_left = 22.85735
+offset_top = -114.28569
+offset_right = 102.857346
+offset_bottom = -26.28569
+theme_override_fonts/font = ExtResource("24_pd17h")
+theme_override_font_sizes/font_size = 40
+text = "E"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="Button" type="Button" parent="符咒3" unique_id=114974871]
+self_modulate = Color(1, 1, 1, 0)
+offset_left = 2.8574905
+offset_top = -165.71437
+offset_right = 151.42877
+offset_bottom = 122.85704
+
+[node name="二倍速" type="Control" parent="." unique_id=1125129955]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ColorRect" type="ColorRect" parent="二倍速" unique_id=1973731033]
+visible = false
+layout_mode = 0
+offset_left = 18.0
+offset_top = 8.000061
+offset_right = 135.0
+offset_bottom = 47.0
+color = Color(0, 1, 1, 0.19215687)
+
+[node name="背景" type="Sprite2D" parent="二倍速" unique_id=909480236]
+modulate = Color(1, 1, 1, 0.22745098)
+position = Vector2(99.99999, 26.468748)
+scale = Vector2(0.3427495, 0.12965426)
+texture = ExtResource("25_ag87l")
+
+[node name="CheckButton" type="CheckButton" parent="二倍速" unique_id=1684135041]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 108.0
+offset_bottom = 39.0
+scale = Vector2(1.3595104, 1.3595104)
+theme_override_font_sizes/font_size = 16
+text = "                  "
+
+[node name="Label" type="Label" parent="二倍速/CheckButton" unique_id=316687789]
+layout_mode = 0
+offset_left = 5.8844714
+offset_top = 2.206677
+offset_right = 85.88447
+offset_bottom = 27.21568
+text = "二倍速(F1) "

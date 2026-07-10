@@ -259,6 +259,9 @@ func _run_actor_turn(actor: BattleCharacter) -> void:
 		_change_state(BattleState.CHECK_BATTLE_END)
 		return
 
+	# 正常行动前 tick buff（每回合一次，在自己的回合计数）
+	actor.tick_buffs()
+
 	if actor.is_player:
 		# 玩家角色：切换到等待输入状态
 		_double_action_active = false
@@ -1506,7 +1509,6 @@ func _change_state(new_state: BattleState) -> void:
 	state = new_state
 	if new_state == BattleState.CHECK_BATTLE_END:
 		_tick_all_cooldowns()
-		_tick_all_buffs()
 	state_changed.emit(new_state)
 
 func _push_log(text: String, log_type: String = "system") -> void:
