@@ -458,14 +458,13 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		for t in jj_targets:
 			var tn = t.get_parent() as Node2D
 			if tn:
-				if tn.has_method("play_hit_once"): tn.play_hit_once()
+				if tn.has_method("play_hit_reaction"): tn.play_hit_reaction()
 				if tn.has_method("play_hit_flash"): tn.play_hit_flash()
 			var dmg = maxi(1, int(_current_actor.get_effective_attack() * data.damage_multiplier) - int(t.get_effective_defense() * 0.6))
 			dmg = int(dmg * randf_range(0.95, 1.05) * _current_actor.metamorphosis_mod)
 			var actual = t.take_damage(dmg)
 			t.sync_visual()
 			damage_floated.emit(t, actual, "normal")
-			if tn and tn.has_method("play_idle") and not t.is_dead: tn.play_idle()
 		await _finish_player_action()
 		return
 

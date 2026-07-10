@@ -10,19 +10,17 @@ signal closed
 
 func _ready() -> void:
 	_ensure_buses()
-	# 设置滑块范围：-80dB（静音）到 0dB（最大）
 	for s in [music_slider, volume_slider, sfx_slider]:
-		s.min_value = -80
-		s.max_value = 0
+		s.min_value = 0
+		s.max_value = 100
 		s.step = 1
 	
-	# 加载设置（默认 0dB = 最大音量）
-	var bv = AudioServer.get_bus_volume_db(AudioServer.get_bus_index("BGM"))
-	music_slider.value = bv if bv > -79 else 0
-	bv = AudioServer.get_bus_volume_db(AudioServer.get_bus_index("SFX"))
-	sfx_slider.value = bv if bv > -79 else 0
-	bv = AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Master"))
-	volume_slider.value = bv if bv > -79 else 0
+	var bv = db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("BGM")))
+	music_slider.value = bv * 100 if bv > 0 else 100
+	bv = db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("SFX")))
+	sfx_slider.value = bv * 100 if bv > 0 else 100
+	bv = db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Master")))
+	volume_slider.value = bv * 100 if bv > 0 else 100
 	var fs = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 	fullscreen_cb.button_pressed = fs
 
@@ -32,31 +30,32 @@ func _ready() -> void:
 	fullscreen_cb.toggled.connect(_on_fullscreen_toggled)
 
 
+
 func _ensure_buses() -> void:
 	if AudioServer.get_bus_index("BGM") < 0:
-		AudioServer.add_bus(AudioServer.get_bus_index("Master"))
-		var idx = AudioServer.get_bus_count() - 1
-		AudioServer.set_bus_name(idx, "BGM")
+		AudioServer.add_bus(-1)
+		AudioServer.set_bus_name(AudioServer.get_bus_count() - 1, "BGM")
 	if AudioServer.get_bus_index("SFX") < 0:
-		AudioServer.add_bus(AudioServer.get_bus_index("Master"))
-		var idx = AudioServer.get_bus_count() - 1
-		AudioServer.set_bus_name(idx, "SFX")
+		AudioServer.add_bus(-1)
+		AudioServer.set_bus_name(AudioServer.get_bus_count() - 1, "SFX")
 
 
 func _on_music_changed(val: float) -> void:
 	var bus = AudioServer.get_bus_index("BGM")
 	if bus < 0: bus = AudioServer.get_bus_index("Master")
-	if bus >= 0: AudioServer.set_bus_volume_db(bus, val)
-
+	if bus >= 0: AudioServer.set_bus_volume_db(bus, _linear_db(val))
 
 func _on_sfx_changed(val: float) -> void:
 	var bus = AudioServer.get_bus_index("SFX")
 	if bus < 0: bus = AudioServer.get_bus_index("Master")
-	if bus >= 0: AudioServer.set_bus_volume_db(bus, val)
-
+	if bus >= 0: AudioServer.set_bus_volume_db(bus, _linear_db(val))
 
 func _on_volume_changed(val: float) -> void:
-	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), val)
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), _linear_db(val))
+
+func _linear_db(val: float) -> float:
+	if val <= 0: return -80.0
+	return linear_to_db(val / 100.0)
 
 
 func _on_fullscreen_toggled(on: bool) -> void:

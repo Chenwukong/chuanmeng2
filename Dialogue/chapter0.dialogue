@@ -12,6 +12,7 @@ Nathan: For more information see the online documentation.
 
 ~ 剑侠客
 #set get_tree().current_scene.open_shop("镖头")
+set GameData.story_hint = "新的剧情提示"
 set GameData.bossFight("赤焰兽")
 凌风: 你们听说了吗？
 二郎神: 什么？

@@ -156,7 +156,7 @@ var _tooltip_hover_count: int = 0     # 当前悬停的角色数（进入+1，�
 # ══════════════════════════════════════════════
 func _ready() -> void:
 	# 连接 BattleManager 信号
-	get_tree().current_scene.get_node("UI/BattleLog").visible = false
+#	get_tree().current_scene.get_node("UI/BattleLog").visible = false
 	battle_manager.log_pushed.connect(_on_log_pushed)
 	battle_manager.skill_failed.connect(_on_skill_failed)
 	battle_manager.damage_floated.connect(_on_damage_floated)

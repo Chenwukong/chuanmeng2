@@ -17,6 +17,7 @@ const SHICHEN_IMG: Array[String] = [
 
 var _bounty_popup = null
 var _bounty_open = false
+var _hint_popup = null
 var _disabled_buttons: Array = []
 var _map_popup = null
 var _pet_popup = null
@@ -224,6 +225,7 @@ func _input(event: InputEvent):
 				"地图": _open_map_popup()
 				"系统": _open_setting_popup()
 				"打造": _open_build_popup()
+				"剧情": _open_hint_popup()
 			_play_sprite_anim(sprite, "pressed")
 			get_viewport().set_input_as_handled()
 			await get_tree().create_timer(0.15).timeout
@@ -272,6 +274,10 @@ func _esc_close_or_save() -> void:
 	if _setting_popup and is_instance_valid(_setting_popup):
 		_setting_popup.close()
 		_setting_popup = null
+		return
+	if _hint_popup and is_instance_valid(_hint_popup):
+		_hint_popup.closed.emit()
+		_hint_popup = null
 		return
 	if _bounty_popup and is_instance_valid(_bounty_popup) and _bounty_open:
 		var snd = AudioStreamPlayer.new()
@@ -472,6 +478,15 @@ func _open_setting_popup() -> void:
 	_setting_popup = popup
 	add_child(popup)
 	popup.closed.connect(func(): _setting_popup = null; _unregister_popup())
+	_register_popup()
+
+
+func _open_hint_popup() -> void:
+	if _hint_popup and is_instance_valid(_hint_popup):
+		return
+	_hint_popup = preload("res://Component/hintPopup.tscn").instantiate()
+	add_child(_hint_popup)
+	_hint_popup.closed.connect(func(): _hint_popup = null; _unregister_popup())
 	_register_popup()
 
 

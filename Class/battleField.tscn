@@ -22,6 +22,8 @@
 [ext_resource type="Texture2D" uid="uid://5duyliwdml6e" path="res://Graphic/UI/进度条.png" id="15_bhsf1"]
 [ext_resource type="Texture2D" uid="uid://4gx7o0j46ltx" path="res://Graphic/UI/命令条S.png" id="16_ved5n"]
 [ext_resource type="Texture2D" uid="uid://b3tfm0m8lvwta" path="res://Graphic/UI/1 (2).png" id="21_8r2kx"]
+[ext_resource type="FontFile" uid="uid://dgudp2duoeeta" path="res://Graphic/UI/Font/aajiuzhongxiao.ttf" id="24_pd17h"]
+[ext_resource type="PackedScene" uid="uid://dno5u7h0tr5vo" path="res://scenes/tcp_sprite.tscn" id="25_pd17h"]
 
 [node name="BattleScene" type="CanvasLayer" unique_id=1995866063]
 layer = 3
@@ -208,30 +210,74 @@ offset_right = 1149.0
 offset_bottom = 644.0
 
 [node name="main" type="Marker2D" parent="." unique_id=86344470]
-position = Vector2(1171, 685)
+position = Vector2(1052, 633)
 
 [node name="AllieSlot1" type="Marker2D" parent="." unique_id=1116384823]
-position = Vector2(836, 729)
+position = Vector2(717, 677)
 
 [node name="AllieSlot2" type="Marker2D" parent="." unique_id=2117312284]
-position = Vector2(929, 661)
+position = Vector2(810, 609)
 
 [node name="AllieSlot3" type="Marker2D" parent="." unique_id=683828840]
-position = Vector2(1016, 588)
+position = Vector2(897, 536)
 
 [node name="AllieSlot4" type="Marker2D" parent="." unique_id=101417203]
-position = Vector2(1102, 513)
+position = Vector2(983, 461)
 
 [node name="AllieSlot5" type="Marker2D" parent="." unique_id=1396494869]
-position = Vector2(1180, 430)
+position = Vector2(1061, 378)
 
 [node name="PetSlot1" type="Marker2D" parent="." unique_id=704794187]
-position = Vector2(861, 585)
+position = Vector2(742, 533)
 
 [node name="PetSlot2" type="Marker2D" parent="." unique_id=237034065]
-position = Vector2(969, 486)
+position = Vector2(850, 434)
 
 [node name="命令条s" type="Sprite2D" parent="." unique_id=800907323]
 visible = false
 position = Vector2(1114, 281)
 texture = ExtResource("16_ved5n")
+
+[node name="符咒2" parent="." unique_id=960371219 instance=ExtResource("25_pd17h")]
+position = Vector2(1110, 489)
+scale = Vector2(0.6, 0.6)
+tcp_path = "res://TCP/符咒/3290.tcp"
+
+[node name="Label" type="Label" parent="符咒2" unique_id=2146587226]
+offset_left = 28.33333
+offset_top = -31.666676
+offset_right = 88.333336
+offset_bottom = 34.333324
+theme_override_fonts/font = ExtResource("24_pd17h")
+theme_override_font_sizes/font_size = 30
+text = "止战"
+metadata/_edit_use_anchors_ = true
+
+[node name="符咒1" parent="." unique_id=1866989955 instance=ExtResource("25_pd17h")]
+position = Vector2(1088.0001, 606)
+scale = Vector2(0.35, 0.35)
+tcp_path = "res://TCP/符咒/3290.tcp"
+
+[node name="Label" type="Label" parent="符咒1" unique_id=706049925]
+offset_left = 28.570938
+offset_top = -54.285698
+offset_right = 88.57094
+offset_bottom = 11.714302
+theme_override_fonts/font = ExtResource("24_pd17h")
+theme_override_font_sizes/font_size = 40
+text = "止战"
+metadata/_edit_use_anchors_ = true
+
+[node name="符咒3" parent="." unique_id=289349604 instance=ExtResource("25_pd17h")]
+position = Vector2(1168, 603)
+scale = Vector2(0.35, 0.35)
+tcp_path = "res://TCP/符咒/3290.tcp"
+
+[node name="Label" type="Label" parent="符咒3" unique_id=212085981]
+offset_left = 20.000103
+offset_top = -48.571415
+offset_right = 100.00011
+offset_bottom = 39.428585
+theme_override_fonts/font = ExtResource("24_pd17h")
+theme_override_font_sizes/font_size = 40
+text = "止战"

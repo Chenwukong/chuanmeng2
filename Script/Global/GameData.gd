@@ -19,6 +19,7 @@ var player_inventory: Inventory
 var player_equipment: Dictionary = {}   # { slot_key: EquipData 字典 }  已穿上的
 var equip_bag: Array[Dictionary] = []   # 未穿上的装备列表（在背包中显示）
 var material_bag: Array[Dictionary] = [] # 打造材料背包
+var story_hint: String = "奇迹行者因为刷野而受伤，寒天云叫你去江南野外抓只鸡回来"  # 剧情提示
 var disabled_buttons: Array = []  # 主界面禁用的按钮，从存档恢复
 
 ## 技能库：记录角色额外习得的技能  { member_id: [skill_id, ...] }
@@ -344,9 +345,9 @@ func save_game(slot: int = 0) -> void:
 		"play_time_sec": play_time_sec,
 		"chapter_id": chapter_id,
 		"scene_path": current_scene_path,
-		"vol_master": AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Master")),
-		"vol_music": AudioServer.get_bus_volume_db(AudioServer.get_bus_index("BGM")),
-		"vol_sfx": AudioServer.get_bus_volume_db(AudioServer.get_bus_index("SFX")),
+		"vol_master": db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Master"))) * 100,
+		"vol_music": db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("BGM"))) * 100,
+		"vol_sfx": db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("SFX"))) * 100,
 		"party": {},
 		"party_order": party_order.duplicate(),
 		"pets": {},
@@ -363,6 +364,7 @@ func save_game(slot: int = 0) -> void:
 		"material_bag": material_bag,
 		"dialogue_indexes": _serialize_dialogue_indexes(),
 		"disabled_buttons": disabled_buttons,
+		"story_hint": story_hint,
 	}
 
 	for mid in party_db:
@@ -406,13 +408,17 @@ func load_game(slot: int = 0) -> bool:
 	gold           = data.get("gold", 0)
 	talent_points  = data.get("talent_points", 0)
 	disabled_buttons = data.get("disabled_buttons", []).duplicate()
+	story_hint = data.get("story_hint", story_hint)
 	# 恢复音量设置
-	var v_master = data.get("vol_master", 0.0)
-	var v_music = data.get("vol_music", 0.0)
-	var v_sfx = data.get("vol_sfx", 0.0)
-	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), v_master)
-	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("BGM"), v_music)
-	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("SFX"), v_sfx)
+	var v_master = data.get("vol_master", 100.0)
+	var v_music = data.get("vol_music", 100.0)
+	var v_sfx = data.get("vol_sfx", 100.0)
+	if v_master >= 0:
+		AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), -80 if v_master <= 0 else linear_to_db(v_master / 100.0))
+	if v_music >= 0:
+		AudioServer.set_bus_volume_db(AudioServer.get_bus_index("BGM"), -80 if v_music <= 0 else linear_to_db(v_music / 100.0))
+	if v_sfx >= 0:
+		AudioServer.set_bus_volume_db(AudioServer.get_bus_index("SFX"), -80 if v_sfx <= 0 else linear_to_db(v_sfx / 100.0))
 	var d_talents: Dictionary = data.get("talent_ranks", {})
 	talent_ranks = {}
 	talent_ranks.merge(d_talents)

@@ -77,9 +77,6 @@ func _update_highlight() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible: return
-	if _just_opened:
-		_just_opened = false
-		return
 	if event.is_action_pressed("ui_cancel"):
 		_pop_out(); cancelled.emit(); get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_up"):

@@ -206,7 +206,7 @@ func play_hit_reaction() -> void:
 	play_hit_flash()
 	# 后退（敌人朝左退）
 	var tween = create_tween()
-	tween.tween_property(self, "position", orig_pos + Vector2(-15, 0), 0.1)
+	tween.tween_property(self, "position", orig_pos + Vector2(-30, -10), 0.3)
 	tween.tween_interval(1.5)
 	tween.tween_property(self, "position", orig_pos, 0.001)
 	await tween.finished
@@ -230,6 +230,7 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 	await tween.finished
 	await get_tree().create_timer(0.05).timeout
 
+	GameData.hit_stop()
 	_audio_atk.play()
 	if hit_target and hit_target.has_method("play_hit_reaction"):
 		hit_target.play_hit_reaction()

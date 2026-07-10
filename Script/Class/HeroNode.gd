@@ -227,6 +227,7 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 	await tween.finished
 	await get_tree().create_timer(0.05).timeout
 
+	GameData.hit_stop()
 	_audio_atk.play()
 	if hit_target and hit_target.has_method("play_hit_reaction"):
 		hit_target.play_hit_reaction()
