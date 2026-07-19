@@ -711,7 +711,7 @@ text = "铁骨
 script = ExtResource("6_3j5ib")
 talent_id = "guard_armor"
 talent_name = "铁骨"
-description = "防御提升。"
+description = "防御力+5%/级"
 max_rank = 3
 
 [node name="护盾" type="Button" parent="Pages/Page_Guard" unique_id=349603622]
@@ -799,7 +799,7 @@ text = "破势
 script = ExtResource("6_3j5ib")
 talent_id = "attack_strike"
 talent_name = "破势"
-description = "攻击提升。"
+description = "攻击力+5%/级"
 max_rank = 3
 
 [node name="会心" type="Button" parent="Pages/Page_Attack" unique_id=5449846]
@@ -814,7 +814,7 @@ text = "会心
 script = ExtResource("6_3j5ib")
 talent_id = "attack_crit"
 talent_name = "会心"
-description = "暴击率提升。"
+description = "暴击率+3%/级"
 max_rank = 3
 requirements = Array[Resource]([SubResource("Req_Attack_Crit")])
 
@@ -830,7 +830,7 @@ text = "裂伤
 script = ExtResource("6_3j5ib")
 talent_id = "attack_bleed"
 talent_name = "裂伤"
-description = "攻击有概率附加持续伤害。"
+description = "攻击30%概率附加流血（每级+30%），流血伤害=最大HP×5%/级，持续3回合"
 max_rank = 2
 requirements = Array[Resource]([SubResource("Req_Attack_Bleed")])
 
@@ -846,7 +846,7 @@ text = "连斩
 script = ExtResource("6_3j5ib")
 talent_id = "attack_combo"
 talent_name = "连斩"
-description = "普通攻击有概率追加一次。"
+description = "攻击15%概率立即重放一次同样的攻击（每级+15%）"
 max_rank = 2
 requirements = Array[Resource]([SubResource("Req_Attack_Combo_A"), SubResource("Req_Attack_Combo_B")])
 
@@ -862,7 +862,7 @@ text = "一剑破万法
 script = ExtResource("6_3j5ib")
 talent_id = "attack_slay"
 talent_name = "一剑破万法"
-description = "强力天赋：造成伤害时无视部分防御。"
+description = "造成伤害时额外无视25%防御"
 requirements = Array[Resource]([SubResource("Req_Attack_Slay")])
 
 [node name="DetailLabel" type="RichTextLabel" parent="." unique_id=1478702570]

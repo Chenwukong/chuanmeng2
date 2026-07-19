@@ -277,6 +277,9 @@ func _build_item_list() -> void:
 		var data: ItemData = entry["data"]
 		var count: int     = entry["count"]
 		var iid = data.item_id
+		# 过滤：不显示技能书和符咒
+		if data.item_type == ItemData.ItemType.SKILL_BOOK or data.item_type == ItemData.ItemType.SPECIAL:
+			continue
 
 		var btn = ItemButton.new()
 		btn.setup(data, count, idx, count <= 0)

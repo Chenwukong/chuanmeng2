@@ -7,7 +7,7 @@ signal rank_removed
 @export var talent_id: String = ""
 @export var talent_name: String = ""
 @export_multiline var description: String = ""
-@export_range(1, 10, 1) var max_rank: int = 1
+@export_range(1, 20, 1) var max_rank: int = 1
 @export var requirements: Array[Resource] = []
 
 var rank: int = 0
@@ -69,18 +69,15 @@ func requirements_met() -> bool:
 		if requirement == null:
 			continue
 
-		var path := requirement.get("talent_path") as NodePath
-		var rv = requirement.get("rank_required")
-		var rr: int = 1
-		if rv != null: rr = int(rv)
-		var required_rank := maxi(1, rr)
+		var path: NodePath = requirement.talent_path
+		var rr: int = maxi(1, requirement.rank_required)
 		if path.is_empty():
 			continue
 
 		var target := _resolve_requirement_talent(path)
 		if target == null or not target.has_method("get_rank"):
 			return false
-		if target.get_rank() < required_rank:
+		if target.get_rank() < rr:
 			return false
 
 	return true
@@ -114,9 +111,34 @@ func add_rank() -> void:
 
 func remove_rank() -> void:
 	if rank <= 0: return
-	rank = maxi(rank - 1, 0)
+	# 检查是否有依赖此天赋的其他天赋（且已加点），新 rank 会不满足需求
+	var new_rank = rank - 1
+	if not _can_safely_remove_to(new_rank):
+		return
+	rank = new_rank
 	GameData.set_talent_rank(talent_id, rank)
 	_update_text()
+
+## 检查降到 new_rank 后是否会让依赖天赋失效
+func _can_safely_remove_to(target_rank: int) -> bool:
+	var talent_root = get_parent()
+	while talent_root and not talent_root.has_method("_get_all_talent_nodes"):
+		talent_root = talent_root.get_parent()
+	if talent_root == null:
+		return true  # 找不到根，允许
+	var all_nodes: Array = talent_root._get_all_talent_nodes()
+	for node in all_nodes:
+		if node == self or node.rank == 0:
+			continue
+		for req in node.requirements:
+			if req == null: continue
+			var path: NodePath = req.talent_path
+			var rr: int = req.rank_required
+			if path.is_empty(): continue
+			var target: TalentNode = node._resolve_requirement_talent(path)
+			if target == self and rr > target_rank:
+				return false  # 有依赖天赋需要更高 rank
+	return true
 
 func _on_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
@@ -169,20 +191,19 @@ func get_detail_text() -> String:
 		for requirement in requirements:
 			if requirement == null:
 				continue
-			var path := requirement.get("talent_path") as NodePath
-			var rv = requirement.get("rank_required")
-			var rr: int = 1
-			if rv != null: rr = int(rv)
-			var required_rank := maxi(1, rr)
+			var path: NodePath = requirement.talent_path
+			var rr: int = maxi(1, requirement.rank_required)
+			if path.is_empty():
+				continue
 			var target := _resolve_requirement_talent(path)
 			var target_name := str(path)
 			if target != null and "talent_name" in target:
 				target_name = target.talent_name
-			parts.append("%s %d级" % [target_name, required_rank])
+			parts.append("%s %d级" % [target_name, rr])
 		if not parts.is_empty():
 			requirement_text = "、".join(parts)
 
-	return "[b]%s[/b]\n\n%s\n\n等级：%d/%d\n前置：%s\n\n点击消耗 1 点天赋点升级。" % [
+	return "%s\n\n%s\n\n等级：%d/%d\n前置：%s\n\n点击消耗 1 点天赋点升级。" % [
 		talent_name,
 		description,
 		rank,

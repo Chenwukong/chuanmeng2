@@ -60,6 +60,8 @@ var _tex_cache: Dictionary = {}
 func _ready() -> void:
 	
 	_play_time_accum = float(GameData.play_time_sec)
+	_shichen_idx = GameData.shichen_idx
+	_shichen_accum = GameData.shichen_accum
 	bounty_btn.pressed.connect(_on_bounty_pressed)
 	_setup_ui_buttons()
 	GameData.set_language("zh")
@@ -78,6 +80,7 @@ func _ready() -> void:
 	GameData.add_party_by_name("叮咚")
 	GameData.add_party_by_name("凌风")
 	#ameData.add_party_by_name("大将军")
+	_update_time_volume()
 	
 # ════════════════════════════
 # UI 按钮系统
@@ -99,7 +102,7 @@ func _setup_ui_buttons() -> void:
 	if GameData.disabled_buttons.size() > 0:
 		_disabled_buttons = GameData.disabled_buttons.duplicate()
 		_refresh_btn_visuals()
-	initUIBtn()
+	#initUIBtn()
 
 func _add_btn_labels() -> void:
 	var btn_base = $UI/按钮底图
@@ -166,6 +169,12 @@ func _refresh_btn_visuals() -> void:
 			continue
 		# 地图特殊：未解锁天赋则禁用
 		if bn == "地图" and not GameData.has_talent("main_map"):
+			sprite.modulate = Color(0.3, 0.3, 0.3, 0.4)
+			var lbl = sprite.get_node_or_null("Label") as Label
+			if lbl: lbl.visible = false
+			continue
+		# 打造特殊：未解锁攻击铸造天赋则禁用
+		if bn == "打造" and not GameData.has_talent("main_forge"):
 			sprite.modulate = Color(0.3, 0.3, 0.3, 0.4)
 			var lbl = sprite.get_node_or_null("Label") as Label
 			if lbl: lbl.visible = false
@@ -484,6 +493,7 @@ func _open_setting_popup() -> void:
 	_setting_popup = popup
 	add_child(popup)
 	popup.closed.connect(func(): _setting_popup = null; _unregister_popup())
+	popup.volume_changed.connect(_update_time_volume)
 	_register_popup()
 
 
@@ -594,16 +604,19 @@ func _process(delta: float) -> void:
 
 	# 外部 BattleLog 由 battleUI 通过 GameData.world_log_text 更新，MainScene 只读不写
 
-	_shichen_accum += delta
-	if _shichen_accum >= SECONDS_PER_SHICHEN:
-		_shichen_accum -= SECONDS_PER_SHICHEN
-		_shichen_idx = (_shichen_idx + 1) % 12
 	if not GameData.ui_blocked:
+		_shichen_accum += delta
+		if _shichen_accum >= SECONDS_PER_SHICHEN:
+			_shichen_accum -= SECONDS_PER_SHICHEN
+			_shichen_idx = (_shichen_idx + 1) % 12
+			_update_time_volume()
 		GameData.play_time_sec = int(Time.get_ticks_msec() / 1000.0)
+		GameData.shichen_idx = _shichen_idx
+		GameData.shichen_accum = _shichen_accum
 	_update_time_ui()
 
 	var period := _get_period()
-	if period != _last_period:
+	if period != _last_period or not is_instance_valid(_cached_map):
 		_last_period = period
 		GameData.current_period = period
 		_apply_day_tint()
@@ -650,15 +663,41 @@ func _get_period() -> int:
 	return 0
 
 
-func _apply_day_tint() -> void:
-	if not _cached_map or not _cached_map.has_method("set_day_tint"):
+func _apply_day_tint(immediate: bool = false) -> void:
+	if not is_instance_valid(_cached_map) or not _cached_map.has_method("set_day_tint"):
 		_cached_map = null
 		for child in get_children():
 			if child is Node2D and child.has_method("set_day_tint"):
 				_cached_map = child
 				break
-	if _cached_map:
-		_cached_map.set_day_tint(PERIOD_TINTS[_last_period])
+	if is_instance_valid(_cached_map):
+		_cached_map.set_day_tint(PERIOD_TINTS[_last_period], immediate)
+
+
+func refresh_map_tint() -> void:
+	_cached_map = null
+	_apply_day_tint(true)
+
+
+func _get_volume_multiplier() -> float:
+	# 子丑寅(0-2)=晚上60%, 卯辰巳(3-5)=早上100%, 午未申(6-8)=下午80%, 酉戌亥(9-11)=晚上60%
+	if _shichen_idx <= 2: return 0.6
+	elif _shichen_idx <= 5: return 1.0
+	elif _shichen_idx <= 8: return 0.8
+	else: return 0.6
+
+func _update_time_volume() -> void:
+	var mult = _get_volume_multiplier()
+	for bus_name in ["Master", "BGM", "SFX"]:
+		var bus = AudioServer.get_bus_index(bus_name)
+		if bus < 0: continue
+		var base = {
+			"Master": GameData.base_vol_master,
+			"BGM": GameData.base_vol_bgm,
+			"SFX": GameData.base_vol_sfx
+		}[bus_name]
+		var actual = base * mult
+		AudioServer.set_bus_volume_db(bus, linear_to_db(actual) if actual > 0 else -80)
 
 
 func _find_player() -> Node2D:
@@ -850,7 +889,7 @@ var _world_log: RichTextLabel = null
 
 func initUIBtn():
 	disable_btn("打造")
-	#disable_btn("天赋")
+	disable_btn("天赋")
 	disable_btn("悬赏")
 	disable_btn("宠物")
 	disable_btn("打造")

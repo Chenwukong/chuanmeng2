@@ -28,6 +28,7 @@ var buffs: Dictionary = {}
 var is_dead: bool = false
 var is_frozen: bool = false  # 冰冻：跳过本回合
 var is_weakened: bool = false  # 虚弱：跳过本回合（横扫千军后触发）
+var killed_by_fire: bool = false  # 被火焰击杀标记
 var is_summoned_pet: bool = false  # 战斗中召唤出的宠物
 var consecutive_turns: int = 0  # 连续行动次数（连续衰减用）
 
@@ -198,7 +199,12 @@ func play_spell_effect(anim_name: String) -> void:
 	var parent = get_parent()
 	if parent == null: return
 	var ss = parent.get_node_or_null("Animation") as AnimatedSprite2D
-	if ss == null or not ss.sprite_frames or not ss.sprite_frames.has_animation(anim_name):
+	if ss == null:
+		return
+	if not ss.sprite_frames or not ss.sprite_frames.has_animation(anim_name):
+		return
+	# 同上动画已在播，不打断
+	if ss.visible and ss.animation == anim_name:
 		return
 	ss.stop()
 	ss.sprite_frames.set_animation_loop(anim_name, false)
@@ -434,7 +440,7 @@ func reset_sp() -> void:
 
 ## 冻结类 buff ID 列表
 const FREEZE_BUFF_IDS: Array[String] = ["frozen", "freeze", "冰封", "失魂"]
-const DEBUFF_IDS: Array[String] = ["poison", "burn", "slow", "def_broken", "atk_down", "frozen", "freeze", "冰封", "失魂", "weakened"]
+const DEBUFF_IDS: Array[String] = ["poison", "burn", "bleed", "slow", "def_broken", "atk_down", "frozen", "freeze", "冰封", "失魂", "weakened"]
 
 # ─── BUFF 系统（分层叠加，max 3 层，同源不重复） ───
 const MAX_BUFF_LAYERS := 3
@@ -459,6 +465,11 @@ func add_buff(buff_id: String, turns: int, value: Variant = null, source: String
 	# 已达最大层数
 	if layers.size() >= MAX_BUFF_LAYERS:
 		return
+	if value != null and buff_id not in DEBUFF_IDS:
+		# 增幅术：增益效果提升 10%/级
+		var buff_up = GameData.get_talent_rank("support_buff_up")
+		if buff_up > 0 and value is float:
+			value *= (1.0 + 0.1 * buff_up)
 	layers.append({ "source": source, "turns": turns, "value": value })
 	buff_added.emit(buff_id)
 
@@ -779,7 +790,11 @@ func get_effective_magic_crit_rate() -> float:
 
 ## 慧根：MP 消耗减免比例
 func get_mp_cost_reduction() -> float:
-	return minf(_book_num("mp_save"), 0.8)  # 最多减免80%
+	var base := _book_num("mp_save")
+	# 灵力节约天赋：辅助角色耗蓝减 10%/级
+	if CharacterStats.has_role(stats.role, CharacterStats.Role.SUMMON):
+		base += 0.1 * GameData.get_talent_rank("support_mp_save")
+	return minf(base, 0.8)
 
 ## 治疗加成
 func get_effective_heal_rate() -> float:
@@ -805,6 +820,10 @@ func get_reflect_ratio() -> float:
 		var db = GameData.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "reflect":
 			v += db.get("value", 0.0)
+	# 守中有攻天赋：反伤 10%/级
+	var talent_rank = GameData.get_talent_rank("guard_counter")
+	if talent_rank > 0:
+		v += 0.1 * talent_rank
 	return minf(v, 0.6)
 
 ## 毒概率

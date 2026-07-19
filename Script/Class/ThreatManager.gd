@@ -44,7 +44,12 @@ var _taunt_map: Dictionary = {}     # { "yuling": 2 }  追敌 → 剩余回合
 
 ## 获取 actor 的职业倍率
 func _rate(actor: BattleCharacter) -> float:
-	return PROFESSION_RATES.get(CharacterStats.role_name(actor.stats.role), 1.0)
+	var base = PROFESSION_RATES.get(CharacterStats.role_name(actor.stats.role), 1.0)
+	# 韬光养晦：辅助角色仇恨减少 10%/级
+	if CharacterStats.has_role(actor.stats.role, CharacterStats.Role.SUMMON):
+		var rank = GameData.get_talent_rank("support_threat_down")
+		base *= maxf(0.0, 1.0 - 0.1 * rank)
+	return base
 
 
 ## 获取 actor 的仇恨键（优先 member_id，否则 character_name）
@@ -106,6 +111,13 @@ func add_guard_threat(actor: BattleCharacter, damage_taken: int) -> void:
 	_threat_table[k] = _threat_table.get(k, 0) + int(damage_taken * 0.5)
 
 
+## 强制添加仇恨（先声夺人）
+func force_add(actor: BattleCharacter, amount: int) -> void:
+	if actor == null or not actor.is_player: return
+	var k := _key(actor)
+	_threat_table[k] = _threat_table.get(k, 0) + maxi(0, amount)
+
+
 ## 嘲讽：threat = highest_hate × 1.5，并标记追敌 2 回合
 func taunt(actor: BattleCharacter) -> void:
 	if actor == null or not actor.is_player:
@@ -115,7 +127,7 @@ func taunt(actor: BattleCharacter) -> void:
 		if v > top_val:
 			top_val = v
 	var k := _key(actor)
-	_threat_table[k] = maxi(_threat_table.get(k, 0), int(top_val * 1.5))
+	_threat_table[k] = maxi(_threat_table.get(k, 0), int(top_val * 1.5 * (1.0 + 0.2 * GameData.get_talent_rank("guard_taunt_up"))))
 	_taunt_map[k] = 2
 
 

@@ -62,7 +62,7 @@ static func execute(
 
 	# ── 附带效果（伤害型技能也可携带 Buff）──
 	if data.apply_buff_id != "" and result.success:
-		if randf() <= data.apply_buff_chance:
+		if randf() <= _calc_debuff_chance(caster, target, data.apply_buff_chance):
 			target.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
 			result.applied_buff = data.apply_buff_id
 
@@ -88,8 +88,10 @@ static func _calc_damage(
 	var raw_atk = caster.get_effective_magic_attack() if is_magic else caster.get_effective_attack()
 	var def     = target.get_effective_magic_defense() if is_magic else target.get_effective_defense()
 
-	# 无视防御
-	def = int(def * (1.0 - data.ignore_defense_ratio))
+	# 无视防御 + 一剑破万法天赋：额外无视 25%/级
+	var slay_rank = GameData.get_talent_rank("attack_slay")
+	var ignore_ratio = data.ignore_defense_ratio + 0.02 * slay_rank
+	def = int(def * (1.0 - ignore_ratio))
 
 	# 基础伤害 = 攻击 * 倍率 - 防御 * 0.6
 	var base_dmg = int(raw_atk * data.damage_multiplier * caster.get_night_dmg_mul()) - int(def * 0.6) + data.flat_damage
@@ -134,7 +136,7 @@ static func _calc_multi_hit(
 	for i in data.hit_count:
 		var raw_atk = caster.get_effective_attack()
 		var def     = target.get_effective_defense()
-		var dmg     = maxi(1, int(raw_atk * data.damage_multiplier / data.hit_count) - int(def * 0.4))
+		var dmg     = maxi(1, int(raw_atk * data.damage_multiplier / data.hit_count) - int(def))
 		dmg = int(dmg * randf_range(0.95, 1.05))
 		result.damage_list.append(dmg)
 		total += dmg
@@ -163,18 +165,29 @@ static func _apply_buff(
 ) -> void:
 
 	if data.apply_buff_id != "":
-		var success = randf() <= data.apply_buff_chance
+		var success = randf() <= _calc_debuff_chance(caster, target, data.apply_buff_chance)
 		if success:
 			target.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
 			result.applied_buff = data.apply_buff_id
 			var buf_label = GameData._T("LOG_BUFF_GAIN") if not is_debuff else GameData._T("LOG_BUFF_CURSED")
 			result.log_text = GameData._T("LOG_BUFF_CAST") % [caster.stats.get_display_name(), GameData._T(data.skill_name), target.stats.get_display_name(), buf_label]
+		elif is_debuff:
 			result.log_text = GameData._T("LOG_BUFF_FAIL") % [GameData._T(data.skill_name), target.stats.get_display_name()]
-		result.log_text = GameData._T("LOG_SKILL_CAST") % [caster.stats.get_display_name(), GameData._T(data.skill_name)]
-		result.log_text = "%s 施展【%s】" % [caster.stats.get_display_name(), data.skill_name]
+		else:
+			result.log_text = GameData._T("LOG_SKILL_CAST") % [caster.stats.get_display_name(), GameData._T(data.skill_name)]
 
 
 # ──────────────────────────────────────────────────────
+## 运气修正封印/异常成功率：base + (caster_luck - target_luck) / 100.0
+static func _calc_debuff_chance(caster: BattleCharacter, target: BattleCharacter, base_chance: float) -> float:
+	var caster_luck = caster.stats.luck + caster.equip_special.get("luck", 0)
+	var target_luck = target.stats.luck + target.equip_special.get("luck", 0)
+	var chance = base_chance + float(caster_luck - target_luck)
+	# 封印精通天赋
+	chance += 0.03 * GameData.get_talent_rank("support_seal_chance")
+	if chance <= 0.0: return 0.0
+	return clampf(chance, 0.0, 1.0)
+
 ## 返回值结构
 class SkillResult:
 	var skill_id: String = ""

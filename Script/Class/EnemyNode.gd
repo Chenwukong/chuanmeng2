@@ -82,6 +82,8 @@ func _stop_indicator_float() -> void:
 
 ## 短暂闪白表示被击中
 func play_hit_flash() -> void:
+	if battle_character.killed_by_fire:
+		return
 	var tween = create_tween()
 	tween.tween_property(sprite, "modulate", Color(3, 3, 3), 0.2)
 	tween.tween_property(sprite, "modulate", COLOR_NORMAL,   0.15)
@@ -92,15 +94,29 @@ func play_hit_flash() -> void:
 ## 加速抖动效果 — 覆盖整个施法过程
 var _shake_tween: Tween = null
 
-func shake(intensity: float = 3.0) -> void:
+func shake(intensity: float = 3.0, duration: float = 0.0) -> void:
 	if _shake_tween and _shake_tween.is_valid():
 		_shake_tween.kill()
+	# 清除旧的自动停止计时器
+	if has_meta("_shake_timer"):
+		var old_timer: SceneTreeTimer = get_meta("_shake_timer")
+		if old_timer and old_timer.time_left > 0:
+			pass
+		remove_meta("_shake_timer")
 	var orig := position
 	_shake_tween = create_tween()
 	_shake_tween.set_loops()
 	for _i in range(4):
 		var offset := Vector2(randf_range(-intensity, intensity), randf_range(-intensity, intensity))
 		_shake_tween.tween_property(self, "position", orig + offset, 0.04)
+	# 自动停止
+	if duration > 0:
+		var tm := get_tree().create_timer(duration)
+		set_meta("_shake_timer", tm)
+		tm.timeout.connect(func():
+			if is_instance_valid(self):
+				stop_shake()
+		, CONNECT_ONE_SHOT)
 
 ## 停止抖动并归位
 func stop_shake() -> void:
@@ -275,13 +291,20 @@ func _on_died() -> void:
 		_freeze_shatter()
 		return
 
+	if battle_character.killed_by_fire:
+		_charred_death()
+		return
+
 	battle_character.sync_visual()
 	was_player.play("die", false)
 	# 如果没有 WAS 死亡动画（大多数敌人没有），用渐隐替代
 	if not was_player.is_playing():
-		var tw := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-		tw.tween_property(sprite, "modulate:a", 0.0, 0.5)
-		tw.tween_callback(func(): visible = false)
+		if battle_character.killed_by_fire:
+			pass  # 已焦黑，不渐隐
+		else:
+			var tw := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+			tw.tween_property(sprite, "modulate:a", 0.0, 0.5)
+			tw.tween_callback(func(): visible = false)
 
 var _shattered: bool = false
 
@@ -370,3 +393,19 @@ func _on_revived() -> void:
 	if wui: wui.visible = true
 	sprite.modulate = COLOR_NORMAL
 	was_player.play("idle")
+
+
+func _charred_death() -> void:
+	# 关闭头顶 UI
+	var wui = get_node_or_null("WorldUI")
+	if wui: wui.visible = false
+	if has_node("BuffSprite"):
+		$BuffSprite.visible = false
+
+	# 先播死亡动画，播完变焦黑
+	battle_character.sync_visual()
+	was_player.play("die", false)
+	if was_player.is_playing():
+		await was_player.animation_finished
+		was_player.stop()
+	sprite.modulate = Color(0.12, 0.06, 0.02)

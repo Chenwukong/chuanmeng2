@@ -12,6 +12,12 @@ var pet_db:   Dictionary = {}     # { pet_id: PetData }
 var pet_team: Array[String] = []  # 最多6只出战宠物ID
 var mech_db:  Dictionary = {}     # { name: { name, was_base_path, level, exp, atk, def_, spd, skills } }
 var mech_team: Array[String] = [] # 可召唤的铁甲兽列表
+static var shichen_idx: int = 2    # 当前时辰索引（跨场景持久）
+static var shichen_accum: float = 0.0  # 时辰累计时间
+
+static var base_vol_master: float = 1.0
+static var base_vol_bgm: float = 1.0
+static var base_vol_sfx: float = 1.0
 var player_gold: int = 5000
 var player_inventory: Inventory
 
@@ -343,11 +349,13 @@ func save_game(slot: int = 0) -> void:
 		"talent_ranks": talent_ranks.duplicate(),
 		"game_flags": game_flags.duplicate(),
 		"play_time_sec": play_time_sec,
+		"shichen_idx": shichen_idx,
+		"shichen_accum": shichen_accum,
 		"chapter_id": chapter_id,
 		"scene_path": current_scene_path,
-		"vol_master": db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Master"))) * 100,
-		"vol_music": db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("BGM"))) * 100,
-		"vol_sfx": db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("SFX"))) * 100,
+		"vol_master": GameData.base_vol_master * 100,
+		"vol_music":  GameData.base_vol_bgm * 100,
+		"vol_sfx":    GameData.base_vol_sfx * 100,
 		"party": {},
 		"party_order": party_order.duplicate(),
 		"pets": {},
@@ -414,10 +422,13 @@ func load_game(slot: int = 0) -> bool:
 	var v_music = data.get("vol_music", 100.0)
 	var v_sfx = data.get("vol_sfx", 100.0)
 	if v_master >= 0:
+		GameData.base_vol_master = v_master / 100.0
 		AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), -80 if v_master <= 0 else linear_to_db(v_master / 100.0))
 	if v_music >= 0:
+		GameData.base_vol_bgm = v_music / 100.0
 		AudioServer.set_bus_volume_db(AudioServer.get_bus_index("BGM"), -80 if v_music <= 0 else linear_to_db(v_music / 100.0))
 	if v_sfx >= 0:
+		GameData.base_vol_sfx = v_sfx / 100.0
 		AudioServer.set_bus_volume_db(AudioServer.get_bus_index("SFX"), -80 if v_sfx <= 0 else linear_to_db(v_sfx / 100.0))
 	var d_talents: Dictionary = data.get("talent_ranks", {})
 	talent_ranks = {}
@@ -426,6 +437,8 @@ func load_game(slot: int = 0) -> bool:
 	game_flags = {}
 	game_flags.merge(d_flags)
 	play_time_sec  = data.get("play_time_sec", 0)
+	shichen_idx    = data.get("shichen_idx", 10)
+	shichen_accum  = data.get("shichen_accum", 0.0)
 	chapter_id     = data.get("chapter_id", 1)
 	current_scene_path = data.get("scene_path", "res://scenes/MainScene.tscn")
 	_restore_dialogue_indexes(data.get("dialogue_indexes", {}))
@@ -649,6 +662,7 @@ func create_enemy(enemy_name: String) -> CharacterStats:
 	s.speed          = row.spd;   s.level         = row.lv
 	s.skill_ids      = row.skills.duplicate()
 	s.ai_strategy    = row.get("ai_strategy", "balanced")
+	s.luck           = row.get("luck", 0)
 	s.magic_attack   = row.get("matk", row.atk)
 	s.magic_defense  = row.get("mdef", int(row.def * 0.8))
 	s.was_base_path  = row.get("was_base_path", "")
@@ -688,21 +702,21 @@ const ENEMY_DB = [
 	{ name = "山魈·獠牙",  hp = 110, mp = 30,  atk = 28, def = 12, spd = 9,  lv = 1, skills = ["普通攻击","妖术"] },
 	{ name = "厉鬼·幽魂",  hp = 80,  mp = 60,  atk = 20, def = 5,  spd = 14, lv = 2, skills = ["普通攻击","妖术","蛊毒咒"] },
 	{ name = "石傀·巨岩",  hp = 160, atk = 32, def = 22, spd = 5,  lv = 3, skills = ["普通攻击","破防击"] },
-	{ name = "火鸦·灼羽",  hp = 70,  mp = 80,  atk = 18, def = 6,  spd = 16, lv = 3, skills = ["普通攻击","妖术","灼焰术"] },
-	{ name = "幽蛛·织网",  hp = 100, mp = 50,  atk = 24, def = 10, spd = 12, lv = 4, skills = ["普通攻击","蛊毒咒","妖术"] },
-	{ name = "风狼·疾牙",  hp = 120, mp = 30,  atk = 30, def = 8,  spd = 18, lv = 4, skills = ["普通攻击","三连击"] },
-	{ name = "寒魄·幽灵",  hp = 90,  mp = 90,  atk = 22, def = 8,  spd = 13, lv = 5, skills = ["普通攻击","冰封诀","妖术"] },
+	{ name = "火鸦·灼羽",  hp = 70,  mp = 80,  atk = 18, def = 6,  mdef = 4,  spd = 16, lv = 3, skills = ["普通攻击","妖术","灼焰术"] },
+	{ name = "幽蛛·织网",  hp = 100, mp = 50,  atk = 24, def = 10, mdef = 6,  spd = 12, lv = 4, skills = ["普通攻击","蛊毒咒","妖术"] },
+	{ name = "风狼·疾牙",  hp = 120, mp = 30,  atk = 30, def = 8,  mdef = 5,  spd = 18, lv = 4, skills = ["普通攻击","三连击"] },
+	{ name = "寒魄·幽灵",  hp = 90,  mp = 90,  atk = 22, def = 6,  mdef = 12, spd = 13, lv = 5, skills = ["普通攻击","冰封诀","妖术"] },
 	# ── 精英怪 ──
-	{ name = "九尾妖狐",    hp = 200, mp = 80,  atk = 35, def = 15, spd = 12, lv = 6, skills = ["普通攻击","妖术","妖气回复","蛊毒咒"] },
-	{ name = "魔将·煞星",  hp = 250, mp = 60,  atk = 42, def = 20, spd = 10, lv = 7, skills = ["普通攻击","三连击","破防击","护体真气"] },
-	{ name = "骷髅王",      hp = 220, mp = 70,  atk = 38, def = 18, spd = 11, lv = 7, skills = ["普通攻击","妖术","破防击"] },
-	{ name = "熔岩魔人",    hp = 280, mp = 50,  atk = 45, def = 25, spd = 7,  lv = 8, skills = ["普通攻击","灼焰术","破防击"] },
+	{ name = "九尾妖狐",    hp = 200, mp = 80,  atk = 35, def = 15, mdef = 18, spd = 12, lv = 6, skills = ["普通攻击","妖术","妖气回复","蛊毒咒"] },
+	{ name = "魔将·煞星",  hp = 250, mp = 60,  atk = 42, def = 22, mdef = 12, spd = 10, lv = 7, skills = ["普通攻击","三连击","破防击","护体真气"] },
+	{ name = "骷髅王",      hp = 220, mp = 70,  atk = 38, def = 12, mdef = 18, spd = 11, lv = 7, skills = ["普通攻击","妖术","破防击"] },
+	{ name = "熔岩魔人",    hp = 280, mp = 50,  atk = 45, def = 28, mdef = 10, spd = 7,  lv = 8, skills = ["普通攻击","灼焰术","破防击"] },
 	# ── Boss（捕捉固定甲级）──
-	{ name = "九幽魔王",    hp = 400, mp = 120, atk = 50, def = 22, spd = 11, lv = 10, rank = "boss", skills = ["普通攻击","妖术","妖气回复","冰封诀","蛊毒咒"] },
-	{ name = "蛟龙·渊王",   hp = 500, mp = 100, atk = 58, def = 28, spd = 13, lv = 12, rank = "boss", skills = ["普通攻击","妖术","三连击","灼焰术","破防击"] },
-	{ name = "上古神魔",    hp = 600, mp = 150, atk = 65, def = 30, spd = 15, lv = 15, rank = "boss", skills = ["普通攻击","妖术","妖气回复","冰封诀","三连击","蛊毒咒"] },
+	{ name = "九幽魔王",    hp = 400, mp = 120, atk = 50, def = 22, mdef = 22, spd = 11, lv = 10, rank = "boss", skills = ["普通攻击","妖术","妖气回复","冰封诀","蛊毒咒"] },
+	{ name = "蛟龙·渊王",   hp = 500, mp = 100, atk = 58, def = 28, mdef = 24, spd = 13, lv = 12, rank = "boss", skills = ["普通攻击","妖术","三连击","灼焰术","破防击"] },
+	{ name = "上古神魔",    hp = 600, mp = 150, atk = 65, def = 30, mdef = 30, spd = 15, lv = 15, rank = "boss", skills = ["普通攻击","妖术","妖气回复","冰封诀","三连击","蛊毒咒"] },
 	# ── 测试怪物（WAS 动画）──
-	{ name = "超级赤焰兽",  hp = 200, mp = 80,  atk = 30, def = 15, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/超级赤焰兽" },
+	{ name = "超级赤焰兽",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/超级赤焰兽" },
 ]
 
 func _build_enemy_db() -> void:
@@ -719,17 +733,17 @@ const CHARACTER_DB := {
 	"youxiaoyun": {
 		"name": "游霄云", "class": "战神", "elem": "金", "role": "主",
 		"en_name": "YouXiaoYun",
-		"hp": 150, "mp": 80,  "atk": 35, "matk": 25, "def": 14, "mdef": 10, "spd": 78,
+		"hp": 150, "mp": 80,  "atk": 30, "matk": 105, "def": 14, "mdef": 10, "spd": 78, "luck": 0.1,
 		"crit": 0.18, "crit_mult": 1.7,
 		"was_base_path": "res://WAS/游霄云/",
 		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴","神行步"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg", "cast_sound": "res://Audio/SE/男-枪.ogg",
+		"attack_sound": "res://Audio/SE/男-法术-呀.ogg", "cast_sound": "res://Audio/SE/男-法术-呀.ogg",
 		"ranged": true,
 	},
 	"erlang": {
 		"name": "二郎神", "class": "战神", "elem": "金", "role": "攻",
 		"en_name": "ErLang",
-		"hp": 150, "mp": 70,  "atk": 30, "matk": 20, "def": 14, "mdef": 10, "spd": 30,
+		"hp": 150, "mp": 70,  "atk": 30, "matk": 20, "def": 14, "mdef": 10, "spd": 30, "luck": 8,
 		"crit": 0.18, "crit_mult": 1.7,
 		"was_base_path": "res://WAS/二郎神",
 		"skills": ["普通攻击","御剑气","雷霆诀","破防击","金刚护体","寂静剑法"],
@@ -739,7 +753,7 @@ const CHARACTER_DB := {
 	"duoshiyi": {
 		"name": "堕十一", "class": "灵师", "elem": "金", "role": "攻",
 		"en_name": "DuoShiYi",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25, "luck": 10,
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/堕十一",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","寂静剑法"],
@@ -772,7 +786,7 @@ const CHARACTER_DB := {
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/凌风",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"attack_sound":"res://Audio/SE/男-剑.ogg" , "cast_sound": "res://Audio/SE/男侠客-出招吼.ogg",
 		"traits": {"横扫不休": {"chance": 0.3}, "双动": {}},
 	},
 	"hutouguai": {
@@ -782,7 +796,7 @@ const CHARACTER_DB := {
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/虎头怪",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"attack_sound": "res://Audio/SE/虎锤.ogg",
 		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
 	},
 	"shentianbing": {
@@ -999,6 +1013,7 @@ func _add_member(member_id: String, d: Dictionary) -> void:
 	s.defense         = d.def;    s.magic_defense   = d.mdef
 	s.speed           = d.spd;    s.level           = 1
 	s.crit_rate       = d.crit;   s.crit_mult       = d.crit_mult
+	s.luck            = d.get("luck", 0)
 	s.was_base_path   = d.get("was_base_path", "")
 	s.was_direction   = d.get("was_direction", 2)  # 主角团默认朝左上角
 	s.attack_sound_path = d.get("attack_sound", "")
@@ -1007,7 +1022,7 @@ func _add_member(member_id: String, d: Dictionary) -> void:
 	# 五行和定位
 	s.element = _parse_element(d.get("elem", "金"))
 	s.role    = _parse_role(d.get("role", "攻"))
-	s.skill_ids       = d.skills
+	s.skill_ids       = _get_initial_skills(member_id, d)
 	s.traits          = d.get("traits", {})
 	party_db[member_id] = s
 
@@ -1049,6 +1064,29 @@ func gain_exp(member_id: String, amount: int) -> bool:
 		return true
 	return false
 
+## 根据 SKILL_LEARN_DB 获取角色初始技能（包含≤等级的所有技能）
+func _get_initial_skills(member_id: String, d: Dictionary) -> Array[String]:
+	var table = SKILL_LEARN_DB.get(member_id)
+	if table == null:
+		var fallback: Array[String] = []
+		var raw = d.get("skills", [])
+		for s in raw:
+			fallback.append(str(s))
+		if fallback.is_empty():
+			fallback = ["普通攻击"]
+		return fallback
+	var start_lv = d.get("lv", 1)
+	var result: Array[String] = []
+	for entry in table:
+		if entry.level <= start_lv:
+			for sid in entry.skills:
+				if sid not in result:
+					result.append(sid)
+	if result.is_empty():
+		result = ["普通攻击"]
+	return result
+
+
 func _level_up_member(s: CharacterStats) -> void:
 	s.exp -= s.exp_to_next
 	s.level += 1
@@ -1056,8 +1094,19 @@ func _level_up_member(s: CharacterStats) -> void:
 	s.max_hp      += s.hp_growth
 	s.max_mp      += s.mp_growth
 	s.attack      += s.atk_growth
+	s.magic_attack += s.matk_growth
 	s.defense     += s.def_growth
+	s.magic_defense += s.mdef_growth
 	s.speed       += s.speed_growth
+	# 检查技能学习
+	if "member_id" in s and not s.member_id.is_empty():
+		var learn_table = SKILL_LEARN_DB.get(s.member_id, [])
+		for entry in learn_table:
+			if entry.level == s.level:
+				for sid in entry.skills:
+					if sid not in s.skill_ids:
+						s.skill_ids.append(sid)
+						print("%s 学会了 %s！" % [s.character_name, sid])
 
 
 # ══════════════════════════════════════════════
@@ -1092,6 +1141,12 @@ func _init_inventory() -> void:
 	player_inventory.add_item(item_db["quest_ghost_core"],    1)
 	player_inventory.add_item(item_db["quest_fire_feather"],  5)
 	player_inventory.add_item(item_db["quest_spider_silk"],   2)
+	# 测试用符咒
+	player_inventory.add_item(item_db["talisman_fire"], 5)
+	player_inventory.add_item(item_db["talisman_thunder"], 5)
+	player_inventory.add_item(item_db["talisman_ice"], 5)
+	player_inventory.add_item(item_db["talisman_haste"], 5)
+	player_inventory.add_item(item_db["talisman_ceasefire"], 5)
 
 
 # ══════════════════════════════════════════════
@@ -1187,19 +1242,19 @@ const SKILL_DB := {
 	"毒瘴": {
 		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
 		"mp": 20, "dmg": 1.0, "magic": true, "cd": 2,
-		"buff": "poison", "bturn": 4, "bchance": 1.0,
+		"buff": "poison", "bturn": 4, "bchance": 0.3,
 		"desc": "释放毒瘴侵蚀敌人，造成 100% 法术伤害并 100% 使目标中毒 4 回合",
 	},
 	"虚沉冰封": {
 		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
 		"mp": 18, "dmg": 1.4, "cd": 3, "magic": true, "sound": "res://Audio/SE/法术13.ogg",
-		"buff": "freeze", "bturn": 1, "bchance": 1,
+		"buff": "freeze", "bturn": 1, "bchance": 0.4,
 		"desc": "冰封敌人，造成 140% 法术伤害，100% 概率冰冻 1 回合",
 	},
 	"失魂符": {
 		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
 		"mp": 22, "dmg": 1.6, "cd": 3, "magic": true, "sound": "res://Audio/SE/法术5.ogg",
-		"buff": "失魂", "bturn": 1, "bchance": 1,
+		"buff": "失魂", "bturn": 1, "bchance": 0.7,
 		"desc": "以符咒摄取敌人魂魄，造成 160% 法术伤害，100% 封印 1 回合。被封印的敌人阵亡时魂魄离体消散",
 	},
 	"破防击": {
@@ -1361,6 +1416,85 @@ const BOOK_SKILL_DB := {
 	"来财":     {"name":"来财","icon":"💰","type":"gold_boost","desc":"战斗金币收益提升 50%","value":1.5},
 }
 
+## 技能学习表：{ member_id: [{ level: N, skills: ["id1","id2"] }] }
+## 升级时自动学习对应技能
+const SKILL_LEARN_DB := {
+	"youxiaoyun": [
+		{ "level": 1,  "skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法",] },
+		{ "level": 3,  "skills": ["横扫千军"] },
+		{ "level": 5,  "skills": ["达摩护体"] },
+		{ "level": 7,  "skills": ["如沐春风"] },
+		{ "level": 9,  "skills": ["虚沉冰封"] },
+		{ "level": 11, "skills": ["失魂符"] },
+		{ "level": 13, "skills": ["毒瘴"] },
+		{ "level": 15, "skills": ["神行步"] },
+	],
+	"erlang": [
+		{ "level": 1,  "skills": ["破防击","妖术"] },
+		{ "level": 4,  "skills": ["三连击"] },
+		{ "level": 7,  "skills": ["护体真气"] },
+		{ "level": 10, "skills": ["天罡战气"] },
+		{ "level": 13, "skills": ["雷霆万钧"] },
+		{ "level": 16, "skills": ["战神附体"] },
+	],
+	"duoshiyi": [
+		{ "level": 1,  "skills": ["召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"] },
+		{ "level": 4,  "skills": ["寂静剑法"] },
+		{ "level": 7,  "skills": ["铁甲修复"] },
+		{ "level": 10, "skills": ["铁甲狂暴"] },
+		{ "level": 13, "skills": ["灵甲护体"] },
+		{ "level": 16, "skills": ["天机术"] },
+	],
+	"qianmian": [
+		{ "level": 1,  "skills": ["妖术","蛊毒咒"] },
+		{ "level": 4,  "skills": ["妖气回复"] },
+		{ "level": 7,  "skills": ["冰封诀"] },
+		{ "level": 10, "skills": ["毒瘴"] },
+		{ "level": 13, "skills": ["幻影步"] },
+		{ "level": 16, "skills": ["千幻术"] },
+	],
+	"dingdong": [
+		{ "level": 1,  "skills": ["召唤铁甲兽"] },
+		{ "level": 4,  "skills": ["如来神掌"] },
+		{ "level": 7,  "skills": ["大悲咒"] },
+		{ "level": 10, "skills": ["金刚护法"] },
+		{ "level": 13, "skills": ["金刚护魂"] },
+		{ "level": 16, "skills": ["不动明王"] },
+	],
+	"yuelao": [
+		{ "level": 1,  "skills": ["金刚护体","妖术","蛊毒咒"] },
+		{ "level": 4,  "skills": ["金刚护法"] },
+		{ "level": 7,  "skills": ["妖气回复"] },
+		{ "level": 10, "skills": ["连理枝"] },
+		{ "level": 13, "skills": ["金刚护魂"] },
+		{ "level": 16, "skills": ["牵缘术"] },
+	],
+	"zhongkui": [
+		{ "level": 1,  "skills": ["破防击","失魂符"] },
+		{ "level": 4,  "skills": ["三连击"] },
+		{ "level": 7,  "skills": ["降魔杵"] },
+		{ "level": 10, "skills": ["护体真气"] },
+		{ "level": 13, "skills": ["降妖诀"] },
+		{ "level": 16, "skills": ["镇魂咒"] },
+	],
+	"heixuan": [
+		{ "level": 1,  "skills": ["金刚护体","破防击","蛊毒咒"] },
+		{ "level": 4,  "skills": ["三连击"] },
+		{ "level": 7,  "skills": ["护体真气"] },
+		{ "level": 10, "skills": ["万毒蚀骨"] },
+		{ "level": 13, "skills": ["金刚护魂"] },
+		{ "level": 16, "skills": ["毒龙附体"] },
+	],
+	"yunqiu": [
+		{ "level": 1,  "skills": ["金刚护体","如沐春风","普度众生"] },
+		{ "level": 4,  "skills": ["清净琉璃"] },
+		{ "level": 7,  "skills": ["大悲咒"] },
+		{ "level": 10, "skills": ["慈航普度"] },
+		{ "level": 13, "skills": ["金刚护魂"] },
+		{ "level": 16, "skills": ["观音莲台"] },
+	],
+}
+
 func _register_skills() -> void:
 	for sid in SKILL_DB:
 		var row = SKILL_DB[sid]
@@ -1396,6 +1530,7 @@ func _register_items() -> void:
 	const BF = ItemData.ItemType.BUFF_ITEM
 	const RV = ItemData.ItemType.REVIVE
 	const BOOK = ItemData.ItemType.SKILL_BOOK
+	const SP = ItemData.ItemType.SPECIAL
 
 	var rows = [
 		# ── 回复类 ──
@@ -1452,6 +1587,12 @@ func _register_items() -> void:
 		{ id = "book_night",       name = "夜战",     icon = "🌙", type = BOOK, book_id = "夜战",     desc = "夜间伤害+10%速度+8%" },
 		{ id = "book_gold_h",      name = "高级来财", icon = "💰", type = BOOK, book_id = "高级来财", desc = "金币收益+100%" },
 		{ id = "book_gold",        name = "来财",     icon = "💰", type = BOOK, book_id = "来财",     desc = "金币收益+50%" },
+		# ── 符咒（消耗品）──
+		{ id = "talisman_fire",      name = "星火篆", icon = "🔥", type = SP, dmg = 10.5, desc = "造成火焰伤害并灼烧" },
+		{ id = "talisman_thunder",   name = "雷电符咒", icon = "⚡", type = SP, dmg = 1.8, desc = "造成雷电伤害并概率麻痹" },
+		{ id = "talisman_ice",       name = "冰冻符咒", icon = "❄️", type = SP, dmg = 2.0, desc = "造成冰冻伤害并封印" },
+		{ id = "talisman_haste",     name = "加速符咒", icon = "💨", type = SP, desc = "为队友施加加速效果" },
+		{ id = "talisman_ceasefire", name = "止战符咒", icon = "🕊️", type = SP, desc = "削减敌人灵力" },
 	]
 
 	for row in rows:
@@ -1466,6 +1607,7 @@ func _register_items() -> void:
 		d.buff_id           = row.get("buff_id", "")
 		d.buff_turns        = row.get("buff_turns", 0)
 		d.revive_hp_percent = row.get("revive_pct", 0.0)
+		d.damage_multiplier = row.get("dmg", 1.0)
 		d.book_skill_id     = row.get("book_id", "")
 		d.description       = row.desc
 		d.max_stack         = 10

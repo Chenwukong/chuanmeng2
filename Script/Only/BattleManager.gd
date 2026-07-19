@@ -43,6 +43,10 @@ var _double_action_active: bool = false
 enum DoubleActionType { NONE, DAMAGE, SUPPORT }
 var _双动_first_type: int = DoubleActionType.NONE
 var _双动_second_phase: bool = false
+var _free_items_used: int = 0  # 缩地成寸：本场已免费使用的道具次数
+var _last_skill_id: String = "普通攻击"    # 连斩：上次使用的技能
+var _last_target: BattleCharacter = null   # 连斩：上次攻击目标
+var _combo_triggered: bool = false         # 连斩：本次行动已触发
 
 @export var action_delay: float = 2.0
 
@@ -62,6 +66,7 @@ signal ranged_attack_completed()
 signal skill_failed(msg: String)
 signal bonus_attack_started
 signal battle_ended(player_won: bool, total_exp: int, total_gold: int, level_ups: Array)
+signal party_changed
 
 # ──────────────────────────────────────────────
 ## 初始化战斗
@@ -135,6 +140,7 @@ func add_summoned_character(bc: BattleCharacter, stats: CharacterStats, pet_id: 
 		c.recalc_summon_buffs(pet_count)
 	_update_element_resonance()
 	_push_log(GameData._T("LOG_JOIN_BATTLE") % bc.stats.get_display_name(), "system")
+	party_changed.emit()
 
 ## 移除角色（替换宠物时使用）
 func remove_character(bc: BattleCharacter) -> void:
@@ -148,13 +154,15 @@ func remove_character(bc: BattleCharacter) -> void:
 	for c in party:
 		c.recalc_summon_buffs(pet_count)
 	_update_element_resonance()
+	party_changed.emit()
 
 func start_battle() -> void:
 	_battle_ended_flag = false
 	# 爆冲天赋：全员开局增加行动条
 	var baochong_rank = GameData.get_talent_rank("baochong")
 	if baochong_rank > 0:
-		var bonus_sp = 20.0 if baochong_rank == 1 else 35.0
+	#	var bonus_sp = 20.0 if baochong_rank == 1 else 35.0
+		var bonus_sp = baochong_rank * 10
 		for c in party:
 			if not c.is_dead:
 				c.current_sp = mini(100, c.current_sp + bonus_sp)
@@ -176,9 +184,62 @@ func start_battle() -> void:
 		for c in party:
 			if not c.is_dead:
 				c.current_mp = mini(c.get_effective_max_mp(), c.current_mp + 10 * spirit_rank)
+	# 铁壁：护角色血量提升 5%/级
+	var hp_rank = GameData.get_talent_rank("guard_hp_up")
+	if hp_rank > 0:
+		var hp_bonus_pct = 0.05 * hp_rank
+		for c in party:
+			if not c.is_dead and CharacterStats.has_role(c.stats.role, CharacterStats.Role.GUARD):
+				c.current_hp = mini(c.get_effective_max_hp(), c.current_hp + int(c.get_effective_max_hp() * hp_bonus_pct))
+	# 先声夺人：开局获得仇恨（按防御%）
+	var start_threat_rank = GameData.get_talent_rank("guard_start_threat")
+	if start_threat_rank > 0 and _threat_mgr != null:
+		for c in party:
+			if not c.is_dead and CharacterStats.has_role(c.stats.role, CharacterStats.Role.GUARD):
+				var bonus = c.stats.defense * start_threat_rank * 10
+				_threat_mgr.force_add(c, bonus)
 	_change_state(BattleState.BATTLE_START)
+	# 灵兽陪伴：开局自动召唤
+	if GameData.get_talent_rank("summon_auto") > 0:
+		for pid in GameData.pet_team:
+			var pet = GameData.pet_db.get(pid)
+			if pet and pid not in summoned_pet_ids and _count_summoned_pets() < get_pet_slot_count():
+				var old_state = state
+				state = BattleState.PLAYER_TURN
+				for ch in party:
+					if not ch.is_dead and not ch.is_summoned_pet:
+						_current_actor = ch
+						_push_log("[灵兽陪伴] 自动召唤 %s！" % pet.character_name, "system")
+						var scene = get_parent()
+						if scene and scene.has_method("summon_pet"):
+							var pet_node = await scene.summon_pet(pet)
+							var target = _pick_random_enemy()
+							if target and pet_node:
+								print("[灵兽神通 auto-summon] rank=", GameData.get_talent_rank("summon_auto_cast"), " skills=", pet.skill_ids)
+								if GameData.get_talent_rank("summon_auto_cast") > 0:
+									var skill_id = ""
+									for sid in pet.skill_ids:
+										if sid != "普通攻击" and SkillManager.get_skill(sid) != null:
+											skill_id = sid
+											break
+									if skill_id.is_empty() and not pet.skill_ids.is_empty():
+										skill_id = pet.skill_ids[0]
+									if not skill_id.is_empty():
+										var bc = pet_node.get_node("BattleCharacter") as BattleCharacter
+										if bc:
+											_push_log("[灵兽神通] %s 施展 %s！" % [pet.character_name, skill_id], "player_action")
+											_apply_skill_result(SkillManager.execute(bc, target, skill_id), bc, target)
+								else:
+									var dmg = maxi(1, pet.attack - target.get_effective_defense())
+									target.take_damage(dmg)
+									target.sync_visual()
+									damage_floated.emit(target, dmg, "normal")
+									_push_log("%s 攻击 %s，造成 %d 点伤害" % [pet.character_name, target.stats.get_display_name(), dmg], "player_action")
+						break
+				state = old_state
+				break
 	await get_tree().create_timer(1.0).timeout
-	_change_state(BattleState.CHECK_BATTLE_END)  # 开场结束，开始 SP 积累
+	_change_state(BattleState.CHECK_BATTLE_END)
 
 # ──────────────────────────────────────────────
 # SP 行动条驱动
@@ -310,6 +371,9 @@ func player_use_normal_attack(target: BattleCharacter) -> void:
 		return
 	if _双动_first_type == DoubleActionType.NONE:
 		_双动_first_type = DoubleActionType.DAMAGE
+	_last_skill_id = "普通攻击"
+	_last_target = target
+	_combo_triggered = false
 	_change_state(BattleState.PLAYER_ACTION)
 	var result = SkillManager.execute(_current_actor, target, "普通攻击")
 	await _apply_skill_result(result, _current_actor, target)
@@ -335,6 +399,9 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 	if not no_cd and skill_cooldowns.get(cd_key, 0) > 0:
 		_push_log(GameData._T("LOG_SKILL_CD") % [skill_id, skill_cooldowns[cd_key]], "system")
 		return
+	_last_skill_id = skill_id
+	_last_target = target
+	_combo_triggered = false
 	_change_state(BattleState.PLAYER_ACTION)
 	var data = SkillManager.get_skill(skill_id)
 	if data == null:
@@ -463,7 +530,7 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			if tn:
 				if tn.has_method("play_hit_reaction"): tn.play_hit_reaction()
 				if tn.has_method("play_hit_flash"): tn.play_hit_flash()
-			var dmg = maxi(1, int(_current_actor.get_effective_attack() * data.damage_multiplier) - int(t.get_effective_defense() * 0.6))
+			var dmg = maxi(1, int(_current_actor.get_effective_attack() * data.damage_multiplier) - int(t.get_effective_defense()))
 			dmg = int(dmg * randf_range(0.95, 1.05) * _current_actor.metamorphosis_mod)
 			var actual = t.take_damage(dmg)
 			t.sync_visual()
@@ -486,7 +553,7 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			var target_pos = target.get_parent().global_position
 			var nd = mech.get_parent() as Node2D
 			var on_hit = func():
-				var dmg = maxi(1, mech.stats.attack - int(target.get_effective_defense() * 0.5))
+				var dmg = maxi(1, mech.stats.attack - int(target.get_effective_defense()))
 				dmg = int(dmg * randf_range(0.95, 1.05) * _current_actor.metamorphosis_mod)
 				var actual = target.take_damage(dmg)
 				target.sync_visual()
@@ -628,7 +695,7 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 
 		# 逐个结算伤害
 		for t in targets:
-			var dmg = maxi(1, int(_current_actor.get_effective_magic_attack() * 1.6) - int(t.stats.magic_defense * 0.4))
+			var dmg = maxi(1, int(_current_actor.get_effective_magic_attack() * 1.6) - int(t.stats.magic_defense))
 			dmg = int(dmg * randf_range(0.95, 1.05))
 			var actual = t.take_damage(dmg)
 			t.sync_visual()
@@ -681,10 +748,24 @@ func player_use_item(item_id: String, target: BattleCharacter) -> void:
 		await target.play_spell_effect(anim_name)
 
 	var result = player_inventory.use_item(item_id, target)
+	# 缩地成寸：战后道具不消耗（首次每级一次）
+	var free_max := GameData.get_talent_rank("support_free_item")
+	if free_max > 0 and _free_items_used < free_max:
+		_free_items_used += 1
+		
+		if slot and slot.get("data") and slot.get("count", 0) < (slot.get("data") as ItemData).max_stack:
+			player_inventory.add_item(slot.get("data"), 1)
 	_push_log(result.log_text, "heal" if result.heal_amount > 0 else "system")
 	if result.heal_amount > 0:
 		damage_floated.emit(target, result.heal_amount, "heal")
 		target.sync_visual()
+	# 治疗量加成（灵石疗伤）
+	var heal_bonus := GameData.get_talent_rank("support_heal_power")
+	if heal_bonus > 0 and result.heal_amount > 0:
+		var extra = int(result.heal_amount * 0.1 * heal_bonus)
+		target.heal(extra)
+		target.sync_visual()
+		damage_floated.emit(target, extra, "heal")
 	await get_tree().create_timer(action_delay).timeout
 	await _finish_player_action()
 
@@ -744,6 +825,16 @@ func _finish_player_action() -> void:
 			return
 	if _current_actor:
 		_current_actor.reset_sp()
+	# 连斩天赋：概率立即重放一次同样的攻击
+	if not _combo_triggered:
+		var combo_rank = GameData.get_talent_rank("attack_combo")
+		if combo_rank > 0 and _current_actor and not _current_actor.is_dead and _last_target and not _last_target.is_dead:
+			var combo_chance = 0.05 * combo_rank
+			if randf() < combo_chance:
+				_combo_triggered = true
+				_push_log("%s 触发连击！" % _current_actor.stats.get_display_name(), "system")
+				var result = SkillManager.execute(_current_actor, _last_target, _last_skill_id)
+				await _apply_skill_result(result, _current_actor, _last_target)
 	_double_action_active = false
 	_双动_first_type = DoubleActionType.NONE
 	_change_state(BattleState.CHECK_BATTLE_END)
@@ -829,6 +920,9 @@ func player_summon(pet: PetData, prefer_pos: Vector2 = Vector2.INF) -> void:
 	if _current_actor.is_summoned_pet:
 		_push_log(GameData._T("LOG_PET_CANT"), "system")
 		return
+	if _count_summoned_pets() >= get_pet_slot_count():
+		_push_log("召唤位已满！", "system")
+		return
 	
 	# 只有召系角色能召唤
 	if not CharacterStats.has_role(_current_actor.stats.role, CharacterStats.Role.SUMMON):
@@ -862,6 +956,31 @@ func player_summon(pet: PetData, prefer_pos: Vector2 = Vector2.INF) -> void:
 		await _finish_player_action()
 		return
 
+	# 灵兽神通：自动施法
+	print("[灵兽神通] talent rank=", GameData.get_talent_rank("summon_auto_cast"), " pet skills=", pet.skill_ids, " summoned=", pet.character_name)
+	if GameData.get_talent_rank("summon_auto_cast") > 0:
+		# 选第一个非普通攻击的技能
+		var skill_id = ""
+		for sid in pet.skill_ids:
+			print("[灵兽神通] pet skill: ", sid, " in db=", SkillManager.get_skill(sid) != null)
+			if sid != "普通攻击" and SkillManager.get_skill(sid) != null:
+				skill_id = sid
+				break
+		if skill_id.is_empty() and not pet.skill_ids.is_empty():
+			skill_id = pet.skill_ids[0]
+		print("[灵兽神通] selected skill_id=", skill_id)
+		if not skill_id.is_empty() and SkillManager.get_skill(skill_id) != null:
+			_push_log("[灵兽神通] %s 施展 %s！" % [pet.character_name, skill_id], "player_action")
+			var bc = pet_node.get_node("BattleCharacter") as BattleCharacter
+			var result = SkillManager.execute(bc, target, skill_id)
+			if result.success:
+				bc = pet_node.get_node("BattleCharacter") as BattleCharacter
+				await _apply_skill_result(result, bc, target)
+			else:
+				await get_tree().create_timer(0.5).timeout
+			await _finish_player_action()
+			return
+
 	# 执行攻击动画和伤害
 	var target_pos = target.get_parent().global_position
 	if pet_node and pet_node.has_method("play_attack_sequence"):
@@ -878,7 +997,7 @@ func player_summon(pet: PetData, prefer_pos: Vector2 = Vector2.INF) -> void:
 func _do_pet_attack_damage(pet: PetData, target: BattleCharacter) -> void:
 	var skill_id = "普通攻击"
 	var sk_data = SkillManager.get_skill(skill_id)
-	var dmg = maxi(1, pet.attack - int(target.get_effective_defense() * 0.6))
+	var dmg = maxi(1, pet.attack - int(target.get_effective_defense()))
 	dmg = int(dmg * randf_range(0.95, 1.05))
 	var actual = target.take_damage(dmg)
 	target.sync_visual()
@@ -947,7 +1066,7 @@ func player_summon_mech(mech_name: String, replace_bc: BattleCharacter = null) -
 	var target_pos = target.get_parent().global_position
 	if pet_node and pet_node.has_method("play_attack_sequence"):
 		await pet_node.play_attack_sequence(target_pos, target.get_parent() as EnemyNode)
-	var dmg = maxi(1, stats.attack - int(target.get_effective_defense() * 0.5))
+	var dmg = maxi(1, stats.attack - int(target.get_effective_defense()))
 	dmg = int(dmg * randf_range(0.95, 1.05))
 	var actual = target.take_damage(dmg); target.sync_visual()
 	damage_floated.emit(target, actual, "normal")
@@ -955,6 +1074,15 @@ func player_summon_mech(mech_name: String, replace_bc: BattleCharacter = null) -
 	await get_tree().create_timer(action_delay * 0.5).timeout
 	await _finish_player_action()
 
+## 召唤宠物槽数量（1 + 天赋加成）
+func get_pet_slot_count() -> int:
+	return 1 + GameData.get_talent_rank("summon_pet_slot")
+
+func _count_summoned_pets() -> int:
+	var count := 0
+	for c in party:
+		if c.is_summoned_pet and not c.is_dead: count += 1
+	return count
 
 ## 无宠物时的召唤兜底
 func player_summon_fallback() -> void:
@@ -983,7 +1111,7 @@ func _do_pet_attack(pet: PetData, target: BattleCharacter) -> void:
 	var sk_data = SkillManager.get_skill(skill_id)
 
 	if sk_data == null or skill_id == "普通攻击":
-		var dmg = maxi(1, pet.attack - int(target.get_effective_defense() * 0.6))
+		var dmg = maxi(1, pet.attack - int(target.get_effective_defense()))
 		dmg = int(dmg * randf_range(0.95, 1.05))
 		var actual = target.take_damage(dmg)
 		target.sync_visual()
@@ -991,7 +1119,7 @@ func _do_pet_attack(pet: PetData, target: BattleCharacter) -> void:
 		_push_log(GameData._T("LOG_PET_ATK") % [pet.character_name, target.stats.get_display_name(), actual], "player_action")
 	else:
 		var mul = sk_data.damage_multiplier if sk_data.damage_multiplier > 0 else 1.0
-		var dmg = maxi(1, int(pet.attack * mul) - int(target.get_effective_defense() * 0.6))
+		var dmg = maxi(1, int(pet.attack * mul) - int(target.get_effective_defense()))
 		dmg = int(dmg * randf_range(0.95, 1.05))
 		var actual = target.take_damage(dmg)
 		target.sync_visual()
@@ -1093,7 +1221,7 @@ func execute_enemy_skill(actor: BattleCharacter, skill_id: String, target: Battl
 func _get_extra_heal_target_count(actor: BattleCharacter) -> int:
 	if actor == null or actor.is_dead:
 		return 0
-	return maxi(0, int(actor.equip_special.get("heal_targets", 0)))
+	return maxi(0, int(actor.equip_special.get("heal_targets", 0)) + GameData.get_talent_rank("support_wider_heal"))
 
 func _get_heal_side(actor: BattleCharacter) -> Array[BattleCharacter]:
 	if actor != null and actor.is_player:
@@ -1210,6 +1338,11 @@ func _apply_skill_result(
 
 	# 存入待显示伤害
 	var meta_mul = actor.metamorphosis_mod
+	# 符能天赋：符咒伤害加成 5%/级
+	if is_ranged_attack and CharacterStats.has_role(actor.stats.role, CharacterStats.Role.MAIN):
+		var funeng_rank = GameData.get_talent_rank("funeng")
+		if funeng_rank > 0:
+			meta_mul *= (1.0 + 0.05 * funeng_rank)
 	for dmg in result.damage_list:
 		var is_aoe = result.skill_type == SkillData.SkillType.AOE
 		pending_damage.append({
@@ -1307,6 +1440,13 @@ func flush_pending_damage() -> void:
 							d.target.add_buff("poison", 3)
 							_push_log(GameData._T("LOG_POISON") % d.target.stats.get_display_name(), "debuff")
 							d.target.sync_visual()
+					# 裂伤天赋：攻击概率附加流血
+					if not d.target.is_dead:
+						var bleed_rank = GameData.get_talent_rank("attack_bleed")
+						if bleed_rank > 0 and randf() < 0.3 * bleed_rank and not d.target.is_immune_to_debuffs():
+							var bleed_dmg = int(d.target.stats.max_hp * 0.05 * bleed_rank)
+							d.target.add_buff("bleed", 3, bleed_dmg)
+							_push_log("%s 裂伤流血！" % d.target.stats.get_display_name(), "debuff")
 		# 仇恨
 		if d.type == "heal":
 			if d.has("attacker") and d.attacker:
@@ -1363,6 +1503,15 @@ func _apply_dot(target: BattleCharacter) -> void:
 		await get_tree().create_timer(0.35).timeout
 		if target.is_dead:
 			return
+	# 裂伤流血（独立处理，使用存储的伤害值）
+	if target.has_buff("bleed"):
+		var bleed_dmg = target.get_buff_value("bleed")
+		if bleed_dmg == null or bleed_dmg < 1:
+			bleed_dmg = maxi(1, int(target.stats.max_hp * 0.05))
+		target.take_damage(bleed_dmg)
+		target.sync_visual()
+		damage_floated.emit(target, bleed_dmg, "bleed")
+		_push_log("%s 流血 %d 点" % [target.stats.get_display_name(), bleed_dmg], "debuff")
 
 ## Tick 全体 buff
 func _tick_all_buffs() -> void:

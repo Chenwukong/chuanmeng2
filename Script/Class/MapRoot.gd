@@ -332,14 +332,20 @@ func _count_solid(g: PackedByteArray, gs: Vector2i) -> int:
 
 
 ## 根据时辰着色地图图层和遮罩图（MainScene 调用）
-func set_day_tint(color: Color) -> void:
+func set_day_tint(color: Color, immediate: bool = false) -> void:
 	if _map_layer:
-		var tw := create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-		tw.tween_property(_map_layer, "modulate", color, 1.5)
+		if immediate:
+			_map_layer.modulate = color
+		else:
+			var tw := create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+			tw.tween_property(_map_layer, "modulate", color, 1.5)
 	var bs := get_node_or_null("BgShadow") as Sprite2D
 	if bs:
-		var tw2 := create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-		tw2.tween_property(bs, "modulate", color, 1.5)
+		if immediate:
+			bs.modulate = color
+		else:
+			var tw2 := create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+			tw2.tween_property(bs, "modulate", color, 1.5)
 
 
 # ═══════════════════════════════════════

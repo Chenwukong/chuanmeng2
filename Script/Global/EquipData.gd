@@ -70,6 +70,7 @@ enum AffixType {
 	PENETRATION, # 穿透 +N%
 	MAX_HP,      # 气血 +N%
 	MAX_MP,      # 灵力 +N%
+	LUCK,        # 运气 +N
 }
 
 static func affix_label(a: AffixType) -> String:
@@ -83,6 +84,7 @@ static func affix_label(a: AffixType) -> String:
 		AffixType.PENETRATION: return "穿透"
 		AffixType.MAX_HP:      return "气血"
 		AffixType.MAX_MP:      return "灵力"
+		AffixType.LUCK:        return "运气"
 	return ""
 
 ## 完全随机一条词缀（值和类型皆随机）
@@ -91,6 +93,7 @@ static func random_affix(rarity: Rarity) -> Dictionary:
 		AffixType.LIFESTEAL, AffixType.STRENGTH, AffixType.INTELLECT,
 		AffixType.CRIT_RATE, AffixType.CRIT_DMG, AffixType.HASTE,
 		AffixType.PENETRATION, AffixType.MAX_HP, AffixType.MAX_MP,
+		AffixType.LUCK,
 	]
 	var rng = RandomNumberGenerator.new()
 	rng.randomize()

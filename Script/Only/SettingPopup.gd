@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 signal closed
+signal volume_changed
 
 @onready var music_slider: HSlider = $"系统设置/musicIcon/HSlider"
 @onready var volume_slider: HSlider = $"系统设置/soundIcon/HSlider"
@@ -15,12 +16,9 @@ func _ready() -> void:
 		s.max_value = 100
 		s.step = 1
 	
-	var bv = db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("BGM")))
-	music_slider.value = bv * 100 if bv > 0 else 100
-	bv = db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("SFX")))
-	sfx_slider.value = bv * 100 if bv > 0 else 100
-	bv = db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Master")))
-	volume_slider.value = bv * 100 if bv > 0 else 100
+	music_slider.value = GameData.base_vol_bgm * 100
+	sfx_slider.value = GameData.base_vol_sfx * 100
+	volume_slider.value = GameData.base_vol_master * 100
 	var fs = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 	fullscreen_cb.button_pressed = fs
 
@@ -41,17 +39,16 @@ func _ensure_buses() -> void:
 
 
 func _on_music_changed(val: float) -> void:
-	var bus = AudioServer.get_bus_index("BGM")
-	if bus < 0: bus = AudioServer.get_bus_index("Master")
-	if bus >= 0: AudioServer.set_bus_volume_db(bus, _linear_db(val))
+	GameData.base_vol_bgm = val / 100.0
+	volume_changed.emit()
 
 func _on_sfx_changed(val: float) -> void:
-	var bus = AudioServer.get_bus_index("SFX")
-	if bus < 0: bus = AudioServer.get_bus_index("Master")
-	if bus >= 0: AudioServer.set_bus_volume_db(bus, _linear_db(val))
+	GameData.base_vol_sfx = val / 100.0
+	volume_changed.emit()
 
 func _on_volume_changed(val: float) -> void:
-	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), _linear_db(val))
+	GameData.base_vol_master = val / 100.0
+	volume_changed.emit()
 
 func _linear_db(val: float) -> float:
 	if val <= 0: return -80.0

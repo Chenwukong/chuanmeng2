@@ -58,7 +58,10 @@ func _hit():
 	_apply_talisman_effect()
 	# 播放命中音效
 	var snd = AudioStreamPlayer.new()
-	snd.stream = load("res://Audio/SE/法术5.ogg")
+	var hit_sound := "res://Audio/SE/法术5.ogg"
+	if talisman_type == 0:
+		hit_sound = "res://Audio/SE/火1.ogg"
+	snd.stream = load(hit_sound)
 	snd.bus = "SFX"
 	get_tree().root.add_child(snd)
 	snd.play()
@@ -93,26 +96,60 @@ func _hit():
 		tw2.tween_callback(func(): hit.emit(); queue_free())
 
 
+## 运气判定 + 失败震开
+func _try_apply_debuff(target_bc: BattleCharacter, buff_id: String, turns: int, base_chance: float, source: String = "") -> bool:
+	var caster_luck = attacker.stats.luck + attacker.equip_special.get("luck", 0)
+	var target_luck = target_bc.stats.luck + target_bc.equip_special.get("luck", 0)
+	var chance := base_chance + float(caster_luck - target_luck)
+	var buff_name := "封印" if buff_id == "freeze" else ("灼烧" if buff_id == "burn" else buff_id)
+	
+	print("[符咒] %s → %s, base=%.2f, caster_luck=%d, target_luck=%d, chance=%.2f" % [attacker.stats.get_display_name(), target_bc.stats.get_display_name(), base_chance, caster_luck, target_luck, chance])
+	
+	# 找 battle manager 发 log
+	var bm = null
+	if target_node and target_node.get_parent() and target_node.get_parent().get_parent():
+		bm = target_node.get_parent().get_parent().get_node_or_null("BattleManager")
+	
+	if chance <= 0.0:
+		if bm and bm.has_method("_push_log"):
+			bm._push_log("%s 的%s被 %s 抵抗！" % [target_bc.stats.get_display_name(), buff_name, attacker.stats.get_display_name()], "system")
+		if target_node and target_node.has_method("shake"):
+			target_node.shake(8.0, 0.25)
+		return false
+	if randf() > chance:
+		if bm and bm.has_method("_push_log"):
+			bm._push_log("%s 的%s未能命中 %s！" % [attacker.stats.get_display_name(), buff_name, target_bc.stats.get_display_name()], "system")
+		if target_node and target_node.has_method("shake"):
+			target_node.shake(8.0, 0.25)
+		return false
+	target_bc.add_buff(buff_id, turns, null, source)
+	if bm and bm.has_method("_push_log"):
+		bm._push_log("%s 被%s了！" % [target_bc.stats.get_display_name(), buff_name], "debuff")
+	return true
+
+
 func _apply_talisman_effect():
 	if attacker == null: return
 	var target_bc = target_node.get_node("BattleCharacter") as BattleCharacter if target_node else null
-	if target_bc == null: return
+	if target_bc == null:
+		print("[符咒] target_bc null, target_node=", target_node)
+		return
+	print("[符咒] hit target=", target_bc.stats.get_display_name(), " talisman_type=", talisman_type)
 
 	match talisman_type:
-		0:  # 火焰 → 灼烧
+		0:  # 星火篆 → 灼烧
 			if not target_bc.is_dead:
-				target_bc.add_buff("burn", 3)
-			# 法术动画
-			target_bc.play_spell_effect("fire")
+				if _try_apply_debuff(target_bc, "burn", 3, 0.8):
+					target_bc.play_spell_effect("星火篆")
 		1:  # 雷电 → 概率麻痹
-			if not target_bc.is_dead and randf() < 0.3:
-				target_bc.add_buff("freeze", 1)
-				target_bc.play_spell_effect("thunder")
+			if not target_bc.is_dead:
+				if _try_apply_debuff(target_bc, "freeze", 1, 0.3):
+					target_bc.play_spell_effect("thunder")
 		2:  # 冰冻
 			if not target_bc.is_dead:
-				target_bc.add_buff("freeze", 1, null, "虚沉冰封")
-				target_bc.sync_freeze_anim()
-				target_bc.show_debuff("冰封")
+				if _try_apply_debuff(target_bc, "freeze", 1, 0.7, "虚沉冰封"):
+					target_bc.sync_freeze_anim()
+					target_bc.show_debuff("冰封")
 		3:  # 加速 → 在 battleUI 里已处理为选队友加速
 			# 此处投射物已命中，不额外处理
 			pass
@@ -122,6 +159,12 @@ func _apply_talisman_effect():
 				target_bc.current_mp = maxi(0, target_bc.current_mp - mp_loss)
 				target_bc.sync_visual()
 				target_bc.play_spell_effect("ceasefire")
+				# battle log
+				var group = target_node.get_parent()
+				if group:
+					var bm = group.get_parent().get_node_or_null("BattleManager") if group.get_parent() else null
+					if bm and bm.has_method("_push_log"):
+						bm._push_log("%s 被扣除 %d 点蓝量" % [target_bc.stats.get_display_name(), mp_loss], "debuff")
 
 
 static func shoot(

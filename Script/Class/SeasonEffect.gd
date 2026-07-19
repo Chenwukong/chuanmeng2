@@ -27,7 +27,8 @@ func _ready():
 func _process(delta):
 	if not auto_update or _material == null:
 		return
-	_time += delta
+	if not GameData.ui_blocked:
+		_time += delta
 	_material.set_shader_parameter("time_shift", _time)
 
 	# 战斗中隐藏积雪

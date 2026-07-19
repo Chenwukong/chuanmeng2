@@ -44,6 +44,13 @@ func _restore_ranks() -> void:
 					talent.rank += 1
 					talent._update_text()
 
+## 收集所有页面的天赋节点
+func _get_all_talent_nodes() -> Array[TalentNode]:
+	var result: Array[TalentNode] = []
+	for page in pages.get_children():
+		result.append_array(page.get_talents())
+	return result
+
 
 func _process(_delta: float) -> void:
 
@@ -111,7 +118,7 @@ func _refresh_all() -> void:
 		page.refresh(talent_points)
 
 	if detail_label.text.is_empty():
-		detail_label.text = "[b]选择天赋[/b]\n\n鼠标移到天赋上查看说明，点击可消耗天赋点升级。"
+		detail_label.text = "选择天赋\n\n鼠标移到天赋上查看说明，点击可消耗天赋点升级。"
 
 
 func _show_talent_detail(talent: TalentNode) -> void:

@@ -58,6 +58,7 @@ static func role_name(roles: int) -> String:
 @export var speed: int = 12        # 速度（决定行动顺序）
 @export var crit_rate: float = 0.15  # 暴击率 0.0~1.0
 @export var crit_mult: float = 1.5   # 暴击倍率
+@export var luck: int = 0            # 运气（影响封印/异常成功率）
 
 ## 成长属性（玩家专用）
 @export var level: int = 1
@@ -72,6 +73,8 @@ static func role_name(roles: int) -> String:
 @export var atk_growth: int = 4
 @export var def_growth: int = 2
 @export var speed_growth: int = 1
+@export var matk_growth: int = 3
+@export var mdef_growth: int = 1
 
 ## AI 策略（敌人专用）：balanced / aggressive / healer
 @export var ai_strategy: String = "balanced"
@@ -146,6 +149,7 @@ func duplicate_for_battle() -> CharacterStats:
 	copy.speed           = speed
 	copy.crit_rate       = crit_rate
 	copy.crit_mult       = crit_mult
+	copy.luck            = luck
 	copy.level           = level
 	copy.saved_hp        = saved_hp
 	copy.saved_mp        = saved_mp
@@ -156,6 +160,8 @@ func duplicate_for_battle() -> CharacterStats:
 	copy.atk_growth      = atk_growth
 	copy.def_growth      = def_growth
 	copy.speed_growth    = speed_growth
+	copy.matk_growth     = matk_growth
+	copy.mdef_growth     = mdef_growth
 	copy.ai_strategy     = ai_strategy
 	copy.was_base_path   = was_base_path
 	copy.was_direction   = was_direction
@@ -190,6 +196,7 @@ func save_to_dict() -> Dictionary:
 		"spd":     speed,
 		"crit":    crit_rate,
 		"critmul": crit_mult,
+		"luck":    luck,
 		"lv":      level,
 		"saved_hp": saved_hp,
 		"saved_mp": saved_mp,
@@ -200,6 +207,8 @@ func save_to_dict() -> Dictionary:
 		"atk_g":   atk_growth,
 		"def_g":   def_growth,
 		"spd_g":   speed_growth,
+		"matk_g":  matk_growth,
+		"mdef_g":  mdef_growth,
 		"elem":    element,
 		"role":    role,
 		"skills":  skill_ids,
@@ -231,6 +240,7 @@ func load_from_dict(d: Dictionary) -> void:
 	speed           = d.get("spd", 10)
 	crit_rate       = d.get("crit", 0.1)
 	crit_mult       = d.get("critmul", 1.5)
+	luck            = d.get("luck", 0)
 	level           = d.get("lv", 1)
 	saved_hp        = d.get("saved_hp", 0)
 	saved_mp        = d.get("saved_mp", 0)
@@ -241,6 +251,8 @@ func load_from_dict(d: Dictionary) -> void:
 	atk_growth      = d.get("atk_g", 4)
 	def_growth      = d.get("def_g", 2)
 	speed_growth    = d.get("spd_g", 1)
+	matk_growth     = d.get("matk_g", 3)
+	mdef_growth     = d.get("mdef_g", 1)
 	element         = d.get("elem", Element.METAL)
 	role            = d.get("role", Role.ATTACK)
 	is_ranged       = d.get("ranged", false)

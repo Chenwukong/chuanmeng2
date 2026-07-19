@@ -36,3 +36,4 @@ enum ItemCategory {
 @export var buff_turns: int = 3
 @export var revive_hp_percent: float = 0.5 # 复活时恢复 HP 百分比
 @export var book_skill_id: String = ""     # 技能书对应的 book skill ID
+@export var damage_multiplier: float = 1.0 # 伤害倍率（符咒/攻击道具）

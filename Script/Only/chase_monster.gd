@@ -3,7 +3,7 @@ extends Node2D
 
 @onready var _wasp: WASAnimationPlayer = $WASAnimationPlayer
 
-@export var speed: float = 400.0
+@export var speed: float = 800.0
 @export var repath_interval: float = 0.8
 @export var catch_distance: float = 40.0
 

@@ -1,6 +1,7 @@
 extends Sprite2D
 
 var _material: ShaderMaterial = null
+var _ground_time: float = 0.0
 @export var intensity = 0.5
 
 func _ready() -> void:
@@ -34,4 +35,6 @@ func _process(delta: float) -> void:
 
 	material.set_shader_parameter("camera_pos", top_left)
 	material.set_shader_parameter("viewport_size", vp_size)
-	material.set_shader_parameter("time_shift", Time.get_ticks_msec() / 1000.0)
+	if not GameData.ui_blocked and not GameData.in_battle:
+		_ground_time += delta
+	material.set_shader_parameter("time_shift", _ground_time)

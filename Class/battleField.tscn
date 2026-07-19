@@ -137,10 +137,10 @@ texture = ExtResource("15_bhsf1")
 [node name="ActionPanel" type="Control" parent="BattleUI" unique_id=2108301612]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 1199.0
-offset_top = 471.0
-offset_right = 1277.0
-offset_bottom = 607.0
+offset_left = 1117.0
+offset_top = 372.0
+offset_right = 1195.0
+offset_bottom = 508.0
 script = ExtResource("3_g70vi")
 
 [node name="战斗指令召唤兽背景" type="Sprite2D" parent="BattleUI/ActionPanel" unique_id=1331725707]
@@ -254,6 +254,17 @@ theme_override_font_sizes/font_size = 30
 text = "止战"
 metadata/_edit_use_anchors_ = true
 
+[node name="num" type="Label" parent="符咒2" unique_id=2019803264]
+visible = false
+offset_left = 88.333534
+offset_top = -33.333344
+offset_right = 148.33354
+offset_bottom = 32.666656
+theme_override_fonts/font = ExtResource("24_pd17h")
+theme_override_font_sizes/font_size = 30
+text = "(1)"
+metadata/_edit_use_anchors_ = true
+
 [node name="符咒1" parent="." unique_id=1866989955 instance=ExtResource("25_pd17h")]
 position = Vector2(1106, 606)
 scale = Vector2(0.35, 0.35)
@@ -276,7 +287,7 @@ offset_right = 111.42843
 offset_bottom = -31.999977
 theme_override_fonts/font = ExtResource("24_pd17h")
 theme_override_font_sizes/font_size = 40
-text = "Q"
+text = "<Q"
 horizontal_alignment = 1
 metadata/_edit_use_anchors_ = true
 
@@ -286,6 +297,17 @@ offset_left = -8.571429
 offset_top = -159.99991
 offset_right = 139.99986
 offset_bottom = 128.5715
+
+[node name="num" type="Label" parent="符咒1" unique_id=1141943784]
+visible = false
+offset_left = 111.42854
+offset_top = -45.714237
+offset_right = 171.42856
+offset_bottom = 20.285763
+theme_override_fonts/font = ExtResource("24_pd17h")
+theme_override_font_sizes/font_size = 30
+text = "(1)"
+metadata/_edit_use_anchors_ = true
 
 [node name="符咒3" parent="." unique_id=289349604 instance=ExtResource("25_pd17h")]
 position = Vector2(1185.9999, 603)
@@ -308,7 +330,7 @@ offset_right = 102.857346
 offset_bottom = -26.28569
 theme_override_fonts/font = ExtResource("24_pd17h")
 theme_override_font_sizes/font_size = 40
-text = "E"
+text = "E>"
 horizontal_alignment = 1
 metadata/_edit_use_anchors_ = true
 
@@ -318,6 +340,17 @@ offset_left = 2.8574905
 offset_top = -165.71437
 offset_right = 151.42877
 offset_bottom = 122.85704
+
+[node name="num" type="Label" parent="符咒3" unique_id=1999418763]
+visible = false
+offset_left = 102.85746
+offset_top = -39.99995
+offset_right = 162.85748
+offset_bottom = 26.00005
+theme_override_fonts/font = ExtResource("24_pd17h")
+theme_override_font_sizes/font_size = 30
+text = "(1)"
+metadata/_edit_use_anchors_ = true
 
 [node name="二倍速" type="Control" parent="." unique_id=1125129955]
 layout_mode = 3

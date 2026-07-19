@@ -190,6 +190,7 @@ func _refresh() -> void:
 	var atk := s.attack + eq_atk + _tmp_atk
 	var df := s.defense + eq_def + _tmp_def
 	var spd := s.speed + eq_spd + _tmp_spd
+	var matk := s.magic_attack + eq_matk + _tmp_matk
 
 	_set_attr("名称", s.get_display_name(), Color(1, 0.85, 0.2))
 	_set_attr("等级", "%d" % s.level, Color.WHITE)
@@ -199,7 +200,7 @@ func _refresh() -> void:
 	_set_attr("所需经验", "%d" % s.exp_to_next, Color.WHITE)
 
 	_set_attr("体质", "%d" % hp, _green_if(_tmp_hp > 0 or _tmp_magic > 0))
-	_set_attr("魔力", "%d" % mp, _green_if(_tmp_mp > 0 or _tmp_magic > 0))
+	_set_attr("魔力", "%d" % matk, _green_if(_tmp_matk > 0))
 	_set_attr("力量", "%d" % atk, _green_if(_tmp_atk > 0))
 	_set_attr("耐力", "%d" % df, _green_if(_tmp_def > 0))
 	_set_attr("敏捷", "%d" % spd, _green_if(_tmp_spd > 0))

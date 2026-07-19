@@ -68,6 +68,8 @@ func _do_teleport() -> void:
 		if new_map == null:
 			return
 		main_scene.add_child(new_map)
+		if main_scene.has_method("refresh_map_tint"):
+			main_scene.refresh_map_tint()
 
 		# 找新地图里名字与旧地图名匹配的传送圈
 		var target_tp: Area2D = null

@@ -181,8 +181,9 @@ func _ready() -> void:
 						merged.defense += b.get("def", 0)
 						merged.magic_defense += b.get("mdef", 0)
 						merged.speed += b.get("spd", 0)
+						merged.luck += b.get("luck", 0)
 						# 收集武器特殊属性（所有装备槽）
-						for sk in ["lifesteal", "true_dmg", "gold_boost", "reflect", "night_dmg", "dodge", "crit_rate", "heal_up", "heal_targets", "threat_reduce", "mdef"]:
+						for sk in ["lifesteal", "true_dmg", "gold_boost", "reflect", "night_dmg", "dodge", "crit_rate", "heal_up", "heal_targets", "threat_reduce", "mdef", "luck"]:
 								var sv = eq.get(sk, 0)
 								if sv > 0: weapon_special[sk] = weapon_special.get(sk, 0) + sv
 				if not weapon_special.is_empty():
