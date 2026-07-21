@@ -441,7 +441,7 @@ func _trigger_encounter(pool: Array, cfg: Dictionary) -> void:
 	var min_count: int = cfg.get("min", 3)
 	var max_count: int = min_count + 2
 	var count = randi_range(min_count, max_count)
-	count = clampi(count, 1, 6)
+	count = clampi(count, 1, 8)
 
 	var picked: Array[String] = []
 	for i in count:

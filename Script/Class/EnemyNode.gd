@@ -50,11 +50,15 @@ func _on_area_input_event(_viewport, event: InputEvent, _shape_idx: int) -> void
 		_play_select_flash()
 
 func _on_mouse_entered() -> void:
+	if battle_character.killed_by_fire:
+		return
 	if selectable:
 		sprite.modulate = COLOR_HOVER
 		hovered.emit(battle_character)
 
 func _on_mouse_exited() -> void:
+	if battle_character.killed_by_fire:
+		return
 	sprite.modulate = COLOR_NORMAL
 	mouse_left.emit()
 
@@ -82,7 +86,7 @@ func _stop_indicator_float() -> void:
 
 ## 短暂闪白表示被击中
 func play_hit_flash() -> void:
-	if battle_character.killed_by_fire:
+	if battle_character.killed_by_fire or battle_character.is_dead:
 		return
 	var tween = create_tween()
 	tween.tween_property(sprite, "modulate", Color(3, 3, 3), 0.2)
@@ -193,6 +197,8 @@ func play_ranged_attack() -> void:
 
 ## 播放一次挨打动画，停住不循环
 func play_hit_once() -> void:
+	if battle_character.is_dead:
+		return
 	was_player.play("hit", false)
 	# 播放 gotHit 动画精灵（如果存在）
 	var hit_ani := get_node_or_null("gotHit") as AnimatedSprite2D

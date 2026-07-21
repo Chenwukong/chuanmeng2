@@ -23,6 +23,7 @@ enum ItemCategory {
 @export var item_name: String = "未命名道具"
 @export var description: String = ""
 @export var icon_emoji: String = "📦"
+@export var icon_path: String = ""           # TCP 图标路径（优先于 emoji）
 @export var item_type: ItemType = ItemType.HP_POTION
 @export var item_category: ItemCategory = ItemCategory.CONSUMABLE
 @export var max_stack: int = 10  # 最大叠加数量
@@ -37,3 +38,4 @@ enum ItemCategory {
 @export var revive_hp_percent: float = 0.5 # 复活时恢复 HP 百分比
 @export var book_skill_id: String = ""     # 技能书对应的 book skill ID
 @export var damage_multiplier: float = 1.0 # 伤害倍率（符咒/攻击道具）
+@export var hit_sound: String = ""          # 命中音效路径（符咒用）

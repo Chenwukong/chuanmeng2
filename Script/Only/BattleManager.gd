@@ -1586,6 +1586,9 @@ func _check_battle_end() -> void:
 		var gold_talent_rank = GameData.get_talent_rank("main_gold_boost")
 		if gold_talent_rank > 0:
 			total_gold = int(total_gold * (1.0 + gold_talent_rank * 0.15))
+		if GameData.is_night_time():
+			total_exp = int(total_exp * 1.5)
+			total_gold = int(total_gold * 1.5)
 		var level_ups: Array = []
 		for i in party.size():
 			var c = party[i]

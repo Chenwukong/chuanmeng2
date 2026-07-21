@@ -9,13 +9,19 @@ var on_hit: Callable
 var texture: Texture2D
 var talisman_type: int = 0
 var attacker: BattleCharacter = null
+var flythrough_dmg: int = 0
 
 var _finished: bool = false
+var _hit_enemies: Array = []
 
 signal hit
 
 
 func _ready():
+	if target_node and flythrough_dmg > 0:
+		var bc = target_node.get_node_or_null("BattleCharacter") as BattleCharacter
+		if bc:
+			_hit_enemies.append(bc)
 	# 场景已自带 Sprite2D 子节点（position 0, -30），直接复用
 	var spr = get_node_or_null("Sprite2D") as Sprite2D
 	if spr == null:
@@ -48,6 +54,38 @@ func _process(delta):
 		return
 	global_position += dir.normalized() * min(delta * speed, dist)
 	rotation = dir.angle() - deg_to_rad(90)
+	_apply_flight_damage()
+
+
+func _apply_flight_damage() -> void:
+	if flythrough_dmg <= 0 or GameData.get_talent_rank("main_pierce") <= 0:
+		return
+	var bm = null
+	if target_node and is_instance_valid(target_node):
+		var pg = target_node.get_parent()
+		if pg:
+			var ppg = pg.get_parent()
+			if ppg:
+				bm = ppg.get_node_or_null("BattleManager")
+	if bm == null:
+		for c in get_tree().root.get_children():
+			bm = c.get_node_or_null("BattleManager")
+			if bm: break
+	if bm == null:
+		return
+	for enemy in bm.enemies:
+		if enemy in _hit_enemies or enemy.is_dead:
+			continue
+		var enemy_node = enemy.get_parent()
+		if enemy_node == null or not is_instance_valid(enemy_node):
+			continue
+		if enemy_node.global_position.distance_squared_to(global_position) > 12000:
+			continue
+		_hit_enemies.append(enemy)
+		var dmg = maxi(1, int(flythrough_dmg * 0.1))
+		enemy.take_damage(dmg)
+		enemy.sync_visual()
+		bm.damage_floated.emit(enemy, dmg, "pass_through")
 
 
 func _hit():
@@ -56,11 +94,14 @@ func _hit():
 	GameData.hit_stop()
 	# 先应用符咒效果，再扣血（否则敌人直接死了就冻不住了）
 	_apply_talisman_effect()
-	# 播放命中音效
-	var snd = AudioStreamPlayer.new()
+	# 从道具数据读取符咒命中音效
+	var talisman_ids := ["talisman_fire", "talisman_thunder", "talisman_ice", "talisman_haste", "talisman_ceasefire"]
 	var hit_sound := "res://Audio/SE/法术5.ogg"
-	if talisman_type == 0:
-		hit_sound = "res://Audio/SE/火1.ogg"
+	if talisman_type >= 0 and talisman_type < talisman_ids.size():
+		var item_data = GameData.item_db.get(talisman_ids[talisman_type]) as ItemData
+		if item_data and not item_data.hit_sound.is_empty():
+			hit_sound = item_data.hit_sound
+	var snd = AudioStreamPlayer.new()
 	snd.stream = load(hit_sound)
 	snd.bus = "SFX"
 	get_tree().root.add_child(snd)
@@ -129,22 +170,25 @@ func _try_apply_debuff(target_bc: BattleCharacter, buff_id: String, turns: int, 
 
 
 func _apply_talisman_effect():
-	if attacker == null: return
+	if attacker == null:
+		print("[符咒] attacker null")
+		return
 	var target_bc = target_node.get_node("BattleCharacter") as BattleCharacter if target_node else null
 	if target_bc == null:
 		print("[符咒] target_bc null, target_node=", target_node)
 		return
-	print("[符咒] hit target=", target_bc.stats.get_display_name(), " talisman_type=", talisman_type)
+	print("[符咒] hit target=", target_bc.stats.get_display_name(), " talisman_type=", talisman_type, " is_dead=", target_bc.is_dead)
 
 	match talisman_type:
 		0:  # 星火篆 → 灼烧
 			if not target_bc.is_dead:
-				if _try_apply_debuff(target_bc, "burn", 3, 0.8):
-					target_bc.play_spell_effect("星火篆")
+				print("[符咒] 星火篆 → calling play_spell_effect")
+				target_bc.play_spell_effect("星火篆")
+			else:
+				print("[符咒] 星火篆 skipped: target dead")
 		1:  # 雷电 → 概率麻痹
 			if not target_bc.is_dead:
-				if _try_apply_debuff(target_bc, "freeze", 1, 0.3):
-					target_bc.play_spell_effect("thunder")
+				target_bc.play_spell_effect("五雷咒")
 		2:  # 冰冻
 			if not target_bc.is_dead:
 				if _try_apply_debuff(target_bc, "freeze", 1, 0.7, "虚沉冰封"):
@@ -172,19 +216,20 @@ static func shoot(
 	to_pos: Vector2,
 	target_node_ref: Node2D,
 	hit_callback: Callable,
-	parent: Node,
+	parent: Node = null,
 	attacker: BattleCharacter = null,
 	talisman: int = 0,
-	icon_texture: Texture2D = null
+	icon_texture: Texture2D = null,
+	flythrough_dmg: int = 0
 ) -> Signal:
 	var p = SpellProjectile.new()
-	# 先设属性再入树，避免 _ready 触发时 texture 尚未赋值
 	p.target_pos = to_pos
 	p.target_node = target_node_ref
 	p.on_hit = hit_callback
 	p.texture = icon_texture
 	p.talisman_type = talisman
 	p.attacker = attacker
+	p.flythrough_dmg = flythrough_dmg
 	from_pos.x -= 240
 	from_pos.y -= 400
 	p.global_position = from_pos

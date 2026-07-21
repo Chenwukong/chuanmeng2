@@ -52,10 +52,10 @@ text = "✦ 宠物"
 
 [node name="DeployLabel" type="Label" parent="Panel" unique_id=1688129553]
 layout_mode = 0
-offset_left = 142.0
-offset_top = 95.0
-offset_right = 228.0
-offset_bottom = 118.0
+offset_left = 727.0
+offset_top = 91.0
+offset_right = 813.0
+offset_bottom = 114.0
 text = "已上场"
 
 [node name="DeployGrid" type="HBoxContainer" parent="Panel" unique_id=2104017670]

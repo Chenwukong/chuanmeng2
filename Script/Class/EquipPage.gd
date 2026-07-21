@@ -17,6 +17,7 @@ const SLOT_NODE_MAP := {
 var equipment: Dictionary = {}
 var equip_bag: Array[Dictionary] = []
 var inventory_items: Dictionary = {}
+var material_items: Array[Dictionary] = []  # 打造材料（material_bag）
 var _member_id: String = ""
 var _member_ids: Array[String] = []
 var _member_idx: int = 0
@@ -162,6 +163,24 @@ func _connect_signals() -> void:
 
 func set_inventory(items: Dictionary) -> void:
 	inventory_items = items
+
+
+func set_materials(items: Array) -> void:
+	# 同名材料堆叠
+	material_items.clear()
+	var stacked: Array[Dictionary] = []
+	for item in items:
+		var found := false
+		for s in stacked:
+			if s.get("name", "") == item.get("name", ""):
+				s["_qty"] = s.get("_qty", 0) + 1
+				found = true
+				break
+		if not found:
+			var copy = item.duplicate()
+			copy["_qty"] = 1
+			stacked.append(copy)
+	material_items = stacked
 
 
 func set_equip_bag(bag: Array) -> void:
@@ -333,14 +352,17 @@ func _rebuild_filtered_list() -> void:
 
 		match _current_tab:
 			ItemTab.CONSUMABLE:
-				if data.item_category == ItemData.ItemCategory.CONSUMABLE:
+				# 药品：回血、回蓝、buff、复活
+				if data.item_type in [ItemData.ItemType.HP_POTION, ItemData.ItemType.MP_POTION, ItemData.ItemType.BUFF_ITEM, ItemData.ItemType.REVIVE]:
 					_filtered_ids.append(item_id)
 			ItemTab.KEY_ITEM:
-				if data.item_category == ItemData.ItemCategory.QUEST:
+				# 道具：任务物品、符咒、技能书
+				if data.item_category == ItemData.ItemCategory.QUEST or data.item_type in [ItemData.ItemType.SPECIAL, ItemData.ItemType.SKILL_BOOK]:
 					_filtered_ids.append(item_id)
 			ItemTab.MATERIAL:
-				if data.item_category == ItemData.ItemCategory.MATERIAL:
-					_filtered_ids.append(item_id)
+				# 材料从 material_items 渲染，_filtered_ids 存索引
+				for _i in material_items.size():
+					_filtered_ids.append("")
 
 
 func _render_page() -> void:
@@ -362,7 +384,24 @@ func _render_page() -> void:
 				_render_equip_item(idx, slot, icon)
 		return
 
-	# 消耗品/任务/材料走原逻辑
+	# 材料标签：直接渲染 material_items
+	if _current_tab == ItemTab.MATERIAL:
+		var total_pages = maxi(1, ceili(float(material_items.size()) / SLOTS_PER_PAGE))
+		page_label.text = "%d/%d" % [_current_page + 1, total_pages]
+		var start_idx = _current_page * SLOTS_PER_PAGE
+		for i in range(SLOTS_PER_PAGE):
+			var slot: Panel = _item_slots[i] if i < _item_slots.size() else null
+			var icon: TextureRect = _item_icons[i] if i < _item_icons.size() else null
+			if slot == null or icon == null:
+				continue
+			var idx = start_idx + i
+			if idx >= material_items.size():
+				_clear_item_slot(slot, icon)
+			else:
+				_render_material_item(idx, slot, icon)
+		return
+
+	# 消耗品/任务走原逻辑
 	var total_pages = maxi(1, ceili(float(_filtered_ids.size()) / SLOTS_PER_PAGE))
 	page_label.text = "%d/%d" % [_current_page + 1, total_pages]
 	var start_idx = _current_page * SLOTS_PER_PAGE
@@ -385,6 +424,16 @@ func _render_equip_item(idx: int, slot: Panel, icon: TextureRect) -> void:
 	if eq.is_empty():
 		_clear_item_slot(slot, icon)
 		return
+
+	# 隐藏其他标签遗留的 emoji 和数量
+	var emoji = slot.get_node_or_null("Emoji") as Label
+	if emoji: emoji.visible = false
+	var qty = slot.get_node_or_null("Qty") as Label
+	if qty: qty.text = ""
+
+	# 隐藏消耗品/道具的 emoji 标签
+
+	if emoji: emoji.visible = false
 
 	var tex = _load_tcp_icon(str(eq.get("tcp_path", "")))
 	icon.texture = tex
@@ -500,16 +549,123 @@ func _render_inventory_item(idx: int, slot: Panel, icon: TextureRect) -> void:
 	var item_id = _filtered_ids[idx]
 	var entry = inventory_items.get(item_id, {})
 	var data: ItemData = entry.get("data")
-	icon.texture = null
+	var count: int = entry.get("count", 0)
 
-	icon.tooltip_text = "%s\n×%d\n%s" % [data.item_name, entry.get("count", 0), data.description] if data else ""
+	# 优先用 tcp 纹理，其次 emoji
+	var emoji_label = slot.get_node_or_null("Emoji") as Label
+	if emoji_label == null:
+		emoji_label = Label.new()
+		emoji_label.name = "Emoji"
+		emoji_label.add_theme_font_size_override("font_size", 36)
+		emoji_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		emoji_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		emoji_label.size = slot.size
+		emoji_label.position = Vector2.ZERO
+		emoji_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		slot.add_child(emoji_label)
+
+	if data:
+		if not data.icon_path.is_empty():
+			var tex = _load_tcp_icon(data.icon_path)
+			icon.texture = tex
+			icon.visible = true
+			icon.position = Vector2(4, 4)
+			icon.size = slot.size - Vector2(8, 8)
+			icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			emoji_label.visible = false
+		else:
+			icon.texture = null
+			emoji_label.text = data.icon_emoji
+			emoji_label.visible = true
+		slot.set_meta("tooltip_text", "%s\n×%d\n%s" % [data.item_name, count, data.description])
+	else:
+		icon.texture = null
+		emoji_label.visible = false
+		slot.set_meta("tooltip_text", "")
+	
+	# 渲染数量
+	var qty_label = slot.get_node_or_null("Qty") as Label
+	if qty_label == null:
+		qty_label = Label.new()
+		qty_label.name = "Qty"
+		qty_label.add_theme_font_size_override("font_size", 18)
+		qty_label.add_theme_color_override("font_color", Color(1, 1, 0))
+		qty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		qty_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		qty_label.size = Vector2(50, 18)
+		qty_label.position = Vector2(slot.size.x - 55, slot.size.y - 20)
+		qty_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		slot.add_child(qty_label)
+	qty_label.text = str(count) if count > 1 else ""
+
 	_reset_slot_style(slot)
 	
 
+## 渲染材料槽位（material_bag）
+func _render_material_item(idx: int, slot: Panel, icon: TextureRect) -> void:
+	var mat: Dictionary = material_items[idx] if idx < material_items.size() else {}
+	if mat.is_empty():
+		_clear_item_slot(slot, icon)
+		return
+	var qty: int = mat.get("_qty", 1)
+	var tcp_path: String = mat.get("tcp_path", "")
+	var mat_name: String = mat.get("name", "材料")
+	var mat_desc: String = mat.get("desc", "")
+
+	var emoji_label = slot.get_node_or_null("Emoji") as Label
+	if emoji_label == null:
+		emoji_label = Label.new()
+		emoji_label.name = "Emoji"
+		emoji_label.add_theme_font_size_override("font_size", 36)
+		emoji_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		emoji_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		emoji_label.size = slot.size
+		emoji_label.position = Vector2.ZERO
+		emoji_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		slot.add_child(emoji_label)
+
+	if not tcp_path.is_empty():
+		var tex = _load_tcp_icon(tcp_path)
+		icon.texture = tex
+		icon.visible = true
+		icon.position = Vector2(4, 4)
+		icon.size = slot.size - Vector2(8, 8)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		emoji_label.visible = false
+	else:
+		icon.texture = null
+		emoji_label.text = "📦"
+		emoji_label.visible = true
+
+	slot.set_meta("tooltip_text", "%s\n×%d\n%s" % [mat_name, qty, mat_desc])
+
+	var qty_label = slot.get_node_or_null("Qty") as Label
+	if qty_label == null:
+		qty_label = Label.new()
+		qty_label.name = "Qty"
+		qty_label.add_theme_font_size_override("font_size", 18)
+		qty_label.add_theme_color_override("font_color", Color(1, 1, 0))
+		qty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		qty_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		qty_label.size = Vector2(50, 18)
+		qty_label.position = Vector2(slot.size.x - 55, slot.size.y - 20)
+		qty_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		slot.add_child(qty_label)
+	qty_label.text = str(qty) if qty > 1 else ""
+
+	_reset_slot_style(slot)
+
+
 func _clear_item_slot(slot: Panel, icon: TextureRect) -> void:
 	icon.texture = null
-	icon.tooltip_text = ""
 	_reset_slot_style(slot)
+	slot.set_meta("tooltip_text", "")
+	var emoji = slot.get_node_or_null("Emoji") as Label
+	if emoji: emoji.visible = false
+	var qty = slot.get_node_or_null("Qty") as Label
+	if qty: qty.text = ""
 
 
 func _format_base_stats(base: Dictionary) -> String:
@@ -531,7 +687,12 @@ func _on_prev_page() -> void:
 
 
 func _on_next_page() -> void:
-	var total_pages = maxi(1, ceili(float(_filtered_ids.size()) / SLOTS_PER_PAGE))
+	var source_size: int
+	match _current_tab:
+		ItemTab.EQUIP: source_size = equip_bag.size()
+		ItemTab.MATERIAL: source_size = material_items.size()
+		_: source_size = _filtered_ids.size()
+	var total_pages = maxi(1, ceili(float(source_size) / SLOTS_PER_PAGE))
 	if _current_page < total_pages - 1:
 		_current_page += 1
 		_render_page()
@@ -650,12 +811,24 @@ func _on_equip_slot_hovered(slot_key: String) -> void:
 
 func _on_item_slot_hovered(slot_index: int) -> void:
 	var idx = _current_page * SLOTS_PER_PAGE + slot_index
-	if _current_tab != ItemTab.EQUIP or idx >= equip_bag.size(): return
+	if _current_tab == ItemTab.EQUIP:
+		if idx >= equip_bag.size(): return
+		var slot = _item_slots[slot_index] if slot_index < _item_slots.size() else null
+		if slot == null: return
+		var bbcode = slot.get_meta("tooltip_bbcode", "")
+		if bbcode.is_empty(): return
+		_show_tooltip(bbcode, get_local_mouse_position())
+		return
+	# 非装备标签：用 slot meta
+	if _current_tab == ItemTab.MATERIAL:
+		if idx >= material_items.size(): return
+	else:
+		if idx >= _filtered_ids.size(): return
 	var slot = _item_slots[slot_index] if slot_index < _item_slots.size() else null
 	if slot == null: return
-	var bbcode = slot.get_meta("tooltip_bbcode", "")
-	if bbcode.is_empty(): return
-	_show_tooltip(bbcode, get_local_mouse_position())
+	var tip = slot.get_meta("tooltip_text", "")
+	if tip.is_empty(): return
+	_show_tooltip(tip, get_local_mouse_position())
 
 
 func _on_equip_slot_pressed(slot_key: String) -> void:
@@ -722,12 +895,18 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 		return
 
 	var idx = _current_page * SLOTS_PER_PAGE + slot_index
+	if _current_tab == ItemTab.MATERIAL:
+		if idx < material_items.size():
+			var mat = material_items[idx]
+			detail_label.text = "%s ×%d -- %s" % [mat.get("name", "?"), mat.get("_qty", 1), mat.get("desc", "")]
+		return
 	if _current_tab != ItemTab.EQUIP:
 		if idx < _filtered_ids.size():
 			var item_id = _filtered_ids[idx]
-			var data: ItemData = inventory_items[item_id].get("data")
+			var entry = inventory_items.get(item_id, {})
+			var data: ItemData = entry.get("data")
 			if data:
-				detail_label.text = "%s ×%d -- %s" % [data.item_name, inventory_items[item_id].get("count", 0), data.description]
+				detail_label.text = "%s ×%d -- %s" % [data.item_name, entry.get("count", 0), data.description]
 		return
 
 	if idx >= equip_bag.size():

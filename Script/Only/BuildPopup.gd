@@ -108,7 +108,11 @@ func set_materials(items) -> void:
 		var has_craft = item.has("craft_type")
 		var is_equip = item.has("slot") or item.has("equip_data")
 		if has_craft:
-			_material_items.append(item)
+			# 符纸放左边（和武器同级作为基底），其他符咒材料仍在右边
+			if item.get("name", "") == "符纸":
+				_equip_items.append(item)
+			else:
+				_material_items.append(item)
 		elif is_equip and item.get("slot", -1) == EquipData.SlotType.WEAPON:
 			_equip_items.append(item)
 	_stack_all()
@@ -173,7 +177,10 @@ func _refresh() -> void:
 			show = false
 		if show:
 			icon.texture = _load_tcp_icon(item.get("tcp_path", ""))
-			slot.modulate = Color.WHITE
+			# 符咒模式下只灰掉武器，符纸等材料仍可点
+			var is_weapon = item.has("slot") or item.has("equip_data")
+			var blocked_eq = (current_type == "talisman" and is_weapon) or (current_type == "weapon" and item.has("craft_type") and item.get("craft_type", "") != "weapon")
+			slot.modulate = Color(0.4, 0.4, 0.4, 0.5) if blocked_eq else Color.WHITE
 			ql.text = str(item.get("_qty", 1)) if item.get("_qty", 1) > 1 else ""
 			wl.visible = item.get("_worn", false)
 		else:
@@ -186,6 +193,18 @@ func _refresh() -> void:
 		if slot == null: continue
 		var m_idx = _mat_page * SLOTS_PER_PAGE + i
 		var icon = slot.get_node("Icon") as TextureRect
+		var ql = slot.get_node_or_null("Qty") as Label
+		if ql == null:
+			ql = Label.new()
+			ql.name = "Qty"
+			ql.add_theme_font_size_override("font_size", 18)
+			ql.add_theme_color_override("font_color", Color(1, 1, 0))
+			ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			ql.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+			ql.size = Vector2(50, 18)
+			ql.position = Vector2(slot.size.x - 55, slot.size.y - 20)
+			ql.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			slot.add_child(ql)
 		if m_idx < _material_items.size():
 			var item = _material_items[m_idx]
 			icon.texture = _load_tcp_icon(item.get("tcp_path", ""))
@@ -193,9 +212,11 @@ func _refresh() -> void:
 			if current_type != "" and item.get("craft_type", "") != current_type:
 				blocked = true
 			slot.modulate = Color(0.4, 0.4, 0.4, 0.5) if blocked else Color.WHITE
+			ql.text = str(item.get("_qty", 1)) if item.get("_qty", 1) > 1 else ""
 		else:
 			icon.texture = null
 			slot.modulate = Color(0.4, 0.4, 0.4, 0.3)
+			ql.text = ""
 	for i in 4:
 		var rslot = rslots[i]
 		var ricon = rslot.get_node("Icon") as TextureRect
@@ -262,7 +283,13 @@ func _on_resource_click(idx: int, ev: InputEvent) -> void:
 	_next_resource -= 1
 	_refresh()
 func _append_back(item: Dictionary) -> void:
-	var items = _equip_items if item.has("slot") or item.has("equip_data") else _material_items
+	var items: Array
+	if item.has("slot") or item.has("equip_data"):
+		items = _equip_items
+	elif item.get("name", "") == "符纸":
+		items = _equip_items
+	else:
+		items = _material_items
 	for m in items:
 		if m.get("name", "") == item.get("name", "") and m.get("tcp_path", "") == item.get("tcp_path", ""):
 			m["_qty"] = m.get("_qty", 0) + 1
@@ -293,6 +320,11 @@ func _build() -> void:
 	if craft_type == "":
 		_push_msg(GameData._T("BUILD_NEED_EQUIP"))
 		return
+	# ── 符咒打造 ──
+	if craft_type == "talisman":
+		_build_talisman(cost)
+		return
+	# ── 武器打造（原有逻辑） ──
 	var weapon = {}
 	var weapon_idx = -1
 	for i in 4:
@@ -364,6 +396,68 @@ func _build() -> void:
 	_show_result_popup(result)
 
 
+## 符咒打造：4个材料匹配配方 → 产出符咒
+func _build_talisman(cost: int) -> void:
+	# 统计4个槽位中各材料的数量（用 MATERIAL_DB id 匹配配方）
+	var mat_counts := {}
+	for i in 4:
+		var r = _resources[i]
+		var mat_id := ""
+		for mid in GameData.MATERIAL_DB:
+			if GameData.MATERIAL_DB[mid].get("name", "") == r.get("name", ""):
+				mat_id = mid
+				break
+		if mat_id.is_empty():
+			_push_msg("未知材料: %s" % r.get("name", "?"))
+			return
+		mat_counts[mat_id] = mat_counts.get(mat_id, 0) + 1
+	
+	# 匹配配方
+	var matched: Dictionary = {}
+	for recipe in GameData.TALISMAN_RECIPES:
+		var req: Dictionary = recipe.get("materials", {})
+		if req.size() != mat_counts.size():
+			continue
+		var ok := true
+		for mid in req:
+			if mat_counts.get(mid, 0) != req[mid]:
+				ok = false
+				break
+		if ok:
+			matched = recipe
+			break
+	
+	if matched.is_empty():
+		_push_msg("材料组合不正确，无法打造符咒！")
+		return
+	
+	# 扣钱
+	_player_gold -= cost
+	GameData.player_gold = _player_gold
+	
+	# 产出符咒
+	var output_id: String = matched.get("output", "")
+	var output_name: String = matched.get("output_name", "符咒")
+	var item_data = GameData.item_db.get(output_id) as ItemData
+	if item_data == null:
+		_push_msg("符咒数据错误: %s" % output_id)
+		return
+	GameData.player_inventory.add_item(item_data, 3)
+	
+	# 消耗材料（和武器打造同样逻辑：从 material_bag 中 find + remove）
+	for i in 4:
+		var mat = _resources[i]
+		var mb_idx = GameData.material_bag.find(mat)
+		if mb_idx >= 0:
+			GameData.material_bag.remove_at(mb_idx)
+	
+	# 清空槽位
+	_resources = [{}, {}, {}, {}]
+	_next_resource = 0
+	_refresh()
+	_show_result_popup({"name": output_name, "level": 0})
+
+
 func _show_result_popup(result: Dictionary) -> void:
 	var panel = Panel.new()
 	panel.size = Vector2(280, 120)
@@ -372,7 +466,11 @@ func _show_result_popup(result: Dictionary) -> void:
 	var lbl = Label.new()
 	var name = result.get("name", "装备")
 	var lv = result.get("level", 1)
-	var txt = GameData._T("BUILD_SUCCESS") % (name + " +%d" % lv)
+	var txt: String
+	if lv == 0:  # 符咒打造
+		txt = GameData._T("BUILD_SUCCESS") % name
+	else:
+		txt = GameData._T("BUILD_SUCCESS") % (name + " +%d" % lv)
 	txt += "\n\n" + GameData._T("BUILD_CLICK_CLOSE")
 	lbl.text = txt
 	lbl.position = Vector2(15, 15)

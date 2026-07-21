@@ -65,7 +65,7 @@ static func role_name(roles: int) -> String:
 @export var saved_hp: int = 0   # 战后存的血量（0=满血）
 @export var saved_mp: int = 0   # 战后存的蓝量（0=满蓝）
 @export var exp: int = 0
-@export var exp_to_next: int = 156
+@export var exp_to_next: int = 0
 
 ## 升级成长系数（每级提升量）
 @export var hp_growth: int = 15
@@ -83,7 +83,7 @@ static func role_name(roles: int) -> String:
 @export var is_ranged: bool = false
 
 ## 符咒类型（主角羽灵神专用）
-enum TalismanType { FIRE, SLEEP, ICE, HASTE, CEASEFIRE }
+enum TalismanType { FIRE, SLEEP, ICE, HASTE, CEASEFIRE, REVIVE }
 @export var talisman_type: TalismanType = TalismanType.FIRE
 
 ## 敌人等级标记（如 "boss" / "special" / ""）

@@ -195,6 +195,17 @@ func get_weighted_target(alive_party: Array[BattleCharacter]) -> BattleCharacter
 		return _threat_table.get(_key(a), 0) > _threat_table.get(_key(b), 0)
 	)
 
+	# 如果所有值相等（开局无仇恨），纯随机
+	var all_equal := true
+	if sorted.size() >= 2:
+		var first_val = _threat_table.get(_key(sorted[0]), 0)
+		for i in range(1, sorted.size()):
+			if _threat_table.get(_key(sorted[i]), 0) != first_val:
+				all_equal = false
+				break
+	if all_equal:
+		return sorted[randi() % sorted.size()]
+
 	match sorted.size():
 		0:
 			return null

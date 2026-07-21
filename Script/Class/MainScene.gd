@@ -264,10 +264,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				bs._toggle_double_speed()
 
 
-## ESC 依次关闭已打开的面板（队伍/道具/宠物/天赋/悬赏/存档），全关掉后开存档
+## ESC 依次关闭已打开的面板（队伍/道具/宠物/天赋/悬赏/存档等），全关掉后开存档
 func _esc_close_or_save() -> void:
 	if _team_popup and is_instance_valid(_team_popup):
 		_team_popup.close()
+		return
+	if _build_popup and is_instance_valid(_build_popup):
+		_build_popup.close()
+		_build_popup = null
+		_unregister_popup()
 		return
 	if _status_popup and is_instance_valid(_status_popup):
 		_status_popup.close_popup()
@@ -307,6 +312,9 @@ func _esc_close_or_save() -> void:
 		return
 	if _save_popup and is_instance_valid(_save_popup):
 		_close_popup(_save_popup)
+		return
+	if _shop_popup and is_instance_valid(_shop_popup):
+		_close_popup(_shop_popup)
 		return
 	_open_save_popup()
 
@@ -361,6 +369,7 @@ func _open_equip_page():
 	_equip_page.set_member_id(first_mid)
 	_equip_page.set_equip_bag(GameData.equip_bag)
 	_equip_page.set_inventory(GameData.player_inventory._slots)
+	_equip_page.set_materials(GameData.material_bag)
 	_equip_page.full_refresh()
 	_equip_page.closed.connect(func(): _close_popup(_equip_page))
 	_register_popup(_equip_page)
@@ -464,9 +473,13 @@ func _close_map() -> void:
 
 
 func _open_build_popup() -> void:
+	if _build_popup and is_instance_valid(_build_popup):
+		_close_popup(_build_popup)
+		return
 	var popup = preload("res://Component/build_popup.tscn").instantiate()
 	add_child(popup)
-	popup.closed.connect(func(): popup.queue_free(); _unregister_popup())
+	_build_popup = popup
+	popup.closed.connect(func(): _build_popup = null; _unregister_popup(), CONNECT_ONE_SHOT)
 	# 传装备 + 材料
 	popup.set_materials(GameData.equip_bag.duplicate() + GameData.material_bag.duplicate() + _get_equipped_items())
 	_register_popup()
@@ -664,12 +677,11 @@ func _get_period() -> int:
 
 
 func _apply_day_tint(immediate: bool = false) -> void:
-	if not is_instance_valid(_cached_map) or not _cached_map.has_method("set_day_tint"):
+	if not is_instance_valid(_cached_map) or not _cached_map.has_method("set_day_tint") or _cached_map.is_queued_for_deletion():
 		_cached_map = null
 		for child in get_children():
-			if child is Node2D and child.has_method("set_day_tint"):
+			if child is Node2D and child.has_method("set_day_tint") and not child.is_queued_for_deletion():
 				_cached_map = child
-				break
 	if is_instance_valid(_cached_map):
 		_cached_map.set_day_tint(PERIOD_TINTS[_last_period], immediate)
 

@@ -276,12 +276,12 @@ func _action_attack() -> void:
 	if actor and actor.stats.talisman_type == CharacterStats.TalismanType.HASTE:
 		_set_pending_ally(func(ally: BattleCharacter):
 			if ally and not ally.is_dead and actor:
-				_consume_talisman()
-				# 主角播放攻击动作
+				if not _consume_talisman():
+					return
+				_set_talisman_visible(false)
 				var caster_nd = actor.get_parent()
 				if caster_nd and caster_nd.has_method("play_ranged_attack"):
 					caster_nd.play_ranged_attack()
-				# 选出加速目标：选中的队友 + 随机2个队友
 				var targets: Array[BattleCharacter] = [ally]
 				var cands: Array[BattleCharacter] = []
 				for c in battle_manager.party:
@@ -291,7 +291,6 @@ func _action_attack() -> void:
 				var extra_count := 2 + GameData.get_talent_rank("fenliefu")
 				for j in mini(extra_count, cands.size()):
 					targets.append(cands[j])
-				# 对每个目标射符咒
 				var fudong_rank = GameData.get_talent_rank("fudong")
 				var haste_val = 1.3 * (1.0 + 0.05 * fudong_rank)
 				for t in targets:
@@ -311,6 +310,29 @@ func _action_attack() -> void:
 							, CONNECT_ONE_SHOT)
 					, self, actor, actor.stats.talisman_type, _get_talisman_texture(actor))
 				battle_manager._push_log("符咒加速 %d 人！" % targets.size(), "player_action")
+				battle_manager._finish_player_action()
+			)
+		return
+	# 借尸符 → 选阵亡队友
+	if actor and actor.stats.talisman_type == CharacterStats.TalismanType.REVIVE:
+		_set_pending_dead_ally(func(ally: BattleCharacter):
+			if ally and ally.is_dead and actor:
+				if not _consume_talisman():
+					return
+				_set_talisman_visible(false)
+				var caster_nd = actor.get_parent()
+				if caster_nd and caster_nd.has_method("play_ranged_attack"):
+					caster_nd.play_ranged_attack()
+				var caster_pos = actor.get_parent().global_position if actor.get_parent() else Vector2.ZERO
+				var target_pos = ally.get_parent().global_position
+				SpellProjectile.shoot(caster_pos, target_pos, ally.get_parent(), func():
+					# 击中后复活
+					var heal_amt = int(ally.stats.max_hp * 0.3)
+					ally.heal(heal_amt)
+					ally.sync_visual()
+					battle_manager._push_log("💀 借尸还魂！%s 复活了！" % ally.stats.get_display_name(), "player_action")
+					battle_manager.damage_floated.emit(ally, heal_amt, "heal")
+				, self, actor, actor.stats.talisman_type, _get_talisman_texture(actor))
 				battle_manager._finish_player_action()
 			)
 		return
@@ -352,9 +374,15 @@ func _action_skill(skill_id: String) -> void:
 				battle_manager.player_use_skill(skill_id, target)
 			)
 		SkillData.TargetType.SINGLE_ALLY:
-			_set_pending_ally(func(ally: BattleCharacter):
-				battle_manager.player_use_skill(skill_id, ally)
-			)
+			if data.heal_size == "revive":
+				# 复活技能：只选阵亡队友
+				_set_pending_dead_ally(func(ally: BattleCharacter):
+					battle_manager.player_use_skill(skill_id, ally)
+				)
+			else:
+				_set_pending_ally(func(ally: BattleCharacter):
+					battle_manager.player_use_skill(skill_id, ally)
+				)
 		SkillData.TargetType.SELF:
 			battle_manager.player_use_skill(skill_id, battle_manager.current_actor())
 			_finish_action()
@@ -682,6 +710,9 @@ func _on_enemy_sprite_clicked(char: BattleCharacter) -> void:
 					battle_manager._push_log("%s 加速！" % ally.stats.get_display_name(), "player_action")
 			)
 			return
+		# 借尸符 → 选阵亡队友
+		if ttype == CharacterStats.TalismanType.REVIVE:
+			return
 		# 主角远程：符咒多目标攻击
 		if CharacterStats.has_role(actor.stats.role, CharacterStats.Role.MAIN) and actor.stats.is_ranged:
 			if nd: nd.set_selected(true)
@@ -704,7 +735,15 @@ func _execute_talisman_attack(actor: BattleCharacter, target: BattleCharacter) -
 	_last_attack_target = target
 	if actor:
 		actor.apply_stacking_buff()
-	_consume_talisman()
+	if not _consume_talisman():
+		_talisman_attacking = false
+		action_panel.set_enabled(true)
+		action_panel.slide_in()
+		action_panel.btn_attack.grab_focus()
+		battle_manager._play_error_sound()
+		battle_manager._push_log("符咒已用完！", "system")
+		return
+	_set_talisman_visible(false)
 	var all_targets: Array[BattleCharacter] = [target]
 	var extra_count := GameData.get_talent_rank("fenliefu")
 	if actor.stats.talisman_type == CharacterStats.TalismanType.FIRE:
@@ -750,6 +789,8 @@ func _execute_talisman_attack(actor: BattleCharacter, target: BattleCharacter) -
 				if t_node.has_method("play_hit_flash"):
 					t_node.play_hit_flash()
 			t.take_damage(total_dmg)
+			if not t.is_dead:
+				t.killed_by_fire = false
 			t.sync_visual()
 			battle_manager.damage_floated.emit(t, total_dmg, "magic")
 			battle_manager._push_log("%s 受到 %d 点伤害" % [t.stats.get_display_name(), total_dmg], "player_action")
@@ -775,7 +816,7 @@ func _execute_talisman_attack(actor: BattleCharacter, target: BattleCharacter) -
 					if not _t.is_frozen and _tn.has_method("play_idle"):
 						_tn.play_idle()
 				, CONNECT_ONE_SHOT)
-		, self, actor, actor.stats.talisman_type, _get_talisman_texture(actor))
+		, self, actor, actor.stats.talisman_type, _get_talisman_texture(actor), total_dmg)
 	while caster_nd and caster_nd.has_method("play_ranged_attack") and caster_nd._ranged_animating:
 		await get_tree().process_frame
 	_talisman_attacking = false
@@ -876,7 +917,7 @@ func _process(_delta: float) -> void:
 			elif Input.is_physical_key_pressed(KEY_3): pressed = 2
 			elif Input.is_physical_key_pressed(KEY_4): pressed = 3
 			if pressed >= 0 and pressed != actor.stats.talisman_type:
-				var names = ["星火篆", "雷电", "冰冻", "加速"]
+				var names = ["星火篆", "五雷咒", "冰冻", "加速"]
 				switch_talisman(actor, pressed)
 				_push_log_to_battle("%s 切换符咒：%s" % [actor.stats.get_display_name(), names[pressed]])
 
@@ -1506,7 +1547,7 @@ func _on_damage_floated(target: BattleCharacter, amount: int, float_type: String
 
 	var container := Node2D.new()
 	container.position = screen_pos
-	container.scale = Vector2(0.45, 0.45)
+	container.scale = Vector2(0.75, 0.75)
 	add_child(container)
 
 	var prefix: String = "23"
@@ -1827,10 +1868,11 @@ func _on_actor_turn_started(actor: BattleCharacter, is_player: bool) -> void:
 			action_panel.show_near(actor_node.global_position)
 
 		# 远程角色显示当前符咒
-		var talisman_names = ["[星火篆]", "[雷电]", "[冰冻]", "[加速]", "[止战]"]
 		var talisman_info = ""
 		if actor.stats.is_ranged:
-			talisman_info = " " + talisman_names[actor.stats.talisman_type]
+			var idx = actor.stats.talisman_type
+			if idx >= 0 and idx < _talisman_names.size():
+				talisman_info = " " + _talisman_names[idx]
 		actor_indicator.text = GameData._T("BATTLE_TURN_OF") % [actor.stats.get_display_name(), talisman_info]
 		action_panel.refresh(actor, true)
 		_enable_enemy_selection(true)
@@ -2163,21 +2205,9 @@ func _check_threat_eye() -> void:
 	var top_key := top.member_id if (top and not top.member_id.is_empty()) else (top.stats.character_name if top else "")
 	if _threat_eye_first:
 		_threat_eye_first = false
-		# 开局全部仇恨为 0 → 随机选一人，记下 key 避免后续平局覆盖
-		var all_zero := true
-		for c in alive:
-			if battle_manager._threat_mgr.get_threat_value(c) > 0:
-				all_zero = false
-				break
-		if all_zero:
-			alive.shuffle()
-			top = alive[0]
-			top_key = top.member_id if (top and not top.member_id.is_empty()) else (top.stats.character_name if top else "")
-			_show_threat_eye(top)
+		# 第一轮不显示眼睛，只记录当前最高目标方便后续对比
+		if top_key != "":
 			_last_top_threat_key = top_key
-			return
-		_show_threat_eye(top)
-		_last_top_threat_key = top_key
 		return
 	elif top_key != "" and top_key != _last_top_threat_key \
 		and battle_manager._threat_mgr.get_threat_value(top) > 0:
@@ -2652,9 +2682,9 @@ func switch_talisman(actor: BattleCharacter, ttype: int) -> void:
 
 
 # ══ 三符咒显示 ══
-var _talisman_types: Array[int] = [CharacterStats.TalismanType.FIRE, CharacterStats.TalismanType.SLEEP, CharacterStats.TalismanType.ICE, CharacterStats.TalismanType.HASTE, CharacterStats.TalismanType.CEASEFIRE]
-var _talisman_names: Array[String] = ["星火篆", "雷电", "冰冻", "加速", "止战"]
-var _talisman_item_ids: Array[String] = ["talisman_fire", "talisman_thunder", "talisman_ice", "talisman_haste", "talisman_ceasefire"]
+var _talisman_types: Array[int] = [CharacterStats.TalismanType.FIRE, CharacterStats.TalismanType.SLEEP, CharacterStats.TalismanType.ICE, CharacterStats.TalismanType.HASTE, CharacterStats.TalismanType.CEASEFIRE, CharacterStats.TalismanType.REVIVE]
+var _talisman_names: Array[String] = ["星火篆", "五雷咒", "冰冻", "加速", "止战", "借尸符"]
+var _talisman_item_ids: Array[String] = ["talisman_fire", "talisman_thunder", "talisman_ice", "talisman_haste", "talisman_ceasefire", "talisman_revive"]
 var _free_talismans_left: int = 0  # 节约成本天赋：本场剩余免费符咒次数
 var _free_items_left: int = 0  # 缩地成寸：战斗剩余免费道具次数
 var _talisman_attacking := false   # 防止重复点击
@@ -2682,15 +2712,18 @@ static func get_pet_stat_mult(stat: String) -> float:
 	return mult
 
 ## 消耗当前符咒（节约成本天赋可能跳过）
-func _consume_talisman() -> void:
+func _consume_talisman() -> bool:
 	if _free_talismans_left > 0:
 		_free_talismans_left -= 1
-		return
+		return true
 	var ttype = battle_manager.current_actor().stats.talisman_type if battle_manager.current_actor() else 0
 	var idx = _talisman_types.find(ttype)
 	if idx >= 0:
 		var item_id = _talisman_item_ids[idx]
-		battle_manager.player_inventory.remove_item(item_id, 1)
+		if not battle_manager.player_inventory.remove_item(item_id, 1):
+			return false
+	else:
+		return false
 	# 刷新标签数量
 	for name_prefix in ["符咒1", "符咒2", "符咒3"]:
 		var nd = _find_talisman_node(name_prefix)
@@ -2702,6 +2735,7 @@ func _consume_talisman() -> void:
 			var iname = _talisman_names[type_idx] if type_idx < _talisman_names.size() else ""
 			var c = battle_manager.player_inventory.get_count(_talisman_item_ids[type_idx])
 			lbl.text = "%s(%d)" % [iname, c]
+	return true
 
 ## 更新所有符咒的 num label
 func _setup_talisman_display() -> void:

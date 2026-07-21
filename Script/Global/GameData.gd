@@ -152,8 +152,8 @@ signal battle_ended_for_save()
 ## 快捷施法（Alt+Q）已迁移到 battleUI 的 _quick_skill_per_char
 const ENCOUNTER_CONFIG := {
 	"东海湾": {
-		"pool": ["超级赤焰兽"],
-		"min": 3,
+		"pool": ["毒云龟", "黑熊", "火沙虫"],
+		"min": 8,
 	},
 }
 const ENCOUNTER_INTERVAL := 120.0   # 像素检查间隔
@@ -649,6 +649,9 @@ func get_random_enemy_id(min_lv: int = 1, max_lv: int = 99) -> String:
 		return ENEMY_DB[0].name
 	return candidates[randi() % candidates.size()].name
 
+func is_night_time() -> bool:
+	return shichen_idx <= 2 or shichen_idx >= 9
+
 func create_enemy(enemy_name: String) -> CharacterStats:
 	var row = _enemy_db_cache.get(enemy_name)
 	if row == null:
@@ -656,39 +659,47 @@ func create_enemy(enemy_name: String) -> CharacterStats:
 		row = _enemy_db_cache.values()[0]
 	var s = CharacterStats.new()
 	s.character_name = row.name
-	s.max_hp         = row.hp;    s.max_mp        = row.mp
-	s.attack         = row.atk
-	s.defense        = row.def
-	s.speed          = row.spd;   s.level         = row.lv
+	var nm := 1.3 if is_night_time() else 1.0
+	s.max_hp         = int(row.hp * nm);    s.max_mp        = int(row.mp * nm)
+	s.attack         = int(row.atk * nm)
+	s.defense        = int(row.def * nm)
+	s.speed          = int(row.spd * nm);   s.level         = row.lv
 	s.skill_ids      = row.skills.duplicate()
 	s.ai_strategy    = row.get("ai_strategy", "balanced")
 	s.luck           = row.get("luck", 0)
-	s.magic_attack   = row.get("matk", row.atk)
-	s.magic_defense  = row.get("mdef", int(row.def * 0.8))
+	s.magic_attack   = int(row.get("matk", row.atk) * nm)
+	s.magic_defense  = int(row.get("mdef", int(row.def * 0.8)) * nm)
 	s.was_base_path  = row.get("was_base_path", "")
 	s.was_direction  = row.get("was_direction", 0)
-	s.exp_reward     = row.get("exp", 0)
+	s.exp_reward     = int(row.get("exp", 0) * nm)
 	s.attack_sound_path = row.get("attack_sound", "")
 	s.cast_sound_path   = row.get("cast_sound", "")
 	s.rank             = row.get("rank", "")
 	s.element = _parse_element(row.get("elem", "金"))
 	s.role    = _parse_role(row.get("role", "护"))
+	s.traits  = row.get("traits", {}).duplicate()
 	# 进场时随机资质（捕捉时保留）
-	s.capture_aptitude = _roll_aptitude(row.get("rank", ""))
+	s.capture_aptitude = _roll_aptitude(row.get("rank", ""), row.lv)
 	return s
 
 
 ## 进场随机资质
-func _roll_aptitude(rank: String) -> int:
+func _roll_aptitude(rank: String, lv: int = 1) -> int:
 	match rank:
 		"boss":    return PetData.Aptitude.甲
 		"special": return PetData.Aptitude.特
-	# 普通: 丁45% 丙30% 乙18% 甲7%
+	var lv_mod := clampf(lv / 50.0, 0.0, 1.0)
+	if is_night_time():
+		lv_mod = minf(lv_mod * 1.3, 1.0)
+	# 甲 = lv_mod × 15%，乙 = lv_mod × 25%，丙 = lv_mod × 30%，剩余丁
+	var jia  := int(lv_mod * 15)
+	var yi   := jia + int(lv_mod * 25)
+	var bing := yi  + int(lv_mod * 30)
 	var r = randi() % 100
-	if r < 45:  return PetData.Aptitude.丁
-	if r < 75:  return PetData.Aptitude.丙
-	if r < 93:  return PetData.Aptitude.乙
-	return PetData.Aptitude.甲
+	if r < jia:    return PetData.Aptitude.甲
+	if r < yi:     return PetData.Aptitude.乙
+	if r < bing:   return PetData.Aptitude.丙
+	return PetData.Aptitude.丁
 
 # ══════════════════════════════════════════════
 # 怪物数据库
@@ -700,23 +711,29 @@ const ENEMY_DB = [
 	# ── 普通怪 ──
 	{ name = "妖狐·赤尾", hp = 90,  mp = 40,  atk = 22, def = 8,  spd = 10, lv = 1, skills = ["普通攻击","妖术","妖气回复"] },
 	{ name = "山魈·獠牙",  hp = 110, mp = 30,  atk = 28, def = 12, spd = 9,  lv = 1, skills = ["普通攻击","妖术"] },
-	{ name = "厉鬼·幽魂",  hp = 80,  mp = 60,  atk = 20, def = 5,  spd = 14, lv = 2, skills = ["普通攻击","妖术","蛊毒咒"] },
+	{ name = "厉鬼·幽魂",  hp = 80,  mp = 60,  atk = 20, def = 5,  spd = 14, lv = 2, skills = ["普通攻击","妖术","蛊毒咒"], traits = {"_revive": 20} },
 	{ name = "石傀·巨岩",  hp = 160, atk = 32, def = 22, spd = 5,  lv = 3, skills = ["普通攻击","破防击"] },
 	{ name = "火鸦·灼羽",  hp = 70,  mp = 80,  atk = 18, def = 6,  mdef = 4,  spd = 16, lv = 3, skills = ["普通攻击","妖术","灼焰术"] },
 	{ name = "幽蛛·织网",  hp = 100, mp = 50,  atk = 24, def = 10, mdef = 6,  spd = 12, lv = 4, skills = ["普通攻击","蛊毒咒","妖术"] },
 	{ name = "风狼·疾牙",  hp = 120, mp = 30,  atk = 30, def = 8,  mdef = 5,  spd = 18, lv = 4, skills = ["普通攻击","三连击"] },
-	{ name = "寒魄·幽灵",  hp = 90,  mp = 90,  atk = 22, def = 6,  mdef = 12, spd = 13, lv = 5, skills = ["普通攻击","冰封诀","妖术"] },
+	{ name = "寒魄·幽灵",  hp = 90,  mp = 90,  atk = 22, def = 6,  mdef = 12, spd = 13, lv = 5, skills = ["普通攻击","冰封诀","妖术"], traits = {"_revive": 25} },
 	# ── 精英怪 ──
-	{ name = "九尾妖狐",    hp = 200, mp = 80,  atk = 35, def = 15, mdef = 18, spd = 12, lv = 6, skills = ["普通攻击","妖术","妖气回复","蛊毒咒"] },
+	{ name = "九尾妖狐",    hp = 200, mp = 80,  atk = 35, def = 15, mdef = 18, spd = 12, lv = 6, skills = ["普通攻击","妖术","妖气回复","蛊毒咒","起死回生"] },
 	{ name = "魔将·煞星",  hp = 250, mp = 60,  atk = 42, def = 22, mdef = 12, spd = 10, lv = 7, skills = ["普通攻击","三连击","破防击","护体真气"] },
-	{ name = "骷髅王",      hp = 220, mp = 70,  atk = 38, def = 12, mdef = 18, spd = 11, lv = 7, skills = ["普通攻击","妖术","破防击"] },
+	{ name = "骷髅王",      hp = 220, mp = 70,  atk = 38, def = 12, mdef = 18, spd = 11, lv = 7, skills = ["普通攻击","妖术","破防击"], traits = {"_revive": 30} },
 	{ name = "熔岩魔人",    hp = 280, mp = 50,  atk = 45, def = 28, mdef = 10, spd = 7,  lv = 8, skills = ["普通攻击","灼焰术","破防击"] },
 	# ── Boss（捕捉固定甲级）──
-	{ name = "九幽魔王",    hp = 400, mp = 120, atk = 50, def = 22, mdef = 22, spd = 11, lv = 10, rank = "boss", skills = ["普通攻击","妖术","妖气回复","冰封诀","蛊毒咒"] },
+	{ name = "九幽魔王",    hp = 400, mp = 120, atk = 50, def = 22, mdef = 22, spd = 11, lv = 10, rank = "boss", skills = ["普通攻击","妖术","妖气回复","冰封诀","蛊毒咒","起死回生"], traits = {"_revive": 40} },
 	{ name = "蛟龙·渊王",   hp = 500, mp = 100, atk = 58, def = 28, mdef = 24, spd = 13, lv = 12, rank = "boss", skills = ["普通攻击","妖术","三连击","灼焰术","破防击"] },
 	{ name = "上古神魔",    hp = 600, mp = 150, atk = 65, def = 30, mdef = 30, spd = 15, lv = 15, rank = "boss", skills = ["普通攻击","妖术","妖气回复","冰封诀","三连击","蛊毒咒"] },
 	# ── 测试怪物（WAS 动画）──
 	{ name = "超级赤焰兽",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/超级赤焰兽" },
+	{ name = "毒云龟",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/毒云龟" },	
+	{ name = "谛听",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/谛听" },	
+	{ name = "草龟",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/草龟" },
+	{ name = "超级大鹏",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/超级大鹏" },
+	{ name = "黑熊",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/黑熊" },
+	{ name = "火沙虫",  hp = 200, mp = 80,  atk = 3000, def = 15, mdef = 10, spd = 200, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/火沙虫" },
 ]
 
 func _build_enemy_db() -> void:
@@ -733,7 +750,7 @@ const CHARACTER_DB := {
 	"youxiaoyun": {
 		"name": "游霄云", "class": "战神", "elem": "金", "role": "主",
 		"en_name": "YouXiaoYun",
-		"hp": 150, "mp": 80,  "atk": 30, "matk": 105, "def": 14, "mdef": 10, "spd": 78, "luck": 0.1,
+		"hp": 150000, "mp": 80,  "atk": 30, "matk": 105, "def": 14, "mdef": 10, "spd": 78, "luck": 0.1,
 		"crit": 0.18, "crit_mult": 1.7,
 		"was_base_path": "res://WAS/游霄云/",
 		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴","神行步"],
@@ -984,7 +1001,92 @@ const MATERIAL_DB = {
 		"desc": "增加治疗量", "price": 350,
 		"craft_type": "weapon", "stat": "heal_up", "min_boost": 8, "max_boost": 15,
 	},
+	# ── 符咒材料 ──
+	"talisman_paper": {
+		"name": "符纸", "tcp_path": "res://TCP/符咒/3290.tcp",
+		"desc": "制作符咒的基础材料，黄纸朱砂", "price": 80,
+		"craft_type": "talisman", "stat": "", "min_boost": 0, "max_boost": 0,
+	},
+	"flame_herb": {
+		"name": "火焰花", "tcp_path": "res://TCP/草药/飞云草.tcp",
+		"desc": "蕴含火灵力的花朵，可用于制作星火篆", "price": 120,
+		"craft_type": "talisman", "stat": "", "min_boost": 0, "max_boost": 0,
+	},
+	"thunder_wood": {
+		"name": "雷击木", "tcp_path": "res://TCP/草药/飞云草.tcp",
+		"desc": "被雷劈过的灵木，可用于制作五雷咒", "price": 130,
+		"craft_type": "talisman", "stat": "", "min_boost": 0, "max_boost": 0,
+	},
+	"ice_crystal": {
+		"name": "冰晶草", "tcp_path": "res://TCP/草药/飞云草.tcp",
+		"desc": "生长在极寒之地的草药，可用于制作冰冻符", "price": 140,
+		"craft_type": "talisman", "stat": "", "min_boost": 0, "max_boost": 0,
+	},
+	"peace_moss": {
+		"name": "止战苔", "tcp_path": "res://TCP/草药/飞云草.tcp",
+		"desc": "散发宁静气息的苔藓，可用于制作止战符", "price": 110,
+		"craft_type": "talisman", "stat": "", "min_boost": 0, "max_boost": 0,
+	},
 }
+
+# ═══ 符咒配方数据库 ═══
+## 放入4个材料 → 匹配配方 → 产出对应符咒
+const TALISMAN_RECIPES: Array[Dictionary] = [
+	{
+		"output": "talisman_haste",   # 加速符
+		"output_name": "加速符",
+		"materials": {
+			"talisman_paper": 1,
+			"cloud_herb": 3
+		}
+	},
+	{
+		"output": "talisman_fire",    # 星火篆
+		"output_name": "星火篆",
+		"materials": {
+			"talisman_paper": 1,
+			"flame_herb": 2,
+			"black_ore": 1
+		}
+	},
+	{
+		"output": "talisman_thunder", # 五雷咒
+		"output_name": "五雷咒",
+		"materials": {
+			"talisman_paper": 1,
+			"thunder_wood": 2,
+			"gold_ore": 1
+		}
+	},
+	{
+		"output": "talisman_ice",     # 冰冻符咒
+		"output_name": "冰冻符咒",
+		"materials": {
+			"talisman_paper": 1,
+			"ice_crystal": 2,
+			"moon_stone": 1
+		}
+	},
+	{
+		"output": "talisman_ceasefire", # 止战符咒
+		"output_name": "止战符咒",
+		"materials": {
+			"talisman_paper": 1,
+			"peace_moss": 2,
+			"lake_heart": 1
+		}
+	},
+	{
+		"output": "talisman_revive",   # 借尸符
+		"output_name": "借尸符",
+		"materials": {
+			"talisman_paper": 1,
+			"ice_crystal": 1,
+			"moon_stone": 1,
+			"lake_heart": 1
+		}
+	},
+]
 
 static func get_material(id: String) -> Dictionary:
 	return MATERIAL_DB.get(id, {}).duplicate()
@@ -1012,6 +1114,7 @@ func _add_member(member_id: String, d: Dictionary) -> void:
 	s.attack          = d.atk;    s.magic_attack    = d.matk
 	s.defense         = d.def;    s.magic_defense   = d.mdef
 	s.speed           = d.spd;    s.level           = 1
+	s.exp_to_next     = CharacterStats.calc_exp_to_next(s.level)
 	s.crit_rate       = d.crit;   s.crit_mult       = d.crit_mult
 	s.luck            = d.get("luck", 0)
 	s.was_base_path   = d.get("was_base_path", "")
@@ -1060,8 +1163,8 @@ func gain_exp(member_id: String, amount: int) -> bool:
 		return false
 	s.exp += amount
 	if s.exp >= s.exp_to_next:
-		_level_up_member(s)
-		return true
+		var levels_gained := _level_up_member(s)
+		return levels_gained > 0
 	return false
 
 ## 根据 SKILL_LEARN_DB 获取角色初始技能（包含≤等级的所有技能）
@@ -1087,26 +1190,30 @@ func _get_initial_skills(member_id: String, d: Dictionary) -> Array[String]:
 	return result
 
 
-func _level_up_member(s: CharacterStats) -> void:
-	s.exp -= s.exp_to_next
-	s.level += 1
-	s.exp_to_next = CharacterStats.calc_exp_to_next(s.level)
-	s.max_hp      += s.hp_growth
-	s.max_mp      += s.mp_growth
-	s.attack      += s.atk_growth
-	s.magic_attack += s.matk_growth
-	s.defense     += s.def_growth
-	s.magic_defense += s.mdef_growth
-	s.speed       += s.speed_growth
-	# 检查技能学习
-	if "member_id" in s and not s.member_id.is_empty():
-		var learn_table = SKILL_LEARN_DB.get(s.member_id, [])
-		for entry in learn_table:
-			if entry.level == s.level:
-				for sid in entry.skills:
-					if sid not in s.skill_ids:
-						s.skill_ids.append(sid)
-						print("%s 学会了 %s！" % [s.character_name, sid])
+func _level_up_member(s: CharacterStats) -> int:
+	var gained := 0
+	while s.exp_to_next > 0 and s.exp >= s.exp_to_next:
+		s.exp -= s.exp_to_next
+		s.level += 1
+		s.exp_to_next = CharacterStats.calc_exp_to_next(s.level)
+		s.max_hp      += s.hp_growth
+		s.max_mp      += s.mp_growth
+		s.attack      += s.atk_growth
+		s.magic_attack += s.matk_growth
+		s.defense     += s.def_growth
+		s.magic_defense += s.mdef_growth
+		s.speed       += s.speed_growth
+		# 检查技能学习
+		if "member_id" in s and not s.member_id.is_empty():
+			var learn_table = SKILL_LEARN_DB.get(s.member_id, [])
+			for entry in learn_table:
+				if entry.level == s.level:
+					for sid in entry.skills:
+						if sid not in s.skill_ids:
+							s.skill_ids.append(sid)
+							print("%s 学会了 %s！" % [s.character_name, sid])
+		gained += 1
+	return gained
 
 
 # ══════════════════════════════════════════════
@@ -1147,6 +1254,7 @@ func _init_inventory() -> void:
 	player_inventory.add_item(item_db["talisman_ice"], 5)
 	player_inventory.add_item(item_db["talisman_haste"], 5)
 	player_inventory.add_item(item_db["talisman_ceasefire"], 5)
+	player_inventory.add_item(item_db["talisman_revive"], 5)
 
 
 # ══════════════════════════════════════════════
@@ -1348,6 +1456,14 @@ const SKILL_DB := {
 		"buff": "burn", "bturn": 2, "bchance": 0.75,
 		"desc": "喷吐烈焰，造成 130% 法术伤害，75% 概率灼烧 2 回合",
 	},
+	# ── 复活技能（玩家和怪物通用）──
+	"借尸还魂": {
+		"type": SkillData.SkillType.HEAL, "target": SkillData.TargetType.SINGLE_ALLY,
+		"mp": 30, "heal": 0.2, "flat": 0, "cd": 5,
+		"hsize": "revive",
+		"sound": "res://Audio/SE/heal 1.ogg",
+		"desc": "复活一名阵亡队友，恢复 20% 最大气血",
+	},
 }
 
 # ══════════════════════════════════════════════
@@ -1420,7 +1536,7 @@ const BOOK_SKILL_DB := {
 ## 升级时自动学习对应技能
 const SKILL_LEARN_DB := {
 	"youxiaoyun": [
-		{ "level": 1,  "skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法",] },
+		{ "level": 1,  "skills": ["寂静剑法","一苇渡江","金刚护体","起死回生",] },
 		{ "level": 3,  "skills": ["横扫千军"] },
 		{ "level": 5,  "skills": ["达摩护体"] },
 		{ "level": 7,  "skills": ["如沐春风"] },
@@ -1588,11 +1704,12 @@ func _register_items() -> void:
 		{ id = "book_gold_h",      name = "高级来财", icon = "💰", type = BOOK, book_id = "高级来财", desc = "金币收益+100%" },
 		{ id = "book_gold",        name = "来财",     icon = "💰", type = BOOK, book_id = "来财",     desc = "金币收益+50%" },
 		# ── 符咒（消耗品）──
-		{ id = "talisman_fire",      name = "星火篆", icon = "🔥", type = SP, dmg = 10.5, desc = "造成火焰伤害并灼烧" },
-		{ id = "talisman_thunder",   name = "雷电符咒", icon = "⚡", type = SP, dmg = 1.8, desc = "造成雷电伤害并概率麻痹" },
-		{ id = "talisman_ice",       name = "冰冻符咒", icon = "❄️", type = SP, dmg = 2.0, desc = "造成冰冻伤害并封印" },
-		{ id = "talisman_haste",     name = "加速符咒", icon = "💨", type = SP, desc = "为队友施加加速效果" },
-		{ id = "talisman_ceasefire", name = "止战符咒", icon = "🕊️", type = SP, desc = "削减敌人灵力" },
+		{ id = "talisman_fire",      name = "星火篆", icon = "🔥", tcp = "res://TCP/符咒/3290.tcp", type = SP, dmg = 1.5, hit_sound = "res://Audio/SE/火1.ogg", desc = "造成火焰伤害并灼烧" },
+		{ id = "talisman_thunder",   name = "五雷咒", icon = "⚡", tcp = "res://TCP/符咒/0865.tcp", type = SP, dmg = 1.8, hit_sound = "res://Audio/SE/124-Thunder02.ogg", desc = "造成雷电伤害并概率麻痹" },
+		{ id = "talisman_ice",       name = "冰冻符咒", icon = "❄️", tcp = "res://TCP/符咒/3290.tcp", type = SP, dmg = 2.0, hit_sound = "res://Audio/SE/法术5.ogg", desc = "造成冰冻伤害并封印" },
+		{ id = "talisman_haste",     name = "加速符咒", icon = "💨", tcp = "res://TCP/符咒/3290.tcp", type = SP, hit_sound = "res://Audio/SE/法术5.ogg", desc = "为队友施加加速效果" },
+		{ id = "talisman_ceasefire", name = "止战符咒", icon = "🕊️", tcp = "res://TCP/符咒/3290.tcp", type = SP, hit_sound = "res://Audio/SE/法术5.ogg", desc = "削减敌人灵力" },
+		{ id = "talisman_revive",    name = "借尸符",   icon = "💀", tcp = "res://TCP/符咒/3290.tcp", type = SP, hit_sound = "res://Audio/SE/heal 1.ogg", desc = "复活一名阵亡队友，恢复30%气血" },
 	]
 
 	for row in rows:
@@ -1600,6 +1717,7 @@ func _register_items() -> void:
 		d.item_id           = row.id
 		d.item_name         = row.name
 		d.icon_emoji        = row.icon
+		d.icon_path         = row.get("tcp", "")
 		d.item_type         = row.type
 		d.item_category     = row.get("cat", ItemData.ItemCategory.CONSUMABLE)
 		d.hp_restore        = row.get("hp", 0)
@@ -1608,6 +1726,7 @@ func _register_items() -> void:
 		d.buff_turns        = row.get("buff_turns", 0)
 		d.revive_hp_percent = row.get("revive_pct", 0.0)
 		d.damage_multiplier = row.get("dmg", 1.0)
+		d.hit_sound         = row.get("hit_sound", "")
 		d.book_skill_id     = row.get("book_id", "")
 		d.description       = row.desc
 		d.max_stack         = 10
@@ -1740,7 +1859,13 @@ func _debug_equip_belt() -> void:
 				equip_bag.append(eq)
 	# 测试：放几件打造材料
 	if material_bag.is_empty():
-		for mid in ["black_ore", "gold_ore", "gold_ore", "red_shell", "cloud_herb", "blood_stone", "gold_ore", "shattered_green","shattered_green", "thorn_horn", "moon_stone", "lake_heart", "vitality"]:
+		for mid in ["black_ore", "gold_ore", "gold_ore", "red_shell", "cloud_herb", "blood_stone", "gold_ore", "shattered_green","shattered_green", "thorn_horn", "moon_stone", "lake_heart", "vitality",
+				"talisman_paper", "talisman_paper", "talisman_paper", "talisman_paper", "talisman_paper",
+				"cloud_herb", "cloud_herb", "cloud_herb",
+				"flame_herb", "flame_herb",
+				"thunder_wood", "thunder_wood",
+				"ice_crystal", "ice_crystal",
+				"peace_moss", "peace_moss"]:
 			var mat = MATERIAL_DB.get(mid, {}).duplicate()
 			if not mat.is_empty():
 				material_bag.append(mat)

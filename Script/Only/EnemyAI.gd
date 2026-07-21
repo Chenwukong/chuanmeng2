@@ -44,6 +44,18 @@ func _balanced(actor: BattleCharacter) -> void:
 	available = available.filter(func(id): return _can_use(actor, id))
 
 	if available.size() > 0:
+		# 通用复活检查：有阵亡队友且拥有复活技能
+		var revive_skills = available.filter(func(id):
+			var d = SkillManager.get_skill(id)
+			return d and d.skill_type == SkillData.SkillType.HEAL and d.heal_size == "revive"
+		)
+		if revive_skills.size() > 0:
+			var dead_allies = battle_manager.enemies.filter(func(e): return e.is_dead)
+			if dead_allies.size() > 0:
+				chosen_skill = revive_skills[0]
+				target = dead_allies[0]
+				await battle_manager.execute_enemy_skill(actor, chosen_skill, target)
+				return
 		# 残血优先治疗
 		if actor.hp_percent() < 0.3:
 			var heal_skills = available.filter(func(id):
@@ -118,6 +130,20 @@ func _healer(actor: BattleCharacter) -> void:
 	available = available.filter(func(id): return _can_use(actor, id))
 
 	if available.size() > 0:
+		# 先检查复活技能
+		var revive_skills = available.filter(func(id):
+			var d = SkillManager.get_skill(id)
+			return d and d.skill_type == SkillData.SkillType.HEAL and d.heal_size == "revive"
+		)
+		if revive_skills.size() > 0:
+			# 找阵亡队友
+			var dead_allies = battle_manager.enemies.filter(func(e): return e.is_dead)
+			if dead_allies.size() > 0:
+				chosen_skill = revive_skills[0]
+				target = dead_allies[0]
+				await battle_manager.execute_enemy_skill(actor, chosen_skill, target)
+				return
+		# 复活优先失败或没有复活技能，继续原有治疗逻辑
 		var heal_skills = available.filter(func(id):
 			var d = SkillManager.get_skill(id)
 			return d and d.skill_type == SkillData.SkillType.HEAL

@@ -162,14 +162,21 @@ func _load_buff_frames(parent: Node) -> void:
 
 func _load_spell_frames(parent: Node) -> void:
 	var scene = load("res://Component/animation.tscn")
-	if scene == null: return
-	var template = scene.instantiate() as AnimatedSprite2D
-	var spell_sprite = parent.get_node_or_null("Animation") as AnimatedSprite2D
-	if spell_sprite and template and template.sprite_frames:
-		spell_sprite.sprite_frames = template.sprite_frames.duplicate()
-		spell_sprite.scale = template.scale
-		spell_sprite.position = template.position
-	template.queue_free()
+	if scene == null:
+		print("[_load_spell_frames] scene load FAILED")
+		return
+	# 替换旧的 Animation 节点
+	var old = parent.get_node_or_null("Animation")
+	if old: old.queue_free()
+	var template = scene.instantiate()
+	template.name = "Animation"
+	parent.add_child(template)
+	# 验证星火篆子节点
+	var check = template.get_node_or_null("星火篆") as AnimatedSprite2D
+	if check and check.sprite_frames:
+		print("[_load_spell_frames] Animation/星火篆 loaded, frames=", check.sprite_frames.get_frame_count("default"), " parent=", parent.name)
+	else:
+		print("[_load_spell_frames] WARNING: 星火篆 not found or no sprite_frames!")
 
 
 ## 显示 Debuff 动画（"冰封"/"虚弱"等）
@@ -197,60 +204,60 @@ func hide_debuff() -> void:
 
 func play_spell_effect(anim_name: String) -> void:
 	var parent = get_parent()
-	if parent == null: return
-	var ss = parent.get_node_or_null("Animation") as AnimatedSprite2D
+	if parent == null:
+		print("[play_spell_effect] parent null for ", anim_name)
+		return
+	# 懒加载：如果 Animation 节点不存在，现场创建
+	if not parent.has_node("Animation"):
+		print("[play_spell_effect] Animation missing on parent=%s, loading now..." % parent.name)
+		_load_spell_frames(parent)
+	var ss = parent.get_node_or_null("Animation/%s" % anim_name) as AnimatedSprite2D
 	if ss == null:
+		print("[play_spell_effect] node not found: Animation/%s (parent=%s)" % [anim_name, parent.name])
 		return
-	if not ss.sprite_frames or not ss.sprite_frames.has_animation(anim_name):
+	if ss.sprite_frames == null:
+		print("[play_spell_effect] sprite_frames null for ", anim_name)
 		return
-	# 同上动画已在播，不打断
-	if ss.visible and ss.animation == anim_name:
-		return
+	print("[play_spell_effect] playing ", anim_name, " frames=", ss.sprite_frames.get_frame_count("default"))
 	ss.stop()
-	ss.sprite_frames.set_animation_loop(anim_name, false)
+	ss.frame = 0
+	ss.sprite_frames.set_animation_loop("default", false)
 	ss.visible = true
-	ss.play(anim_name)
+	ss.play("default")
 	await ss.animation_finished
 	ss.visible = false
+	print("[play_spell_effect] finished ", anim_name)
 
 ## 同时播放两个法术特效（金刚护法 + 一苇渡江），调用方无需 await
 func play_dual_spell_effect() -> void:
 	var parent = get_parent()
 	if parent == null: return
-	var ss1 = parent.get_node_or_null("Animation") as AnimatedSprite2D
-	if ss1 == null or not ss1.sprite_frames: return
-	# 创建第二个动画精灵同时播放
-	var ss2 := AnimatedSprite2D.new()
-	ss2.name = "Animation_Dual"
-	ss2.sprite_frames = ss1.sprite_frames
-	ss2.position = ss1.position
-	ss2.offset = ss1.offset
-	ss2.scale = ss1.scale
-	ss2.centered = ss1.centered
-	parent.add_child(ss2)
+	var ss1 = parent.get_node_or_null("Animation/金刚护法") as AnimatedSprite2D
+	var ss2 = parent.get_node_or_null("Animation/一苇渡江") as AnimatedSprite2D
+	if ss1 == null or ss2 == null: return
+	if not ss1.sprite_frames or not ss2.sprite_frames: return
 	# 播放
-	var has_jg = ss1.sprite_frames.has_animation("金刚护法")
-	var has_yw := ss2.sprite_frames.has_animation("一苇渡江")
+	var has_jg = ss1.sprite_frames.has_animation("default")
+	var has_yw = ss2.sprite_frames.has_animation("default")
 	if has_jg:
 		ss1.stop()
-		ss1.sprite_frames.set_animation_loop("金刚护法", false)
+		ss1.sprite_frames.set_animation_loop("default", false)
 		ss1.visible = true
-		ss1.play("金刚护法")
+		ss1.play("default")
 	if has_yw:
-		ss2.sprite_frames.set_animation_loop("一苇渡江", false)
+		ss2.sprite_frames.set_animation_loop("default", false)
 		ss2.visible = true
-		ss2.play("一苇渡江")
+		ss2.play("default")
 	# 用 Timer 等两个都播完（避免 animation_finished 信号竞态）
 	var max_frames := 0
 	if has_jg:
-		max_frames = maxi(max_frames, ss1.sprite_frames.get_frame_count("金刚护法"))
+		max_frames = maxi(max_frames, ss1.sprite_frames.get_frame_count("default"))
 	if has_yw:
-		max_frames = maxi(max_frames, ss2.sprite_frames.get_frame_count("一苇渡江"))
+		max_frames = maxi(max_frames, ss2.sprite_frames.get_frame_count("default"))
 	var duration := maxi(0.5, float(max_frames) / 15.0)
 	await get_tree().create_timer(duration).timeout
 	ss1.visible = false
-	if is_instance_valid(ss2):
-		ss2.queue_free()
+	ss2.visible = false
 
 ## 特性触发红字飘字：从角色身上浮起再消失
 func show_trait_float(trait_name: String) -> void:
@@ -626,6 +633,7 @@ func _apply_talent_boosts() -> void:
 		"guard_armor": {"def_up": 0.05},
 		"attack_strike": {"atk_up": 0.05},
 		"attack_crit": {"crit_up": 0.03},
+		"attack_speed": {"haste": 0.02},
 	}
 	# 召唤兽额外加成
 	var is_mech = stats.character_class == "铁甲"
@@ -895,9 +903,10 @@ func gain_exp(amount: int) -> bool:
 ## 战斗中升级：恢复部分 HP/MP，更新头顶显示
 ## 注：永久属性提升在 GameData._level_up 中处理
 func _level_up() -> void:
-	stats.exp -= stats.exp_to_next
-	stats.level += 1
-	stats.exp_to_next = CharacterStats.calc_exp_to_next(stats.level)
+	while stats.exp_to_next > 0 and stats.exp >= stats.exp_to_next:
+		stats.exp -= stats.exp_to_next
+		stats.level += 1
+		stats.exp_to_next = CharacterStats.calc_exp_to_next(stats.level)
 	# 废物觉醒
 	if trait_data.has("废物") and stats.level >= trait_data["废物"].get("break_lv", 80):
 		var aw = trait_data["废物"].get("awaken_skills", [])
