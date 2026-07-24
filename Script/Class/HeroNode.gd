@@ -9,6 +9,7 @@ extends Node2D
 @onready var _audio_atk:  AudioStreamPlayer = $Audio_Attack
 @onready var _audio_cast: AudioStreamPlayer = $Audio_Cast
 @onready var _select_indicator: Sprite2D = $SelectIndicator
+@onready var _png: AnimatedSprite2D = $PNG
 ## 武器层（如果角色有配套武器 WAS 文件夹则自动创建）
 var _weapon_sprite: Sprite2D = null
 var _weapon_was: WASAnimationPlayer = null
@@ -73,7 +74,7 @@ func setup_weapon(was_base: String) -> void:
 	_weapon_was.frame_time = was_player.frame_time
 	add_child(_weapon_was)
 
-	var names := {"idle":"待机","attack":"攻击","hit":"挨打","die":"死亡","cast":"施法","move":"移动","walk":"行走"}
+	var names := {"idle":"待机","attack":"攻击","hit":"挨打","die":"死亡","cast":"施法","defend":"防御","move":"移动","walk":"行走"}
 	for anim in names:
 		var p = weapon_dir + "/" + names[anim] + ".was"
 		if FileAccess.file_exists(p):
@@ -155,6 +156,9 @@ func _spawn_cast_effect() -> void:
 
 
 func play_animation(anim_name: String) -> void:
+	# PNG 优先（walk/move → 走, attack → 攻击, magic → 施法）
+	if _try_play_any(anim_name):
+		return
 	was_player.play(anim_name, anim_name == "idle")
 	if _weapon_was and _weapon_was.anim_files.has(anim_name):
 		_weapon_was.play(anim_name, anim_name == "idle")
@@ -182,10 +186,15 @@ func play_cast_sequence(spell_name: String = "") -> void:
 	_play_cast_voice()
 	_current_spell_anim = spell_name
 	_spawn_cast_effect()
-	was_player.play("cast", false)
-	if _weapon_was and _weapon_was.anim_files.has("cast"):
-		_weapon_was.play("cast", false)
-	await was_player.play_frames_direct("cast")
+	if not _try_play_any("cast"):
+		was_player.play("cast", false)
+		if _weapon_was and _weapon_was.anim_files.has("cast"):
+			_weapon_was.play("cast", false)
+	if not _try_play_any("cast"):
+		await was_player.play_frames_direct("cast")
+	else:
+		await _png.animation_finished
+		_try_play_any("idle")
 	_current_spell_anim = ""
 	was_player.play("idle")
 	if _weapon_was:
@@ -201,7 +210,11 @@ func play_ranged_attack() -> void:
 	_audio_atk.play()
 	if _weapon_was and _weapon_was.anim_files.has("attack"):
 		_weapon_was.play("attack", false)
-	await was_player.play_frames_direct("attack")
+	if not _try_play_any("attack"):
+		await was_player.play_frames_direct("attack")
+	else:
+		await _png.animation_finished
+		_try_play_any("idle")
 	was_player.play("idle")
 	if _weapon_was:
 		_weapon_was.play("idle")
@@ -217,9 +230,11 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 
 	# 走过去（隐藏 buff/debuff 装饰）
 	$BuffSprite.visible = false
-	was_player.play("move", false)
-	if _weapon_was and _weapon_was.anim_files.has("move"):
-		_weapon_was.play("move", false)
+	_play_png_loop("walk")
+	if not _try_play_any("move"):
+		was_player.play("move", false)
+		if _weapon_was and _weapon_was.anim_files.has("move"):
+			_weapon_was.play("move", false)
 	var tween = create_tween()
 	tween.tween_property(self, "position", approach, 0.35)
 	tween.set_ease(Tween.EASE_IN_OUT)
@@ -232,7 +247,13 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 		hit_target.play_hit_reaction()
 	if _weapon_was and _weapon_was.anim_files.has("attack"):
 		_weapon_was.play("attack", false)
-	await was_player.play_frames_direct("attack")
+	if not _try_play_any("attack"):
+		await was_player.play_frames_direct("attack")
+	else:
+		# PNG attack: 播完等待
+		await _png.animation_finished
+		# attack 播完切回 idle
+		_try_play_any("idle")
 	if _weapon_was:
 		_weapon_was.play("idle")
 
@@ -241,13 +262,16 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 		await on_hit.call()
 
 	# 走回来
-	was_player.play("move", false)
-	if _weapon_was and _weapon_was.anim_files.has("move"):
-		_weapon_was.play("move", false)
+	_play_png_loop("walk")
+	if not _try_play_any("move"):
+		was_player.play("move", false)
+		if _weapon_was and _weapon_was.anim_files.has("move"):
+			_weapon_was.play("move", false)
 	tween = create_tween()
 	tween.tween_property(self, "position", _original_pos, 0.3)
 	tween.set_ease(Tween.EASE_IN_OUT)
 	await tween.finished
+	_play_png_loop("idle")
 	was_player.play("idle")
 	if _weapon_was:
 		_weapon_was.play("idle")
@@ -344,6 +368,10 @@ func play_multihit_sequence(target_pos: Vector2, hit_target: Node2D, hit_count: 
 
 ## 播放一次挨打动画，停住不循环
 func play_hit_once() -> void:
+	# 优先播 PNG 受击动画
+	if _try_play_png("hurt"):
+		return
+	sprite.visible = true
 	was_player.play("hit", false)
 	if _weapon_was and _weapon_was.anim_files.has("hit"):
 		_weapon_was.play("hit", false)
@@ -532,17 +560,123 @@ func play_hit_flash() -> void:
 
 ## 保护动画：瞬移到被保护者身前，播放挨打动画
 func guard_warp(ally_global_pos: Vector2, ally_z: int) -> void:
+	print("[guard_warp] called for ", name)
 	_original_pos = position
 	_original_z = z_index
 	var local_target = get_parent().to_local(ally_global_pos)
 	var front_pos = local_target + Vector2(-12, -12)
 	position = front_pos
 	z_index = ally_z - 1
-	was_player.play("hit", false)
+	var played := _try_play_png("defend")
+	if not played:
+		sprite.visible = true
+		if _weapon_was and _weapon_was.anim_files.has("defend"):
+			_weapon_was.play("defend", false)
+		was_player.play("defend", false)
+		if not was_player.is_playing():
+			was_player.play("hit", false)
 	play_hit_flash()
 
 ## 保护动画：回到原位（瞬移）
 func guard_return() -> void:
 	position = _original_pos
 	z_index = _original_z
-	was_player.play("idle")
+	if not _try_play_png("idle"):
+		sprite.visible = true
+		was_player.play("idle")
+		if _weapon_was:
+			_weapon_was.play("idle")
+
+
+## 尝试播放 PNG 动画（支持别名：WAS 名 → PNG 后缀）
+func _try_play_any(was_anim: String) -> bool:
+	var suffix_map := {
+		"move": "walk",
+		"cast": "magic",
+	}
+	var suffix = suffix_map.get(was_anim, was_anim)
+	if _try_play_png(suffix):
+		return true
+	if suffix != was_anim and _try_play_png(was_anim):
+		return true
+	return false
+
+
+## 循环播放 PNG 动画（walk/idle 等需要持续的动画）
+func _play_png_loop(suffix: String) -> void:
+	if _png == null or not _png.sprite_frames:
+		return
+	var char_name = $BattleCharacter.stats.character_name
+	var anim_name = char_name + suffix
+	if not _png.sprite_frames.has_animation(anim_name):
+		return
+	_png.visible = true
+	_png.animation = anim_name
+	_png.frame = 0
+	_png.play()
+	sprite.visible = false
+
+
+## 尝试播放 PNG 动画（如果有 PNG 节点且有所需动画）
+## anim_suffix: "hurt" / "defend" / "idle" / "dead"
+## 返回 true 表示已播放，false 表示没有 PNG 节点或动画不存在
+func _try_play_png(anim_suffix: String) -> bool:
+	if _png == null or not _png.sprite_frames:
+		return false
+	var char_name = $BattleCharacter.stats.character_name
+	var anim_name = char_name + anim_suffix
+	if not _png.sprite_frames.has_animation(anim_name):
+		return false
+	_png.visible = true
+	_png.animation = anim_name
+	_png.frame = 0
+	_png.play()
+	# 非循环动画（hurt/dead）结束时自动隐藏
+	if not _png.sprite_frames.get_animation_loop(anim_name):
+		# 非循环动画播完后回到 idle
+		_png.animation_finished.connect(func():
+			if not is_instance_valid(_png):
+				return
+			var idle_anim = $BattleCharacter.stats.character_name + "idle"
+			if _png.sprite_frames and _png.sprite_frames.has_animation(idle_anim):
+				_png.animation = idle_anim
+				_png.play()
+			else:
+				_png.visible = false
+		, CONNECT_ONE_SHOT)
+	# 隐藏 WAS
+	sprite.visible = false
+	return true
+
+
+## 守护动作：选择保护时播放一次防御动画
+func play_guard_cast() -> void:
+	if _try_play_png("defend"):
+		return
+	sprite.visible = true
+	if _weapon_was and _weapon_was.anim_files.has("defend"):
+		_weapon_was.play("defend", false)
+	was_player.play("defend", false)
+	if not was_player.is_playing():
+		was_player.play("cast", false)
+
+
+## 设置 PNG / WAS 模式
+func set_png_mode(use_png: bool) -> void:
+	if _png == null:
+		return
+	var bc = $BattleCharacter as BattleCharacter
+	if bc == null or bc.stats == null:
+		return
+	var char_name = bc.stats.character_name
+	var idle_anim = char_name + "idle"
+	# 自动检测：如果 PNG 节点有匹配的 {角色名}idle 动画就启用 PNG
+	var has_png := _png.sprite_frames != null and _png.sprite_frames.has_animation(idle_anim)
+	if has_png:
+		sprite.visible = false
+		_png.visible = true
+		_png.animation = idle_anim
+		_png.play()
+	else:
+		_png.visible = false
+		sprite.visible = true

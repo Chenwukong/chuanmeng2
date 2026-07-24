@@ -671,6 +671,9 @@ func create_enemy(enemy_name: String) -> CharacterStats:
 	s.magic_defense  = int(row.get("mdef", int(row.def * 0.8)) * nm)
 	s.was_base_path  = row.get("was_base_path", "")
 	s.was_direction  = row.get("was_direction", 0)
+	s.portrait_path  = row.get("portrait_path", "")
+	s.portrait_offset = row.get("portrait_offset", Vector2.ZERO)
+	s.team_offset     = row.get("team_offset", Vector2.ZERO)
 	s.exp_reward     = int(row.get("exp", 0) * nm)
 	s.attack_sound_path = row.get("attack_sound", "")
 	s.cast_sound_path   = row.get("cast_sound", "")
@@ -678,6 +681,7 @@ func create_enemy(enemy_name: String) -> CharacterStats:
 	s.element = _parse_element(row.get("elem", "金"))
 	s.role    = _parse_role(row.get("role", "护"))
 	s.traits  = row.get("traits", {}).duplicate()
+	s.use_png = row.get("use_png", false)
 	# 进场时随机资质（捕捉时保留）
 	s.capture_aptitude = _roll_aptitude(row.get("rank", ""), row.lv)
 	return s
@@ -733,7 +737,7 @@ const ENEMY_DB = [
 	{ name = "草龟",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/草龟" },
 	{ name = "超级大鹏",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/超级大鹏" },
 	{ name = "黑熊",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/黑熊" },
-	{ name = "火沙虫",  hp = 200, mp = 80,  atk = 3000, def = 15, mdef = 10, spd = 200, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/火沙虫" },
+	{ name = "火沙虫",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/火沙虫" },
 ]
 
 func _build_enemy_db() -> void:
@@ -748,14 +752,28 @@ func _build_enemy_db() -> void:
 
 const CHARACTER_DB := {
 	"youxiaoyun": {
-		"name": "游霄云", "class": "战神", "elem": "金", "role": "主",
+		"name": "游霄云", "class": "战神", "elem": "无", "role": "主",
 		"en_name": "YouXiaoYun",
-		"hp": 150000, "mp": 80,  "atk": 30, "matk": 105, "def": 14, "mdef": 10, "spd": 78, "luck": 0.1,
+		"hp": 1500, "mp": 80,  "atk": 30, "matk": 105, "def": 14, "mdef": 10, "spd": 78, "luck": 0.1,
 		"crit": 0.18, "crit_mult": 1.7,
 		"was_base_path": "res://WAS/游霄云/",
 		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴","神行步"],
 		"attack_sound": "res://Audio/SE/男-法术-呀.ogg", "cast_sound": "res://Audio/SE/男-法术-呀.ogg",
 		"ranged": true,
+	},
+	"aobai": {
+		"name": "敖白", "class": "战神", "elem": "水", "role": "攻",
+		"portrait_offset": Vector2(-20, -45),
+		"team_offset": Vector2(-240, -10),
+		"en_name": "AoBai",
+		 "use_png": true,
+		"hp": 1500, "mp": 80,  "atk": 30, "matk": 105, "def": 14, "mdef": 10, "spd": 78, "luck": 0.1,
+		"crit": 0.18, "crit_mult": 1.7,
+		#"was_base_path": "res://WAS/游霄云/",
+		"traits": {"晓之以理": {"dmg_reduce": 0.10}},
+		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴","神行步"],
+		"attack_sound": "res://Audio/SE/男-法术-呀.ogg", "cast_sound": "res://Audio/SE/男-法术-呀.ogg",
+		"ranged": false,
 	},
 	"erlang": {
 		"name": "二郎神", "class": "战神", "elem": "金", "role": "攻",
@@ -787,7 +805,7 @@ const CHARACTER_DB := {
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
 	},
 	"dingdong": {
-		"name": "叮咚", "class": "灵师", "elem": "水", "role": "召",
+		"name": "叮咚", "class": "灵师", "elem": "土", "role": "召",
 		"en_name": "DingDong",
 		"hp": 120, "mp": 100, "atk": 2000, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
 		"crit": 0.12, "crit_mult": 1.5,
@@ -853,7 +871,8 @@ const CHARACTER_DB := {
 		"crit": 0.12, "crit_mult": 1.5,
 		"was_base_path": "res://WAS/桃夭夭",
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
+		"attack_sound": "res://Audio/SE/",
+		 "cast_sound": "res://Audio/SE/女-法术X.ogg",
 		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
 	},				
 	"yanwushi": {
@@ -904,14 +923,14 @@ const CHARACTER_DB := {
 		"skills": ["普通攻击", "嘲讽", "护体真气", "回元术"],
 		"traits": {"吞噬": {"hp_gain": 4, "level_floor": 5}},
 	},
-	"longtaizi": {
-		"name": "龙太子", "class": "灵师", "elem": "水", "role": "攻",
-		"en_name": "Longtaizi",
-		"hp": 130, "mp": 90, "atk": 28, "matk": 25, "def": 12, "mdef": 10, "spd": 22,
-		"was_base_path": "res://WAS/龙太子",
-		"skills": ["普通攻击", "雷霆诀", "御剑气", "破防击"],
-		"traits": {"晓之以理": {"dmg_reduce": 0.10}},
-	},
+	#"longtaizi": {
+		#"name": "龙太子", "class": "灵师", "elem": "水", "role": "攻",
+		#"en_name": "Longtaizi",
+		#"hp": 130, "mp": 90, "atk": 28, "matk": 25, "def": 12, "mdef": 10, "spd": 22,
+		#"was_base_path": "res://WAS/龙太子",
+		#"skills": ["普通攻击", "雷霆诀", "御剑气", "破防击"],
+		#"traits": {"晓之以理": {"dmg_reduce": 0.10}},
+	#},
 	"hun": {
 		"name": "魂", "class": "灵师", "elem": "土", "role": "攻",
 		"en_name": "Hun",
@@ -1119,6 +1138,10 @@ func _add_member(member_id: String, d: Dictionary) -> void:
 	s.luck            = d.get("luck", 0)
 	s.was_base_path   = d.get("was_base_path", "")
 	s.was_direction   = d.get("was_direction", 2)  # 主角团默认朝左上角
+	s.portrait_path   = d.get("portrait_path", "")
+	s.portrait_offset = d.get("portrait_offset", Vector2.ZERO)
+	s.team_offset     = d.get("team_offset", Vector2.ZERO)
+	s.use_png         = d.get("use_png", false)
 	s.attack_sound_path = d.get("attack_sound", "")
 	s.cast_sound_path   = d.get("cast_sound", "")
 	s.is_ranged         = d.get("ranged", false)
@@ -1133,6 +1156,7 @@ func _add_member(member_id: String, d: Dictionary) -> void:
 ## 从字符串解析五行枚举
 func _parse_element(s: String) -> CharacterStats.Element:
 	match s:
+		"无": return CharacterStats.Element.NONE
 		"木": return CharacterStats.Element.WOOD
 		"水": return CharacterStats.Element.WATER
 		"火": return CharacterStats.Element.FIRE
@@ -1372,32 +1396,32 @@ const SKILL_DB := {
 	},
 	"一苇渡江": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 15, "cd": 2, "buff": "haste", "bturn": 3, "bvalue": 1.3,
+		"mp": 15, "cd": 2, "buff": "haste", "bturn": 3, "bvalue": 1.3, "extra": 3,
 		"desc": "选定目标加速并随机增益 3 名未加速队友，3 回合速度提升 30%",
 	},
 	"神行步": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 15, "cd": 2, "buff": "haste", "bturn": 3, "bvalue": 1.3,
+		"mp": 15, "cd": 2, "buff": "haste", "bturn": 3, "bvalue": 1.3, "extra": 3,
 		"desc": "选定目标加速并随机增益 3 名未加速队友，3 回合速度提升 30%",
 	},
 	"达摩护体": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 20, "cd": 3, "buff": "hp_up", "bturn": 3, "bvalue": 1.3,
+		"mp": 20, "cd": 3, "buff": "hp_up", "bturn": 3, "bvalue": 1.3, "extra": 3,
 		"desc": "选定目标并随机护体 3 名队友，3 回合气血上限提升 30%",
 	},
 	"金刚护体": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 20, "cd": 3, "buff": "def_up", "bturn": 3, "bvalue": 1.5,
+		"mp": 20, "cd": 3, "buff": "def_up", "bturn": 3, "bvalue": 1.5, "extra":8,
 		"desc": "选定目标并随机护体 3 名队友，3 回合物防提升 50%",
 	},
 	"金刚护法": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 20, "cd": 3, "buff": "atk_up", "bturn": 3, "bvalue": 1.5,
+		"mp": 20, "cd": 3, "buff": "atk_up", "bturn": 3, "bvalue": 1.5, "extra":3,
 		"desc": "选定目标并随机护法 3 名队友，3 回合物理攻击提升 50%",
 	},
 	"金刚护魂": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 20, "cd": 3, "buff": "mdef_up", "bturn": 3, "bvalue": 1.5,
+		"mp": 20, "cd": 3, "buff": "mdef_up", "bturn": 3, "bvalue": 1.5, "extra": 3,
 		"desc": "选定目标并随机护魂 3 名队友，3 回合魔防提升 50%",
 	},
 	"如沐春风": {
@@ -1585,8 +1609,8 @@ const SKILL_LEARN_DB := {
 		{ "level": 13, "skills": ["金刚护魂"] },
 		{ "level": 16, "skills": ["牵缘术"] },
 	],
-	"zhongkui": [
-		{ "level": 1,  "skills": ["破防击","失魂符"] },
+	"taoyaoyao": [
+		{ "level": 1,  "skills": ["如沐春风","护体真气"] },
 		{ "level": 4,  "skills": ["三连击"] },
 		{ "level": 7,  "skills": ["降魔杵"] },
 		{ "level": 10, "skills": ["护体真气"] },
@@ -1634,6 +1658,7 @@ func _register_skills() -> void:
 		sk.apply_buff_turns  = row.get("bturn", 0)
 		sk.apply_buff_chance = row.get("bchance", 0.0)
 		sk.apply_buff_value  = row.get("bvalue", 0.0)
+		sk.extra_targets    = row.get("extra", 0)
 		sk.sound_path        = row.get("sound", "")
 		SkillManager.register_skill(sk)
 

@@ -9,6 +9,7 @@ extends Node2D
 @onready var _audio_atk:  AudioStreamPlayer = $Audio_Attack
 @onready var _audio_cast: AudioStreamPlayer = $Audio_Cast
 @onready var _select_indicator: Sprite2D = $SelectIndicator
+@onready var _png: AnimatedSprite2D = $PNG
 
 ## 是否可以被点击选中（玩家回合才允许）
 var selectable: bool = false
@@ -153,6 +154,8 @@ func _play_select_flash() -> void:
 # 动画
 # ─────────────────────────────────────────────
 func play_animation(anim_name: String) -> void:
+	if _try_play_any(anim_name):
+		return
 	was_player.play(anim_name, anim_name == "idle")
 
 ## 播放施法音效（降级：施法音效→攻击音效→通用音效）
@@ -199,6 +202,10 @@ func play_ranged_attack() -> void:
 func play_hit_once() -> void:
 	if battle_character.is_dead:
 		return
+	# 优先播 PNG 受击动画
+	if _try_play_png("hurt"):
+		return
+	sprite.visible = true
 	was_player.play("hit", false)
 	# 播放 gotHit 动画精灵（如果存在）
 	var hit_ani := get_node_or_null("gotHit") as AnimatedSprite2D
@@ -415,3 +422,82 @@ func _charred_death() -> void:
 		await was_player.animation_finished
 		was_player.stop()
 	sprite.modulate = Color(0.12, 0.06, 0.02)
+
+
+## 尝试播放 PNG 动画（支持别名：WAS 名 → PNG 后缀）
+func _try_play_any(was_anim: String) -> bool:
+	var suffix_map := {
+		"move": "walk",
+		"cast": "magic",
+	}
+	var suffix = suffix_map.get(was_anim, was_anim)
+	if _try_play_png(suffix):
+		return true
+	if suffix != was_anim and _try_play_png(was_anim):
+		return true
+	return false
+
+
+## 循环播放 PNG 动画（用于 walk/idle 等需要持续的动画）
+func _play_png_loop(suffix: String) -> void:
+	if _png == null or not _png.sprite_frames:
+		return
+	if battle_character == null or battle_character.stats == null:
+		return
+	var char_name := battle_character.stats.character_name
+	var anim_name := char_name + suffix
+	if not _png.sprite_frames.has_animation(anim_name):
+		return
+	_png.visible = true
+	_png.animation = anim_name
+	_png.frame = 0
+	_png.play()
+	sprite.visible = false
+
+
+## 尝试播放 PNG 动画（如果有 PNG 节点且有所需动画）
+func _try_play_png(anim_suffix: String) -> bool:
+	if _png == null or not _png.sprite_frames:
+		return false
+	if battle_character == null:
+		return false
+	var char_name := battle_character.stats.character_name
+	var anim_name := char_name + anim_suffix
+	if not _png.sprite_frames.has_animation(anim_name):
+		return false
+	_png.visible = true
+	_png.animation = anim_name
+	_png.frame = 0
+	_png.play()
+	if not _png.sprite_frames.get_animation_loop(anim_name):
+		_png.animation_finished.connect(func():
+			if not is_instance_valid(_png):
+				return
+			var idle_anim := battle_character.stats.character_name + "idle"
+			if _png.sprite_frames and _png.sprite_frames.has_animation(idle_anim):
+				_png.animation = idle_anim
+				_png.play()
+			else:
+				_png.visible = false
+		, CONNECT_ONE_SHOT)
+	sprite.visible = false
+	return true
+
+
+## 设置 PNG / WAS 模式
+func set_png_mode(use_png: bool) -> void:
+	if _png == null:
+		return
+	if battle_character == null or battle_character.stats == null:
+		return
+	var char_name := battle_character.stats.character_name
+	var idle_anim := char_name + "idle"
+	var has_png := _png.sprite_frames != null and _png.sprite_frames.has_animation(idle_anim)
+	if has_png:
+		sprite.visible = false
+		_png.visible = true
+		_png.animation = idle_anim
+		_png.play()
+	else:
+		_png.visible = false
+		sprite.visible = true

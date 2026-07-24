@@ -48,6 +48,9 @@ enum TargetType { SINGLE_ENEMY, SINGLE_ALLY, SELF, ALL_ENEMIES, ALL_ALLIES }
 @export var apply_buff_chance: float = 1.0  # 成功率 0.0~1.0
 @export var apply_buff_value: float = 0.0   # Buff 携带的数值（如百分比）
 
+## 群体参数
+@export var extra_targets: int = 0  # 除主目标外额外作用的友军数（0=单目标）
+
 ## 动画标签（对应场景中的 AnimationPlayer 动画名）
 @export var animation_name: String = "attack"
 @export var vfx_scene_path: String = ""  # 粒子特效场景路径（可选）

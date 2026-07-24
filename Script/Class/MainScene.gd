@@ -75,10 +75,11 @@ func _ready() -> void:
 	_add_btn_labels()
 	add_child(load("res://Script/Class/CursorController.gd").new())
 	GameData.add_party_by_name("游霄云")
+	GameData.add_party_by_name("敖白")
 	GameData.add_party_by_name("千面")
-	GameData.add_party_by_name("堕十一")
+	GameData.add_party_by_name("桃夭夭")
 	GameData.add_party_by_name("叮咚")
-	GameData.add_party_by_name("凌风")
+
 	#ameData.add_party_by_name("大将军")
 	_update_time_volume()
 	
@@ -841,17 +842,37 @@ func show_team_chat(dialogue_file: String, title: String, flag: String = "") -> 
 		var pt := bubble.get_node_or_null("%portrait") as TextureRect
 		if pt:
 			var was_path := ""
+			var png_portrait := ""
 			for mid in GameData.CHARACTER_DB:
 				if GameData.CHARACTER_DB[mid].name == dl.character:
 					was_path = GameData.CHARACTER_DB[mid].get("was_base_path", "")
+					png_portrait = GameData.CHARACTER_DB[mid].get("portrait_path", "")
 					break
-			if was_path.is_empty(): was_path = "res://WAS/" + dl.character
-			var pp := was_path.path_join("头像/头像.was")
-			if FileAccess.file_exists(pp):
-				var r := WASReader.new()
-				if r.load_from_file(pp):
-					var d := r.decode_frame(0, 0)
-					if not d.is_empty(): pt.texture = d.get("texture", null)
+			# 优先 PNG 头像：{portrait_path}/{角色名}.png
+			var set := false
+			if not png_portrait.is_empty():
+				var png_path := png_portrait.trim_suffix("/") + "/" + dl.character + ".png"
+				if FileAccess.file_exists(png_path):
+					var img := Image.load_from_file(png_path)
+					if img != null:
+						pt.texture = ImageTexture.create_from_image(img)
+						set = true
+			# 自动检测：Graphic/Character/{角色名}/{角色名}.png
+			if not set:
+				var auto_png = "res://Graphic/Character/" + dl.character + "/" + dl.character + ".png"
+				if FileAccess.file_exists(auto_png):
+					var img := Image.load_from_file(auto_png)
+					if img != null:
+						pt.texture = ImageTexture.create_from_image(img)
+						set = true
+			if not set:
+				if was_path.is_empty(): was_path = "res://WAS/" + dl.character
+				var pp := was_path.path_join("头像/头像.was")
+				if FileAccess.file_exists(pp):
+					var r := WASReader.new()
+					if r.load_from_file(pp):
+						var d := r.decode_frame(0, 0)
+						if not d.is_empty(): pt.texture = d.get("texture", null)
 
 		# 隐藏不需要的
 		for hide_name in ["ResponsesMenu", "Control"]:

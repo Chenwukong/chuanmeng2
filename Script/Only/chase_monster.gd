@@ -5,7 +5,7 @@ extends Node2D
 
 @export var speed: float = 800.0
 @export var repath_interval: float = 0.8
-@export var catch_distance: float = 40.0
+@export var catch_distance: float = 120.0
 
 var _player: Node2D = null
 var _astar: AStarGrid2D = null

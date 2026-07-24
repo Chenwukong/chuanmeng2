@@ -109,6 +109,9 @@ func setup(character_stats: CharacterStats, for_player: bool = false) -> void:
 		# 检测武器 WAS
 		if parent.has_method("setup_weapon"):
 			parent.setup_weapon(stats.was_base_path)
+	# 检测 PNG/WAS 模式（自动检测 PNG 节点是否有匹配动画）
+	if parent.has_method("set_png_mode"):
+		parent.set_png_mode(stats.use_png)
 
 	# 加载角色专属攻击音效
 	if not stats.attack_sound_path.is_empty():
@@ -323,6 +326,7 @@ func _register_was_anims(was: WASAnimationPlayer, base_path: String) -> void:
 		"hit":    ["挨打", "hit"],
 		"die":    ["死亡", "die"],
 		"cast":   ["施法", "cast"],
+		"defend": ["防御", "defend"],
 		"move":   ["移动", "move", "行走", "walk"],
 	}
 	for anim_name in anim_names:

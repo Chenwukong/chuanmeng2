@@ -25,10 +25,12 @@
 [ext_resource type="FontFile" uid="uid://dgudp2duoeeta" path="res://Graphic/UI/Font/aajiuzhongxiao.ttf" id="24_pd17h"]
 [ext_resource type="Texture2D" uid="uid://cisfuyciwa4h2" path="res://Graphic/UI/剧情回顾-removebg-preview.png" id="25_ag87l"]
 [ext_resource type="PackedScene" uid="uid://dno5u7h0tr5vo" path="res://scenes/tcp_sprite.tscn" id="25_pd17h"]
+[ext_resource type="Texture2D" uid="uid://do5jth1vrgcla" path="res://Graphic/RANDOM/lightTexture.png" id="26_ag87l"]
 
 [node name="BattleScene" type="CanvasLayer" unique_id=1995866063]
 layer = 3
 script = ExtResource("1_bq3b7")
+metadata/_edit_horizontal_guides_ = [-164.0]
 
 [node name="Black" type="ColorRect" parent="." unique_id=1106428944]
 visible = false
@@ -390,3 +392,20 @@ offset_top = 2.206677
 offset_right = 85.88447
 offset_bottom = 27.21568
 text = "二倍速(F1) "
+
+[node name="PointLight2D" type="PointLight2D" parent="." unique_id=1522890980]
+visible = false
+position = Vector2(403.9076, 266.0845)
+rotation = 0.6981317
+scale = Vector2(1.0369538, 0.9889533)
+color = Color(0.627451, 0.1254902, 0.9411765, 1)
+energy = 6.0
+texture = ExtResource("26_ag87l")
+
+[node name="PointLight2D2" type="PointLight2D" parent="." unique_id=1845410223]
+visible = false
+position = Vector2(894.5, 565)
+scale = Vector2(1.5527345, 0.89843744)
+color = Color(0, 1, 1, 1)
+energy = 1.5
+texture = ExtResource("26_ag87l")

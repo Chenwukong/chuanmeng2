@@ -10,6 +10,12 @@
 [ext_resource type="Texture2D" uid="uid://dhv7omnogu1d4" path="res://Graphic/RANDOM/Mouse_DOWN.png" id="8_mouse"]
 [ext_resource type="Texture2D" uid="uid://ci1e7r1d47pma" path="res://Graphic/RANDOM/shadow (2).png" id="9_shadow"]
 [ext_resource type="Texture2D" uid="uid://dw5n6u0u8u1v1" path="res://Graphic/BattleAnimation/#十一弦攻击【敌】.png" id="10_vr8dx"]
+[ext_resource type="Texture2D" uid="uid://hceqctba306u" path="res://Graphic/Battler/敖白/破碎无双+敖白.png" id="11_ovimw"]
+[ext_resource type="Texture2D" uid="uid://ctt87w775e6es" path="res://Graphic/Battler/敖白/敖白★5.png" id="11_vo2sq"]
+[ext_resource type="Texture2D" uid="uid://dgdty14bu5idy" path="res://Graphic/Battler/敖白/敖白★3.png" id="12_rnqyt"]
+[ext_resource type="Texture2D" uid="uid://bbktwrsm53phu" path="res://Graphic/Battler/敖白/敖白★4.png" id="13_ovimw"]
+[ext_resource type="Texture2D" uid="uid://ni24mgceyp6e" path="res://Graphic/Battler/敖白/敖白.png" id="14_cvivd"]
+[ext_resource type="Texture2D" uid="uid://dhvyc1sbsc5ce" path="res://Graphic/Battler/敖白/敖白-法术.png" id="16_cvivd"]
 
 [sub_resource type="RectangleShape2D" id="Rect_click"]
 size = Vector2(71, 97.25)
@@ -72,6 +78,235 @@ animations = [{
 }]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_vr8dx"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mukxi"]
+atlas = ExtResource("11_ovimw")
+region = Rect2(576, 192, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bd5f2"]
+atlas = ExtResource("11_ovimw")
+region = Rect2(768, 192, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kn67w"]
+atlas = ExtResource("11_vo2sq")
+region = Rect2(0, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bjmhi"]
+atlas = ExtResource("11_vo2sq")
+region = Rect2(280, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dyr18"]
+atlas = ExtResource("11_vo2sq")
+region = Rect2(560, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r56ig"]
+atlas = ExtResource("11_vo2sq")
+region = Rect2(840, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bt6mc"]
+atlas = ExtResource("12_rnqyt")
+region = Rect2(0, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vax1o"]
+atlas = ExtResource("12_rnqyt")
+region = Rect2(280, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_umly1"]
+atlas = ExtResource("12_rnqyt")
+region = Rect2(560, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m1hl6"]
+atlas = ExtResource("12_rnqyt")
+region = Rect2(840, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ndjjk"]
+atlas = ExtResource("13_ovimw")
+region = Rect2(0, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nf0gi"]
+atlas = ExtResource("13_ovimw")
+region = Rect2(280, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dsp7k"]
+atlas = ExtResource("13_ovimw")
+region = Rect2(560, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_okhkd"]
+atlas = ExtResource("13_ovimw")
+region = Rect2(840, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h68ff"]
+atlas = ExtResource("14_cvivd")
+region = Rect2(0, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8jms3"]
+atlas = ExtResource("14_cvivd")
+region = Rect2(280, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iai5o"]
+atlas = ExtResource("14_cvivd")
+region = Rect2(560, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jlfkn"]
+atlas = ExtResource("14_cvivd")
+region = Rect2(840, 0, 280, 222)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_woe8l"]
+atlas = ExtResource("16_cvivd")
+region = Rect2(576, 384, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_82k2n"]
+atlas = ExtResource("11_ovimw")
+region = Rect2(0, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3i2xy"]
+atlas = ExtResource("11_ovimw")
+region = Rect2(192, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tsrxg"]
+atlas = ExtResource("11_ovimw")
+region = Rect2(384, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3uhbm"]
+atlas = ExtResource("11_ovimw")
+region = Rect2(576, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dsglp"]
+atlas = ExtResource("11_ovimw")
+region = Rect2(768, 0, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s3id1"]
+atlas = ExtResource("11_ovimw")
+region = Rect2(0, 192, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k4la0"]
+atlas = ExtResource("11_ovimw")
+region = Rect2(192, 192, 192, 192)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_mukxi"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mukxi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bd5f2")
+}],
+"loop": false,
+"name": &"敖白attack",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kn67w")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bjmhi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dyr18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r56ig")
+}],
+"loop": false,
+"name": &"敖白dead",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bt6mc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vax1o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_umly1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m1hl6")
+}],
+"loop": true,
+"name": &"敖白defend",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ndjjk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nf0gi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dsp7k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_okhkd")
+}],
+"loop": true,
+"name": &"敖白hurt",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h68ff")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8jms3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iai5o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jlfkn")
+}],
+"loop": true,
+"name": &"敖白idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_woe8l")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_woe8l")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_woe8l")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_woe8l")
+}],
+"loop": false,
+"name": &"敖白magic",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_82k2n")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3i2xy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tsrxg")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3uhbm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dsglp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s3id1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k4la0")
+}],
+"loop": true,
+"name": &"敖白walk",
+"speed": 5.0
+}]
 
 [node name="fightScenePlayer" type="Node2D" unique_id=350880952]
 script = ExtResource("1_15wyq")
@@ -182,3 +417,9 @@ frame_progress = 1.0
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=770575423]
 sprite_frames = SubResource("SpriteFrames_vr8dx")
+
+[node name="PNG" type="AnimatedSprite2D" parent="." unique_id=765849592]
+visible = false
+position = Vector2(5, -31)
+sprite_frames = SubResource("SpriteFrames_mukxi")
+animation = &"敖白hurt"

@@ -40,6 +40,9 @@ func _ready() -> void:
 	_wasp.load_all()
 	_wasp.play("idle")  # 初始化不走 _play_hero，避免误触骑行状态
 
+	# 加载武器（如果有武器目录）
+	_setup_weapon("res://WAS/游霄云/")
+
 	# 坐骑动画
 	_mount_wasp.add_anim("move", "res://WAS/坐骑/坐骑-宝贝葫芦/行走.was")
 	_mount_wasp.add_anim("idle", "res://WAS/坐骑/坐骑-宝贝葫芦/站立.was")
@@ -55,6 +58,36 @@ func _ready() -> void:
 	if p and "astar_grid" in p:
 		_astar = p.astar_grid
 		_cell_size = p.get("astar_cell_size") if "astar_cell_size" in p else 20
+
+
+## 加载武器动画（如果武器目录存在）
+func _setup_weapon(was_base: String) -> void:
+	var weapon_dir := was_base.trim_suffix("/") + "武器"
+	if not DirAccess.dir_exists_absolute(weapon_dir):
+		return
+	var idle_path := weapon_dir + "/待机.was"
+	if not FileAccess.file_exists(idle_path):
+		return
+	var weapon_sprite := Sprite2D.new()
+	weapon_sprite.name = "WeaponSprite"
+	weapon_sprite.centered = true
+	weapon_sprite.z_index = $Sprite2D.z_index + 1
+	add_child(weapon_sprite)
+
+	var weapon_was := WASAnimationPlayer.new()
+	weapon_was.name = "WeaponWAS"
+	weapon_was.target_sprite = NodePath("../WeaponSprite")
+	weapon_was.direction = _wasp.direction
+	weapon_was.frame_time = _wasp.frame_time
+	add_child(weapon_was)
+
+	var names := {"idle":"待机","move":"移动","walk":"行走"}
+	for anim in names:
+		var p = weapon_dir + "/" + names[anim] + ".was"
+		if FileAccess.file_exists(p):
+			weapon_was.add_anim(anim, p)
+	weapon_was.load_all()
+	weapon_was.play("idle")
 
 
 func setup_astar(a: AStarGrid2D, cs: int) -> void:
@@ -201,6 +234,8 @@ func _process(delta: float) -> void:
 					_mount_wasp.play("move", true)
 				else:
 					_play_hero("move")
+				var ww = get_node_or_null("WeaponWAS") as WASAnimationPlayer
+				if ww: ww.play("move", true)
 		_report_encounter_step()
 
 	elif _click_path.is_empty() or _click_idx >= _click_path.size():
@@ -209,6 +244,8 @@ func _process(delta: float) -> void:
 			_play_hero("idle")
 			if _riding:
 				_mount_wasp.play("idle")
+			var ww = get_node_or_null("WeaponWAS") as WASAnimationPlayer
+			if ww: ww.play("idle", true)
 
 	else:
 		if not _is_moving:
@@ -218,6 +255,8 @@ func _process(delta: float) -> void:
 				_mount_wasp.play("move", true)
 			else:
 				_play_hero("move")
+			var ww = get_node_or_null("WeaponWAS") as WASAnimationPlayer
+			if ww: ww.play("move", true)
 
 		var next_pt: Vector2 = _click_path[_click_idx]
 		var to: Vector2 = next_pt - global_position
@@ -232,6 +271,8 @@ func _process(delta: float) -> void:
 				_play_hero("idle")
 				if _riding:
 					_mount_wasp.play("idle")
+				var ww = get_node_or_null("WeaponWAS") as WASAnimationPlayer
+				if ww: ww.play("idle", true)
 		else:
 			var dir: Vector2 = to / dist
 			_set_dir(dir)
@@ -323,6 +364,9 @@ func _set_dir(dir: Vector2) -> void:
 		_dir_idx = n
 		_wasp.direction = _dir_idx
 		_mount_wasp.direction = _dir_idx
+		var weapon_was = get_node_or_null("WeaponWAS") as WASAnimationPlayer
+		if weapon_was:
+			weapon_was.direction = _dir_idx
 
 ## 鼠标点击水面波纹特效
 func _spawn_click_ripple(pos: Vector2) -> void:

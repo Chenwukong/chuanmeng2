@@ -846,13 +846,15 @@ func _apply_aoe_buff(target: BattleCharacter, buff_id: String, turns: int, value
 	} 
 
 	# 受益者列表
+	var data = SkillManager.get_skill(skill_id)
+	var extra_count = data.extra_targets if data != null else 3
 	var beneficiaries: Array[BattleCharacter] = [target]
 	var candidates: Array[BattleCharacter] = []
 	for c in party:
 		if c != target and not c.is_dead and c.get_buff_layer_count(buff_id) < 3 and not c.has_buff_source(buff_id, skill_id):
 			candidates.append(c)
 	candidates.shuffle()
-	for j in mini(3, candidates.size()):
+	for j in mini(extra_count, candidates.size()):
 		beneficiaries.append(candidates[j])
 
 	# 所有人身上的法术特效同时启动
@@ -905,7 +907,10 @@ func player_guard(ally: BattleCharacter) -> void:
 	if state != BattleState.PLAYER_TURN: return
 	_change_state(BattleState.PLAYER_ACTION)
 	guard_relations[ally] = _current_actor
-	# 保护动画：守护者播放 buff 特效 + 飘字
+	# 保护动画：守护者播放防御/守护动画
+	var nd = _current_actor.get_parent()
+	if nd and nd.has_method("play_guard_cast"):
+		nd.play_guard_cast()
 	_current_actor.show_trait_float("守护")
 	_current_actor.play_dual_spell_effect()
 	_push_log(GameData._T("LOG_GUARD_SET") % [_current_actor.stats.get_display_name(), ally.stats.get_display_name()], "player_action")
@@ -1792,6 +1797,7 @@ func _update_element_resonance() -> void:
 	for c in party:
 		if c.is_dead: continue
 		var e = c.stats.element
+		if e == CharacterStats.Element.NONE: continue
 		counts[e] = counts.get(e, 0) + 1
 	for elem in counts:
 		var count: int = counts[elem]
@@ -1799,17 +1805,17 @@ func _update_element_resonance() -> void:
 		var info: Dictionary = _ELEM_BUFFS.get(elem, {})
 		var buff_id: String = info.get("dmg", "")
 		if buff_id.is_empty(): continue
-		var value = 1.10 if count >= 3 else 1.05
+		var value = 1.20 if count >= 5 else (1.15 if count >= 4 else (1.10 if count >= 3 else 1.05))
 		for c in party:
 			if c.is_dead: continue
 			if not c.trait_data.has("_elem_resonance"):
 				c.trait_data["_elem_resonance"] = {}
 			c.trait_data["_elem_resonance"][buff_id] = value
-	# 五行齐全：额外小幅加成
+	# 五行齐全（不含无属性）：额外小幅加成
 	if counts.keys().size() >= 5:
 		for c in party:
 			if c.is_dead: continue
 			if not c.trait_data.has("_elem_resonance"):
 				c.trait_data["_elem_resonance"] = {}
 			for k in ["atk_up", "matk_up", "def_up", "haste", "hp_up"]:
-				c.trait_data["_elem_resonance"]["all_" + k] = 1.03
+				c.trait_data["_elem_resonance"]["all_" + k] = 1.1

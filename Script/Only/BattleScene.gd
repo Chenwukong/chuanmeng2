@@ -279,6 +279,11 @@ func _ready() -> void:
 	# BGM 立刻启动，不等延迟（延迟可能在战斗结束时还未触发）
 	_start_bgm()
 	_setup_double_speed()
+	# 夜间战斗亮灯
+	if GameData.is_night_time():
+		for child in get_children():
+			if child is PointLight2D:
+				child.visible = true
 
 ## 二倍速面板
 func _setup_double_speed() -> void:

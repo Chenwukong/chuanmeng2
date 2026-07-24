@@ -187,17 +187,35 @@ func _load_portrait(character_name: String) -> void:
 		return
 	# 1) CHARACTER_DB
 	var was_path := ""
+	var png_portrait := ""
 	for mid in GameData.CHARACTER_DB:
 		if GameData.CHARACTER_DB[mid].name == character_name:
 			was_path = GameData.CHARACTER_DB[mid].get("was_base_path", "")
+			png_portrait = GameData.CHARACTER_DB[mid].get("portrait_path", "")
 			break
 	# 2) 敌人数据库
 	if was_path.is_empty():
 		for row in GameData._enemy_db_cache.values():
 			if row.name == character_name:
 				was_path = row.get("was_base_path", "")
+				png_portrait = row.get("portrait_path", "")
 				break
-	# 3) 直接猜 WAS/<角色名>
+	# 3) 优先 PNG 头像：{portrait_path}/{角色名}.png
+	if not png_portrait.is_empty():
+		var png_path := png_portrait.trim_suffix("/") + "/" + character_name + ".png"
+		if FileAccess.file_exists(png_path):
+			var img := Image.load_from_file(png_path)
+			if img != null:
+				portrait.texture = ImageTexture.create_from_image(img)
+				return
+	# 3.5) 自动检测：Graphic/Character/{角色名}/{角色名}.png
+	var auto_png = "res://Graphic/Character/" + character_name + "/" + character_name + ".png"
+	if FileAccess.file_exists(auto_png):
+		var img := Image.load_from_file(auto_png)
+		if img != null:
+			portrait.texture = ImageTexture.create_from_image(img)
+			return
+	# 4) 直接猜 WAS/<角色名>
 	if was_path.is_empty():
 		was_path = "res://WAS/" + character_name
 

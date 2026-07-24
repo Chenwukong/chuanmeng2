@@ -10,7 +10,7 @@ var en_name: String = ""  # 英文名（locale="en" 时使用）
 @export var emoji_icon: String = "🧙"
 
 ## 五行：金、木、水、火、土
-enum Element { METAL, WOOD, WATER, FIRE, EARTH }
+enum Element { NONE, METAL, WOOD, WATER, FIRE, EARTH }
 ## 返回当前语言下的显示名
 static func display_name(s) -> String:
 	if s == null: return ""
@@ -26,12 +26,22 @@ func get_display_name() -> String:
 
 static func element_name(e: Element) -> String:
 	match e:
+		Element.NONE:  return "无"
 		Element.METAL: return "金"
 		Element.WOOD:  return "木"
 		Element.WATER: return "水"
 		Element.FIRE:  return "火"
 		_:              return "土"
 @export var element: Element = Element.METAL
+
+static func element_to_enum(s: String) -> Element:
+	match s:
+		"金": return Element.METAL
+		"木": return Element.WOOD
+		"水": return Element.WATER
+		"火": return Element.FIRE
+		"土": return Element.EARTH
+		_:    return Element.NONE
 
 ## 定位：主、攻、辅、召、护
 enum Role { MAIN = 1 << 0, ATTACK = 1 << 1, SUPPORT = 1 << 2, SUMMON = 1 << 3, GUARD = 1 << 4 }
@@ -92,6 +102,14 @@ enum TalismanType { FIRE, SLEEP, ICE, HASTE, CEASEFIRE, REVIVE }
 ## WAS 动画基础路径（目录路径，其下的文件按约定命名）
 ## 文件约定：idle.was, attack.was, hit.was, die.was
 @export var was_base_path: String = ""
+## 头像路径（PNG 目录），如 "res://character/敖白/"，优先于 WAS 头像
+@export var portrait_path: String = ""
+## 头像偏移（PNG 头像位置微调）
+@export var portrait_offset: Vector2 = Vector2.ZERO
+## 队伍弹窗行走图偏移
+@export var team_offset: Vector2 = Vector2.ZERO
+## 使用 PNG 序列帧动画（代替 WAS），在 PNG 节点中按 {角色名}{动作} 命名
+@export var use_png: bool = false
 
 ## WAS 动画方向索引（0-7，视素材而定）
 @export var was_direction: int = 0
@@ -165,6 +183,10 @@ func duplicate_for_battle() -> CharacterStats:
 	copy.ai_strategy     = ai_strategy
 	copy.was_base_path   = was_base_path
 	copy.was_direction   = was_direction
+	copy.portrait_path   = portrait_path
+	copy.portrait_offset = portrait_offset
+	copy.team_offset     = team_offset
+	copy.use_png         = use_png
 	copy.exp_reward      = exp_reward
 	copy.attack_sound_path = attack_sound_path
 	copy.cast_sound_path   = cast_sound_path

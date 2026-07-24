@@ -844,6 +844,7 @@ func _on_equip_slot_pressed(slot_key: String) -> void:
 		_selected_equip_idx = -1
 		detail_label.text = "已装备 %s 到 %s" % [selected.get("display_name", ""), slot_key]
 		equipment = GameData.player_equipment.get(_member_id, {})
+		_play_sfx("res://Audio/SE/001-System01.ogg")
 		_refresh_equip_slots()
 		_render_page()
 		return
@@ -870,6 +871,7 @@ func _on_equip_slot_rightclick(event: InputEvent, slot_key: String) -> void:
 			equip_bag = GameData.equip_bag
 			detail_label.text = "%s 已卸下" % slot_key
 			equipment = GameData.player_equipment.get(_member_id, {})
+			_play_sfx("res://Audio/SE/002-System02.ogg")
 			_refresh_equip_slots()
 			_render_page()
 
@@ -887,6 +889,7 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 			GameData.equip_item_by_index(_member_id, slot, bag_idx)
 			equip_bag = GameData.equip_bag
 			equipment = GameData.player_equipment.get(_member_id, {})
+			_play_sfx("res://Audio/SE/001-System01.ogg")
 			_refresh_equip_slots()
 			_render_page()
 		return
@@ -926,6 +929,7 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 		_selected_equip_idx = -1
 		detail_label.text = "已装备 %s" % eq.get("display_name", "")
 		equipment = GameData.player_equipment.get(_member_id, {})
+		_play_sfx("res://Audio/SE/001-System01.ogg")
 		_refresh_equip_slots()
 		_render_page()
 		return
@@ -939,3 +943,15 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 	]
 	_render_page()
 	_refresh_equip_slots()
+
+
+## 播放界面音效
+func _play_sfx(path: String) -> void:
+	if not ResourceLoader.exists(path):
+		return
+	var snd = AudioStreamPlayer.new()
+	snd.stream = load(path)
+	snd.bus = "SFX"
+	get_tree().root.add_child(snd)
+	snd.play()
+	snd.finished.connect(snd.queue_free)

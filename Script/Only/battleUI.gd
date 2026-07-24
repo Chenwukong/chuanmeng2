@@ -42,10 +42,47 @@ var _quick_skill_per_char: Dictionary = {}  # character_name/member_id -> skill_
 # 🎨 头像变体缓存 🎨
 var _portrait_cache: Dictionary = {}
 
-func _portrait_texture(was_base: String, variant: String) -> Texture2D:
+func _load_png_portrait(base_path: String, variant: String) -> Texture2D:
+	if base_path.is_empty():
+		return null
+	var png_path := base_path.trim_suffix("/") + "/" + variant + ".png"
+	if not FileAccess.file_exists(png_path):
+		return null
+	var img := Image.load_from_file(png_path)
+	if img == null:
+		return null
+	return ImageTexture.create_from_image(img)
+
+
+func _portrait_texture(was_base: String, variant: String, png_base: String = "", char_name: String = "") -> Texture2D:
 	var key := was_base + "/" + variant
 	if _portrait_cache.has(key):
 		return _portrait_cache[key]
+	# 尝试 PNG：{portrait_path}/{角色名}.png
+	if not png_base.is_empty() and not char_name.is_empty():
+		var png_path = png_base.trim_suffix("/") + "/" + char_name + ".png"
+		if FileAccess.file_exists(png_path):
+			var img := Image.load_from_file(png_path)
+			if img != null:
+				_portrait_cache[key] = ImageTexture.create_from_image(img)
+				return _portrait_cache[key]
+	# 自动检测：Graphic/Character/{角色名}/{角色名}.png
+	if not char_name.is_empty():
+		var auto_path = "res://Graphic/Character/" + char_name + "/" + char_name + ".png"
+		if FileAccess.file_exists(auto_path):
+			var img := Image.load_from_file(auto_path)
+			if img != null:
+				_portrait_cache[key] = ImageTexture.create_from_image(img)
+				return _portrait_cache[key]
+	# 尝试 PNG（变体名：x44.png / 头像.png）
+	if not png_base.is_empty():
+		var png_path2 = png_base.trim_suffix("/") + "/" + variant + ".png"
+		if FileAccess.file_exists(png_path2):
+			var img := Image.load_from_file(png_path2)
+			if img != null:
+				_portrait_cache[key] = ImageTexture.create_from_image(img)
+				return _portrait_cache[key]
+	# 尝试 WAS 头像（变体）
 	var path := was_base.trim_suffix("/") + "/头像/" + variant + ".was"
 	if FileAccess.file_exists(path):
 		var r := WASReader.new()
@@ -77,9 +114,21 @@ func _update_avatar_for(c: BattleCharacter) -> void:
 	var e = _turn_entries.get(c)
 	if e == null:
 		return
-	var tex := _portrait_texture(c.stats.was_base_path, "x44")
+	var tex = _portrait_texture(c.stats.was_base_path, "x44", c.stats.portrait_path, c.stats.character_name)
 	if tex:
 		e["avatar"].texture = tex
+		# 只有 PNG 头像放大 4 倍加偏移
+		var png_path = "res://Graphic/Character/" + c.stats.character_name + "/" + c.stats.character_name + ".png"
+		if FileAccess.file_exists(png_path):
+			e["avatar"].scale = Vector2(4, 4)
+			var off = c.stats.portrait_offset
+			# 记录原始位置（只记一次）
+			if not e["avatar"].has_meta("_orig_pos"):
+				e["avatar"].set_meta("_orig_pos", (e["avatar"] as Control).position)
+			e["avatar"].layout_mode = 0
+			e["avatar"].position = (e["avatar"].get_meta("_orig_pos") as Vector2) + off
+		else:
+			e["avatar"].scale = Vector2(1, 1)
 
 
 # 📊 敌人总血量条 📊
@@ -166,17 +215,17 @@ func _ready() -> void:
 	battle_manager.character_animated.connect(_on_character_animated)
 	battle_manager.bonus_attack_started.connect(_on_bonus_attack_started)
 	battle_manager.party_changed.connect(_connect_party_signals)
+	_init_log()
 	actor_indicator.text = ""
 	action_panel.set_enabled(false)
-
-	# 延迟到下一帧执行 UI 初始化，确保 BattleScene._ready() 已调用 battle_manager.setup()
-	call_deferred("init_ui")
+	# 延迟到下一帧连接战斗信号（确保 battle_manager.setup() 已执行）
+	call_deferred("_connect_battle_signals")
 
 # ══════════════════════════════════════════════
 # BattleScene 调用的初始化入口
 # ══════════════════════════════════════════════
 
-func init_ui() -> void:
+func _init_log() -> void:
 	# 重置仇恨 eye
 	_threat_eye_first = true
 	_last_top_threat_key = ""
@@ -185,6 +234,9 @@ func init_ui() -> void:
 	if not GameData.world_log_text.is_empty():
 		battle_log.text = GameData.world_log_text
 		battle_log.scroll_to_line(battle_log.get_line_count())
+
+
+func _connect_battle_signals() -> void:
 	# 连接敌人点击信号
 	for ch in battle_manager.enemies:
 		var nd = ch.get_parent()
@@ -730,6 +782,7 @@ func _execute_talisman_attack(actor: BattleCharacter, target: BattleCharacter) -
 	if battle_manager.state != BattleManager.BattleState.PLAYER_TURN:
 		return
 	_talisman_attacking = true
+	action_panel.visible = false
 	action_panel.set_enabled(false)
 	print("[符咒攻击] actor=", actor.stats.get_display_name(), " target=", target.stats.get_display_name())
 	_last_attack_target = target
@@ -821,6 +874,8 @@ func _execute_talisman_attack(actor: BattleCharacter, target: BattleCharacter) -
 		await get_tree().process_frame
 	_talisman_attacking = false
 	battle_manager._finish_player_action()
+	action_panel.visible = true
+	action_panel.set_enabled(true)
 
 func _clear_enemy_selection() -> void:
 	for ch in battle_manager.enemies:
@@ -1433,6 +1488,8 @@ func _make_turn_entry(c: BattleCharacter) -> void:
 		c.hp_changed.connect(_on_hp_changed_for_portrait.bind(c))
 		c.buff_added.connect(_on_buff_added_for_portrait.bind(c))
 		c.died.connect(_on_turn_actor_died.bind(c))
+	# 初始头像
+	_update_avatar_for(c)
 
 func _update_turn_order() -> void:
 	# 所有存活角色按 SP 降序排列
@@ -1520,7 +1577,7 @@ func _on_hp_changed_for_portrait(o: int, n: int, _m: int, c: BattleCharacter) ->
 	if n < o:
 		var e = _turn_entries.get(c)
 		if e != null:
-			var tex := _portrait_texture(c.stats.was_base_path, "x44")
+			var tex = _portrait_texture(c.stats.was_base_path, "x44", c.stats.portrait_path, c.stats.character_name)
 			if tex:
 				e["avatar"].texture = tex
 	else:
@@ -1531,7 +1588,7 @@ func _on_buff_added_for_portrait(buff_id: String, c: BattleCharacter) -> void:
 	var e = _turn_entries.get(c)
 	if e == null:
 		return
-	var tex := _portrait_texture(c.stats.was_base_path, "x44")
+	var tex = _portrait_texture(c.stats.was_base_path, "x44", c.stats.portrait_path, c.stats.character_name)
 	if tex:
 		e["avatar"].texture = tex
 
@@ -1609,7 +1666,7 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 				# 目标挨打				
 				var ee = _turn_entries.get(target)
 				if ee != null:
-					var tex := _portrait_texture(target.stats.was_base_path, "x44")
+					var tex = _portrait_texture(target.stats.was_base_path, "x44", target.stats.portrait_path if target.stats else "", target.stats.character_name if target.stats else "")
 					if tex: ee["avatar"].texture = tex
 				# on_hit：攻击命中时立刻扣血，不等走回来
 				# 斩杀特效：died 信号会触发（EnemyNode._on_died 处理冰冻碎冰/失魂离体）			
@@ -1653,7 +1710,7 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 			
 				var ee = _turn_entries.get(target)
 				if ee != null:
-					var tex := _portrait_texture(target.stats.was_base_path, "x44")
+					var tex = _portrait_texture(target.stats.was_base_path, "x44", target.stats.portrait_path if target.stats else "", target.stats.character_name if target.stats else "")
 					if tex: ee["avatar"].texture = tex
 				nd.play_ranged_attack()
 				var target_node: Node2D = target.get_parent()
@@ -1715,7 +1772,7 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 				# 目标挨打				
 				var ee = _turn_entries.get(target)
 				if ee != null:
-					var tex := _portrait_texture(target.stats.was_base_path, "x44")
+					var tex = _portrait_texture(target.stats.was_base_path, "x44", target.stats.portrait_path if target.stats else "", target.stats.character_name if target.stats else "")
 					if tex: ee["avatar"].texture = tex
 				var on_hit := func():
 					battle_manager.flush_pending_damage()
@@ -1760,7 +1817,7 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 				var caster_pos = actor.get_parent().global_position if actor.get_parent() else Vector2.ZERO
 				var ee = _turn_entries.get(target)
 				if ee != null:
-					var tex := _portrait_texture(target.stats.was_base_path, "x44")
+					var tex = _portrait_texture(target.stats.was_base_path, "x44", target.stats.portrait_path if target.stats else "", target.stats.character_name if target.stats else "")
 					if tex: ee["avatar"].texture = tex
 				nd.play_ranged_attack()
 				var tgt_node: Node2D = target.get_parent()
@@ -1802,21 +1859,25 @@ func _on_character_animated(actor: BattleCharacter, anim_name: String, target: B
 # ══════════════════════════════════════════════
 
 func _on_log_pushed(text: String, log_type: String) -> void:
-	var line := "[color=%s]%s[/color]\n" % [LOG_COLORS.get(log_type, "white"), text]
-	battle_log.append_text(line)
+	# 转义文本中的 BBCode 特殊字符，防止被解析成标签
+	var escaped := text.replace("[", "[lb]").replace("]", "[rb]")
+	var line := "[color=%s]%s[/color]\n" % [LOG_COLORS.get(log_type, "white"), escaped]
+	battle_log.text += line
 	if battle_log.text.length() > 5000:
 		battle_log.text = battle_log.text.substr(battle_log.text.length() - 5000)
-	await get_tree().process_frame
-	battle_log.scroll_to_line(battle_log.get_line_count())
+	call_deferred("_scroll_log")
 	GameData.world_log_text += line
-	# 限制长度，超了从前面截
 	if GameData.world_log_text.length() > 5000:
 		GameData.world_log_text = GameData.world_log_text.substr(GameData.world_log_text.length() - 5000)
 	var log_node := get_tree().current_scene.get_node_or_null("UI/BattleLog") as RichTextLabel
 	if log_node:
-		log_node.append_text(line)
+		log_node.text += line
 		if log_node.text.length() > 5000:
 			log_node.text = log_node.text.substr(log_node.text.length() - 5000)
+
+func _scroll_log() -> void:
+	if battle_log and is_instance_valid(battle_log):
+		battle_log.scroll_to_line(battle_log.get_line_count())
 
 func _on_skill_failed(msg: String) -> void:
 	_show_floating_text(msg, Color(0.8, 0.8, 0.8))

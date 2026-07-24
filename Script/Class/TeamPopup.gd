@@ -75,6 +75,69 @@ func _refresh() -> void:
 			# 多出来的格子隐藏
 			player.visible = false
 
+	# 统计五行人数（包括主角）
+	var elem_counts = {}
+	for s in all:
+		if s is CharacterStats:
+			elem_counts[s.element] = elem_counts.get(s.element, 0) + 1
+	# 更新五行人数标签
+	for elem_str in ["金","木","水","火","土"]:
+		var elem_node = get_node_or_null(elem_str) as Label
+		if elem_node == null:
+			continue
+		var count_lbl = elem_node.get_node_or_null("label") as Label
+		if count_lbl == null:
+			continue
+		var elem_val = CharacterStats.element_to_enum(elem_str)
+		var count = elem_counts.get(elem_val, 0)
+		count_lbl.text = str(count)
+		# 颜色：2绿 3蓝 4紫 5红
+		match count:
+			2: count_lbl.modulate = Color(0, 1, 0)
+			3: count_lbl.modulate = Color(0, 0.6, 1)
+			4: count_lbl.modulate = Color(0.6, 0, 1)
+			5: count_lbl.modulate = Color(1, 0, 0)
+			_: count_lbl.modulate = Color(1, 1, 1)
+
+	# 统计共鸣增益
+	var active_gains = []
+	var elem_cfg = {
+		CharacterStats.Element.METAL: {2:"物攻:+5%", 3:"物攻:+10%", 4:"物攻:+15%", 5:"物攻:+20%"},
+		CharacterStats.Element.WOOD:  {2:"治疗:+5%", 3:"治疗:+10%", 4:"治疗:+15%", 5:"治疗:+20%"},
+		CharacterStats.Element.WATER: {2:"速度:+5%", 3:"速度:+10%", 4:"速度:+15%", 5:"速度:+20%"},
+		CharacterStats.Element.FIRE:  {2:"法攻:+5%", 3:"法攻:+10%", 4:"法攻:+15%", 5:"法攻:+20%"},
+		CharacterStats.Element.EARTH: {2:"防御:+5%", 3:"防御:+10%", 4:"防御:+15%", 5:"防御:+20%"},
+	}
+	for elem_val in elem_cfg:
+		var count = elem_counts.get(elem_val, 0)
+		if count >= 5:
+			active_gains.append(elem_cfg[elem_val][5])
+		elif count >= 4:
+			active_gains.append(elem_cfg[elem_val][4])
+		elif count >= 3:
+			active_gains.append(elem_cfg[elem_val][3])
+		elif count >= 2:
+			active_gains.append(elem_cfg[elem_val][2])
+	# 五行齐全
+	var non_zero = 0
+	for ev in [CharacterStats.Element.METAL, CharacterStats.Element.WOOD, CharacterStats.Element.WATER, CharacterStats.Element.FIRE, CharacterStats.Element.EARTH]:
+		if elem_counts.get(ev, 0) > 0:
+			non_zero += 1
+	if non_zero >= 5:
+		active_gains.append("全属性+10%")
+
+	# 显示增益标签
+	for i in 2:
+		var gain_node = get_node_or_null("增益%d" % (i + 1)) as Label
+		if gain_node == null:
+			continue
+		if i < active_gains.size():
+			gain_node.visible = true
+			gain_node.text = active_gains[i]
+		else:
+			gain_node.visible = false
+			gain_node.text = ""
+
 
 func _setup_player(player: Node2D, stats: CharacterStats) -> void:
 	var name_lbl := player.get_node_or_null("name") as Label
@@ -96,9 +159,27 @@ func _setup_player(player: Node2D, stats: CharacterStats) -> void:
 	_play_idle(player, sprite, stats)
 
 
-## 在 player 的 sprite 上播放 WAS 待机动画（朝右下角）
+## 在 player 的 sprite 上播放待机动画（PNG 行走图 或 WAS）
 func _play_idle(player: Node2D, sprite: Sprite2D, stats: CharacterStats) -> void:
-	if sprite == null or stats.was_base_path.is_empty():
+	if sprite == null:
+		return
+
+	# 优先 PNG 行走图：右下方向第一帧
+	var png_path = "res://Graphic/Character/" + stats.character_name + "/行走.png"
+	if FileAccess.file_exists(png_path):
+		var tex = load(png_path) as Texture2D
+		if tex:
+			var frame_w = tex.get_width() / 4
+			var frame_h = tex.get_height() / 4
+			sprite.texture = tex
+			sprite.region_enabled = true
+			sprite.region_rect = Rect2(0, 0, frame_w, frame_h)
+			sprite.centered = true
+			sprite.position = stats.team_offset
+			return
+
+	# 回退 WAS 待机
+	if stats.was_base_path.is_empty():
 		return
 
 	# 查找待机 .was 文件

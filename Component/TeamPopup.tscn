@@ -204,4 +204,112 @@ text = "X"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="金" type="Label" parent="." unique_id=1033615024]
+offset_left = 503.4485
+offset_top = 208.0
+offset_right = 543.4485
+offset_bottom = 231.0
+text = "金:"
+
+[node name="label" type="Label" parent="金" unique_id=576208724]
+layout_mode = 0
+offset_left = 21.551514
+offset_top = 0.41557312
+offset_right = 61.551514
+offset_bottom = 23.415573
+text = "1"
+
+[node name="木" type="Label" parent="." unique_id=1005322249]
+offset_left = 503.0
+offset_top = 229.41557
+offset_right = 543.0
+offset_bottom = 252.41557
+text = "木:"
+
+[node name="label" type="Label" parent="木" unique_id=645653893]
+layout_mode = 0
+offset_left = 21.551514
+offset_top = 0.41557312
+offset_right = 61.551514
+offset_bottom = 23.415573
+text = "1"
+
+[node name="水" type="Label" parent="." unique_id=382315095]
+offset_left = 549.0
+offset_top = 208.0
+offset_right = 589.0
+offset_bottom = 231.0
+text = "水:"
+
+[node name="label" type="Label" parent="水" unique_id=1666467750]
+layout_mode = 0
+offset_left = 21.551514
+offset_top = 0.41557312
+offset_right = 61.551514
+offset_bottom = 23.415573
+text = "1"
+
+[node name="火" type="Label" parent="." unique_id=1879901520]
+offset_left = 549.0
+offset_top = 229.0
+offset_right = 589.0
+offset_bottom = 252.0
+text = "火:"
+
+[node name="label" type="Label" parent="火" unique_id=294425137]
+layout_mode = 0
+offset_left = 21.551514
+offset_top = 0.41557312
+offset_right = 61.551514
+offset_bottom = 23.415573
+text = "1"
+
+[node name="土" type="Label" parent="." unique_id=602097869]
+offset_left = 589.0
+offset_top = 219.0
+offset_right = 629.0
+offset_bottom = 242.0
+text = "土:"
+
+[node name="label" type="Label" parent="土" unique_id=1589863108]
+layout_mode = 0
+offset_left = 21.551514
+offset_top = 0.41557312
+offset_right = 61.551514
+offset_bottom = 23.415573
+text = "1"
+
+[node name="增益1" type="Label" parent="." unique_id=254528252]
+offset_left = 723.0
+offset_top = 205.0
+offset_right = 763.0
+offset_bottom = 228.0
+text = "增益:"
+
+[node name="label" type="Label" parent="增益1" unique_id=1470625276]
+visible = false
+layout_mode = 0
+offset_left = 57.0
+offset_top = -1.0
+offset_right = 97.0
+offset_bottom = 22.0
+text = "1"
+
+[node name="增益2" type="Label" parent="." unique_id=1469315695]
+visible = false
+offset_left = 723.0
+offset_top = 229.0
+offset_right = 763.0
+offset_bottom = 252.0
+text = "增益:"
+
+[node name="label" type="Label" parent="增益2" unique_id=1559014675]
+visible = false
+layout_mode = 0
+offset_left = 38.0
+offset_top = 1.0
+offset_right = 78.0
+offset_bottom = 24.0
+text = "1"
+
 [connection signal="pressed" from="CloseButton" to="." method="_on_close_button_pressed"]
