@@ -75,10 +75,10 @@ func _ready() -> void:
 	_add_btn_labels()
 	add_child(load("res://Script/Class/CursorController.gd").new())
 	GameData.add_party_by_name("游霄云")
-	GameData.add_party_by_name("敖白")
-	GameData.add_party_by_name("千面")
-	GameData.add_party_by_name("桃夭夭")
-	GameData.add_party_by_name("叮咚")
+	GameData.add_party_by_name("骨精灵")
+	#GameData.add_party_by_name("桃夭夭")
+	GameData.add_party_by_name("影精灵")
+	#GameData.add_party_by_name("叮咚")
 
 	#ameData.add_party_by_name("大将军")
 	_update_time_volume()
@@ -843,10 +843,10 @@ func show_team_chat(dialogue_file: String, title: String, flag: String = "") -> 
 		if pt:
 			var was_path := ""
 			var png_portrait := ""
-			for mid in GameData.CHARACTER_DB:
-				if GameData.CHARACTER_DB[mid].name == dl.character:
-					was_path = GameData.CHARACTER_DB[mid].get("was_base_path", "")
-					png_portrait = GameData.CHARACTER_DB[mid].get("portrait_path", "")
+			for mid in CharacterDB.CHARACTER_DB:
+				if CharacterDB.CHARACTER_DB[mid].name == dl.character:
+					was_path = CharacterDB.CHARACTER_DB[mid].get("was_base_path", "")
+					png_portrait = CharacterDB.CHARACTER_DB[mid].get("portrait_path", "")
 					break
 			# 优先 PNG 头像：{portrait_path}/{角色名}.png
 			var set := false

@@ -69,7 +69,7 @@ static var _lang_cache: Dictionary = {}
 static var _current_lang: String = "zh"
 static func get_lang() -> String: return _current_lang
 
-func hit_stop(duration: float = 0.1, scale: float = 0.05, shake_strength: float = 4.0, shake_duration: float = 0.14) -> void:
+func hit_stop(duration: float = 0.2, scale: float = 0.05, shake_strength: float = 6.0, shake_duration: float = 0.14) -> void:
 	if duration <= 0.0:
 		return
 	if shake_strength > 0.0 and shake_duration > 0.0:
@@ -158,6 +158,9 @@ const ENCOUNTER_CONFIG := {
 }
 const ENCOUNTER_INTERVAL := 120.0   # 像素检查间隔
 const ENCOUNTER_CHANCE  := 0.1   # 触发概率（1.0 = 100%）
+
+func _init() -> void:
+	randomize()
 
 func _ready() -> void:
 	_load_languages()
@@ -594,7 +597,7 @@ func get_full_party() -> Array:
 	return party_db.values()
 
 
-## 按名字添加队员（从 CHARACTER_DB 查数据，找不到则用参数自定义）
+## 按名字添加队员（从 CharacterDB.CHARACTER_DB 查数据，找不到则用参数自定义）
 func add_party_by_name(p_name: String, p_class: String = "", p_role: String = "",
 	p_elem: String = "", p_level: int = 1, p_was: String = "") -> void:
 	# 先从数据库查
@@ -602,11 +605,11 @@ func add_party_by_name(p_name: String, p_class: String = "", p_role: String = ""
 	if teamIsFull():
 		return
 		
-	for mid in CHARACTER_DB:
-		if CHARACTER_DB[mid].name == p_name:
+	for mid in CharacterDB.CHARACTER_DB:
+		if CharacterDB.CHARACTER_DB[mid].name == p_name:
 			if party_db.has(mid):
 				return  # 已在队
-			var dd: Dictionary = CHARACTER_DB[mid].duplicate()
+			var dd: Dictionary = CharacterDB.CHARACTER_DB[mid].duplicate()
 			_add_member(mid, dd)
 			if p_level > 1:
 				party_db[mid].level = p_level
@@ -644,9 +647,9 @@ func remove_party_member(member_id: String) -> void:
 ## 按等级范围随机返回怪物 ID（随机遇敌用）
 ## 按等级范围随机返回怪物 ID（随机遇敌用）
 func get_random_enemy_id(min_lv: int = 1, max_lv: int = 99) -> String:
-	var candidates = ENEMY_DB.filter(func(row): return row.lv >= min_lv and row.lv <= max_lv)
+	var candidates = EnemyDB.ENEMY_DB.filter(func(row): return row.lv >= min_lv and row.lv <= max_lv)
 	if candidates.is_empty():
-		return ENEMY_DB[0].name
+		return EnemyDB.ENEMY_DB[0].name
 	return candidates[randi() % candidates.size()].name
 
 func is_night_time() -> bool:
@@ -687,6 +690,12 @@ func create_enemy(enemy_name: String) -> CharacterStats:
 	return s
 
 
+func _build_enemy_db() -> void:
+	for row in EnemyDB.ENEMY_DB:
+		var key = row.get("id", row.name)
+		_enemy_db_cache[key] = row
+
+
 ## 进场随机资质
 func _roll_aptitude(rank: String, lv: int = 1) -> int:
 	match rank:
@@ -706,244 +715,6 @@ func _roll_aptitude(rank: String, lv: int = 1) -> int:
 	return PetData.Aptitude.丁
 
 # ══════════════════════════════════════════════
-# 怪物数据库
-# 字段：name, hp, mp, atk, def, spd, lv, skills, rank(可选:普通/boss/特殊), exp(可选), was_base_path(可选), ai_strategy(可选)
-# rank: 普通=资质随机丁丙乙, boss=固定甲, 特殊=固定特
-# ══════════════════════════════════════════════
-
-const ENEMY_DB = [
-	# ── 普通怪 ──
-	{ name = "妖狐·赤尾", hp = 90,  mp = 40,  atk = 22, def = 8,  spd = 10, lv = 1, skills = ["普通攻击","妖术","妖气回复"] },
-	{ name = "山魈·獠牙",  hp = 110, mp = 30,  atk = 28, def = 12, spd = 9,  lv = 1, skills = ["普通攻击","妖术"] },
-	{ name = "厉鬼·幽魂",  hp = 80,  mp = 60,  atk = 20, def = 5,  spd = 14, lv = 2, skills = ["普通攻击","妖术","蛊毒咒"], traits = {"_revive": 20} },
-	{ name = "石傀·巨岩",  hp = 160, atk = 32, def = 22, spd = 5,  lv = 3, skills = ["普通攻击","破防击"] },
-	{ name = "火鸦·灼羽",  hp = 70,  mp = 80,  atk = 18, def = 6,  mdef = 4,  spd = 16, lv = 3, skills = ["普通攻击","妖术","灼焰术"] },
-	{ name = "幽蛛·织网",  hp = 100, mp = 50,  atk = 24, def = 10, mdef = 6,  spd = 12, lv = 4, skills = ["普通攻击","蛊毒咒","妖术"] },
-	{ name = "风狼·疾牙",  hp = 120, mp = 30,  atk = 30, def = 8,  mdef = 5,  spd = 18, lv = 4, skills = ["普通攻击","三连击"] },
-	{ name = "寒魄·幽灵",  hp = 90,  mp = 90,  atk = 22, def = 6,  mdef = 12, spd = 13, lv = 5, skills = ["普通攻击","冰封诀","妖术"], traits = {"_revive": 25} },
-	# ── 精英怪 ──
-	{ name = "九尾妖狐",    hp = 200, mp = 80,  atk = 35, def = 15, mdef = 18, spd = 12, lv = 6, skills = ["普通攻击","妖术","妖气回复","蛊毒咒","起死回生"] },
-	{ name = "魔将·煞星",  hp = 250, mp = 60,  atk = 42, def = 22, mdef = 12, spd = 10, lv = 7, skills = ["普通攻击","三连击","破防击","护体真气"] },
-	{ name = "骷髅王",      hp = 220, mp = 70,  atk = 38, def = 12, mdef = 18, spd = 11, lv = 7, skills = ["普通攻击","妖术","破防击"], traits = {"_revive": 30} },
-	{ name = "熔岩魔人",    hp = 280, mp = 50,  atk = 45, def = 28, mdef = 10, spd = 7,  lv = 8, skills = ["普通攻击","灼焰术","破防击"] },
-	# ── Boss（捕捉固定甲级）──
-	{ name = "九幽魔王",    hp = 400, mp = 120, atk = 50, def = 22, mdef = 22, spd = 11, lv = 10, rank = "boss", skills = ["普通攻击","妖术","妖气回复","冰封诀","蛊毒咒","起死回生"], traits = {"_revive": 40} },
-	{ name = "蛟龙·渊王",   hp = 500, mp = 100, atk = 58, def = 28, mdef = 24, spd = 13, lv = 12, rank = "boss", skills = ["普通攻击","妖术","三连击","灼焰术","破防击"] },
-	{ name = "上古神魔",    hp = 600, mp = 150, atk = 65, def = 30, mdef = 30, spd = 15, lv = 15, rank = "boss", skills = ["普通攻击","妖术","妖气回复","冰封诀","三连击","蛊毒咒"] },
-	# ── 测试怪物（WAS 动画）──
-	{ name = "超级赤焰兽",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/超级赤焰兽" },
-	{ name = "毒云龟",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/毒云龟" },	
-	{ name = "谛听",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/谛听" },	
-	{ name = "草龟",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/草龟" },
-	{ name = "超级大鹏",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/超级大鹏" },
-	{ name = "黑熊",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/黑熊" },
-	{ name = "火沙虫",  hp = 200, mp = 80,  atk = 30, def = 15, mdef = 10, spd = 20, lv = 5, exp = 50, skills = ["普通攻击","妖术"], was_base_path = "res://WAS/火沙虫" },
-]
-
-func _build_enemy_db() -> void:
-	for row in ENEMY_DB:
-		# 用 id 做 key，没写 id 则用 name
-		var key = row.get("id", row.name)
-		_enemy_db_cache[key] = row
-
-# ══════════════════════════════════════════════
-# 角色数据库 — add_party_by_name 从这里查找角色数据
-# ══════════════════════════════════════════════
-
-const CHARACTER_DB := {
-	"youxiaoyun": {
-		"name": "游霄云", "class": "战神", "elem": "无", "role": "主",
-		"en_name": "YouXiaoYun",
-		"hp": 1500, "mp": 80,  "atk": 30, "matk": 105, "def": 14, "mdef": 10, "spd": 78, "luck": 0.1,
-		"crit": 0.18, "crit_mult": 1.7,
-		"was_base_path": "res://WAS/游霄云/",
-		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴","神行步"],
-		"attack_sound": "res://Audio/SE/男-法术-呀.ogg", "cast_sound": "res://Audio/SE/男-法术-呀.ogg",
-		"ranged": true,
-	},
-	"aobai": {
-		"name": "敖白", "class": "战神", "elem": "水", "role": "攻",
-		"portrait_offset": Vector2(-20, -45),
-		"team_offset": Vector2(-240, -10),
-		"en_name": "AoBai",
-		 "use_png": true,
-		"hp": 1500, "mp": 80,  "atk": 30, "matk": 105, "def": 14, "mdef": 10, "spd": 78, "luck": 0.1,
-		"crit": 0.18, "crit_mult": 1.7,
-		#"was_base_path": "res://WAS/游霄云/",
-		"traits": {"晓之以理": {"dmg_reduce": 0.10}},
-		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴","神行步"],
-		"attack_sound": "res://Audio/SE/男-法术-呀.ogg", "cast_sound": "res://Audio/SE/男-法术-呀.ogg",
-		"ranged": false,
-	},
-	"erlang": {
-		"name": "二郎神", "class": "战神", "elem": "金", "role": "攻",
-		"en_name": "ErLang",
-		"hp": 150, "mp": 70,  "atk": 30, "matk": 20, "def": 14, "mdef": 10, "spd": 30, "luck": 8,
-		"crit": 0.18, "crit_mult": 1.7,
-		"was_base_path": "res://WAS/二郎神",
-		"skills": ["普通攻击","御剑气","雷霆诀","破防击","金刚护体","寂静剑法"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"愈战愈勇": {"dmg_pct": 0.05, "spd_pct": 0.05}},
-	},
-	"duoshiyi": {
-		"name": "堕十一", "class": "灵师", "elem": "金", "role": "攻",
-		"en_name": "DuoShiYi",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25, "luck": 10,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/堕十一",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","寂静剑法"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"愈战愈勇": {"dmg_pct": 0.05, "spd_pct": 0.05}},
-	},
-	"qianmian": {
-		"name": "千面", "class": "灵师", "elem": "水", "role": "召",
-		"en_name": "QianMian",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/千面",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","千变万化"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
-	},
-	"dingdong": {
-		"name": "叮咚", "class": "灵师", "elem": "土", "role": "召",
-		"en_name": "DingDong",
-		"hp": 120, "mp": 100, "atk": 2000, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/叮咚",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"],
-		"attack_sound": "res://Audio/SE/137-Light03.ogg",
-		"ranged": true,
-	},
-	"lingfeng": {
-		"name": "凌风", "class": "灵师", "elem": "水", "role": "攻辅",
-		"en_name": "LingFeng",
-		"hp": 120, "mp": 100, "atk": 20000, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/凌风",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound":"res://Audio/SE/男-剑.ogg" , "cast_sound": "res://Audio/SE/男侠客-出招吼.ogg",
-		"traits": {"横扫不休": {"chance": 0.3}, "双动": {}},
-	},
-	"hutouguai": {
-		"name": "虎头怪", "class": "灵师", "elem": "木", "role": "召",
-		"en_name": "Hutou",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/虎头怪",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound": "res://Audio/SE/虎锤.ogg",
-		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
-	},
-	"shentianbing": {
-		"name": "神天兵", "class": "灵师", "elem": "金", "role": "护",
-		"en_name": "ShenTianBing",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/神天兵",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
-	},
-	"xiaoyaosheng": {
-		"name": "逍遥生", "class": "灵师", "elem": "木", "role": "辅",
-		"en_name": "XiaoYao",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/逍遥生",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"舍己为妹": {"spd_pct": 0.15, "hp_pct": -0.02, "sisters": ["taoyaoyao", "yingjingling"]}},
-	},	
-	"jumowang": {
-		"name": "巨魔王", "class": "灵师", "elem": "金", "role": "护",
-		"en_name": "Jumowang",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/巨魔王",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
-	},		
-	"taoyaoyao": {
-		"name": "桃夭夭", "class": "灵师", "elem": "金", "role": "护",
-		"en_name": "Taoyaoyao",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/桃夭夭",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound": "res://Audio/SE/",
-		 "cast_sound": "res://Audio/SE/女-法术X.ogg",
-		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
-	},				
-	"yanwushi": {
-		"name": "偃无师", "class": "灵师", "elem": "金", "role": "护",
-		"en_name": "Yanwushi",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/偃无师",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
-	},			
-	"yingnvxia": {
-		"name": "英女侠", "class": "灵师", "elem": "金", "role": "护",
-		"en_name": "Yingnvxia",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/英女侠",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
-	},
-	"yingjingling": {
-		"name": "影精灵", "class": "灵师", "elem": "金", "role": "护",
-		"en_name": "Yingjingling",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/影精灵",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
-	},		
-	"dajiangjun": {
-		"name": "大将军", "class": "灵师", "elem": "金", "role": "护",
-		"en_name": "Dajiangjun",
-		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 25,
-		"crit": 0.12, "crit_mult": 1.5,
-		"was_base_path": "res://WAS/大将军",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
-		"attack_sound": "res://Audio/SE/男-枪.ogg",
-		"traits": {"横扫不休": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
-	},
-	"tunshishou": {
-		"name": "吞噬兽", "class": "灵师", "elem": "木", "role": "护",
-		"en_name": "Tunshishou",
-		"hp": 150, "mp": 80, "atk": 22, "matk": 20, "def": 18, "mdef": 14, "spd": 20,
-		"was_base_path": "res://WAS/吞噬兽",
-		"skills": ["普通攻击", "嘲讽", "护体真气", "回元术"],
-		"traits": {"吞噬": {"hp_gain": 4, "level_floor": 5}},
-	},
-	#"longtaizi": {
-		#"name": "龙太子", "class": "灵师", "elem": "水", "role": "攻",
-		#"en_name": "Longtaizi",
-		#"hp": 130, "mp": 90, "atk": 28, "matk": 25, "def": 12, "mdef": 10, "spd": 22,
-		#"was_base_path": "res://WAS/龙太子",
-		#"skills": ["普通攻击", "雷霆诀", "御剑气", "破防击"],
-		#"traits": {"晓之以理": {"dmg_reduce": 0.10}},
-	#},
-	"hun": {
-		"name": "魂", "class": "灵师", "elem": "土", "role": "攻",
-		"en_name": "Hun",
-		"hp": 30, "mp": 20, "atk": 5, "matk": 5, "def": 3, "mdef": 3, "spd": 5,
-		"was_base_path": "res://WAS/魂",
-		"skills": ["普通攻击"],
-		"traits": {"废物": {"break_lv": 80, "hp_mul": 8, "atk_mul": 8, "def_mul": 6, "spd_mul": 5,
-			"awaken_skills": ["雷霆诀", "寂静剑法", "横扫千军", "一苇渡江", "如沐春风"]}},
-	},
-					
-}
-
-# ═══ 商店 NPC 数据库 ═══
 const SHOP_NPC_DB = {
 		"镖头": { "items": ["equip_2952", "equip_2953", "equip_2902"],
 				  "prices": {"equip_2952": 60} },
@@ -969,146 +740,8 @@ static func get_shop_items(npc_name: String) -> Array[Dictionary]:
 
 
 # ═══ 打造材料数据库 ═══
-const MATERIAL_DB = {
-	"black_ore": {
-		"name": "黑曜石", "tcp_path": "res://TCP/矿石/黑曜石.tcp",
-		"desc": "能增加武器伤害的矿石", "price": 200,
-		"craft_type": "weapon", "stat": "atk", "min_boost": 7, "max_boost": 10,
-	},
-	"red_shell": {
-		"name": "红壳", "tcp_path": "res://TCP/矿石/红壳.tcp",
-		"desc": "能增加武器伤害的矿石", "price": 200,
-		"craft_type": "weapon", "stat": "hp", "min_boost": 70, "max_boost": 100,
-	},
-	"cloud_herb": {
-		"name": "飞云草", "tcp_path": "res://TCP/草药/飞云草.tcp",
-		"desc": "能制造加速符咒的灵草", "price": 150,
-		"craft_type": "talisman", "stat": "spd", "min_boost": 3, "max_boost": 6,
-	},
-	"blood_stone": {
-		"name": "吸血石", "tcp_path": "res://TCP/矿石/吸血石.tcp",
-		"desc": "攻击时按伤害百分比吸取生命", "price": 500,
-		"craft_type": "weapon", "stat": "lifesteal", "min_boost": 5, "max_boost": 10,
-	},
-	"gold_ore": {
-		"name": "黄金", "tcp_path": "res://TCP/矿石/黄金.tcp",
-		"desc": "增加战斗获得的金币收益", "price": 400,
-		"craft_type": "weapon", "stat": "gold_boost", "min_boost": 10, "max_boost": 20,
-	},
-	"shattered_green": {
-		"name": "碎绿", "tcp_path": "res://TCP/矿石/碎绿.tcp",
-		"desc": "增加治疗技能可治疗的单位数量", "price": 350,
-		"craft_type": "weapon", "stat": "heal_targets", "min_boost": 1, "max_boost": 1,
-	},
-	"thorn_horn": {
-		"name": "棘角", "tcp_path": "res://TCP/矿石/棘角.tcp",
-		"desc": "受到物理攻击时反弹部分伤害", "price": 450,
-		"craft_type": "weapon", "stat": "reflect", "min_boost": 5, "max_boost": 10,
-	},
-	"moon_stone": {
-		"name": "月石", "tcp_path": "res://TCP/矿石/月石.tcp",
-		"desc": "增加夜间造成的伤害", "price": 400,
-		"craft_type": "weapon", "stat": "night_dmg", "min_boost": 10, "max_boost": 15,
-	},
-	"lake_heart": {
-		"name": "湖泊之心", "tcp_path": "res://TCP/矿石/湖泊之心.tcp",
-		"desc": "增加灵力上限", "price": 300,
-		"craft_type": "weapon", "stat": "mp_up", "min_boost": 30, "max_boost": 50,
-	},
-	"vitality": {
-		"name": "生机", "tcp_path": "res://TCP/矿石/生机.tcp",
-		"desc": "增加治疗量", "price": 350,
-		"craft_type": "weapon", "stat": "heal_up", "min_boost": 8, "max_boost": 15,
-	},
-	# ── 符咒材料 ──
-	"talisman_paper": {
-		"name": "符纸", "tcp_path": "res://TCP/符咒/3290.tcp",
-		"desc": "制作符咒的基础材料，黄纸朱砂", "price": 80,
-		"craft_type": "talisman", "stat": "", "min_boost": 0, "max_boost": 0,
-	},
-	"flame_herb": {
-		"name": "火焰花", "tcp_path": "res://TCP/草药/飞云草.tcp",
-		"desc": "蕴含火灵力的花朵，可用于制作星火篆", "price": 120,
-		"craft_type": "talisman", "stat": "", "min_boost": 0, "max_boost": 0,
-	},
-	"thunder_wood": {
-		"name": "雷击木", "tcp_path": "res://TCP/草药/飞云草.tcp",
-		"desc": "被雷劈过的灵木，可用于制作五雷咒", "price": 130,
-		"craft_type": "talisman", "stat": "", "min_boost": 0, "max_boost": 0,
-	},
-	"ice_crystal": {
-		"name": "冰晶草", "tcp_path": "res://TCP/草药/飞云草.tcp",
-		"desc": "生长在极寒之地的草药，可用于制作冰冻符", "price": 140,
-		"craft_type": "talisman", "stat": "", "min_boost": 0, "max_boost": 0,
-	},
-	"peace_moss": {
-		"name": "止战苔", "tcp_path": "res://TCP/草药/飞云草.tcp",
-		"desc": "散发宁静气息的苔藓，可用于制作止战符", "price": 110,
-		"craft_type": "talisman", "stat": "", "min_boost": 0, "max_boost": 0,
-	},
-}
-
-# ═══ 符咒配方数据库 ═══
-## 放入4个材料 → 匹配配方 → 产出对应符咒
-const TALISMAN_RECIPES: Array[Dictionary] = [
-	{
-		"output": "talisman_haste",   # 加速符
-		"output_name": "加速符",
-		"materials": {
-			"talisman_paper": 1,
-			"cloud_herb": 3
-		}
-	},
-	{
-		"output": "talisman_fire",    # 星火篆
-		"output_name": "星火篆",
-		"materials": {
-			"talisman_paper": 1,
-			"flame_herb": 2,
-			"black_ore": 1
-		}
-	},
-	{
-		"output": "talisman_thunder", # 五雷咒
-		"output_name": "五雷咒",
-		"materials": {
-			"talisman_paper": 1,
-			"thunder_wood": 2,
-			"gold_ore": 1
-		}
-	},
-	{
-		"output": "talisman_ice",     # 冰冻符咒
-		"output_name": "冰冻符咒",
-		"materials": {
-			"talisman_paper": 1,
-			"ice_crystal": 2,
-			"moon_stone": 1
-		}
-	},
-	{
-		"output": "talisman_ceasefire", # 止战符咒
-		"output_name": "止战符咒",
-		"materials": {
-			"talisman_paper": 1,
-			"peace_moss": 2,
-			"lake_heart": 1
-		}
-	},
-	{
-		"output": "talisman_revive",   # 借尸符
-		"output_name": "借尸符",
-		"materials": {
-			"talisman_paper": 1,
-			"ice_crystal": 1,
-			"moon_stone": 1,
-			"lake_heart": 1
-		}
-	},
-]
-
 static func get_material(id: String) -> Dictionary:
-	return MATERIAL_DB.get(id, {}).duplicate()
+	return MaterialDB.MATERIAL_DB.get(id, {}).duplicate()
 
 # ═══ 传送圈位置数据库 ═══
 const TELEPORT_DB = {
@@ -1142,6 +775,14 @@ func _add_member(member_id: String, d: Dictionary) -> void:
 	s.portrait_offset = d.get("portrait_offset", Vector2.ZERO)
 	s.team_offset     = d.get("team_offset", Vector2.ZERO)
 	s.use_png         = d.get("use_png", false)
+	# 成长资质
+	s.hp_growth       = d.get("hp_g", 15)
+	s.mp_growth       = d.get("mp_g", 8)
+	s.atk_growth      = d.get("atk_g", 4)
+	s.def_growth      = d.get("def_g", 2)
+	s.speed_growth    = d.get("spd_g", 1)
+	s.matk_growth     = d.get("matk_g", 3)
+	s.mdef_growth     = d.get("mdef_g", 1)
 	s.attack_sound_path = d.get("attack_sound", "")
 	s.cast_sound_path   = d.get("cast_sound", "")
 	s.is_ranged         = d.get("ranged", false)
@@ -1191,9 +832,9 @@ func gain_exp(member_id: String, amount: int) -> bool:
 		return levels_gained > 0
 	return false
 
-## 根据 SKILL_LEARN_DB 获取角色初始技能（包含≤等级的所有技能）
+## 根据 SkillDB.SKILL_LEARN_DB 获取角色初始技能（包含≤等级的所有技能）
 func _get_initial_skills(member_id: String, d: Dictionary) -> Array[String]:
-	var table = SKILL_LEARN_DB.get(member_id)
+	var table = SkillDB.SKILL_LEARN_DB.get(member_id)
 	if table == null:
 		var fallback: Array[String] = []
 		var raw = d.get("skills", [])
@@ -1229,7 +870,7 @@ func _level_up_member(s: CharacterStats) -> int:
 		s.speed       += s.speed_growth
 		# 检查技能学习
 		if "member_id" in s and not s.member_id.is_empty():
-			var learn_table = SKILL_LEARN_DB.get(s.member_id, [])
+			var learn_table = SkillDB.SKILL_LEARN_DB.get(s.member_id, [])
 			for entry in learn_table:
 				if entry.level == s.level:
 					for sid in entry.skills:
@@ -1325,319 +966,11 @@ func complete_bounty(bounty_id: String) -> void:
 # 技能注册 & 技能库
 # ══════════════════════════════════════════════
 
-## 全部技能定义 — 字典格式，方便查看/扩展
-## 字段含义：type(类型) target(目标) mp(法力) dmg(倍率) hits(段数)
-##          heal(治疗倍率) flat(固定值) cd(冷却) buff(效果ID) bturn(回合) bchance(概率)
-##          desc(描述) magic(法术伤害)
-const SKILL_DB := {
-	"普通攻击": {
-		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 0, "dmg": 1.0, "hits": 1, "sound": "res://Audio/SE/男-枪.ogg",
-		"desc": "对目标造成 100% 物理伤害",
-	},
-	"御剑气": {
-		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 15, "dmg": 1.8, "cd": 1, "sound": "res://Audio/SE/男-枪.ogg",
-		"desc": "凝聚剑气，对目标造成 180% 物理伤害",
-	},
-	"寂静剑法": {
-		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 30, "dmg": 1.3, "cd": 2, "sound": "res://Audio/SE/男-枪.ogg",
-		"desc": "寂静剑气覆盖全场，对所有敌人造成 130% 物理伤害",
-	},
-	"雷霆诀": {
-		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 20, "dmg": 2.0, "cd": 2, "magic": true, "sound": "res://Audio/SE/男-枪.ogg",
-		"desc": "召来雷霆，对目标造成 200% 法术伤害",
-	},
-	"横扫千军": {
-		"type": SkillData.SkillType.MULTI_HIT, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 12, "dmg": 2, "hits": 3, 
-		"desc": "快速攻击 3 次，每次造成 50% 物理伤害",
-	},
-	"回元术": {
-		"type": SkillData.SkillType.HEAL, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 12, "heal": 0.25, "flat": 10, "cd": 2, "sound": "res://Audio/SE/heal 1.ogg",
-		"hsize": "medium",
-		"desc": "恢复自身 25% 最大气血 + 10 点",
-	},
-	"护体真气": {
-		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
-		"mp": 10, "buff": "shield", "bturn": 3,
-		"desc": "运转真气护体，3 回合内防御翻倍",
-	},
-	"蛊毒咒": {
-		"type": SkillData.SkillType.DEBUFF, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 16, "buff": "poison", "bturn": 3, "bchance": 0.85,
-		"desc": "下蛊毒咒，85% 概率使目标中毒 3 回合",
-	},
-	"毒瘴": {
-		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 20, "dmg": 1.0, "magic": true, "cd": 2,
-		"buff": "poison", "bturn": 4, "bchance": 0.3,
-		"desc": "释放毒瘴侵蚀敌人，造成 100% 法术伤害并 100% 使目标中毒 4 回合",
-	},
-	"虚沉冰封": {
-		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 18, "dmg": 1.4, "cd": 3, "magic": true, "sound": "res://Audio/SE/法术13.ogg",
-		"buff": "freeze", "bturn": 1, "bchance": 0.4,
-		"desc": "冰封敌人，造成 140% 法术伤害，100% 概率冰冻 1 回合",
-	},
-	"失魂符": {
-		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 22, "dmg": 1.6, "cd": 3, "magic": true, "sound": "res://Audio/SE/法术5.ogg",
-		"buff": "失魂", "bturn": 1, "bchance": 0.7,
-		"desc": "以符咒摄取敌人魂魄，造成 160% 法术伤害，100% 封印 1 回合。被封印的敌人阵亡时魂魄离体消散",
-	},
-	"破防击": {
-		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 8, "dmg": 1.2, "buff": "def_broken", "bturn": 2, "bchance": 0.90,
-		"desc": "击破防御，造成 120% 伤害，90% 概率破防 2 回合",
-	},
-	"一苇渡江": {
-		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 15, "cd": 2, "buff": "haste", "bturn": 3, "bvalue": 1.3, "extra": 3,
-		"desc": "选定目标加速并随机增益 3 名未加速队友，3 回合速度提升 30%",
-	},
-	"神行步": {
-		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 15, "cd": 2, "buff": "haste", "bturn": 3, "bvalue": 1.3, "extra": 3,
-		"desc": "选定目标加速并随机增益 3 名未加速队友，3 回合速度提升 30%",
-	},
-	"达摩护体": {
-		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 20, "cd": 3, "buff": "hp_up", "bturn": 3, "bvalue": 1.3, "extra": 3,
-		"desc": "选定目标并随机护体 3 名队友，3 回合气血上限提升 30%",
-	},
-	"金刚护体": {
-		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 20, "cd": 3, "buff": "def_up", "bturn": 3, "bvalue": 1.5, "extra":8,
-		"desc": "选定目标并随机护体 3 名队友，3 回合物防提升 50%",
-	},
-	"金刚护法": {
-		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 20, "cd": 3, "buff": "atk_up", "bturn": 3, "bvalue": 1.5, "extra":3,
-		"desc": "选定目标并随机护法 3 名队友，3 回合物理攻击提升 50%",
-	},
-	"金刚护魂": {
-		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 20, "cd": 3, "buff": "mdef_up", "bturn": 3, "bvalue": 1.5, "extra": 3,
-		"desc": "选定目标并随机护魂 3 名队友，3 回合魔防提升 50%",
-	},
-	"如沐春风": {
-		"type": SkillData.SkillType.HEAL, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 18, "heal": 0.15, "flat": 30, "cd": 2, "sound": "res://Audio/SE/heal 1.ogg",
-		"hsize": "group",
-		"desc": "选定目标及随机 3 名队友恢复 15% 最大气血 + 30 点",
-	},
-	"烈焰诀": {
-		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 25, "dmg": 2.5, "cd": 3, "magic": true,
-		"desc": "召唤烈焰，对目标造成 250% 法术伤害",
-	},
-	"地烈火": {
-		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 20, "dmg": 1.6, "cd": 3, "magic": true,
-		"desc": "地底涌出烈火，对目标及随机 2 名敌人造成 160% 法术伤害",
-	},
-	# ── 召唤技能 ──
-	"召唤铁甲兽": {
-		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
-		"mp": 30, "cd": 3,
-		"desc": "打开铁甲界面，召唤机关兽或机关鸟助战",
-	},
-	"铁甲出击": {
-		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 10, "dmg": 0, "cd": 1,
-		"desc": "指挥所有铁甲兽对目标发动一次联合攻击",
-	},
-	# ── 变身技能 ──
-	"千变万化": {
-		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 30, "cd": 5,
-		"desc": "千面千相，变化为一名队友的外貌和技能（不含主角）",
-	},
-	# ── 防御技能 ──
-	"嘲讽": {
-		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
-		"mp": 10, "cd": 2,
-		"desc": "嘲讽全场敌人，强制攻击自己 2 回合",
-	},
-	# ── 敌方技能 ──
-	"妖术": {
-		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 20, "dmg": 1.6, "magic": true,
-		"desc": "施展妖术，造成 160% 法术伤害",
-	},
-	"妖气回复": {
-		"type": SkillData.SkillType.HEAL, "target": SkillData.TargetType.SELF,
-		"mp": 15, "heal": 0.2,
-		"desc": "吸取妖气，恢复 20% 最大气血",
-	},
-	"灼焰术": {
-		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 18, "dmg": 1.3, "magic": true,
-		"buff": "burn", "bturn": 2, "bchance": 0.75,
-		"desc": "喷吐烈焰，造成 130% 法术伤害，75% 概率灼烧 2 回合",
-	},
-	# ── 复活技能（玩家和怪物通用）──
-	"借尸还魂": {
-		"type": SkillData.SkillType.HEAL, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 30, "heal": 0.2, "flat": 0, "cd": 5,
-		"hsize": "revive",
-		"sound": "res://Audio/SE/heal 1.ogg",
-		"desc": "复活一名阵亡队友，恢复 20% 最大气血",
-	},
-}
 
-# ══════════════════════════════════════════════
-# 宠物技能书库（被动技能）
-# ══════════════════════════════════════════════
-const BOOK_SKILL_DB := {
-	# ── 速度 ──
-	"高级敏捷": {"name":"高级敏捷","icon":"⚡","type":"haste","desc":"速度永久提升 30%","value":1.3},
-	"敏捷":     {"name":"敏捷","icon":"⚡","type":"haste","desc":"速度永久提升 15%","value":1.15},
-	# ── 气血 ──
-	"高级血量": {"name":"高级血量","icon":"❤️","type":"hp_up","desc":"气血上限永久提升 25%","value":1.25},
-	"血量":     {"name":"血量","icon":"❤️","type":"hp_up","desc":"气血上限永久提升 12%","value":1.12},
-	# ── 物防 ──
-	"高级物防": {"name":"高级物防","icon":"🛡️","type":"def_up","desc":"物防永久提升 25%","value":1.25},
-	"物防":     {"name":"物防","icon":"🛡️","type":"def_up","desc":"物防永久提升 12%","value":1.12},
-	# ── 魔防 ──
-	"高级魔防": {"name":"高级魔防","icon":"🔮","type":"mdef_up","desc":"魔防永久提升 25%","value":1.25},
-	"魔防":     {"name":"魔防","icon":"🔮","type":"mdef_up","desc":"魔防永久提升 12%","value":1.12},
-	# ── 攻击 ──
-	"高级强力": {"name":"高级强力","icon":"💪","type":"atk_up","desc":"攻击永久提升 25%","value":1.25},
-	"强力":     {"name":"强力","icon":"💪","type":"atk_up","desc":"攻击永久提升 12%","value":1.12},
-	# ── 法伤 ──
-	"高级魔之心": {"name":"高级魔之心","icon":"💜","type":"matk_up","desc":"法术伤害永久提升 25%","value":1.25},
-	"魔之心":     {"name":"魔之心","icon":"💜","type":"matk_up","desc":"法术伤害永久提升 12%","value":1.12},
-	# ── 暴击 ──
-	"高级必杀": {"name":"高级必杀","icon":"💥","type":"crit_up","desc":"暴击率永久提升 20%","value":0.20},
-	"必杀":     {"name":"必杀","icon":"💥","type":"crit_up","desc":"暴击率永久提升 10%","value":0.10},
-	# ── 法术暴击 ──
-	"高级法术暴击": {"name":"高级法术暴击","icon":"🌟","type":"mcrit_up","desc":"法术暴击率永久提升 20%","value":0.20},
-	"法术暴击":     {"name":"法术暴击","icon":"🌟","type":"mcrit_up","desc":"法术暴击率永久提升 10%","value":0.10},
-	# ── 恢复 ──
-	"高级生命恢复": {"name":"高级生命恢复","icon":"💚","type":"regen","desc":"每回合自动恢复 10% 最大气血","value":0.10},
-	"生命恢复":     {"name":"生命恢复","icon":"💚","type":"regen","desc":"每回合自动恢复 5% 最大气血","value":0.05},
-	# ── 连击 ──
-	"高级连击":     {"name":"高级连击","icon":"👊","type":"double_attack","desc":"普通攻击有 45% 概率连击两次","value":0.45},
-	"高级魔法连击": {"name":"高级魔法连击","icon":"✨","type":"double_magic","desc":"法术技能有 35% 概率施放两次","value":0.35},
-	# ── 吸血 ──
-	"高级吸血": {"name":"高级吸血","icon":"🩸","type":"lifesteal","desc":"物理攻击时吸收 25% 伤害为气血","value":0.25},
-	"吸血":     {"name":"吸血","icon":"🩸","type":"lifesteal","desc":"物理攻击时吸收 15% 伤害为气血","value":0.15},
-	# ── 反震 ──
-	"高级反震": {"name":"高级反震","icon":"↩️","type":"reflect","desc":"受到物理攻击时反弹 40% 伤害","value":0.40},
-	"反震":     {"name":"反震","icon":"↩️","type":"reflect","desc":"受到物理攻击时反弹 25% 伤害","value":0.25},
-	# ── 神佑复生 ──
-	"高级神佑复生": {"name":"高级神佑复生","icon":"🕊️","type":"revive","desc":"阵亡时有 30% 概率满血复活","value":0.30},
-	"神佑复生":     {"name":"神佑复生","icon":"🕊️","type":"revive","desc":"阵亡时有 15% 概率半血复活","value":0.15},
-	# ── 毒 ──
-	"高级毒": {"name":"高级毒","icon":"☠️","type":"venom","desc":"物理攻击有 25% 概率使目标中毒3回合","value":0.25},
-	"毒":     {"name":"毒","icon":"☠️","type":"venom","desc":"物理攻击有 15% 概率使目标中毒3回合","value":0.15},
-	# ── 慧根 ──
-	"高级慧根": {"name":"高级慧根","icon":"🧠","type":"mp_save","desc":"技能灵力消耗减少 40%","value":0.40},
-	"慧根":     {"name":"慧根","icon":"🧠","type":"mp_save","desc":"技能灵力消耗减少 20%","value":0.20},
-	# ── 神迹 ──
-	"高级神迹": {"name":"高级神迹","icon":"✨","type":"immune","desc":"免疫所有异常状态","value":1.0},
-	"神迹":     {"name":"神迹","icon":"✨","type":"immune","desc":"50% 概率抵抗异常状态","value":0.50},
-	# ── 迟钝 ──
-	"高级迟钝": {"name":"高级迟钝","icon":"🐢","type":"slow_tank","desc":"速度降低 30%，气血上限提升 30%","value":{"speed":0.70,"hp":1.45}},
-	"迟钝":     {"name":"迟钝","icon":"🐢","type":"slow_tank","desc":"速度降低 20%，气血上限提升 15%","value":{"speed":0.80,"hp":1.15}},
-	# ── 法波动 ──
-	"高级法波动": {"name":"高级法波动","icon":"🌊","type":"magic_fluctuate","desc":"法术伤害在 70%~130% 间浮动","value":{"low":0.70,"high":1.30}},
-	"法波动":     {"name":"法波动","icon":"🌊","type":"magic_fluctuate","desc":"法术伤害在 85%~115% 间浮动","value":{"low":0.85,"high":1.15}},
-	# ── 夜战 ──
-	"高级夜战": {"name":"高级夜战","icon":"🌙","type":"night","desc":"夜间伤害+20%、速度+15%","value":{"dmg":1.20,"spd":1.15}},
-	"夜战":     {"name":"夜战","icon":"🌙","type":"night","desc":"夜间伤害+10%、速度+8%","value":{"dmg":1.10,"spd":1.08}},
-	# ── 来财 ──
-	"高级来财": {"name":"高级来财","icon":"💰","type":"gold_boost","desc":"战斗金币收益提升 100%","value":2.0},
-	"来财":     {"name":"来财","icon":"💰","type":"gold_boost","desc":"战斗金币收益提升 50%","value":1.5},
-}
-
-## 技能学习表：{ member_id: [{ level: N, skills: ["id1","id2"] }] }
-## 升级时自动学习对应技能
-const SKILL_LEARN_DB := {
-	"youxiaoyun": [
-		{ "level": 1,  "skills": ["寂静剑法","一苇渡江","金刚护体","起死回生",] },
-		{ "level": 3,  "skills": ["横扫千军"] },
-		{ "level": 5,  "skills": ["达摩护体"] },
-		{ "level": 7,  "skills": ["如沐春风"] },
-		{ "level": 9,  "skills": ["虚沉冰封"] },
-		{ "level": 11, "skills": ["失魂符"] },
-		{ "level": 13, "skills": ["毒瘴"] },
-		{ "level": 15, "skills": ["神行步"] },
-	],
-	"erlang": [
-		{ "level": 1,  "skills": ["破防击","妖术"] },
-		{ "level": 4,  "skills": ["三连击"] },
-		{ "level": 7,  "skills": ["护体真气"] },
-		{ "level": 10, "skills": ["天罡战气"] },
-		{ "level": 13, "skills": ["雷霆万钧"] },
-		{ "level": 16, "skills": ["战神附体"] },
-	],
-	"duoshiyi": [
-		{ "level": 1,  "skills": ["召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"] },
-		{ "level": 4,  "skills": ["寂静剑法"] },
-		{ "level": 7,  "skills": ["铁甲修复"] },
-		{ "level": 10, "skills": ["铁甲狂暴"] },
-		{ "level": 13, "skills": ["灵甲护体"] },
-		{ "level": 16, "skills": ["天机术"] },
-	],
-	"qianmian": [
-		{ "level": 1,  "skills": ["妖术","蛊毒咒"] },
-		{ "level": 4,  "skills": ["妖气回复"] },
-		{ "level": 7,  "skills": ["冰封诀"] },
-		{ "level": 10, "skills": ["毒瘴"] },
-		{ "level": 13, "skills": ["幻影步"] },
-		{ "level": 16, "skills": ["千幻术"] },
-	],
-	"dingdong": [
-		{ "level": 1,  "skills": ["召唤铁甲兽"] },
-		{ "level": 4,  "skills": ["如来神掌"] },
-		{ "level": 7,  "skills": ["大悲咒"] },
-		{ "level": 10, "skills": ["金刚护法"] },
-		{ "level": 13, "skills": ["金刚护魂"] },
-		{ "level": 16, "skills": ["不动明王"] },
-	],
-	"yuelao": [
-		{ "level": 1,  "skills": ["金刚护体","妖术","蛊毒咒"] },
-		{ "level": 4,  "skills": ["金刚护法"] },
-		{ "level": 7,  "skills": ["妖气回复"] },
-		{ "level": 10, "skills": ["连理枝"] },
-		{ "level": 13, "skills": ["金刚护魂"] },
-		{ "level": 16, "skills": ["牵缘术"] },
-	],
-	"taoyaoyao": [
-		{ "level": 1,  "skills": ["如沐春风","护体真气"] },
-		{ "level": 4,  "skills": ["三连击"] },
-		{ "level": 7,  "skills": ["降魔杵"] },
-		{ "level": 10, "skills": ["护体真气"] },
-		{ "level": 13, "skills": ["降妖诀"] },
-		{ "level": 16, "skills": ["镇魂咒"] },
-	],
-	"heixuan": [
-		{ "level": 1,  "skills": ["金刚护体","破防击","蛊毒咒"] },
-		{ "level": 4,  "skills": ["三连击"] },
-		{ "level": 7,  "skills": ["护体真气"] },
-		{ "level": 10, "skills": ["万毒蚀骨"] },
-		{ "level": 13, "skills": ["金刚护魂"] },
-		{ "level": 16, "skills": ["毒龙附体"] },
-	],
-	"yunqiu": [
-		{ "level": 1,  "skills": ["金刚护体","如沐春风","普度众生"] },
-		{ "level": 4,  "skills": ["清净琉璃"] },
-		{ "level": 7,  "skills": ["大悲咒"] },
-		{ "level": 10, "skills": ["慈航普度"] },
-		{ "level": 13, "skills": ["金刚护魂"] },
-		{ "level": 16, "skills": ["观音莲台"] },
-	],
-}
 
 func _register_skills() -> void:
-	for sid in SKILL_DB:
-		var row = SKILL_DB[sid]
+	for sid in SkillDB.SKILL_DB:
+		var row = SkillDB.SKILL_DB[sid]
 		var sk = SkillData.new()
 		sk.skill_id          = sid
 		sk.skill_name        = sid
@@ -1651,14 +984,22 @@ func _register_skills() -> void:
 		sk.hit_count         = row.get("hits", 1)
 		sk.heal_multiplier   = row.get("heal", 0.0)
 		sk.flat_heal         = row.get("flat", 0)
+		sk.shield_pct        = row.get("shield", 0.0)
 		sk.heal_size         = row.get("hsize", "medium")
 		sk.flat_damage       = row.get("flat_dmg", 0)
+		sk.ignore_defense_ratio = row.get("ignore_def", 0.0)
+		sk.target_atk_dmg_mult = row.get("tatk_dmg", 0.0)
 		sk.cooldown_turns    = row.get("cd", 0)
 		sk.apply_buff_id     = row.get("buff", "")
 		sk.apply_buff_turns  = row.get("bturn", 0)
 		sk.apply_buff_chance = row.get("bchance", 0.0)
 		sk.apply_buff_value  = row.get("bvalue", 0.0)
 		sk.extra_targets    = row.get("extra", 0)
+		sk.fullscreen_anim  = row.get("fullscreen", "")
+		sk.sacrifice_hp_pct = row.get("sac_hp", 0.5)
+		sk.sacrifice_def_pct = row.get("sac_def", 0.5)
+		sk.ghost_cost = row.get("ghost_cost", 0)
+		sk.boost_pct = row.get("boost_pct", 0.0)
 		sk.sound_path        = row.get("sound", "")
 		SkillManager.register_skill(sk)
 
@@ -1891,7 +1232,7 @@ func _debug_equip_belt() -> void:
 				"thunder_wood", "thunder_wood",
 				"ice_crystal", "ice_crystal",
 				"peace_moss", "peace_moss"]:
-			var mat = MATERIAL_DB.get(mid, {}).duplicate()
+			var mat = MaterialDB.MATERIAL_DB.get(mid, {}).duplicate()
 			if not mat.is_empty():
 				material_bag.append(mat)
 

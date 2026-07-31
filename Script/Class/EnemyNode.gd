@@ -250,6 +250,8 @@ func play_hit_reaction() -> void:
 ## 完整攻击序列：走过去 → 攻击(同时触发目标受击) → 走回来
 func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit: Callable = Callable()) -> void:
 	var _original_pos = position
+	var _original_z = z_index
+	z_index = 999
 	var local_target = get_parent().to_local(target_pos)
 	var approach = local_target + (position - local_target).normalized() * 30
 
@@ -266,6 +268,11 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 	_audio_atk.play()
 	if hit_target and hit_target.has_method("play_hit_reaction"):
 		hit_target.play_hit_reaction()
+	# 攻击命中瞬间播放法术特效
+	if _current_spell_anim != "" and hit_target:
+		var bc = hit_target.get_node_or_null("BattleCharacter") as BattleCharacter
+		if bc and bc.has_method("play_spell_effect"):
+			bc.play_spell_effect(_current_spell_anim)
 	await was_player.play_frames_direct("attack")
 
 	# ── 攻击命中后、走回前：执行回调（扣血+斩杀） ──
@@ -278,6 +285,7 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 	tween.tween_property(self, "position", _original_pos, 0.3)
 	tween.set_ease(Tween.EASE_IN_OUT)
 	await tween.finished
+	z_index = _original_z
 
 	was_player.play("idle")
 	# 恢复 buff/debuff 显示

@@ -267,7 +267,7 @@ func _update_detail() -> void:
 	eff_spd = int(eff_spd * _pet_book_mul(pet, "haste"))
 	# 迟钝特殊处理
 	for b in pet.book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "slow_tank":
 			eff_hp = int(eff_hp * db.value.hp)
 			eff_spd = int(eff_spd * db.value.speed)
@@ -647,7 +647,7 @@ func _ready() -> void:
 func _pet_book_mul(pet: PetData, book_type: String) -> float:
 	var mul = 1.0
 	for b in pet.book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == book_type:
 			var v = db.get("value", 1.0)
 			if v is float or v is int:

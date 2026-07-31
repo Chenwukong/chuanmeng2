@@ -41,10 +41,10 @@ func _load_tcp() -> void:
 		push_error("TcpSprite: 加载失败 — %s" % _reader.get_last_error())
 		return
 
-	print("TcpSprite: 加载成功 %s | %d 组 × %d 帧 = %d 帧 | 画布 %dx%d" % [
-		_reader.format_name, _reader.group_count, _reader.frame_count,
-		_reader.total_frames, _reader.canvas_width, _reader.canvas_height
-	])
+	#print("TcpSprite: 加载成功 %s | %d 组 × %d 帧 = %d 帧 | 画布 %dx%d" % [
+		#_reader.format_name, _reader.group_count, _reader.frame_count,
+		#_reader.total_frames, _reader.canvas_width, _reader.canvas_height
+	#])
 
 	# 预解码选定方向的全部帧
 	var start_idx := direction * _reader.frame_count

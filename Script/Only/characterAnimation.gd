@@ -28,7 +28,7 @@ func _load_was(path: String) -> void:
 		print("加载失败: ", _reader.get_last_error())
 		return
 	_is_loaded = true
-	print("加载成功，方向数: ", _reader.group_count, "，每方向帧数: ", _reader.frame_count)
+
 
 
 # 设置方向并重置到第0帧

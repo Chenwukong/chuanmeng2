@@ -403,8 +403,8 @@ func _build_talisman(cost: int) -> void:
 	for i in 4:
 		var r = _resources[i]
 		var mat_id := ""
-		for mid in GameData.MATERIAL_DB:
-			if GameData.MATERIAL_DB[mid].get("name", "") == r.get("name", ""):
+		for mid in MaterialDB.MATERIAL_DB:
+			if MaterialDB.MATERIAL_DB[mid].get("name", "") == r.get("name", ""):
 				mat_id = mid
 				break
 		if mat_id.is_empty():
@@ -414,7 +414,7 @@ func _build_talisman(cost: int) -> void:
 	
 	# 匹配配方
 	var matched: Dictionary = {}
-	for recipe in GameData.TALISMAN_RECIPES:
+	for recipe in MaterialDB.TALISMAN_RECIPES:
 		var req: Dictionary = recipe.get("materials", {})
 		if req.size() != mat_counts.size():
 			continue

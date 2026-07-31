@@ -35,11 +35,13 @@ enum TargetType { SINGLE_ENEMY, SINGLE_ALLY, SELF, ALL_ENEMIES, ALL_ALLIES }
 @export var flat_damage: int = 0              # 固定伤害（不受攻击力影响）
 @export var hit_count: int = 1                # 多段攻击次数（MULTI_HIT 用）
 @export var ignore_defense_ratio: float = 0.0 # 无视防御比例 0.0~1.0
+@export var target_atk_dmg_mult: float = 0.0  # 目标攻击追加伤害倍率（力劈华山用）
 @export var is_magic_damage: bool = false      # true=用法攻计算，false=物攻
 
 ## 治疗参数
 @export var heal_multiplier: float = 0.0  # 基于最大 HP 的治疗比例
 @export var flat_heal: int = 0            # 固定治疗量
+@export var shield_pct: float = 0.0       # 护盾值（最大 HP 百分比）
 @export var heal_size: String = "medium"  # small / medium / large / group / hot / revive（仇恨系统用）
 
 ## 效果（施加 Buff/Debuff）
@@ -48,8 +50,17 @@ enum TargetType { SINGLE_ENEMY, SINGLE_ALLY, SELF, ALL_ENEMIES, ALL_ALLIES }
 @export var apply_buff_chance: float = 1.0  # 成功率 0.0~1.0
 @export var apply_buff_value: float = 0.0   # Buff 携带的数值（如百分比）
 
+## 舍生取义参数
+@export var sacrifice_hp_pct: float = 0.5   # 牺牲气血比例（最大气血 × 此值）
+@export var sacrifice_def_pct: float = 0.5  # 牺牲后双抗降为原值的比例
+
+## 鬼魂技能参数
+@export var ghost_cost: int = 0       # 消耗的鬼魂层数
+@export var boost_pct: float = 0.0    # 增伤百分比（鬼煞附体等）
+
 ## 群体参数
 @export var extra_targets: int = 0  # 除主目标外额外作用的友军数（0=单目标）
+@export var fullscreen_anim: String = ""  # 全屏动画名（如 "寂静剑法"），有值则对所有敌人生效
 
 ## 动画标签（对应场景中的 AnimationPlayer 动画名）
 @export var animation_name: String = "attack"

@@ -790,6 +790,10 @@ func _execute_talisman_attack(actor: BattleCharacter, target: BattleCharacter) -
 		actor.apply_stacking_buff()
 	if not _consume_talisman():
 		_talisman_attacking = false
+		_pending_action = Callable()
+		_enable_enemy_selection(false)
+		_clear_enemy_selection()
+		action_panel.visible = true
 		action_panel.set_enabled(true)
 		action_panel.slide_in()
 		action_panel.btn_attack.grab_focus()
@@ -1336,9 +1340,8 @@ func _highlight_enemy(ch: BattleCharacter) -> void:
 
 ## 鼠标悬停敌人 — 火眼金睛：显示怪物状态 tooltip + 同步键盘高亮
 func _on_enemy_hovered(ch: BattleCharacter) -> void:
-	if not GameData.has_talent("main_true_sight"):
-		return
-	_show_tooltip(ch)
+	if GameData.has_talent("main_true_sight"):
+		_show_tooltip(ch)
 	# 选敌模式下同步键盘高亮
 	var enemies := battle_manager.alive_enemies()
 	var idx := enemies.find(ch)
@@ -1448,13 +1451,23 @@ func _buff_display_name(buff_id: String) -> String:
 		"haste": return "加速"
 		"hp_up": return "气血↑"
 		"atk_up": return "攻击↑"
+		"matk_up": return "法攻↑"
 		"def_up": return "防御↑"
 		"mdef_up": return "魔防↑"
+		"lifesteal_up": return "吸血↑"
 		"burn": return "灼烧"
 		"freeze": return "冰冻"
 		"slow": return "减速"
 		"poison": return "中毒"
 		"weakened": return "虚弱"
+		"def_broken": return "破甲"
+		"mdef_broken": return "魔防破碎"
+		"atk_down": return "降攻"
+		"marked": return "割喉标记"
+		"bleed": return "流血"
+		"ghost_shield": return "鬼影护体"
+		"ghost_boost": return "鬼煞附体"
+		"失魂": return "失魂"
 		_: return buff_id
 
 
@@ -1638,12 +1651,13 @@ func _on_damage_floated(target: BattleCharacter, amount: int, float_type: String
 		digit_specs.append({"tex": tex, "w": tex.get_width()})
 		total_width += tex.get_width()
 
-	var x_offset := -total_width * 0.5
+	var x_offset := -total_width * 0.4
+	var digit_spacing := 10.0  # 数字间距，越大越开
 	for spec in digit_specs:
 		var spr := Sprite2D.new()
 		spr.texture = spec["tex"]
 		spr.position.x = x_offset
-		x_offset += spec["w"]
+		x_offset += spec["w"] + digit_spacing
 		container.add_child(spr)
 
 	# 上浮渐隐
@@ -1878,6 +1892,7 @@ func _on_log_pushed(text: String, log_type: String) -> void:
 func _scroll_log() -> void:
 	if battle_log and is_instance_valid(battle_log):
 		battle_log.scroll_to_line(battle_log.get_line_count())
+
 
 func _on_skill_failed(msg: String) -> void:
 	_show_floating_text(msg, Color(0.8, 0.8, 0.8))

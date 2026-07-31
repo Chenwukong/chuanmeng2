@@ -108,6 +108,19 @@ func _on_timer_timeout() -> void:
 			return
 	_apply_frame(r)
 
+
+## 显示指定动画的第一帧（用于快速更新朝向）
+func show_frame(anim_name: String) -> void:
+	var r = _readers.get(anim_name)
+	if r == null:
+		if not _load_one(anim_name): return
+		r = _readers.get(anim_name)
+		if r == null: return
+	_current_anim = anim_name
+	_current_frame = 0
+	_apply_frame(r)
+
+
 func _apply_frame(r: WASReader) -> void:
 	var d = r.decode_frame(direction, _current_frame)
 	if d.is_empty(): return

@@ -2,10 +2,11 @@
 
 [ext_resource type="Script" uid="uid://c616qcfedxpqd" path="res://Script/Class/HeroNode.gd" id="1_15wyq"]
 [ext_resource type="Script" uid="uid://b42w8puhl8lo4" path="res://Script/Class/BattleCharacter.gd" id="2_em3j7"]
-[ext_resource type="Script" uid="uid://bvynqpeueed4w" path="res://Script/Class/WASAnimationPlayer.gd" id="3_i42p"]
+[ext_resource type="Script" uid="uid://copiyksv066os" path="res://Script/Class/WASAnimationPlayer.gd" id="3_i42p"]
 [ext_resource type="Texture2D" uid="uid://vxkfu1c2q0hu" path="res://Graphic/UI/hp_back.png" id="4_1k10l"]
 [ext_resource type="Texture2D" uid="uid://w2j8b7eulj4b" path="res://Graphic/UI/hp.png" id="5_8fkw8"]
 [ext_resource type="Texture2D" uid="uid://by25ea6vqmjpw" path="res://Graphic/UI/sp.png" id="6_1qp50"]
+[ext_resource type="Texture2D" uid="uid://b7kjom6w4fddx" path="res://Graphic/UI/shield.png" id="6_cvivd"]
 [ext_resource type="Texture2D" uid="uid://c8bjxm2witu1x" path="res://Graphic/UI/np.png" id="7_vr8dx"]
 [ext_resource type="Texture2D" uid="uid://dhv7omnogu1d4" path="res://Graphic/RANDOM/Mouse_DOWN.png" id="8_mouse"]
 [ext_resource type="Texture2D" uid="uid://ci1e7r1d47pma" path="res://Graphic/RANDOM/shadow (2).png" id="9_shadow"]
@@ -16,6 +17,7 @@
 [ext_resource type="Texture2D" uid="uid://bbktwrsm53phu" path="res://Graphic/Battler/敖白/敖白★4.png" id="13_ovimw"]
 [ext_resource type="Texture2D" uid="uid://ni24mgceyp6e" path="res://Graphic/Battler/敖白/敖白.png" id="14_cvivd"]
 [ext_resource type="Texture2D" uid="uid://dhvyc1sbsc5ce" path="res://Graphic/Battler/敖白/敖白-法术.png" id="16_cvivd"]
+[ext_resource type="Texture2D" uid="uid://3yaljajg31nq" path="res://Graphic/Character/野鬼/野鬼.png" id="18_kn67w"]
 
 [sub_resource type="RectangleShape2D" id="Rect_click"]
 size = Vector2(71, 97.25)
@@ -308,6 +310,42 @@ animations = [{
 "speed": 5.0
 }]
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_kfq71"]
+atlas = ExtResource("18_kn67w")
+region = Rect2(0, 324, 106, 108)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qgqcu"]
+atlas = ExtResource("18_kn67w")
+region = Rect2(106, 324, 106, 108)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_apeab"]
+atlas = ExtResource("18_kn67w")
+region = Rect2(212, 324, 106, 108)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qo54j"]
+atlas = ExtResource("18_kn67w")
+region = Rect2(318, 324, 106, 108)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_lsuol"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kfq71")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qgqcu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_apeab")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qo54j")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
 [node name="fightScenePlayer" type="Node2D" unique_id=350880952]
 script = ExtResource("1_15wyq")
 
@@ -346,6 +384,16 @@ offset_bottom = 6.0
 value = 50.0
 texture_under = ExtResource("4_1k10l")
 texture_progress = ExtResource("5_8fkw8")
+texture_progress_offset = Vector2(4, 3)
+
+[node name="ShieldBar" type="TextureProgressBar" parent="WorldUI" unique_id=462436388]
+visible = false
+offset_left = -31.0
+offset_top = -52.0
+offset_right = 838.0
+offset_bottom = 235.0
+value = 50.0
+texture_progress = ExtResource("6_cvivd")
 texture_progress_offset = Vector2(4, 3)
 
 [node name="MPBar" type="TextureProgressBar" parent="WorldUI" unique_id=205529736]
@@ -423,3 +471,19 @@ visible = false
 position = Vector2(5, -31)
 sprite_frames = SubResource("SpriteFrames_mukxi")
 animation = &"敖白hurt"
+
+[node name="Ghost" type="AnimatedSprite2D" parent="." unique_id=1662731808]
+visible = false
+position = Vector2(46, 50)
+sprite_frames = SubResource("SpriteFrames_lsuol")
+autoplay = "default"
+frame_progress = 0.5277846
+
+[node name="Label" type="Label" parent="Ghost" unique_id=2066244213]
+offset_left = 39.0
+offset_top = -27.0
+offset_right = 79.0
+offset_bottom = 8.0
+theme_override_font_sizes/font_size = 25
+text = "1"
+horizontal_alignment = 1

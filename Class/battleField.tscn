@@ -403,9 +403,7 @@ energy = 6.0
 texture = ExtResource("26_ag87l")
 
 [node name="PointLight2D2" type="PointLight2D" parent="." unique_id=1845410223]
-visible = false
-position = Vector2(894.5, 565)
-scale = Vector2(1.5527345, 0.89843744)
-color = Color(0, 1, 1, 1)
-energy = 1.5
+position = Vector2(883, 472.5)
+scale = Vector2(2.171875, 1.2597656)
+energy = 2.0
 texture = ExtResource("26_ag87l")

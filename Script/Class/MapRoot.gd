@@ -178,7 +178,7 @@ func _get_encounter_pool() -> Array:
 
 
 func _lookup_was_dir(name: String) -> String:
-	for row in GameData.ENEMY_DB:
+	for row in EnemyDB.ENEMY_DB:
 		if row.get("name", "") == name:
 			return row.get("was_base_path", "").trim_suffix("/")
 	var s := GameData.create_enemy(name)
@@ -460,6 +460,10 @@ func _trigger_encounter(pool: Array, cfg: Dictionary) -> void:
 
 func _launch_battle(picked, player: Node2D) -> CanvasLayer:
 	player.visible = false
+	# 隐藏地图上的 NPC
+	for c in get_children():
+		if c is NpcNode:
+			c.visible = false
 
 	var overlay = ColorRect.new()
 	overlay.color = Color(0, 0, 0, 0.0)
@@ -522,6 +526,10 @@ func _restore_after_battle(overlay: ColorRect) -> void:
 		player.set_process(true)
 		player.set_process_input(true)
 		player.visible = true
+		# 恢复地图上的 NPC
+		for c in get_children():
+			if c is NpcNode:
+				c.visible = true
 	else:
 		push_error("[战斗] 找不到 Player 节点！")
 

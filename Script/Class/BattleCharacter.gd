@@ -54,6 +54,8 @@ var _sp_bar:      TextureProgressBar = null
 var _name_label:  Label       = null
 var _hp_tween_node: Node
 var _mp_tween_node: Node
+var _shield_hp: int = 0
+var _shield_bar: TextureProgressBar = null
 
 # ─────────────────────────────────────────────
 func setup(character_stats: CharacterStats, for_player: bool = false) -> void:
@@ -99,6 +101,11 @@ func setup(character_stats: CharacterStats, for_player: bool = false) -> void:
 		_sp_bar.value     = current_sp
 	if _name_label:
 		_name_label.text = stats.get_display_name()
+	if _hp_bar:
+		_hp_bar.tooltip_text = "HP: %d/%d" % [current_hp, get_effective_max_hp()]
+
+	# 查找场景中已有的 ShieldBar
+	_shield_bar = parent.get_node_or_null("WorldUI/ShieldBar") as TextureProgressBar
 
 	# 加载 WAS 动画
 	if not stats.was_base_path.is_empty():
@@ -129,6 +136,13 @@ func setup(character_stats: CharacterStats, for_player: bool = false) -> void:
 	_load_debuff_frames(parent)
 	_load_buff_frames(parent)
 	_load_spell_frames(parent)
+	# 点天灯：如果有灯天赋则创建灯笼控制器
+	if trait_data.has("点天灯"):
+		var lantern = parent.get_node_or_null("LanternDisplay") as LanternDisplay
+		if lantern == null:
+			lantern = LanternDisplay.new()
+			lantern.name = "LanternDisplay"
+			parent.add_child(lantern)
 
 
 var _debuff_container: Node2D = null  # debuff.tscn 实例
@@ -176,10 +190,6 @@ func _load_spell_frames(parent: Node) -> void:
 	parent.add_child(template)
 	# 验证星火篆子节点
 	var check = template.get_node_or_null("星火篆") as AnimatedSprite2D
-	if check and check.sprite_frames:
-		print("[_load_spell_frames] Animation/星火篆 loaded, frames=", check.sprite_frames.get_frame_count("default"), " parent=", parent.name)
-	else:
-		print("[_load_spell_frames] WARNING: 星火篆 not found or no sprite_frames!")
 
 
 ## 显示 Debuff 动画（"冰封"/"虚弱"等）
@@ -342,9 +352,21 @@ func _register_was_anims(was: WASAnimationPlayer, base_path: String) -> void:
 # ─── HP / MP ─────────────────────────────────
 func take_damage(amount: int) -> int:
 	var old = current_hp
+	# 护盾优先吸收伤害
+	if _shield_hp > 0:
+		var shield_absorb = mini(_shield_hp, amount)
+		_shield_hp -= shield_absorb
+		amount -= shield_absorb
+		# 更新护盾条
+		if _shield_bar:
+			var tw = _hp_tween_node.create_tween().set_ease(Tween.EASE_OUT)
+			tw.tween_property(_shield_bar, "value", float(_shield_hp), 0.25)
+			if _shield_hp <= 0:
+				_shield_bar.visible = false
 	current_hp = maxi(0, current_hp - amount)
 	hp_changed.emit(old, current_hp, get_effective_max_hp())
 	_tween_hp_bar()
+	_update_hp_tooltip()
 	if current_hp == 0 and not is_dead:
 		is_dead = true
 		GameData.death_hit_stop(stats.rank == "boss")
@@ -357,6 +379,7 @@ func heal(amount: int) -> int:
 	current_hp = mini(eff_max, current_hp + amount)
 	hp_changed.emit(old, current_hp, eff_max)
 	_tween_hp_bar()
+	_update_hp_tooltip(eff_max)
 	if old == 0 and current_hp > 0:
 		if shattered:
 			# 碎冰击杀不可复活，强制保持死亡
@@ -383,9 +406,44 @@ func sync_visual() -> void:
 	var eff_max_hp = get_effective_max_hp()
 	_update_hp_bar()
 	_update_mp_bar()
+	# 同步护盾条
+	if _shield_bar:
+		_shield_bar.max_value = eff_max_hp
+		_shield_bar.value = mini(eff_max_hp, _shield_hp)
+		_shield_bar.visible = _shield_hp > 0
+	# 更新血条 tooltip
+	_update_hp_tooltip(eff_max_hp)
 	# 面板通过信号同步，但不要覆盖头顶正在跑的 tween
 	hp_changed.emit(current_hp, current_hp, eff_max_hp)
 	mp_changed.emit(current_mp, current_mp, get_effective_max_mp())
+
+
+## 更新血条 tooltip 显示 HP 和护盾信息
+func _update_hp_tooltip(eff_max: int = -1) -> void:
+	if _hp_bar == null:
+		return
+	if eff_max < 0:
+		eff_max = get_effective_max_hp()
+	if _shield_hp > 0:
+		_hp_bar.tooltip_text = "HP: %d/%d  🛡️%d" % [current_hp, eff_max, _shield_hp]
+	else:
+		_hp_bar.tooltip_text = "HP: %d/%d" % [current_hp, eff_max]
+
+
+## 设置护盾值（白色护盾条，优先吸收伤害）
+func set_shield(amount: int) -> void:
+	_shield_hp = maxi(0, amount)
+	if _shield_bar:
+		var eff_max = get_effective_max_hp()
+		_shield_bar.max_value = eff_max
+		var tw = _hp_tween_node.create_tween().set_ease(Tween.EASE_OUT)
+		tw.tween_property(_shield_bar, "value", mini(eff_max, float(_shield_hp)), 0.25)
+		_shield_bar.visible = _shield_hp > 0
+	_update_hp_tooltip()
+
+
+func get_shield() -> int:
+	return _shield_hp
 
 func _update_hp_bar() -> void:
 	if _hp_bar:
@@ -451,7 +509,7 @@ func reset_sp() -> void:
 
 ## 冻结类 buff ID 列表
 const FREEZE_BUFF_IDS: Array[String] = ["frozen", "freeze", "冰封", "失魂"]
-const DEBUFF_IDS: Array[String] = ["poison", "burn", "bleed", "slow", "def_broken", "atk_down", "frozen", "freeze", "冰封", "失魂", "weakened"]
+const DEBUFF_IDS: Array[String] = ["poison", "burn", "bleed", "slow", "def_broken", "mdef_broken", "atk_down", "marked", "frozen", "freeze", "冰封", "失魂", "weakened"]
 
 # ─── BUFF 系统（分层叠加，max 3 层，同源不重复） ───
 const MAX_BUFF_LAYERS := 3
@@ -464,6 +522,9 @@ func add_buff(buff_id: String, turns: int, value: Variant = null, source: String
 		var resist = get_debuff_resist_chance()
 		if resist > 0 and randf() < resist:
 			return
+	# Boss 免疫灼烧
+	if buff_id == "burn" and stats.rank == "boss":
+		return
 	if not buffs.has(buff_id):
 		buffs[buff_id] = { "layers": [] }
 	var layers: Array = buffs[buff_id]["layers"]
@@ -472,6 +533,9 @@ func add_buff(buff_id: String, turns: int, value: Variant = null, source: String
 		for l in layers:
 			if l.get("source", "") == source:
 				l["turns"] = maxi(l["turns"], turns)
+				# 重复施放割喉之战时刷新视觉效果
+				if buff_id == "marked":
+					_show_marked_effect()
 				return
 	# 已达最大层数
 	if layers.size() >= MAX_BUFF_LAYERS:
@@ -488,6 +552,28 @@ func add_buff(buff_id: String, turns: int, value: Variant = null, source: String
 		is_frozen = true
 	if buff_id == "poison":
 		show_debuff("中毒", true)
+	if buff_id == "marked":
+		# 视觉效果由 BattleManager 在技能动画完成后触发
+		pass
+
+func _show_marked_effect() -> void:
+	# 角色变暗：黑气缠身（只影响 sprite，不影响血条等 UI）
+	var parent = get_parent()
+	if parent == null: return
+	# 停止旧脉冲
+	var old_tw = get_meta("_marked_pulse_tween") if has_meta("_marked_pulse_tween") else null
+	if old_tw and old_tw.is_valid():
+		old_tw.kill()
+	# Sprite2D 在 parent 上（HeroNode/EnemyNode 的直接子节点）
+	var sprite = parent.get_node_or_null("Sprite2D") as Sprite2D
+	if sprite:
+		sprite.set_meta("_marked_orig_modulate", sprite.modulate)
+		sprite.modulate = Color(0.3, 0.3, 0.3)
+		var tw = create_tween().set_loops()
+		tw.tween_property(sprite, "modulate", Color(0.2, 0.2, 0.2), 1.0)
+		tw.tween_property(sprite, "modulate", Color(0.4, 0.3, 0.4), 1.0)
+		set_meta("_marked_pulse_tween", tw)
+
 
 func remove_buff(buff_id: String) -> void:
 	if buff_id in buffs:
@@ -506,6 +592,35 @@ func remove_buff(buff_id: String) -> void:
 		if buff_id == "poison":
 			if not has_buff("poison"):
 				hide_debuff()
+	# 清除标记特效
+	if buff_id == "marked":
+		# 停止脉冲动画
+		var pulse_tw = get_meta("_marked_pulse_tween") if has_meta("_marked_pulse_tween") else null
+		if pulse_tw and pulse_tw.is_valid():
+			pulse_tw.kill()
+		var parent = get_parent()
+		if parent:
+			# 恢复颜色（只恢复 sprite）
+			var sp = parent.get_node_or_null("Sprite2D") as Sprite2D
+			if sp and sp.has_meta("_marked_orig_modulate"):
+				sp.modulate = sp.get_meta("_marked_orig_modulate")
+			elif parent.has_meta("_marked_orig_modulate"):
+				parent.modulate = parent.get_meta("_marked_orig_modulate")
+			# 爆散黑雾
+			var dirs := [Vector2(1,0), Vector2(-1,0), Vector2(0,1), Vector2(0,-1),
+						Vector2(0.7,0.7), Vector2(-0.7,0.7), Vector2(0.7,-0.7), Vector2(-0.7,-0.7)]
+			for d in dirs:
+				var dot = ColorRect.new()
+				dot.color = Color(0.1, 0.1, 0.1, 0.8); dot.size = Vector2(16, 16)
+				dot.position = Vector2(-8, -8); dot.z_index = 150
+				dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				parent.add_child(dot)
+				var dt = create_tween().set_parallel()
+				dt.tween_property(dot, "position", d * 80, 0.35)
+				dt.tween_property(dot, "color:a", 0.0, 0.35)
+				dt.tween_property(dot, "size", Vector2(4, 4), 0.35)
+				dt.tween_property(dot, "rotation", randf_range(-3, 3), 0.35)
+				dt.finished.connect(dot.queue_free)
 
 func has_buff(buff_id: String) -> bool:
 	return buff_id in buffs
@@ -597,7 +712,7 @@ func tick_buffs() -> Array[String]:
 func _book_num(type: String, fallback: float = 0.0) -> float:
 	var result = fallback
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == type:
 			var v = db.get("value", 1.0)
 			if v is float or v is int:
@@ -607,7 +722,7 @@ func _book_num(type: String, fallback: float = 0.0) -> float:
 func _book_mul(type: String, fallback: float = 1.0) -> float:
 	var mul = 1.0
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == type:
 			var v = db.get("value", 1.0)
 			if v is float or v is int:
@@ -616,7 +731,7 @@ func _book_mul(type: String, fallback: float = 1.0) -> float:
 
 func _has_book_type(type: String) -> bool:
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == type:
 			return true
 	return false
@@ -698,7 +813,10 @@ func get_effective_attack() -> int:
 func get_effective_magic_attack() -> int:
 	var base = stats.magic_attack * _waste_boost("atk_mul")
 	base = int(base * _book_mul("matk_up"))
-	if has_buff("matk_up"):  base = int(base * clamp(get_buff_value("matk_up") if get_buff_value("matk_up") != null else 1.5, 1.0, 3.0))
+	if has_buff("matk_up"):
+		var bv = get_buff_value("matk_up")
+		if bv != null:
+			base = int(base * bv)
 	if has_buff("atk_down"): base = int(base * clamp(get_buff_value("atk_down") if get_buff_value("atk_down") != null else 0.7, 0.1, 1.0))
 	base = int(base * _elem_resonance_boost("matk_up") * _talent_boost("matk_up"))
 	return base
@@ -722,6 +840,7 @@ func get_effective_magic_defense() -> int:
 	var base = stats.magic_defense * _waste_boost("def_mul")
 	base = int(base * _book_mul("mdef_up"))
 	if has_buff("mdef_up"): base = int(base * clamp(get_buff_value("mdef_up") if get_buff_value("mdef_up") != null else 1.5, 1.0, 5.0))
+	if has_buff("mdef_broken"): base = int(base * clamp(get_buff_value("mdef_broken") if get_buff_value("mdef_broken") != null else 0.5, 0.1, 1.0))
 	return base
 
 func get_effective_speed() -> int:
@@ -730,7 +849,7 @@ func get_effective_speed() -> int:
 	base = int(base * get_night_spd_mul())
 	# 迟钝降速
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "slow_tank":
 			base = int(base * db.value.speed)
 	if has_buff("haste"): base = int(base * clamp(get_buff_value("haste") if get_buff_value("haste") != null else 1.3, 1.0, 3.0))
@@ -761,7 +880,7 @@ func get_effective_max_hp() -> int:
 	base = int(base * _book_mul("hp_up"))
 	# 迟钝加血
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "slow_tank":
 			base = int(base * db.value.hp)
 	if has_buff("hp_up"): base = int(base * clamp(get_buff_value("hp_up") if get_buff_value("hp_up") != null else 1.3, 1.0, 3.0))
@@ -786,7 +905,7 @@ func get_effective_max_mp() -> int:
 func get_effective_crit_rate() -> float:
 	var rate = stats.crit_rate
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "crit_up":
 			rate += db.get("value", 0.0)
 	rate += _talent_boost("crit_up") - 1.0
@@ -795,7 +914,7 @@ func get_effective_crit_rate() -> float:
 func get_effective_magic_crit_rate() -> float:
 	var rate = 0.05  # 基础法术暴击率 5%
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "mcrit_up":
 			rate += db.get("value", 0.0)
 	return clampf(rate, 0.0, 1.0)
@@ -820,7 +939,7 @@ func get_effective_heal_rate() -> float:
 func get_lifesteal_ratio() -> float:
 	var v = 0.0
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "lifesteal":
 			v += db.get("value", 0.0)
 	return minf(v, 0.5)
@@ -829,7 +948,7 @@ func get_lifesteal_ratio() -> float:
 func get_reflect_ratio() -> float:
 	var v = 0.0
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "reflect":
 			v += db.get("value", 0.0)
 	# 守中有攻天赋：反伤 10%/级
@@ -842,7 +961,7 @@ func get_reflect_ratio() -> float:
 func get_venom_chance() -> float:
 	var v = 0.0
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "venom":
 			v += db.get("value", 0.0)
 	return minf(v, 0.5)
@@ -851,7 +970,7 @@ func get_venom_chance() -> float:
 func get_gold_boost() -> float:
 	var v = 1.0
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "gold_boost":
 			v *= db.get("value", 1.0)
 	return v
@@ -859,7 +978,7 @@ func get_gold_boost() -> float:
 ## 神迹免疫异常？
 func is_immune_to_debuffs() -> bool:
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "immune" and db.get("value", 1.0) >= 1.0:
 			return true
 	return false
@@ -867,7 +986,7 @@ func is_immune_to_debuffs() -> bool:
 ## 神迹抵抗异常概率
 func get_debuff_resist_chance() -> float:
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "immune":
 			return db.get("value", 0.0)
 	return 0.0
@@ -888,7 +1007,7 @@ func get_night_spd_mul() -> float:
 		return 1.0
 	var mul = 1.0
 	for b in book_skills:
-		var db = GameData.BOOK_SKILL_DB.get(b, {})
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
 		if db.get("type", "") == "night":
 			var v = db.get("value", {})
 			mul *= v.get("spd", 1.0)
@@ -944,7 +1063,7 @@ func has_book_skill(skill_name: String) -> bool:
 func get_book_value(skill_name: String, fallback: float = 1.0) -> float:
 	if not has_book_skill(skill_name):
 		return fallback
-	var db = GameData.BOOK_SKILL_DB.get(skill_name, {})
+	var db = SkillDB.BOOK_SKILL_DB.get(skill_name, {})
 	return db.get("value", fallback)
 
 

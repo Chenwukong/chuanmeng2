@@ -88,6 +88,11 @@ func setup_weapon(was_base: String) -> void:
 ## 攻击命中特效（在敌人身上播放攻击_2.was，如果有武器文件夹）
 func _spawn_hit_effect(on_target: Node2D) -> void:
 	if _weapon_was == null or _weapon_was.anim_files.is_empty(): return
+	# 清除旧特效避免冲突
+	var old_sprite := on_target.get_node_or_null("HitEffectSprite")
+	if old_sprite: old_sprite.queue_free()
+	var old_was := on_target.get_node_or_null("HitEffectWAS")
+	if old_was: old_was.queue_free()
 	var first_path: String = _weapon_was.anim_files.values()[0]
 	var weapon_dir := first_path.get_base_dir()
 	var effect_path := weapon_dir.path_join("攻击_2.was")
@@ -225,6 +230,8 @@ func play_ranged_attack() -> void:
 ## on_hit: 攻击命中后、走回前的回调（用于立刻扣血+斩杀）
 func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit: Callable = Callable()) -> void:
 	_original_pos = position
+	_original_z = z_index
+	z_index = 999
 	var local_target = get_parent().to_local(target_pos)
 	var approach = local_target + (position - local_target).normalized() * 30
 
@@ -245,6 +252,11 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 	_audio_atk.play()
 	if hit_target and hit_target.has_method("play_hit_reaction"):
 		hit_target.play_hit_reaction()
+	# 攻击命中瞬间播放法术特效（如力劈华山）
+	if _current_spell_anim != "" and hit_target:
+		var bc = hit_target.get_node_or_null("BattleCharacter") as BattleCharacter
+		if bc and bc.has_method("play_spell_effect"):
+			bc.play_spell_effect(_current_spell_anim)
 	if _weapon_was and _weapon_was.anim_files.has("attack"):
 		_weapon_was.play("attack", false)
 	if not _try_play_any("attack"):
@@ -273,6 +285,7 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 	await tween.finished
 	_play_png_loop("idle")
 	was_player.play("idle")
+	z_index = _original_z
 	if _weapon_was:
 		_weapon_was.play("idle")
 	# 恢复 buff/debuff 显示
@@ -288,6 +301,8 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 ## on_hit: 最后一段攻击命中后、走回前的回调（用于立刻扣血+斩杀）
 func play_multihit_sequence(target_pos: Vector2, hit_target: Node2D, hit_count: int, on_hit: Callable = Callable()) -> void:
 	_original_pos = position
+	_original_z = z_index
+	z_index = 999
 	var local_target = get_parent().to_local(target_pos)
 	var approach = local_target + (position - local_target).normalized() * 30
 
@@ -312,6 +327,11 @@ func play_multihit_sequence(target_pos: Vector2, hit_target: Node2D, hit_count: 
 	var push_dir := Vector2(-12, -12)
 	for i in hit_count:
 		_audio_atk.play()
+		# 第一段攻击命中时播放法术特效
+		if i == 0 and _current_spell_anim != "" and hit_target:
+			var bc = hit_target.get_node_or_null("BattleCharacter") as BattleCharacter
+			if bc and bc.has_method("play_spell_effect"):
+				bc.play_spell_effect(_current_spell_anim)
 		if hit_target and hit_target.has_method("play_hit_flash"):
 			hit_target.play_hit_flash()
 		if hit_target:
@@ -356,9 +376,136 @@ func play_multihit_sequence(target_pos: Vector2, hit_target: Node2D, hit_count: 
 	tween.tween_property(self, "position", _original_pos, 0.3)
 	tween.set_ease(Tween.EASE_IN_OUT)
 	await tween.finished
+	z_index = _original_z
 	was_player.play("idle")
 	if _weapon_was:
 		_weapon_was.play("idle")
+	if $BattleCharacter.buffs.size() > 0:
+		$BuffSprite.visible = true
+	if $BattleCharacter.is_frozen:
+		$BattleCharacter.show_debuff("冰封", true)
+	elif $BattleCharacter.is_weakened:
+		$BattleCharacter.show_debuff("虚弱")
+
+## 高速环绕突袭序列：从不同方向快速穿过敌人 N 次
+func play_blitz_sequence(target_pos: Vector2, hit_target: Node2D, hit_count: int, on_hit: Callable = Callable(), skill_sound: String = "") -> void:
+	_original_pos = position
+	_original_z = z_index
+	z_index = 999
+	var local_target = get_parent().to_local(target_pos)
+	var approach = local_target + (position - local_target).normalized() * 40
+
+	# 走过去（隐藏 buff/血条/名字/蓝条/行动条 + 暗影化）
+	$BuffSprite.visible = false
+	var wui = get_node_or_null("WorldUI")
+	if wui:
+		for c in wui.get_children():
+			c.visible = false
+	var _orig_modulate = modulate
+	modulate = Color(0.1, 0.1, 0.1, 1)
+	was_player.play("move", false)
+	if _weapon_was and _weapon_was.anim_files.has("move"):
+		_weapon_was.play("move", false)
+	var tw = create_tween()
+	tw.tween_property(self, "position", approach, 0.3)
+	tw.set_ease(Tween.EASE_IN_OUT)
+	await tw.finished
+	await get_tree().create_timer(0.05).timeout
+
+	# 保存受击方原位
+	var target_orig_pos := hit_target.position if hit_target else Vector2.ZERO
+	if hit_target and hit_target.has_method("play_hit_once"):
+		hit_target.play_hit_once()
+
+	# 8 个方向的突袭路径（围绕敌人环绕）
+	var dashes := [
+		[Vector2(120, 0), Vector2(-120, 0)],      # 右 → 左
+		[Vector2(-80, 80), Vector2(80, -80)],      # 左下 → 右上
+		[Vector2(0, 100), Vector2(0, -100)],       # 下 → 上
+		[Vector2(-80, -80), Vector2(80, 80)],      # 左上 → 右下
+		[Vector2(-120, 0), Vector2(120, 0)],       # 左 → 右
+		[Vector2(80, 80), Vector2(-80, -80)],      # 右下 → 左上
+		[Vector2(0, -100), Vector2(0, 100)],       # 上 → 下
+		[Vector2(80, -80), Vector2(-80, 80)],      # 右上 → 左下
+
+	]
+
+	# 角色攻击音效只播一次
+	_audio_atk.play()
+
+	# 预载技能音效
+	var skill_player: AudioStreamPlayer = null
+	if not skill_sound.is_empty() and ResourceLoader.exists(skill_sound):
+		skill_player = AudioStreamPlayer.new()
+		skill_player.stream = load(skill_sound)
+		skill_player.bus = "SFX"
+		add_child(skill_player)
+
+	for i in mini(hit_count, dashes.size()):
+		var entry = local_target + dashes[i][0]
+		var exit  = local_target + dashes[i][1]
+		# 每次突袭时屏幕震动
+		GameData.hit_stop(0.03, 0.08, 6.0, 0.12)
+		# 根据穿越方向旋转角色（突袭结束后恢复）
+		var angle = rad_to_deg(atan2(exit.y - entry.y, exit.x - entry.x))
+		rotation_degrees = angle
+		# 瞬移到入口
+		position = entry
+		# 每次突袭播技能音效
+		if skill_player:
+			skill_player.play()
+		# 闪白 + 受击
+		if hit_target and hit_target.has_method("play_hit_flash"):
+			hit_target.play_hit_flash()
+		if hit_target:
+			var hit_ani := hit_target.get_node_or_null("gotHit") as AnimatedSprite2D
+			if hit_ani:
+				hit_ani.visible = true
+				hit_ani.frame = 0
+				hit_ani.play("default")
+		# 快速穿过到出口
+		var dt = create_tween()
+		dt.tween_property(self, "position", exit, 0.09)
+		dt.set_ease(Tween.EASE_IN)
+		await dt.finished
+		await get_tree().create_timer(0.08).timeout
+
+	# 攻击命中后回调（扣血）
+	if on_hit.is_valid():
+		await on_hit.call()
+
+	# 敌人归位
+	if hit_target:
+		var rt = create_tween()
+		rt.tween_property(hit_target, "position", target_orig_pos, 0.15)
+		var bc: BattleCharacter = hit_target.get_node_or_null("BattleCharacter") as BattleCharacter
+		if bc and (bc.is_frozen or bc.is_weakened or bc.is_dead):
+			pass
+		elif hit_target.has_method("play_idle"):
+			hit_target.play_idle()
+
+	# 走回来恢复旋转
+	rotation_degrees = 0
+	was_player.play("move", false)
+	if _weapon_was and _weapon_was.anim_files.has("move"):
+		_weapon_was.play("move", false)
+	tw = create_tween()
+	tw.tween_property(self, "position", _original_pos, 0.3)
+	tw.set_ease(Tween.EASE_IN_OUT)
+	await tw.finished
+	z_index = _original_z
+	# 先恢复颜色再播 idle，否则看不见
+	modulate = _orig_modulate
+	sprite.visible = true
+	_play_png_loop("idle")
+	was_player.play("idle")
+	if _weapon_was:
+		_weapon_was.play("idle")
+	if skill_player:
+		skill_player.queue_free()
+	if wui:
+		for c in wui.get_children():
+			c.visible = true
 	if $BattleCharacter.buffs.size() > 0:
 		$BuffSprite.visible = true
 	if $BattleCharacter.is_frozen:

@@ -119,6 +119,12 @@ func setup(
 	for c in party:
 		c.recalc_summon_buffs(pet_count)
 	_update_element_resonance()
+	# 鬼魂计数器初始化
+	for c in party:
+		if c.trait_data.has("驭鬼术"):
+			c.trait_data["_ghost_count"] = 0
+	_record_ghost_home()
+	_update_ghost_label()
 	# SP 系统：不再需要预建队列，_process 中自动积累
 
 ## 战斗中召唤宠物：注册到队伍
@@ -462,9 +468,31 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		await _finish_player_action()
 		return
 
+	# 舍生取义：检查血量条件
+	if skill_id == "舍生取义":
+		var sac_data = SkillManager.get_skill(skill_id)
+		if sac_data and _current_actor.current_hp <= _current_actor.get_effective_max_hp() * sac_data.sacrifice_hp_pct:
+			_push_log("[舍生取义] 气血不足，无法施放！", "system")
+		_play_error_sound()
+		await _finish_player_action()
+		return
+
+	# 摄魂痛击：绑定死亡计数
+	if skill_id == "摄魂痛击" and target and not target.is_dead:
+		target.died.connect(func():
+			_current_actor.trait_data["_soul_strike_kills"] = _current_actor.trait_data.get("_soul_strike_kills", 0) + 1
+			_push_log("【摄魂痛击】威力提升！当前 %d 层" % _current_actor.trait_data["_soul_strike_kills"], "system")
+		, CONNECT_ONE_SHOT)
+
 	# 愈战愈勇：伤害类技能才叠层（BUFF/HEAL 不算）
 	if data.skill_type != SkillData.SkillType.BUFF and data.skill_type != SkillData.SkillType.HEAL:
 		_current_actor.apply_stacking_buff()
+
+	# 驭鬼术特性：使用技能时鬼魂 +1（阎王令除外消耗鬼魂，普攻不加）
+	if _current_actor.trait_data.has("驭鬼术") and skill_id != "阎王令" and skill_id != "普通攻击":
+		var count = _current_actor.trait_data.get("_ghost_count", 0) + 1
+		_current_actor.trait_data["_ghost_count"] = count
+		_update_ghost_label()
 
 	# 播放技能音效
 	if not data.sound_path.is_empty() and ResourceLoader.exists(data.sound_path):
@@ -502,19 +530,17 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		return
 
 	# 寂静剑法：全屏序列帧动画 + 对所有敌人造成物理伤害
-	if skill_id == "寂静剑法":
-		var jj_targets: Array[BattleCharacter] = []
+	# 全屏法术：对所有存活敌人生效（寂静剑法等）
+	if data and data.fullscreen_anim != "":
+		var fs_targets: Array[BattleCharacter] = []
 		for e in enemies:
 			if not e.is_dead:
-				jj_targets.append(e)
-		# 施法者播放施法动画
-		var jj_caster = _current_actor.get_parent()
-		if jj_caster and jj_caster.has_method("play_cast_sequence"):
-			await jj_caster.play_cast_sequence(skill_id)
-		# 全屏动画播一次，等播完再结算
-		if FullscreenAnimation.has_animation(skill_id):
-			await FullscreenAnimation.play(skill_id).finished
-		# 剑气吹走已死怪物（boss 除外）—— 飘向左上角渐隐
+				fs_targets.append(e)
+		var fs_caster = _current_actor.get_parent()
+		if fs_caster and fs_caster.has_method("play_cast_sequence"):
+			await fs_caster.play_cast_sequence(skill_id)
+		if FullscreenAnimation.has_animation(data.fullscreen_anim):
+			await FullscreenAnimation.play(data.fullscreen_anim).finished
 		for e in enemies:
 			if e.is_dead and e.stats.rank != "boss":
 				var nd = e.get_parent()
@@ -523,18 +549,23 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 					tw.tween_property(nd, "position", nd.position + Vector2(-600, -400), 0.8)
 					tw.parallel().tween_property(nd, "modulate:a", 0.0, 0.8)
 					tw.tween_callback(func(): nd.visible = false)
-		# 所有敌人挨打 + 结算伤害
-		_push_log("%s 施展【寂静剑法】，剑气覆盖全场！" % _current_actor.stats.get_display_name(), "player_action")
-		for t in jj_targets:
+		_push_log("%s 施展【%s】，全场震撼！" % [_current_actor.stats.get_display_name(), data.skill_name], "player_action")
+		for t in fs_targets:
 			var tn = t.get_parent() as Node2D
 			if tn:
 				if tn.has_method("play_hit_reaction"): tn.play_hit_reaction()
 				if tn.has_method("play_hit_flash"): tn.play_hit_flash()
-			var dmg = maxi(1, int(_current_actor.get_effective_attack() * data.damage_multiplier) - int(t.get_effective_defense()))
+			var dmg = maxi(1, int((_current_actor.get_effective_magic_attack() if data.is_magic_damage else _current_actor.get_effective_attack()) * data.damage_multiplier) - int(t.get_effective_defense()))
 			dmg = int(dmg * randf_range(0.95, 1.05) * _current_actor.metamorphosis_mod)
-			var actual = t.take_damage(dmg)
+			dmg = SkillManager.apply_marked_bonus(_current_actor, t, dmg)
+			t.take_damage(dmg)
 			t.sync_visual()
-			damage_floated.emit(t, actual, "normal")
+			damage_floated.emit(t, dmg, "normal")
+		# 全屏法术附带 debuff（灼烧等）
+		if data.apply_buff_id != "":
+			for t in fs_targets:
+				if not t.is_dead and not t.stats.rank == "boss":
+					t.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
 		await _finish_player_action()
 		return
 
@@ -555,10 +586,10 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			var on_hit = func():
 				var dmg = maxi(1, mech.stats.attack - int(target.get_effective_defense()))
 				dmg = int(dmg * randf_range(0.95, 1.05) * _current_actor.metamorphosis_mod)
-				var actual = target.take_damage(dmg)
+				target.take_damage(dmg)
 				target.sync_visual()
-				damage_floated.emit(target, actual, "normal")
-				_push_log(GameData._T("LOG_MECH_ATK") % [mech.stats.get_display_name(), target.stats.get_display_name(), actual], "player_action")
+				damage_floated.emit(target, dmg, "normal")
+				_push_log(GameData._T("LOG_MECH_ATK") % [mech.stats.get_display_name(), target.stats.get_display_name(), dmg], "player_action")
 			if nd and nd.has_method("play_attack_sequence"):
 				await nd.play_attack_sequence(target_pos, target.get_parent() as EnemyNode, on_hit)
 			else:
@@ -568,7 +599,15 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		return
 
 	# 横扫千军：多段攻击动画（走到→连续3刀→回来），每刀结算一次伤害
-	if skill_id == "横扫千军":
+	# 多段攻击：连续攻击多次（横扫千军、破釜沉舟等）
+	if data and data.skill_type == SkillData.SkillType.MULTI_HIT:
+		_set_ghost_visible(false)
+		# 横扫千军：检查血量条件（HP > 50% 才可用）
+		if skill_id == "横扫千军" and _current_actor.current_hp <= _current_actor.get_effective_max_hp() * 0.5:
+			_push_log("【横扫千军】气血不足 50%，无法使用！", "system")
+			_play_error_sound()
+			await _finish_player_action()
+			return
 		var result = SkillManager.execute(_current_actor, target, skill_id)
 		if not result.success:
 			_push_log(result.log_text, "system")
@@ -584,14 +623,15 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		var nd = _current_actor.get_parent() as Node2D
 		var hits = result.damage_list.size()
 		var meta_mul = _current_actor.metamorphosis_mod
+		var blitz_total_dmg = 0
 		
 		# on_hit：命中后立刻结算伤害
 		var on_hit = func():
-			var total_dmg = 0
+			blitz_total_dmg = 0
 			var dmg_list = result.damage_list.duplicate()
 			for i in range(dmg_list.size()):
 				dmg_list[i] = int(dmg_list[i] * meta_mul)
-				total_dmg += dmg_list[i]
+				blitz_total_dmg += dmg_list[i]
 			var actual_total = 0
 			for dmg in dmg_list:
 				var actual = actual_target.take_damage(dmg)
@@ -599,47 +639,60 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 				if actual_target.is_dead:
 					break
 			actual_target.sync_visual()
-			damage_floated.emit(actual_target, total_dmg, "crit" if result.is_crit else "normal")
+			damage_floated.emit(actual_target, blitz_total_dmg, "crit" if result.is_crit else "normal")
 			_push_log(result.log_text, "player_action")
 		
-		if nd and nd.has_method("play_multihit_sequence"):
+		if nd and nd.has_method("play_blitz_sequence") and skill_id == "暗影突袭":
+			var sk_sound = data.sound_path if data else ""
+			await nd.play_blitz_sequence(target.get_parent().global_position, actual_target.get_parent() as Node2D, hits, on_hit, sk_sound)
+		elif nd and nd.has_method("play_multihit_sequence"):
 			await nd.play_multihit_sequence(target.get_parent().global_position, actual_target.get_parent() as Node2D, hits, on_hit)
 		else:
 			await on_hit.call()
 			await get_tree().create_timer(0.3).timeout
-		# 施法者进入虚弱状态（横扫不休则跳过）
-		if not no_cd:
-			_current_actor.is_weakened = true
-			_current_actor.show_debuff("虚弱")
-			_push_log(GameData._T("LOG_SELF_WEAK") % _current_actor.stats.get_display_name(), "system")
+		# 回原位后回血
+		_apply_lifesteal(_current_actor, blitz_total_dmg)
+		_set_ghost_visible(true)
+		# 横扫千军专属：降低双抗 30% 持续 3 回合
+		if skill_id == "横扫千军":
+			_current_actor.add_buff("def_broken", 3, 0.7, skill_id)
+			_current_actor.add_buff("mdef_broken", 3, 0.7, skill_id)
+			_push_log("【横扫千军】%s 双抗降低 30%" % _current_actor.stats.get_display_name(), "system")
 		await _finish_player_action()
 		return
 
 	# 一苇渡江：目标必加速 + 随机3个未加速队友加速
 	if skill_id == "一苇渡江":
 		_apply_aoe_buff(target, "haste", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.3, skill_id)
+		_try_add_lantern_to_targets(target)
 		return
 	if skill_id == "神行步":
 		_apply_aoe_buff(target, "haste", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.3, skill_id)
+		_try_add_lantern_to_targets(target)
 		return
 	# 达摩护体 / 金刚护体 / 金刚护法：目标 + 随机3个队友
 	if skill_id == "达摩护体":
 		_apply_aoe_buff(target, "hp_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.3, skill_id)
+		_try_add_lantern_to_targets(target)
 		return
 	if skill_id == "金刚护体":
 		_apply_aoe_buff(target, "def_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.5, skill_id)
+		_try_add_lantern_to_targets(target)
 		return
 	if skill_id == "金刚护法":
 		_apply_aoe_buff(target, "atk_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.5, skill_id)
+		_try_add_lantern_to_targets(target)
 		return
 	if skill_id == "金刚护魂":
 		_apply_aoe_buff(target, "mdef_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.5, skill_id)
+		_try_add_lantern_to_targets(target)
 		return
 
-	# 如沐春风：群体治疗
-	if skill_id == "如沐春风":
+	# 群体治疗（如沐春风等）：extra>0 的 HEAL 技能
+	if data and data.skill_type == SkillData.SkillType.HEAL and data.extra_targets > 0:
 		var heal_targets: Array[BattleCharacter] = [target]
-		var max_targets := 4 + _get_extra_heal_target_count(_current_actor)
+		var base_extra = data.extra_targets
+		var max_targets = base_extra + _get_extra_heal_target_count(_current_actor)
 		var candidates: Array[BattleCharacter] = []
 		for c in party:
 			if c != target and not c.is_dead:
@@ -656,29 +709,61 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			await caster_node2.play_cast_sequence(skill_id)
 
 		for h in heal_targets:
-			var amt = int(h.stats.max_hp * 0.15) + 30
+			var amt = int(h.stats.max_hp * data.heal_multiplier) + data.flat_heal
 			amt = int(amt * _current_actor.metamorphosis_mod)
+			# 点天灯：灯累计3个时触发回血，加到本次治疗量里
+			if _current_actor and _current_actor.trait_data.has("点天灯"):
+				var lantern_heal = _try_add_lantern_to(h)
+				if lantern_heal > 0:
+					amt += lantern_heal
 			var actual = h.heal(amt)
 			h.sync_visual()
-			damage_floated.emit(h, actual, "heal")
-			_push_log(GameData._T("LOG_ITEM_HEAL") % [h.stats.get_display_name(), actual], "system")
+			damage_floated.emit(h, amt, "heal")
+			_push_log(GameData._T("LOG_ITEM_HEAL") % [h.stats.get_display_name(), amt], "system")
 		await get_tree().create_timer(action_delay).timeout
 		await _finish_player_action()
 		return
 
-	# 地烈火：选中目标 + 随机2个其他敌人，同时命中
-	if skill_id == "地烈火":
-		# 收集目标列表
+	# 群体增益：选中目标 + 随机 extra 个队友
+	if data and data.skill_type == SkillData.SkillType.BUFF and data.extra_targets > 0:
+		var buff_targets: Array[BattleCharacter] = [target]
+		var other_allies: Array[BattleCharacter] = []
+		for c in party:
+			if c != target and not c.is_dead:
+				other_allies.append(c)
+		other_allies.shuffle()
+		for j in mini(data.extra_targets, other_allies.size()):
+			buff_targets.append(other_allies[j])
+
+		for bt in buff_targets:
+			bt.play_spell_effect(skill_id)
+
+		var caster_node2 = _current_actor.get_parent()
+		if caster_node2 and caster_node2.has_method("play_cast_sequence"):
+			await caster_node2.play_cast_sequence(skill_id)
+
+		for bt in buff_targets:
+			bt.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
+			# 金刚护体：额外施加魔防
+			if skill_id == "金刚护体":
+				bt.add_buff("mdef_up", data.apply_buff_turns, data.apply_buff_value, data.skill_id)
+			# 金刚护法：额外施加魔攻
+			elif skill_id == "金刚护法":
+				bt.add_buff("matk_up", data.apply_buff_turns, data.apply_buff_value, data.skill_id)
+		await _finish_player_action()
+		return
+
+	# 群体物理/法术：选中目标 + 随机 extra 个其他敌人
+	if data and data.extra_targets > 0 and (data.skill_type == SkillData.SkillType.MAGIC or data.skill_type == SkillData.SkillType.PHYSICAL):
 		var targets: Array[BattleCharacter] = [target]
 		var other_enemies: Array[BattleCharacter] = []
 		for e in enemies:
 			if e != target and not e.is_dead:
 				other_enemies.append(e)
 		other_enemies.shuffle()
-		for j in mini(2, other_enemies.size()):
+		for j in mini(data.extra_targets, other_enemies.size()):
 			targets.append(other_enemies[j])
 
-		# 所有目标进入挨打 + 闪白 + 法术特效
 		for t in targets:
 			var tn = t.get_parent() as Node2D
 			if tn:
@@ -688,19 +773,22 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 					tn.play_hit_flash()
 			t.play_spell_effect(skill_id)
 
-		# 施法者播放施法动画
 		var caster_node = _current_actor.get_parent()
 		if caster_node and caster_node.has_method("play_cast_sequence"):
 			await caster_node.play_cast_sequence(skill_id)
 
-		# 逐个结算伤害
+		var is_magic = data.is_magic_damage
+		var eff_atk = _current_actor.get_effective_magic_attack() if is_magic else _current_actor.get_effective_attack()
+		var night_mul = _current_actor.get_night_dmg_mul()
 		for t in targets:
-			var dmg = maxi(1, int(_current_actor.get_effective_magic_attack() * 1.6) - int(t.stats.magic_defense))
+			var def_val = t.get_effective_magic_defense() if is_magic else t.get_effective_defense()
+			var dmg = maxi(1, int(eff_atk * data.damage_multiplier * night_mul) - int(def_val * 0.6) + data.flat_damage)
 			dmg = int(dmg * randf_range(0.95, 1.05))
-			var actual = t.take_damage(dmg)
+			dmg = SkillManager.apply_marked_bonus(_current_actor, t, dmg)
+			t.take_damage(dmg)
 			t.sync_visual()
-			damage_floated.emit(t, actual, "normal")
-			_push_log(GameData._T("LOG_GROUND_FIRE") % [t.stats.get_display_name(), actual], "enemy_action")
+			damage_floated.emit(t, dmg, "normal")
+			_push_log("[群体] %s 受到 %d 点伤害" % [t.stats.get_display_name(), dmg], "enemy_action")
 			var tn = t.get_parent() as Node2D
 			if tn and tn.has_method("play_idle") and not t.is_dead:
 				tn.play_idle()
@@ -709,8 +797,420 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		await _finish_player_action()
 		return
 
+	# 割喉之战：瞬移到敌人背后背刺
+	if skill_id == "割喉之战":
+		var nd = _current_actor.get_parent() as Node2D
+		if nd:
+			var orig_pos = nd.position
+			var orig_z = nd.z_index
+			var orig_dir = nd.get_node("WASAnimationPlayer").direction if nd.has_node("WASAnimationPlayer") else 0
+			_set_ghost_visible(false)
+			nd.z_index = 1
+			var enemy_nd = target.get_parent() as Node2D
+			var local_target = nd.get_parent().to_local(enemy_nd.global_position) if enemy_nd else target.get_parent().position
+			# 瞬移到敌人背后（左边）
+			nd.position = local_target + Vector2(-60, -30)
+			# 朝左（方向1）
+			if nd.has_node("WASAnimationPlayer"):
+				var was = nd.get_node("WASAnimationPlayer")
+				was.direction = 0
+				was.play("attack", false)
+			elif nd.has_method("play"):
+				nd.play("attack", false)
+			# 武器方向同步
+			var weapon_was = nd.get_node_or_null("WeaponWAS")
+			if weapon_was:
+				weapon_was.direction = 2
+			# 目标受击 + 武器特效
+			if enemy_nd and enemy_nd.has_method("play_hit_reaction"):
+				enemy_nd.play_hit_reaction()
+			if nd.has_method("_spawn_hit_effect"):
+				nd._spawn_hit_effect(enemy_nd)
+			# 执行技能（伤害计算）
+			var result = SkillManager.execute(_current_actor, target, skill_id)
+			if result.success:
+				for dmg in result.damage_list:
+					target.take_damage(dmg)
+				target.sync_visual()
+				damage_floated.emit(target, result.damage_list[0] if result.damage_list.size() > 0 else 0, "crit" if result.is_crit else "normal")
+				_push_log(result.log_text, "player_action")
+			# 走回来
+			await get_tree().create_timer(1).timeout
+			nd.position = orig_pos
+			nd.z_index = orig_z
+			_set_ghost_visible(true)
+			if nd.has_node("WASAnimationPlayer"):
+				var was = nd.get_node("WASAnimationPlayer")
+				was.direction = orig_dir
+				was.play("idle", false)
+			# 回到原位后才回血
+			if result.success:
+				_apply_lifesteal(_current_actor, result.damage_list[0] if result.damage_list.size() > 0 else 0)
+		await _finish_player_action()
+		return
+
+	# 双生：姐妹协同攻击
+	if skill_id == "双生":
+		var partner_id = "yingjingling" if _current_actor.member_id == "gujingling" else "gujingling"
+		var partner: BattleCharacter = null
+		for c in party:
+			if c.member_id == partner_id and not c.is_dead:
+				partner = c
+				break
+		if partner == null:
+			_push_log("【双生】姐妹不在场，无法使用！", "system")
+			_play_error_sound()
+			await _finish_player_action()
+			return
+		# 执行技能计算伤害
+		var result = SkillManager.execute(_current_actor, target, skill_id)
+		if not result.success:
+			_push_log(result.log_text, "system")
+			await _finish_player_action()
+			return
+		# 获取两姐妹的视觉节点
+		var nd1 = _current_actor.get_parent() as Node2D
+		var nd2 = partner.get_parent() as Node2D
+		var enemy_nd = target.get_parent() as Node2D
+		if nd1 and nd2 and enemy_nd:
+			var orig1 = nd1.position; var z1 = nd1.z_index
+			var orig2 = nd2.position; var z2 = nd2.z_index
+			# 保存原始朝向
+			var dir1 = nd1.get_node("WASAnimationPlayer").direction if nd1.has_node("WASAnimationPlayer") else 0
+			var dir2 = nd2.get_node("WASAnimationPlayer").direction if nd2.has_node("WASAnimationPlayer") else 0
+			nd1.z_index = 999; nd2.z_index = 998
+			var local_target = nd1.get_parent().to_local(enemy_nd.global_position)
+			# 两姐妹瞬移到敌人面前
+			nd1.position = local_target + Vector2(-40, -20)
+			nd2.position = local_target + Vector2(-40, 20)
+			# 设置方向朝右（攻击方向）
+			for nd_obj in [nd1, nd2]:
+				if nd_obj.has_node("WASAnimationPlayer"):
+					var w = nd_obj.get_node("WASAnimationPlayer")
+					w.direction = 3
+					w.play("attack", false)
+			# 先后播放音效（间隔0.1s听出两个人）
+			for nd_obj in [nd1, nd2]:
+				var atk_snd = nd_obj.get_node_or_null("Audio_Attack") as AudioStreamPlayer
+				if atk_snd:
+					atk_snd.play()
+					await get_tree().create_timer(0.1).timeout
+			await get_tree().create_timer(0.15).timeout
+			# 交叉飞过敌人：一个左上，一个右上 + 画面一闪 + 关灯
+			var dlights = []
+			if get_tree():
+				dlights = get_tree().root.find_children("", "PointLight2D", true, false)
+				dlights += get_tree().root.find_children("", "DirectionalLight2D", true, false)
+				dlights += get_tree().root.find_children("", "CanvasModulate", true, false)
+			for l in dlights: l.visible = false
+			var flash = ColorRect.new()
+			flash.color = Color(0, 0, 0, 0)
+			flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			get_tree().root.add_child(flash)
+			var vs = get_viewport().size if get_viewport() else Vector2(1920, 1080)
+			flash.position = Vector2(0, 0)
+			flash.size = vs
+			var ft = create_tween()
+			ft.tween_property(flash, "color:a", 0.8, 0.05)
+			ft.tween_property(flash, "color:a", 0.0, 0.15).set_delay(0.1)
+			ft.finished.connect(func(): flash.queue_free(); for l in dlights: l.visible = true)
+			var tw1 = create_tween()
+			tw1.tween_property(nd1, "position", local_target + Vector2(-80, -100), 0.2)
+			var tw2 = create_tween()
+			tw2.tween_property(nd2, "position", local_target + Vector2(-80, 100), 0.2)
+			if enemy_nd and enemy_nd.has_method("play_hit_reaction"):
+				enemy_nd.play_hit_reaction()
+			# 扣血
+			for dmg in result.damage_list:
+				target.take_damage(dmg)
+			target.sync_visual()
+			damage_floated.emit(target, result.damage_list[0] if result.damage_list.size() > 0 else 0, "crit" if result.is_crit else "normal")
+			_push_log(result.log_text, "player_action")
+			await get_tree().create_timer(1).timeout
+			# 归位（恢复位置/朝向/z）
+			nd1.position = orig1; nd1.z_index = z1
+			nd2.position = orig2; nd2.z_index = z2
+			_set_ghost_visible(true)
+			for i in range(2):
+				var nd_obj = nd1 if i == 0 else nd2
+				var orig_dir = dir1 if i == 0 else dir2
+				if nd_obj.has_node("WASAnimationPlayer"):
+					var w = nd_obj.get_node("WASAnimationPlayer")
+					w.direction = orig_dir
+					w.play("idle")
+			# 归位后才回血
+			var total_d = result.damage_list[0] if result.damage_list.size() > 0 else 0
+			_apply_lifesteal(_current_actor, total_d)
+		await _finish_player_action()
+		return
+
+	# 瞬狱影杀阵：全屏黑暗+隐匿+处决
+	if skill_id == "瞬狱影杀阵":
+		var nd = _current_actor.get_parent()
+		if nd:
+			var orig_pos = nd.position; var orig_z = nd.z_index
+			var orig_dir = nd.get_node("WASAnimationPlayer").direction if nd.has_node("WASAnimationPlayer") else 0
+			nd.z_index = 9999
+			# 隐藏鬼魂
+			_set_ghost_visible(false)
+			# 关闭灯光
+			var lights = []
+			if get_tree():
+				lights = get_tree().root.find_children("", "PointLight2D", true, false)
+				lights += get_tree().root.find_children("", "DirectionalLight2D", true, false)
+				lights += get_tree().root.find_children("", "CanvasModulate", true, false)
+			for l in lights:
+				l.visible = false
+			# 隐藏队友和其他敌人
+			var hidden := []
+			for c in party + enemies:
+				if c == _current_actor or c == target: continue
+				var vn = c.get_parent()
+				if vn: vn.visible = false; hidden.append(vn)
+			# 施法者防御 + 影分身袭击
+			var enemy_nd = target.get_parent()
+			if nd.has_method("play_guard_cast"):
+				nd.play_guard_cast()
+			var clone_dirs := [Vector2(100,0), Vector2(-70,70), Vector2(0,100), Vector2(-70,-70), Vector2(70,-70)]
+			var clone_exits := [Vector2(-100,0), Vector2(70,-70), Vector2(0,-100), Vector2(70,70), Vector2(-70,70)]
+			if enemy_nd:
+				# 预载音效
+				var se_stream = load("res://Audio/SE/兵器-入肉.ogg")
+				# 复制角色精灵用于影分身
+				var char_sprite = nd.get_node_or_null("Sprite2D") as Sprite2D
+				for ci in range(clone_dirs.size()):
+					var clone_spr: Sprite2D
+					if char_sprite:
+						clone_spr = char_sprite.duplicate() as Sprite2D
+						clone_spr.modulate = Color.BLACK
+					else:
+						clone_spr = Sprite2D.new()
+						var img = Image.create(24, 32, false, Image.FORMAT_RGBA8)
+						img.fill(Color(0.2, 0.2, 0.2, 0.8))
+						clone_spr.texture = ImageTexture.create_from_image(img)
+					clone_spr.centered = true
+					clone_spr.z_index = 9999
+					clone_spr.position = clone_dirs[ci]
+					var dv = clone_exits[ci] - clone_dirs[ci]
+					clone_spr.rotation = atan2(dv.y, dv.x)
+					enemy_nd.add_child(clone_spr)
+					if enemy_nd.has_method("play_hit_flash"):
+						enemy_nd.play_hit_flash()
+					# 兵器音效
+					var se = AudioStreamPlayer.new()
+					se.stream = se_stream
+					se.bus = "SFX"
+					get_parent().add_child(se)
+					se.play()
+					se.finished.connect(se.queue_free)
+					# 飞出淡出
+					var ct = create_tween().set_parallel()
+					ct.tween_property(clone_spr, "position", clone_exits[ci], 0.15)
+					ct.tween_property(clone_spr, "modulate:a", 0.0, 0.15)
+					ct.finished.connect(clone_spr.queue_free)
+					await get_tree().create_timer(0.18).timeout
+			# 全屏黑（CanvasLayer 确保全覆盖）
+			var flash_cl = CanvasLayer.new()
+			flash_cl.layer = 9999
+			get_tree().root.add_child(flash_cl)
+			var flash = ColorRect.new()
+			flash.color = Color(0, 0, 0, 0)
+			flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+			flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			flash_cl.add_child(flash)
+			var ft = create_tween()
+			ft.tween_property(flash, "color:a", 1.0, 0.2)
+			await ft.finished
+			# 瞬移到敌人面前穿刺 + 屏幕剧烈震动
+			var local_t = nd.get_parent().to_local(enemy_nd.global_position) if enemy_nd else Vector2.ZERO
+			nd.position = local_t + Vector2(40, 0)
+			GameData.hit_stop(0.05, 0.05, 20.0, 0.5)
+			if nd.has_node("WASAnimationPlayer"):
+				var w = nd.get_node("WASAnimationPlayer")
+				w.direction = 1
+				w.play("attack", false)
+			# 兵器音效
+			var se = AudioStreamPlayer.new()
+			se.stream = load("res://Audio/SE/兵器-入肉.ogg")
+			se.bus = "SFX"
+			get_parent().add_child(se)
+			se.play()
+			se.finished.connect(se.queue_free)
+			if enemy_nd and enemy_nd.has_method("play_hit_reaction"):
+				enemy_nd.play_hit_reaction()
+			if nd.has_method("_spawn_hit_effect"):
+				nd._spawn_hit_effect(enemy_nd)
+			# 扣血
+			var result = SkillManager.execute(_current_actor, target, skill_id)
+			if result.success:
+				for dmg in result.damage_list:
+					target.take_damage(dmg)
+				target.sync_visual()
+				damage_floated.emit(target, result.damage_list[0] if result.damage_list.size() > 0 else 0, "crit" if result.is_crit else "normal")
+				_push_log(result.log_text, "player_action")
+			# 处决：低于5%血量的敌人直接死亡
+			for e in enemies:
+				if not e.is_dead and e.hp_percent() < 0.05:
+					e.current_hp = 0
+					e.is_dead = true
+					e.died.emit()
+					_push_log("【瞬狱影杀阵】%s 被处决！" % e.stats.get_display_name(), "system")
+			# 恢复
+			await get_tree().create_timer(0.5).timeout
+			# 恢复可视
+			ft = create_tween()
+			ft.tween_property(flash, "color:a", 0.0, 0.3)
+			await ft.finished
+			flash.queue_free()
+			flash_cl.queue_free()
+			for l in lights:
+				l.visible = true
+			for vn in hidden:
+				vn.visible = true
+			nd.position = orig_pos; nd.z_index = orig_z
+			_set_ghost_visible(true)
+			if nd.has_node("WASAnimationPlayer"):
+				var w = nd.get_node("WASAnimationPlayer")
+				w.direction = orig_dir
+				w.play("idle")
+			# 武器恢复 idle
+			var weapon_was = nd.get_node_or_null("WeaponWAS")
+			if weapon_was:
+				weapon_was.direction = orig_dir
+				weapon_was.play("idle")
+		await _finish_player_action()
+		return
+
+	# 阎王令：鬼魂飞击 + 本体攻击
+	if skill_id == "阎王令":
+		var nd = _current_actor.get_parent()
+		var enemy_nd = target.get_parent() as Node2D
+		var ghost_count = _current_actor.trait_data.get("_ghost_count", 0)
+		# 隐藏鬼魂
+		var ghost_node = nd.get_node_or_null("Ghost") if nd else null
+		var ghost_tex = null
+		if ghost_node:
+			var anim_name = ghost_node.animation if ghost_node.animation != "" else "default"
+			ghost_tex = ghost_node.sprite_frames.get_frame_texture(anim_name, 0) if ghost_node.sprite_frames and ghost_node.sprite_frames.has_animation(anim_name) else null
+			ghost_node.visible = false
+		if nd and enemy_nd:
+			var orig_pos = nd.position; var orig_z = nd.z_index
+			var orig_dir = nd.get_node("WASAnimationPlayer").direction if nd.has_node("WASAnimationPlayer") else 0
+			nd.z_index = 9999
+			# 远程施法：角色原地不动，鬼魂飞向敌人
+			if nd.has_node("WASAnimationPlayer"):
+				var w = nd.get_node("WASAnimationPlayer")
+				w.direction = 3
+				w.play("cast", false)
+			var center_local = nd.get_parent().to_local(enemy_nd.global_position)
+			for i in range(ghost_count):
+				var g = Sprite2D.new()
+				if ghost_tex:
+					g.texture = ghost_tex
+					g.modulate = Color(1, 1, 1, 0.7)
+				else:
+					var img = Image.create(16, 16, false, Image.FORMAT_RGBA8)
+					img.fill(Color(0.7, 0.8, 1.0, 0.7))
+					g.texture = ImageTexture.create_from_image(img)
+				g.centered = true
+				g.z_index = 9998
+				var start = Vector2(orig_pos.x + randf_range(-30, 30), orig_pos.y + randf_range(-10, 40))
+				g.position = start
+				nd.get_parent().add_child(g)
+				var gt = create_tween().set_parallel()
+				gt.tween_property(g, "position", center_local + Vector2(randf_range(-10, 10), randf_range(-10, 10)), 0.4)
+				gt.tween_property(g, "modulate:a", 0.0, 0.4)
+				gt.finished.connect(g.queue_free)
+			# 鬼魂命中
+			await get_tree().create_timer(0.4).timeout
+			GameData.hit_stop(0.05, 0.05, 15.0, 0.3)
+			# 播放阎王令技能特效
+			if target and target.has_method("play_spell_effect"):
+				target.play_spell_effect(skill_id)
+			if enemy_nd and enemy_nd.has_method("play_hit_reaction"):
+				enemy_nd.play_hit_reaction()
+			var se = AudioStreamPlayer.new()
+			se.stream = load("res://Audio/SE/兵器-入肉.ogg")
+			se.bus = "SFX"
+			get_parent().add_child(se)
+			se.play()
+			se.finished.connect(se.queue_free)
+			# 扣血
+			var result = SkillManager.execute(_current_actor, target, skill_id)
+			if result.success:
+				for dmg in result.damage_list:
+					target.take_damage(dmg)
+				target.sync_visual()
+				damage_floated.emit(target, result.damage_list[0] if result.damage_list.size() > 0 else 0, "crit" if result.is_crit else "normal")
+				_push_log(result.log_text, "player_action")
+			# 收招
+			await get_tree().create_timer(0.3).timeout
+			nd.position = orig_pos; nd.z_index = orig_z
+			if nd.has_node("WASAnimationPlayer"):
+				var w = nd.get_node("WASAnimationPlayer")
+				w.direction = orig_dir
+				w.play("idle")
+			# 恢复鬼魂显示（归零后保持隐藏）
+			if ghost_node:
+				ghost_node.visible = _current_actor.trait_data.get("_ghost_count", 0) > 0
+		await _finish_player_action()
+		return
+
 	var result = SkillManager.execute(_current_actor, target, skill_id)
 	await _apply_skill_result(result, _current_actor, target)
+	# 阎王令：更新鬼魂标签（计数器已在 _calc_damage 清零）
+	if skill_id == "阎王令":
+		_update_ghost_label()
+	# 鬼影护体 / 鬼煞附体：消耗鬼魂施加效果
+	if skill_id == "鬼影护体" or skill_id == "鬼煞附体":
+		if data and _current_actor.trait_data.has("驭鬼术"):
+			var cost = data.ghost_cost
+			var count = _current_actor.trait_data.get("_ghost_count", 0)
+			if count < cost:
+				_push_log("【%s】鬼魂不足（需要 %d 层，当前 %d 层）！" % [skill_id, cost, count], "system")
+			else:
+				_current_actor.trait_data["_ghost_count"] = count - cost
+				_update_ghost_label()
+				if skill_id == "鬼影护体":
+					_current_actor.add_buff("ghost_shield", 999, 1.0, skill_id)
+					_push_log("【鬼影护体】鬼魂抵挡下一次攻击！", "system")
+				elif skill_id == "鬼煞附体":
+					_current_actor.add_buff("ghost_boost", data.apply_buff_turns, data.boost_pct, skill_id)
+					_push_log("【鬼煞附体】伤害提升 %d%%！" % int(data.boost_pct * 100), "system")
+	# 割喉之战：黑雾缠身
+	if skill_id == "死亡宣告" and target and not target.is_dead:
+		if target.has_method("_show_marked_effect"):
+			target._show_marked_effect()
+	# 舍生取义：扣除 50% 最大气血 + 降低双抗
+	if skill_id == "舍生取义":
+	
+		if data:
+			var hp_cost = int(_current_actor.get_effective_max_hp() * data.sacrifice_hp_pct)
+			_current_actor.take_damage(hp_cost)
+			_current_actor.sync_visual()
+			_push_log("[舍生取义] %s 牺牲 %d 点气血，双抗降低" % [_current_actor.stats.get_display_name(), hp_cost], "player_action")
+			_current_actor.add_buff("def_broken", 3, data.sacrifice_def_pct, skill_id)
+			_current_actor.add_buff("mdef_broken", 3, data.sacrifice_def_pct, skill_id)
+	# 影化：同时加速 + 半透明特效
+	if skill_id == "影化":
+		_current_actor.add_buff("haste", 3, 1.3, skill_id)
+		var nd = _current_actor.get_parent()
+		if nd:
+			# 渐变为半透明
+			var tw = create_tween()
+			tw.tween_property(nd, "modulate", Color(1, 1, 1, 0.5), 0.3)
+			# buff 结束时恢复（任一 buff 消失即恢复）
+			_current_actor.buff_removed.connect(func(_buff_id):
+				if is_instance_valid(nd):
+					var tw2 = create_tween()
+					tw2.tween_property(nd, "modulate", Color(1, 1, 1, 1), 0.3)
+			, CONNECT_ONE_SHOT)
+	# 点天灯：对队友施法后挂灯笼
+	if _current_actor and _current_actor.trait_data.has("点天灯") and target and target.is_player:
+		var lh = _try_add_lantern_to(target)
+		if lh > 0:
+			target.heal(lh)
+			target.sync_visual()
 	# 嘲讽
 	if skill_id == "嘲讽":
 		_threat_mgr.taunt(_current_actor)
@@ -902,6 +1402,51 @@ func _apply_aoe_buff(target: BattleCharacter, buff_id: String, turns: int, value
 	await get_tree().create_timer(action_delay).timeout
 	await _finish_player_action()
 
+
+## 点天灯：给单个目标加灯笼
+func _try_add_lantern_to(target: BattleCharacter) -> int:
+	if target == null or target.is_dead:
+		return 0
+	var parent_nd = target.get_parent()
+	if parent_nd == null:
+		return 0
+	var lantern = parent_nd.get_node_or_null("LanternDisplay") as LanternDisplay
+	if lantern == null:
+		lantern = LanternDisplay.new()
+		lantern.name = "LanternDisplay"
+		parent_nd.add_child(lantern)
+	var full = lantern.add_lantern()
+	if full:
+		var heal_pct = 0.2
+		if _current_actor and _current_actor.trait_data.has("点天灯"):
+			heal_pct = _current_actor.trait_data["点天灯"].get("heal_pct", 0.2)
+		var heal_amt = int(target.stats.max_hp * heal_pct)
+		lantern.clear_lanterns()
+		_current_actor.show_trait_float("点天灯")
+		return heal_amt
+	return 0
+
+
+## 点天灯：给 AoE buff 的所有目标加灯笼
+func _try_add_lantern_to_targets(main_target: BattleCharacter) -> void:
+	if _current_actor == null or not _current_actor.trait_data.has("点天灯"):
+		return
+	var a1 = _try_add_lantern_to(main_target)
+	if a1 > 0:
+		main_target.heal(a1)
+		main_target.sync_visual()
+	var extra = _get_extra_heal_target_count(_current_actor)
+	if extra <= 0:
+		return
+	var cands = party.filter(func(c): return c != main_target and not c.is_dead)
+	cands.shuffle()
+	for j in mini(extra, cands.size()):
+		var a2 = _try_add_lantern_to(cands[j])
+		if a2 > 0:
+			cands[j].heal(a2)
+			cands[j].sync_visual()
+
+
 ## 保护队友 — ally 由 BattleUI 点击选择
 func player_guard(ally: BattleCharacter) -> void:
 	if state != BattleState.PLAYER_TURN: return
@@ -915,6 +1460,9 @@ func player_guard(ally: BattleCharacter) -> void:
 	_current_actor.play_dual_spell_effect()
 	_push_log(GameData._T("LOG_GUARD_SET") % [_current_actor.stats.get_display_name(), ally.stats.get_display_name()], "player_action")
 	await get_tree().create_timer(action_delay).timeout
+	# 防御动画播完后切回 idle
+	if nd and nd.has_method("play_idle"):
+		nd.play_idle()
 	await _finish_player_action()
 
 ## 召唤宠物上场，宠物会随机攻击一个敌人再归位
@@ -1004,10 +1552,10 @@ func _do_pet_attack_damage(pet: PetData, target: BattleCharacter) -> void:
 	var sk_data = SkillManager.get_skill(skill_id)
 	var dmg = maxi(1, pet.attack - int(target.get_effective_defense()))
 	dmg = int(dmg * randf_range(0.95, 1.05))
-	var actual = target.take_damage(dmg)
+	target.take_damage(dmg)
 	target.sync_visual()
-	damage_floated.emit(target, actual, "normal")
-	_push_log(GameData._T("LOG_PET_ATK") % [pet.character_name, target.stats.get_display_name(), actual], "player_action")
+	damage_floated.emit(target, dmg, "normal")
+	_push_log(GameData._T("LOG_PET_ATK") % [pet.character_name, target.stats.get_display_name(), dmg], "player_action")
 
 
 ## 召唤铁甲兽上场
@@ -1073,9 +1621,9 @@ func player_summon_mech(mech_name: String, replace_bc: BattleCharacter = null) -
 		await pet_node.play_attack_sequence(target_pos, target.get_parent() as EnemyNode)
 	var dmg = maxi(1, stats.attack - int(target.get_effective_defense()))
 	dmg = int(dmg * randf_range(0.95, 1.05))
-	var actual = target.take_damage(dmg); target.sync_visual()
-	damage_floated.emit(target, actual, "normal")
-	_push_log(GameData._T("LOG_PET_ATK") % [stats.character_name, target.stats.get_display_name(), actual], "player_action")
+	target.take_damage(dmg); target.sync_visual()
+	damage_floated.emit(target, dmg, "normal")
+	_push_log(GameData._T("LOG_PET_ATK") % [stats.character_name, target.stats.get_display_name(), dmg], "player_action")
 	await get_tree().create_timer(action_delay * 0.5).timeout
 	await _finish_player_action()
 
@@ -1118,18 +1666,18 @@ func _do_pet_attack(pet: PetData, target: BattleCharacter) -> void:
 	if sk_data == null or skill_id == "普通攻击":
 		var dmg = maxi(1, pet.attack - int(target.get_effective_defense()))
 		dmg = int(dmg * randf_range(0.95, 1.05))
-		var actual = target.take_damage(dmg)
+		target.take_damage(dmg)
 		target.sync_visual()
-		damage_floated.emit(target, actual, "normal")
-		_push_log(GameData._T("LOG_PET_ATK") % [pet.character_name, target.stats.get_display_name(), actual], "player_action")
+		damage_floated.emit(target, dmg, "normal")
+		_push_log(GameData._T("LOG_PET_ATK") % [pet.character_name, target.stats.get_display_name(), dmg], "player_action")
 	else:
 		var mul = sk_data.damage_multiplier if sk_data.damage_multiplier > 0 else 1.0
 		var dmg = maxi(1, int(pet.attack * mul) - int(target.get_effective_defense()))
 		dmg = int(dmg * randf_range(0.95, 1.05))
-		var actual = target.take_damage(dmg)
+		target.take_damage(dmg)
 		target.sync_visual()
-		damage_floated.emit(target, actual, "normal")
-		_push_log(GameData._T("LOG_PET_SKILL_ATK") % [pet.character_name, skill_id, target.stats.get_display_name(), actual], "player_action")
+		damage_floated.emit(target, dmg, "normal")
+		_push_log(GameData._T("LOG_PET_SKILL_ATK") % [pet.character_name, skill_id, target.stats.get_display_name(), dmg], "player_action")
 	await get_tree().create_timer(action_delay).timeout
 
 ## 捕捉
@@ -1290,8 +1838,8 @@ func _apply_extra_heal_targets(
 		if actual <= 0:
 			continue
 		extra_target.sync_visual()
-		damage_floated.emit(extra_target, actual, "heal")
-		_push_log(GameData._T("LOG_SPLASH_HEAL") % [extra_target.stats.get_display_name(), actual], "heal")
+		damage_floated.emit(extra_target, amount, "heal")
+		_push_log(GameData._T("LOG_SPLASH_HEAL") % [extra_target.stats.get_display_name(), amount], "heal")
 		if actor != null and _threat_mgr != null:
 			_threat_mgr.add_heal_threat(actor, heal_size)
 
@@ -1336,7 +1884,7 @@ func _apply_skill_result(
 			caster_node._current_spell_anim = "远程攻击"
 			anim_name = "ranged_attack"
 		else:
-			caster_node._current_spell_anim = result.skill_id if anim_name == "cast" else ""
+			caster_node._current_spell_anim = result.skill_id
 
 	character_animated.emit(actor, anim_name, actual_target)
 	await get_tree().create_timer(0.25).timeout
@@ -1358,23 +1906,43 @@ func _apply_skill_result(
 			"is_magic": result.is_magic,
 			"is_aoe": is_aoe,
 		})
-	if result.heal_amount > 0:
+	if result.heal_amount > 0 or result.shield_amount > 0:
 		var skill_data = SkillManager.get_skill(result.skill_id)
 		var hsize = skill_data.heal_size if skill_data else "medium"
-		pending_damage.append({
-			"attacker": actor,
-			"target": actual_target,
-			"amount": int(result.heal_amount * meta_mul),
-			"type": "heal",
-			"heal_size": hsize,
-			"skill_id": result.skill_id,
-		})
+		if result.heal_amount > 0:
+			pending_damage.append({
+				"attacker": actor,
+				"target": actual_target,
+				"amount": int(result.heal_amount * meta_mul),
+				"type": "crit" if result.is_crit else "heal",
+				"is_heal": true,
+				"heal_size": hsize,
+				"skill_id": result.skill_id,
+			})
+		if result.shield_amount > 0:
+			pending_damage.append({
+				"attacker": actor,
+				"target": actual_target,
+				"amount": result.shield_amount,
+				"type": "shield",
+				"skill_id": result.skill_id,
+			})
 
 	var log_type = "player_action" if actor.is_player else "enemy_action"
 	_push_log(result.log_text, log_type)
 
 	if result.applied_buff != "":
-		_push_log(GameData._T("LOG_BUFF_GET") % [target.stats.get_display_name(), result.applied_buff], "system")
+		_push_log(GameData._T("LOG_BUFF_GET") % [target.stats.get_display_name(), GameData._T(result.applied_buff)], "system")
+
+	# 特性：烈焰灼魂 — 技能命中后有概率让目标灼烧（Boss免疫）
+	if actor and target and not target.is_dead and target.stats.rank != "boss":
+		var burn_trait = actor.trait_data.get("烈焰灼魂", {})
+		if burn_trait.size() > 0:
+			var chance = burn_trait.get("burn_chance", 0.0)
+			if randf() < chance:
+				var burn_dmg = burn_trait.get("burn_dmg", 0.05)
+				target.add_buff("burn", 2, int(target.stats.max_hp * burn_dmg))
+				_push_log("%s 被烈焰灼伤！" % target.stats.get_display_name(), "debuff")
 
 	# 远程攻击：等待投射物命中结算（battleUI 动画回调中 emit ranged_attack_completed）
 	if is_ranged_attack:
@@ -1389,7 +1957,9 @@ func _apply_skill_result(
 func flush_pending_damage() -> void:
 	var synced: Dictionary = {}  # 已同步过的角色
 	for d in pending_damage:
-		if d.type == "heal":
+		if d.type == "shield":
+			d.target.set_shield(d.amount)
+		elif d.get("is_heal", false) or d.type == "heal":
 			d.target.heal(d.amount)
 			_apply_extra_heal_targets(d.get("attacker"), d.target, d.amount, d.get("heal_size", "medium"), d.get("skill_id", ""))
 		else:
@@ -1418,6 +1988,12 @@ func flush_pending_damage() -> void:
 				d.amount = 0
 				damage_floated.emit(d.target, 0, "dodge")
 			else:
+				# 鬼影护体：抵挡一次攻击
+				if d.target.has_buff("ghost_shield"):
+					d.target.remove_buff("ghost_shield")
+					d.amount = 0
+					damage_floated.emit(d.target, 0, "dodge")
+					_push_log("【鬼影护体】%s 抵挡了攻击！" % d.target.stats.get_display_name(), "system")
 				var actual = d.target.take_damage(d.amount)
 				# 反震（原逻辑 + 装备反震）
 				if not d.get("is_magic", false):
@@ -1434,9 +2010,19 @@ func flush_pending_damage() -> void:
 					if d.has("attacker") and d.attacker and not d.attacker.is_dead:
 						var ls_ratio = d.attacker.get_lifesteal_ratio()
 						ls_ratio += d.attacker.equip_special.get("lifesteal", 0) / 100.0
+						# 特性吸血（如暗影汲取）
+						var drain_trait = d.attacker.trait_data.get("暗影汲取", {})
+						if not drain_trait.is_empty():
+							ls_ratio += drain_trait.get("drain_pct", 0.0)
+						# 吸血提高 buff（lifesteal_up）
+						if d.attacker.has_buff("lifesteal_up"):
+							var lv = d.attacker.get_buff_value("lifesteal_up")
+							if lv != null:
+								ls_ratio += lv
 						if ls_ratio > 0:
 							var heal_amt = maxi(1, int(d.amount * ls_ratio))
 							d.attacker.heal(heal_amt)
+							damage_floated.emit(d.attacker, heal_amt, "heal")
 							_push_log(GameData._T("LOG_LIFESTEAL") % [d.attacker.stats.get_display_name(), heal_amt], "heal")
 					# 毒（原逻辑）
 					if not d.target.is_dead:
@@ -1453,7 +2039,10 @@ func flush_pending_damage() -> void:
 							d.target.add_buff("bleed", 3, bleed_dmg)
 							_push_log("%s 裂伤流血！" % d.target.stats.get_display_name(), "debuff")
 		# 仇恨
-		if d.type == "heal":
+		if d.type == "shield":
+			if d.has("attacker") and d.attacker:
+				_threat_mgr.add_shield_threat(d.attacker, false)
+		elif d.type == "heal" or d.type == "crit":
 			if d.has("attacker") and d.attacker:
 				_threat_mgr.add_heal_threat(d.attacker, d.get("heal_size", "medium"))
 		else:
@@ -1494,20 +2083,42 @@ func _apply_dot(target: BattleCharacter) -> void:
 	for buff_id in ["poison", "burn"]:
 		if not target.has_buff(buff_id):
 			continue
-		var pct = 0.025 if buff_id == "poison" else 0.04
-		var dmg = maxi(1, int(target.stats.max_hp * pct))
-		target.take_damage(dmg)
-		target.sync_visual()
-		damage_floated.emit(target, dmg, buff_id)
-		var icon = "☠️" if buff_id == "poison" else "🔥"
-		_push_log(GameData._T("LOG_DOT_DMG") % [
-			target.stats.get_display_name(),
-			"中毒" if buff_id == "poison" else "灼烧",
-			dmg
-		], "debuff")
-		await get_tree().create_timer(0.35).timeout
-		if target.is_dead:
-			return
+		# Boss 免疫灼烧伤害（buff 已被 add_buff 阻挡，此检查为兜底）
+		if buff_id == "burn" and target.stats.rank == "boss":
+			continue
+		
+		if buff_id == "burn":
+			# 灼烧：按层数多次触发（不同来源各自烧一次）
+			var burn_layers: Array = target.buffs.get("burn", {}).get("layers", [])
+			for i in range(burn_layers.size()):
+				if target.is_dead:
+					return
+				var dmg = maxi(1, int(target.stats.max_hp * 0.04))
+				target.take_damage(dmg)
+				target.sync_visual()
+				damage_floated.emit(target, dmg, "burn")
+				target.play_spell_effect("烧伤")
+				_push_log(GameData._T("LOG_DOT_DMG") % [
+					target.stats.get_display_name(),
+					"灼烧",
+					dmg
+				], "debuff")
+				if i < burn_layers.size() - 1:
+					await get_tree().create_timer(0.35).timeout
+		else:
+			# 中毒：单层触发
+			var dmg = maxi(1, int(target.stats.max_hp * 0.025))
+			target.take_damage(dmg)
+			target.sync_visual()
+			damage_floated.emit(target, dmg, "poison")
+			_push_log(GameData._T("LOG_DOT_DMG") % [
+				target.stats.get_display_name(),
+				"中毒",
+				dmg
+			], "debuff")
+			await get_tree().create_timer(0.35).timeout
+			if target.is_dead:
+				return
 	# 裂伤流血（独立处理，使用存储的伤害值）
 	if target.has_buff("bleed"):
 		var bleed_dmg = target.get_buff_value("bleed")
@@ -1517,6 +2128,24 @@ func _apply_dot(target: BattleCharacter) -> void:
 		target.sync_visual()
 		damage_floated.emit(target, bleed_dmg, "bleed")
 		_push_log("%s 流血 %d 点" % [target.stats.get_display_name(), bleed_dmg], "debuff")
+
+## 处理吸血/暗影汲取（给直接扣血的路径调用）
+func _apply_lifesteal(attacker: BattleCharacter, damage_amount: int) -> void:
+	if attacker == null or attacker.is_dead: return
+	var ls_ratio = attacker.get_lifesteal_ratio()
+	ls_ratio += attacker.equip_special.get("lifesteal", 0) / 100.0
+	var drain_trait = attacker.trait_data.get("暗影汲取", {})
+	if not drain_trait.is_empty():
+		ls_ratio += drain_trait.get("drain_pct", 0.0)
+	if attacker.has_buff("lifesteal_up"):
+		var lv = attacker.get_buff_value("lifesteal_up")
+		if lv != null:
+			ls_ratio += lv
+	if ls_ratio > 0:
+		var heal_amt = maxi(1, int(damage_amount * ls_ratio))
+		attacker.heal(heal_amt)
+		damage_floated.emit(attacker, heal_amt, "heal")
+		_push_log(GameData._T("LOG_LIFESTEAL") % [attacker.stats.get_display_name(), heal_amt], "heal")
 
 ## Tick 全体 buff
 func _tick_all_buffs() -> void:
@@ -1671,6 +2300,44 @@ func _change_state(new_state: BattleState) -> void:
 func _push_log(text: String, log_type: String = "system") -> void:
 	log_pushed.emit(text, log_type)
 
+## 更新骨精灵鬼魂计数 Label
+func _update_ghost_label() -> void:
+	for c in party:
+		if c.member_id == "gujingling":
+			var nd = c.get_parent()
+			var ghost = nd.get_node_or_null("Ghost") as AnimatedSprite2D if nd else null
+			if ghost:
+				var count = c.trait_data.get("_ghost_count", 0)
+				var lbl = ghost.get_node_or_null("Label") as Label
+				if lbl: lbl.text = str(count)
+				ghost.visible = count > 0 and _is_ghost_owner_home(c)
+			break
+
+## 骨精灵是否在原点（鬼魂只有在家才显示）
+func _is_ghost_owner_home(c: BattleCharacter) -> bool:
+	var nd = c.get_parent()
+	if nd == null: return true
+	return nd.position.distance_to(nd.get_meta("_ghost_home", nd.position)) < 5.0
+
+## 记录骨精灵原点
+func _record_ghost_home() -> void:
+	for c in party:
+		if c.member_id == "gujingling":
+			var nd = c.get_parent()
+			if nd:
+				nd.set_meta("_ghost_home", nd.position)
+			break
+
+## 隐藏/显示骨精灵鬼魂
+func _set_ghost_visible(v: bool) -> void:
+	for c in party:
+		if c.member_id == "gujingling":
+			var nd = c.get_parent()
+			var ghost = nd.get_node_or_null("Ghost") if nd else null
+			if ghost:
+				ghost.visible = v and c.trait_data.get("_ghost_count", 0) > 0
+			break
+
 func _play_error_sound() -> void:
 	var snd = AudioStreamPlayer.new()
 	snd.stream = load("res://Audio/SE/057-Wrong01.ogg")
@@ -1680,6 +2347,7 @@ func _play_error_sound() -> void:
 	snd.finished.connect(snd.queue_free)
 
 func _on_character_died(character: BattleCharacter) -> void:
+	print("[DEBUG 死亡] %s 死亡，检查复活..." % character.stats.get_display_name())
 	# 清理保护关系
 	var to_erase: Array = []
 	for k in guard_relations:
@@ -1705,23 +2373,23 @@ func _on_character_died(character: BattleCharacter) -> void:
 		snd.play()
 		snd.finished.connect(snd.queue_free)
 
-	if not character.is_player:
-		var revive_chance_pct = character.trait_data.get("_revive", 0)
-		if revive_chance_pct > 0 and randi() % 100 < revive_chance_pct:
-			# 怪物复生：回满血
-			character.is_dead = false
-			character.current_hp = character.get_effective_max_hp()
-			character.sync_visual()
-			_push_log(GameData._T("LOG_REVIVE") % character.stats.get_display_name(), "system")
-			damage_floated.emit(character, character.get_effective_max_hp(), "heal")
-			character.revived.emit()
-			return
+	var revive_chance_pct = character.trait_data.get("复生", character.trait_data.get("_revive", 0))
+	print("[DEBUG 复活] %s 复生概率=%d%%" % [character.stats.get_display_name(), revive_chance_pct])
+	if revive_chance_pct > 0 and randi() % 100 < revive_chance_pct:
+		# 死亡复活：回满血
+		character.is_dead = false
+		character.current_hp = character.get_effective_max_hp()
+		character.sync_visual()
+		_push_log(GameData._T("LOG_REVIVE") % character.stats.get_display_name(), "system")
+		damage_floated.emit(character, character.get_effective_max_hp(), "heal")
+		character.revived.emit()
+		return
 	# 神佑复生：有概率复活
 	if character._has_book_type("revive"):
 		var revive_chance = 0.0
 		var revive_hp_pct = 0.5
 		for b in character.book_skills:
-			var bdb = GameData.BOOK_SKILL_DB.get(b, {})
+			var bdb = SkillDB.BOOK_SKILL_DB.get(b, {})
 			if bdb.get("type", "") == "revive":
 				revive_chance = max(revive_chance, bdb.get("value", 0.0))
 		if "高级神佑复生" in character.book_skills:
