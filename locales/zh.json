@@ -54,6 +54,7 @@
   "LOG_BUFF_CURSED": "被诅咒",
   "LOG_REFLECT": "↩️ %s 反震 %s，反弹 %d 伤害！",
   "LOG_LIFESTEAL": "🩸 %s 吸取 %d 气血",
+  "LOG_TAUNT": "🛡️ %s 嘲讽全场！",
   "LOG_POISON": "☠️ %s 中毒了！",
   "LOG_DOT_DMG": "%s %s，损失 %d 点气血",
   "LOG_LV_UP": "✦ %s 境界提升至第 %d 重天！",
@@ -218,6 +219,10 @@
   "BUILD_TOOLTIP_REFLECT": "反弹",
   "BUILD_TOOLTIP_NIGHT": "夜战增伤",
   "BUILD_TOOLTIP_HEALTARGETS": "多目标治疗",
+  "BUILD_TOOLTIP_CRIT_RATE": "暴击(运气)",
+  "BUILD_TOOLTIP_DODGE": "闪避",
+  "BUILD_TOOLTIP_THREAT_REDUCE": "减仇恨",
+  "BUILD_TOOLTIP_TRUE_DMG": "真实伤害",
   "BUILD_CLICK_CLOSE": "点击任意处关闭",
   "LOG_SPLASH_HEAL": "🔹 %s 受到溅射治疗 +%d",
   "LOG_DAMAGE_DEALT": "%s 施展【%s】，对 %s 造成 %d 点%s伤害%s",
@@ -249,5 +254,6 @@
   "lifesteal_up": "吸血提升",
   "marked": "割喉标记",
   "ghost_shield": "鬼影护体",
-  "ghost_boost": "鬼煞附体"
+  "ghost_boost": "鬼煞附体",
+  "ghost_gate": "鬼门大开"
 }

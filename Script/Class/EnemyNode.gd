@@ -217,7 +217,8 @@ func play_hit_once() -> void:
 		, CONNECT_ONE_SHOT)
 
 ## 受击反应：闪白 + 后退一步 + 短暂停顿 + 归位 + 恢复待机
-func play_hit_reaction() -> void:
+## stay_hit=true 时归位后保持受击姿态，等外部调用 play_idle() 恢复（用于全屏技能）
+func play_hit_reaction(stay_hit: bool = false) -> void:
 	if battle_character.is_dead:
 		return
 	# 播放 gotHit 动画
@@ -234,18 +235,23 @@ func play_hit_reaction() -> void:
 		was_player.play("hit", false)
 		return
 	var orig_pos = position
+	set_meta("_hit_orig_pos", orig_pos)
 	was_player.play("hit", false)
 	play_hit_flash()
 	# 后退（敌人朝左退）
 	var tween = create_tween()
 	tween.tween_property(self, "position", orig_pos + Vector2(-30, -10), 0.3)
 	tween.tween_interval(1.5)
-	tween.tween_property(self, "position", orig_pos, 0.001)
+	# stay_hit：停在后退位置，等 _finish_player_action 恢复时再归位
+	if not stay_hit:
+		tween.tween_property(self, "position", orig_pos, 0.001)
 	await tween.finished
 	# 如果在这期间已经死亡，不覆盖死亡动画
 	if battle_character.is_dead:
 		return
-	was_player.play("idle")
+	# 全屏技能：保持受击姿态（hit 动画最后一帧），等法术播完再恢复
+	if not stay_hit:
+		was_player.play("idle")
 
 ## 完整攻击序列：走过去 → 攻击(同时触发目标受击) → 走回来
 func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit: Callable = Callable()) -> void:
@@ -268,11 +274,12 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 	_audio_atk.play()
 	if hit_target and hit_target.has_method("play_hit_reaction"):
 		hit_target.play_hit_reaction()
-	# 攻击命中瞬间播放法术特效
+	# 攻击命中瞬间播放法术特效，播后清空避免残留到下次
 	if _current_spell_anim != "" and hit_target:
 		var bc = hit_target.get_node_or_null("BattleCharacter") as BattleCharacter
 		if bc and bc.has_method("play_spell_effect"):
 			bc.play_spell_effect(_current_spell_anim)
+		_current_spell_anim = ""
 	await was_player.play_frames_direct("attack")
 
 	# ── 攻击命中后、走回前：执行回调（扣血+斩杀） ──
@@ -340,7 +347,8 @@ func _freeze_shatter() -> void:
 	# 隐藏所有视觉层（在碎片出现之前）
 	battle_character.hide_debuff()
 	$BuffSprite.visible = false
-	$BuffSprite.stop()
+	if $BuffSprite is AnimatedSprite2D:
+		$BuffSprite.stop()
 	var wui = get_node_or_null("WorldUI")
 	if wui: wui.visible = false
 
@@ -375,7 +383,8 @@ func _soul_leave() -> void:
 	set_selected(false)
 	battle_character.hide_debuff()
 	$BuffSprite.visible = false
-	$BuffSprite.stop()
+	if $BuffSprite is AnimatedSprite2D:
+		$BuffSprite.stop()
 	var wui = get_node_or_null("WorldUI")
 	if wui: wui.visible = false
 

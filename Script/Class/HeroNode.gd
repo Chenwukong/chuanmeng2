@@ -252,11 +252,12 @@ func play_attack_sequence(target_pos: Vector2, hit_target: Node2D = null, on_hit
 	_audio_atk.play()
 	if hit_target and hit_target.has_method("play_hit_reaction"):
 		hit_target.play_hit_reaction()
-	# 攻击命中瞬间播放法术特效（如力劈华山）
+	# 攻击命中瞬间播放法术特效（如力劈华山），播后清空避免残留到下次
 	if _current_spell_anim != "" and hit_target:
 		var bc = hit_target.get_node_or_null("BattleCharacter") as BattleCharacter
 		if bc and bc.has_method("play_spell_effect"):
 			bc.play_spell_effect(_current_spell_anim)
+		_current_spell_anim = ""
 	if _weapon_was and _weapon_was.anim_files.has("attack"):
 		_weapon_was.play("attack", false)
 	if not _try_play_any("attack"):
@@ -327,11 +328,12 @@ func play_multihit_sequence(target_pos: Vector2, hit_target: Node2D, hit_count: 
 	var push_dir := Vector2(-12, -12)
 	for i in hit_count:
 		_audio_atk.play()
-		# 第一段攻击命中时播放法术特效
+		# 第一段攻击命中时播放法术特效，播后清空避免残留到下次
 		if i == 0 and _current_spell_anim != "" and hit_target:
 			var bc = hit_target.get_node_or_null("BattleCharacter") as BattleCharacter
 			if bc and bc.has_method("play_spell_effect"):
 				bc.play_spell_effect(_current_spell_anim)
+			_current_spell_anim = ""
 		if hit_target and hit_target.has_method("play_hit_flash"):
 			hit_target.play_hit_flash()
 		if hit_target:
@@ -728,11 +730,7 @@ func guard_warp(ally_global_pos: Vector2, ally_z: int) -> void:
 func guard_return() -> void:
 	position = _original_pos
 	z_index = _original_z
-	if not _try_play_png("idle"):
-		sprite.visible = true
-		was_player.play("idle")
-		if _weapon_was:
-			_weapon_was.play("idle")
+	play_idle()
 
 
 ## 尝试播放 PNG 动画（支持别名：WAS 名 → PNG 后缀）
@@ -794,6 +792,16 @@ func _try_play_png(anim_suffix: String) -> bool:
 	# 隐藏 WAS
 	sprite.visible = false
 	return true
+
+
+## 回到待机动画（PNG 优先，WAS 兜底）
+func play_idle() -> void:
+	if _try_play_png("idle"):
+		return
+	sprite.visible = true
+	was_player.play("idle")
+	if _weapon_was:
+		_weapon_was.play("idle")
 
 
 ## 守护动作：选择保护时播放一次防御动画

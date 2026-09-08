@@ -35,6 +35,7 @@ enum TargetType { SINGLE_ENEMY, SINGLE_ALLY, SELF, ALL_ENEMIES, ALL_ALLIES }
 @export var flat_damage: int = 0              # 固定伤害（不受攻击力影响）
 @export var hit_count: int = 1                # 多段攻击次数（MULTI_HIT 用）
 @export var ignore_defense_ratio: float = 0.0 # 无视防御比例 0.0~1.0
+@export var miss_chance: float = 0.0          # 技能落空概率 0.0~1.0
 @export var target_atk_dmg_mult: float = 0.0  # 目标攻击追加伤害倍率（力劈华山用）
 @export var is_magic_damage: bool = false      # true=用法攻计算，false=物攻
 
@@ -46,9 +47,12 @@ enum TargetType { SINGLE_ENEMY, SINGLE_ALLY, SELF, ALL_ENEMIES, ALL_ALLIES }
 
 ## 效果（施加 Buff/Debuff）
 @export var apply_buff_id: String = ""      # 施加的 Buff ID（空=不施加）
+@export var apply_buff2_id: String = ""     # 施加的第二个 Buff ID（双抗等，同回合数/数值）
 @export var apply_buff_turns: int = 3
 @export var apply_buff_chance: float = 1.0  # 成功率 0.0~1.0
 @export var apply_buff_value: float = 0.0   # Buff 携带的数值（如百分比）
+@export var self_buff_id: String = ""       # 施放后施加给自己的 Buff ID（如不灭金身的无敌）
+@export var self_buff_turns: int = 0
 
 ## 舍生取义参数
 @export var sacrifice_hp_pct: float = 0.5   # 牺牲气血比例（最大气血 × 此值）
@@ -56,6 +60,7 @@ enum TargetType { SINGLE_ENEMY, SINGLE_ALLY, SELF, ALL_ENEMIES, ALL_ALLIES }
 
 ## 鬼魂技能参数
 @export var ghost_cost: int = 0       # 消耗的鬼魂层数
+@export var ghosts_per_charge: int = 2  # 每几层鬼魂换 1 次效果（鬼影护体）
 @export var boost_pct: float = 0.0    # 增伤百分比（鬼煞附体等）
 
 ## 群体参数

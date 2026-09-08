@@ -62,9 +62,12 @@ static func execute(
 
 	# ── 附带效果（伤害型/治疗型技能也可携带 Buff）──
 	if data.apply_buff_id != "" and result.success and data.skill_type != SkillData.SkillType.BUFF:
-		if randf() <= _calc_debuff_chance(caster, target, data.apply_buff_chance):
+		if randf() <= calc_debuff_chance(caster, target, data.apply_buff_chance):
 			target.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
 			result.applied_buff = data.apply_buff_id
+		# 第二个 buff（伤筋断骨的疲倦：降攻+降防等）
+		if data.apply_buff2_id != "":
+			target.add_buff(data.apply_buff2_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
 
 	return result
 
@@ -104,8 +107,19 @@ static func _calc_damage(
 		var bonus = int(target.stats.attack * bonus_mult * data.target_atk_dmg_mult)
 		base_dmg += bonus
 
-	# 随机浮动 ±5%
-	base_dmg = int(base_dmg * randf_range(0.95, 1.05))
+	# 弱点击破（英女侠）：连续两次攻击同一敌人，本次伤害 x2
+	var wp_cfg = caster.trait_data.get("弱点击破", {})
+	if wp_cfg is Dictionary and not wp_cfg.is_empty():
+		var tkey: String = target.member_id
+		if tkey == "":
+			tkey = str(target.get_instance_id())
+		if caster.last_hit_target == tkey:
+			base_dmg = int(base_dmg * float(wp_cfg.get("mult", 2.0)))
+		caster.last_hit_target = tkey
+
+	# 随机浮动 ±5%（纯固定伤害技能不浮动）
+	if not (data.flat_damage > 0 and data.damage_multiplier <= 0):
+		base_dmg = int(base_dmg * randf_range(0.95, 1.05))
 
 	# 法波动：法术伤害在 low%~high% 间浮动
 	if is_magic and caster._has_book_type("magic_fluctuate"):
@@ -118,11 +132,12 @@ static func _calc_damage(
 				high_mul = max(high_mul, v.get("high", 1.15))
 		base_dmg = int(base_dmg * randf_range(low_mul, high_mul))
 
-	# 暴击（物理用物理暴击率，法术用法术暴击率）
+	# 暴击（物理用物理暴击率，法术用法术暴击率）——纯固定伤害不暴击
+	var is_fixed_dmg = data.flat_damage > 0 and data.damage_multiplier <= 0
 	var crit_chance = caster.get_effective_magic_crit_rate() if is_magic else caster.get_effective_crit_rate()
 	var crit_mult = caster.stats.crit_mult
 	var is_crit = randf() < crit_chance
-	if is_crit:
+	if is_crit and not is_fixed_dmg:
 		base_dmg = int(base_dmg * crit_mult)
 
 	# 鬼煞附体：伤害提升
@@ -200,8 +215,8 @@ static func _calc_heal(
 	if data.shield_pct > 0.0:
 		result.shield_amount = int(target.stats.max_hp * data.shield_pct)
 
-	# 治疗暴击：概率 = 天运 × 3%，暴击倍率 = 1.5
-	var heal_crit_chance = caster.stats.luck * 0.03
+	# 治疗暴击：概率 = 运气 1:1（1 点 luck = 1%），暴击倍率 = 1.5
+	var heal_crit_chance = (caster.stats.luck + caster.equip_special.get("luck", 0)) / 100.0
 	var is_crit = randf() < heal_crit_chance
 	if is_crit:
 		amount = int(amount * 1.5)
@@ -222,7 +237,7 @@ static func _apply_buff(
 	if data.apply_buff_id != "":
 		var success = true
 		if is_debuff:
-			success = randf() <= _calc_debuff_chance(caster, target, data.apply_buff_chance)
+			success = randf() <= calc_debuff_chance(caster, target, data.apply_buff_chance)
 		if success:
 			target.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
 			result.applied_buff = data.apply_buff_id
@@ -241,8 +256,8 @@ static func apply_marked_bonus(attacker: BattleCharacter, target: BattleCharacte
 		return dmg * 2
 	return dmg
 # ──────────────────────────────────────────────────────
-## 运气修正封印/异常成功率：base + (caster_luck - target_luck) / 100.0
-static func _calc_debuff_chance(caster: BattleCharacter, target: BattleCharacter, base_chance: float) -> float:
+## 运气修正封印/异常成功率：base + (caster_luck - target_luck) / 100.0（供单目标/群体减益共用）
+static func calc_debuff_chance(caster: BattleCharacter, target: BattleCharacter, base_chance: float) -> float:
 	var caster_luck = caster.stats.luck + caster.equip_special.get("luck", 0)
 	var target_luck = target.stats.luck + target.equip_special.get("luck", 0)
 	var chance = base_chance + float(caster_luck - target_luck)

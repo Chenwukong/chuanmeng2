@@ -13,8 +13,15 @@ const SKILL_DB := {
 	},
 	"破防击": {
 		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 8, "dmg": 1.2, "buff": "def_broken", "bturn": 2, "bchance": 0.90,
+		"mp": 8, "dmg": 1.2, "buff": "def_broken", "bturn": 2, "bchance": 0.90, "bvalue": 0.5,
 		"desc": "击破防御，造成 120% 伤害，90% 概率破防 2 回合",
+	},
+	"毒刺": {
+		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 10, "dmg": 1.2, "cd": 1,
+		"buff": "poison", "bturn": 3, "bchance": 0.6,
+		"sound":"res://Audio/SE/男-枪.ogg",
+		"desc": "近战刺击 120% 伤害，60% 概率使目标中毒 3 回合（每回合扣 5% 最大气血，对首领无效）",
 	},
 	"御剑气": {
 		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
@@ -76,6 +83,46 @@ const SKILL_DB := {
 		"buff": "burn", "bturn": 2, "bchance": 0.75,
 		"desc": "喷吐烈焰，造成 130% 法术伤害，75% 概率灼烧 2 回合",
 	},
+	"龙腾": {
+		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 25, "dmg": 2, "magic": true,
+		"bturn": 1,
+		"sound": "res://Audio/SE/法术18.ogg",
+		"desc": "蛟龙出海，造成 200% 法术伤害",
+	},
+	"龙啸九天": {
+		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 350, "dmg": 6, "magic": true,
+		"bturn": 3,
+		"sound": "res://Audio/SE/法术18.ogg",
+		"desc": "龙震九重天，造成 600% 法术伤害",
+	},
+	"龙怒": {
+		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 350, "dmg": 5, "magic": true,
+		"extra":3,
+		"bturn": 3,
+		"sound": "res://Audio/SE/法术16.ogg",
+		"desc": "龙之逆鳞，寸草不生，对 4 个目标造成 500% 法术伤害",
+	},
+	"水漫金山": {
+		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 20, "dmg": 1.7, "magic": true,
+		"fullscreen": "水漫金山",
+		"bturn": 1,
+		"sound":"res://Audio/SE/法术-气势强.ogg",
+		"desc": "水漫金山，造成 170% 法术伤害",
+	},
+	"龙卷雨击": {
+		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 25, "dmg": 4, "cd": 2, "magic": true,
+		"fullscreen": "龙卷雨击", "miss_chance": 0.40,
+		"sound":"res://Audio/SE/法术13.ogg",
+		"desc": "龙卷雨击，对所有敌人造成400%法术伤害，40%概率落空",
+	},
+		
+	
+	
 	"雷霆诀": {
 		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
 		"mp": 20, "dmg": 2.0, "cd": 2, "magic": true, "sound": "res://Audio/SE/男-枪.ogg",
@@ -100,13 +147,23 @@ const SKILL_DB := {
 	},
 	"鬼影护体": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
-		"mp": 15, "cd": 4, "ghost_cost": 1,
-		"desc": "消耗 1 层鬼魂，抵挡下一次受到的攻击",
+		"mp": 15, "cd": 4, "buff": "ghost_shield", "ghosts_per_charge": 3,
+		"desc": "消耗全部鬼魂抵挡攻击，每 3 层鬼魂抵挡 1 次",
 	},
 	"鬼煞附体": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
-		"mp": 20, "cd": 4, "ghost_cost": 2, "boost_pct": 0.5, "bturn": 3,
-		"desc": "消耗 2 层鬼魂，3 回合内伤害提升 50%",
+		"mp": 20, "cd": 4, "buff": "ghost_boost", "boost_pct": 0.05, "bturn": 6,
+		"desc": "消耗全部鬼魂，6 回合内每层鬼魂提升 5% 伤害",
+	},
+	"判官令": {
+		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 20, "dmg": 0, "flat_dmg": 200, "cd": 2, "magic": true, "ignore_def": 1.0,
+		"desc": "判官令出，固定造成 200 点伤害",
+	},
+	"鬼门大开": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
+		"mp": 25, "cd": 5, "buff": "ghost_gate", "bturn": 4,
+		"desc": "鬼门大开，4 回合内每次使用技能额外获得 1 层鬼魂",
 	},
 	"天焰葬礼": {
 		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
@@ -126,6 +183,33 @@ const SKILL_DB := {
 		"sound": "res://Audio/SE/法术19.ogg",
 		"desc": "唧唧歪歪，对5名目标造成 130% 法术伤害",
 	},
+	"神罚": {
+		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 25, "dmg": 7.5, "cd": 0, "magic": true, "extra": 5,
+		"sound": "res://Audio/SE/136-Light02.ogg",
+		"desc": "神降天罚，对6名目标造成 750% 法术伤害",
+	},	
+	"圣瀑": {
+		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 25, "dmg": 12, "cd": 0, "magic": true,
+		"sound": "res://Audio/SE/137-Light03.ogg",
+		"desc": "圣光瀑布，对目标造成 1200% 法术伤害",
+	},		
+	"灵魂冲击": {
+		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 25, "dmg": 8.5, "cd": 0, "magic": false, "extra": 4,
+		"sound": "res://Audio/SE/杀.ogg",
+		"desc": "直戳灵魂，对5名目标造成 850% 物理伤害",
+	},		
+	"四面楚歌": {
+		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 25, "dmg": 12, "cd": 0, "magic": false,
+		"sound": "res://Audio/SE/法术 爆炸.ogg",
+		"desc": "从四面八方攻击，对目标造成 1200% 物理伤害",
+	},			
+	
+	
+	
 	"毒瘴": {
 		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
 		"mp": 20, "dmg": 1.0, "magic": true, "cd": 2,
@@ -173,6 +257,13 @@ const SKILL_DB := {
 		"mp": 15, "dmg": 2.2, "hits": 2, "cd": 2,
 		"desc": "破釜沉舟，连续攻击 2 次，共造成 220% 物理伤害",
 	},
+	"二连击": {
+		"type": SkillData.SkillType.MULTI_HIT, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 15, "dmg": 2, "hits": 2, "cd": 1,
+		"desc": "连续攻击 2 次，共造成 200% 物理伤害",
+	},
+		
+	
 	"暗影突袭": {
 		"type": SkillData.SkillType.MULTI_HIT, "target": SkillData.TargetType.SINGLE_ENEMY,
 		"mp": 2, "dmg": 3.0, "hits": 8, "cd": 1,
@@ -186,6 +277,14 @@ const SKILL_DB := {
 		"mp": 12, "heal": 0.25, "flat": 10, "cd": 2, "sound": "res://Audio/SE/heal 1.ogg",
 		"hsize": "medium",
 		"desc": "恢复自身 25% 最大气血 + 10 点",
+	},
+	"五气朝元": {
+		"type": SkillData.SkillType.HEAL, "target": SkillData.TargetType.SINGLE_ALLY,
+		"mp": 12, "heal": 0.25, "flat": 10, "cd": 2, "sound": "res://Audio/SE/heal 1.ogg",
+		"hsize": "medium",
+		"extra": 3,
+		"buff": "regen", "bturn": 3, "bvalue": 0.05, "bchance": 1.0,
+		"desc": "恢复 4 名目标 25% 最大气血 + 10 点，并附加 3 回合持续回血（每回合 5%）",
 	},
 	"妖气回复": {
 		"type": SkillData.SkillType.HEAL, "target": SkillData.TargetType.SELF,
@@ -256,37 +355,52 @@ const SKILL_DB := {
 
 # ═══ 增益 Buff ═══
 	"护体真气": {
-		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
-		"mp": 10, "buff": "shield", "bturn": 3,
-		"desc": "运转真气护体，3 回合内防御翻倍",
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
+		"mp": 100, "cd": 8, "buff": "def_up", "bturn": 2, "bvalue": 2.0, "extra": 3,
+		"desc": "运转真气护体，全体队友 2 回合内物理防御翻倍",
 	},
 	"一苇渡江": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 15, "cd": 2, "buff": "haste", "bturn": 5, "bvalue": 1.2, "extra": 4,
-		"desc": "选定目标加速并随机增益 3 名未加速队友，5 回合速度提升 20%",
+		"mp": 15, "cd": 2, "buff": "haste", "bturn": 5, "bvalue": 1.15, "extra": 4,
+		"desc": "选定目标加速并随机增益 3 名未加速队友，5 回合速度提升 15%",
 	},
 	"神行步": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 15, "cd": 2, "buff": "haste", "bturn": 3, "bvalue": 1.3, "extra": 3,
-		"desc": "选定目标加速并随机增益 3 名未加速队友，3 回合速度提升 30%",
+		"mp": 15, "cd": 2, "buff": "haste", "bturn": 3, "bvalue": 1.25, "extra": 3,
+		"desc": "选定目标加速并随机增益 3 名未加速队友，3 回合速度提升 25%",
 	},
+	"天神护体": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
+		"mp": 120, "cd": 3, "buff": "def_up", "buff2": "mdef_up", "bturn": 5, "bvalue": 1.2, "extra": 7,
+		"sound":"res://Audio/SE/法术16.ogg",
+		"desc": "对 全体目标生效，5 回合双抗提升 20%",
+	},
+	
+	"神明之躯": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
+		"mp": 50, "cd": 5, "buff": "hp_up", "bturn": 8, "bvalue": 1.3, "extra":0,
+		"sound":"res://Audio/SE/法术16.ogg",
+		"desc": "施法者 8 回合气血上限提升 30%",
+	},	
+	
+	
 	"达摩护体": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 20, "cd": 3, "buff": "hp_up", "bturn": 8, "bvalue": 1.2, "extra":4,
+		"mp": 20, "cd": 3, "buff": "hp_up", "bturn": 8, "bvalue": 1.15, "extra":4,
 		"sound":"res://Audio/SE/法术16.ogg",
-		"desc": "选定目标并随机护体 3 名队友，8 回合气血上限提升 20%",
+		"desc": "选定目标并随机护体 3 名队友，8 回合气血上限提升 15%",
 	},
 	"金刚护体": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 20, "cd": 3, "buff": "def_up", "bturn": 5, "bvalue": 1.2, "extra": 4,
+		"mp": 20, "cd": 3, "buff": "def_up", "buff2": "mdef_up", "bturn": 5, "bvalue": 1.15, "extra": 4,
 		"sound":"res://Audio/SE/法术16.ogg",
-		"desc": "选定目标并随机护体 3 名队友，5 回合双抗提升 20%",
+		"desc": "选定目标并随机护体 3 名队友，5 回合双抗提升 15%",
 	},
 	"金刚护法": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
-		"mp": 20, "cd": 3, "buff": "atk_up", "bturn": 5, "bvalue": 1.2, "extra": 4,
+		"mp": 20, "cd": 3, "buff": "atk_up", "buff2": "matk_up", "bturn": 5, "bvalue": 1.15, "extra": 4,
 		"sound":"res://Audio/SE/法术16.ogg",
-		"desc": "选定目标并随机护法 3 名队友，3 回合双攻提升 20%",
+		"desc": "选定目标并随机护法 3 名队友，5 回合双攻提升 15%",
 	},
 	"金刚护魂": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
@@ -311,6 +425,13 @@ const SKILL_DB := {
 		"sound":"res://Audio/SE/法术16.ogg",
 		"desc": "战神附体，5 回合内物理伤害提升 20%",
 	},
+	"龙附": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
+		"mp": 100, "cd": 3,
+		"buff": "matk_up", "bturn": 4, "bvalue": 1.25,
+		"sound":"res://Audio/SE/法术16.ogg",
+		"desc": "神龙附体，5 回合内法术伤害提升 25%",
+	},
 	"影化": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
 		"mp": 20, "cd": 4,
@@ -325,6 +446,13 @@ const SKILL_DB := {
 		"sound":"res://Audio/SE/法术16.ogg",
 		"desc": "黄金盔甲护体，5 回合内物理防御提升 30%",
 	},
+	"不灭金身": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
+		"mp": 120, "cd": 8,  "bvalue": 1.2,
+		"self_buff": "invincible", "self_bturn": 3,
+		"sound":"res://Audio/SE/法术16.ogg",
+		"desc": "自身 3 回合无敌（免疫所有伤害）",
+	},
 # ═══ 减益 Debuff ═══
 	"蛊毒咒": {
 		"type": SkillData.SkillType.DEBUFF, "target": SkillData.TargetType.SINGLE_ENEMY,
@@ -333,21 +461,67 @@ const SKILL_DB := {
 	},
 	"沉戈断戟": {
 		"type": SkillData.SkillType.DEBUFF, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 16, "buff": "atk_down", "bturn": 3, "bchance": 1, "bvalue": 0.9,
+		"mp": 16, "buff": "atk_down", "bturn": 3, "bchance": 1, "bvalue": 0.1,
 		"sound":"res://Audio/SE/法术16.ogg",
 		"desc": "以战戟沉戈之势震慑敌人，令其物理攻击降低 10%，持续 3 回合",
 	},	
+	"老化": {
+		"type": SkillData.SkillType.DEBUFF, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 250, "buff": "atk_down", "bturn": 3, "bchance": 1,"buff2": "haste", "bvalue": 0.15,
+		"sound":"res://Audio/SE/法术16.ogg",
+		"desc": "使敌人老化，3 回合内双攻和速度降低 15%",
+	},
 	"破甲术": {
 		"type": SkillData.SkillType.DEBUFF, "target": SkillData.TargetType.SINGLE_ENEMY,
 		"mp": 20, "buff": "def_broken", "bturn": 5, "bchance": 1, "bvalue": 0.2,
 		"sound":"res://Audio/SE/法术16.ogg",
 		"desc": "击破敌人护甲，5 回合内物理防御降低 20%",
 	},
+	"识破弱点": {
+		"type": SkillData.SkillType.DEBUFF, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 20, "buff": "def_broken", "buff2": "mdef_broken", "bturn": 5, "bchance": 1, "bvalue": 0.2,
+		"sound":"res://Audio/SE/法术16.ogg",
+		"desc": "攻击敌人弱点，5 回合内双抗降低 20%",
+	},
 	"死亡宣告": {
 		"type": SkillData.SkillType.DEBUFF, "target": SkillData.TargetType.SINGLE_ENEMY,
 		"mp": 20, "buff": "marked", "bturn": 5, "bchance": 1,
 		"desc": "标记一名敌人，下次对其造成伤害时双倍并消耗标记",
+	},
+	"似玉生香": {
+		"type": SkillData.SkillType.DEBUFF, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 18, "buff": "silence", "bturn": 1, "bchance": 1,
+		"sound":"res://Audio/SE/法术16.ogg",
+		"desc": "封印敌人，下回合无法施法（对首领无效）",
+	},
+	"破法术": {
+		"type": SkillData.SkillType.DEBUFF, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 12, "buff": "mdef_broken", "bturn": 5, "bchance": 1, "bvalue": 0.5,
+		"sound":"res://Audio/SE/法术16.ogg",
+		"desc": "降低敌方法术防御，5 回合内魔防降低 50%",
+	},
+	"伤筋断骨": {
+		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 15, "dmg": 1.6, "cd": 2,
+		"buff": "atk_down", "buff2": "def_broken", "bturn": 3, "bchance": 1, "bvalue": 0.2,
+		"sound":"res://Audio/SE/男-枪.ogg",
+		"desc": "单体伤害 160%，附加疲倦：3 回合攻击和防御降低 20%",
+	},
+	"灭魂咒": {
+		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 20, "dmg": 1.4, "cd": 2, "extra": 2, "magic": true,
+		"sound":"res://Audio/SE/法术19.ogg",
+		"desc": "对 3 名敌人造成 140% 法术伤害",
 	},	
+	# 刀解其足（英女侠专属）
+	# 数值调整说明：extra=额外目标数（+1 即共 2 名）、bturn=持续回合、bvalue=减速后速度倍率（0.6=降 40%，越小越慢）、bchance=基础命中率、mp/cd=消耗与冷却
+	"刀解其足": {
+		"type": SkillData.SkillType.DEBUFF, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 15, "cd": 3, "extra": 1,
+		"buff": "slow", "bturn": 3, "bchance": 1.0, "bvalue": 0.6,
+		"sound": "res://Audio/SE/兵器-入肉.ogg",
+		"desc": "刀光斩足，令 2 名敌人移动速度降低 40%，持续 3 回合",
+	},
 
 # ═══ 召唤技能 ═══
 	"召唤铁甲兽": {
@@ -385,11 +559,11 @@ const BOOK_SKILL_DB := {
 	"高级魔之心": {"name":"高级魔之心","icon":"💜","type":"matk_up","desc":"法术伤害永久提升 25%","value":1.25},
 	"魔之心":     {"name":"魔之心","icon":"💜","type":"matk_up","desc":"法术伤害永久提升 12%","value":1.12},
 	# ── 暴击 ──
-	"高级必杀": {"name":"高级必杀","icon":"💥","type":"crit_up","desc":"暴击率永久提升 20%","value":0.20},
-	"必杀":     {"name":"必杀","icon":"💥","type":"crit_up","desc":"暴击率永久提升 10%","value":0.10},
+	"高级必杀": {"name":"高级必杀","icon":"💥","type":"crit_up","desc":"运气永久提升 20","value":0.20},
+	"必杀":     {"name":"必杀","icon":"💥","type":"crit_up","desc":"运气永久提升 10","value":0.10},
 	# ── 法术暴击 ──
-	"高级法术暴击": {"name":"高级法术暴击","icon":"🌟","type":"mcrit_up","desc":"法术暴击率永久提升 20%","value":0.20},
-	"法术暴击":     {"name":"法术暴击","icon":"🌟","type":"mcrit_up","desc":"法术暴击率永久提升 10%","value":0.10},
+	"高级法术暴击": {"name":"高级法术暴击","icon":"🌟","type":"mcrit_up","desc":"运气永久提升 20，且法术技能可以暴击","value":0.20},
+	"法术暴击":     {"name":"法术暴击","icon":"🌟","type":"mcrit_up","desc":"运气永久提升 10，且法术技能可以暴击","value":0.10},
 	# ── 恢复 ──
 	"高级生命恢复": {"name":"高级生命恢复","icon":"💚","type":"regen","desc":"每回合自动恢复 10% 最大气血","value":0.10},
 	"生命恢复":     {"name":"生命恢复","icon":"💚","type":"regen","desc":"每回合自动恢复 5% 最大气血","value":0.05},
@@ -439,14 +613,6 @@ const SKILL_LEARN_DB := {
 		{ "level": 11, "skills": ["失魂符"] },
 		{ "level": 13, "skills": ["毒瘴"] },
 		{ "level": 15, "skills": ["神行步"] },
-	],
-	"erlang": [
-		{ "level": 1,  "skills": ["破防击","妖术"] },
-		{ "level": 4,  "skills": ["三连击"] },
-		{ "level": 7,  "skills": ["护体真气"] },
-		{ "level": 10, "skills": ["天罡战气"] },
-		{ "level": 13, "skills": ["雷霆万钧"] },
-		{ "level": 16, "skills": ["战神附体"] },
 	],
 	"duoshiyi": [
 		{ "level": 1,  "skills": ["召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"] },
@@ -517,15 +683,46 @@ const SKILL_LEARN_DB := {
 		{ "level": 40, "skills": ["一苇渡江"] },
 		{ "level": 60, "skills": ["舍生取义"] },
 	],
-	"yunqiu": [
-		{ "level": 1,  "skills": ["金刚护体","如沐春风","普度众生"] },
-		{ "level": 4,  "skills": ["清净琉璃"] },
-		{ "level": 7,  "skills": ["大悲咒"] },
-		{ "level": 10, "skills": ["慈航普度"] },
-		{ "level": 13, "skills": ["金刚护魂"] },
-		{ "level": 16, "skills": ["观音莲台"] },
-	],
+
 	"gujingling": [
-		{ "level": 1,  "skills": ["割喉之战","暗影突袭","横扫千军","双生","摄魂痛击","瞬狱影杀阵","阎王令","鬼影护体","鬼煞附体"] },
+		{ "level": 1,  "skills": ["摄魂痛击","阎王令","鬼影护体","鬼煞附体","判官令","鬼门大开"] },
+		{ "level": 5,  "skills": ["鬼煞附体"] },
+		{ "level": 15,  "skills": ["鬼影护体"] },
+		{ "level": 20, "skills": ["判官令","双生"] },
+		{ "level": 30, "skills": ["阎王令"] },
+		{ "level": 40, "skills": ["双生"] },
+		{ "level": 60, "skills": ["鬼门大开"] },		
 	],
+
+	"aobai": [
+		{ "level": 1,  "skills": ["龙腾","龙卷雨击","龙附","龙啸九天","水漫金山","龙怒"] },
+		{ "level": 5,  "skills": ["龙附"] },
+		{ "level": 15,  "skills": ["龙卷雨击"] },
+		{ "level": 30, "skills": ["水漫金山"] },
+		{ "level": 45, "skills": ["龙啸九天"] },
+		{ "level": 60, "skills": ["龙怒"] },
+	],
+	"lingti": [
+		{ "level": 1,  "skills": ["唧唧歪歪","神罚","圣瀑","四面楚歌","灵魂冲击"] },
+		{ "level": 75, "skills": ["神罚","圣瀑","四面楚歌","灵魂冲击"] },
+	],
+	"shentianbing": [
+		{ "level": 1,  "skills": ["五气朝元","护体真气","不灭金身","二连击","天神护体","神明之躯"] },
+		{ "level": 5,  "skills": ["五气朝元"] },
+		{ "level": 15,  "skills": ["天神护体"] },
+		{ "level": 30, "skills": ["护体真气"] },
+		{ "level": 40, "skills": ["嘲讽"] },
+		{ "level": 45, "skills": ["神明之躯"] },
+		{ "level": 60, "skills": ["不灭金身"] },
+	],	
+	"yingnvxia": [
+		{ "level": 1,  "skills": ["刀解其足","识破弱点","神行步","老化","二连击","毒刺"] },
+		{ "level": 5,  "skills": ["刀解其足"] },
+		{ "level": 15,  "skills": ["识破弱点"] },
+		{ "level": 30, "skills": ["毒刺"] },
+		{ "level": 45, "skills": ["神行步"] },
+		{ "level": 60, "skills": ["老化"] },
+	],	
+		
+	
 }

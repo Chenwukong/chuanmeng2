@@ -420,6 +420,13 @@ func _action_skill(skill_id: String) -> void:
 		_show_mech_summon_popup()
 		return
 	if data == null: return
+	# 全屏技能（龙卷雨击/水漫金山等）：不需要点选敌人，直接施放
+	if data.fullscreen_anim != "":
+		var fs_targets = battle_manager.alive_enemies()
+		if not fs_targets.is_empty():
+			battle_manager.player_use_skill(skill_id, fs_targets[0])
+		_finish_action()
+		return
 	match data.target_type:
 		SkillData.TargetType.SINGLE_ENEMY:
 			_set_pending(func(target: BattleCharacter):
@@ -511,6 +518,9 @@ func _action_capture() -> void:
 	)
 
 func _finish_action() -> void:
+	# 动作已取消（如技能失败回到 PLAYER_TURN）时不要禁用面板
+	if battle_manager.state != BattleManager.BattleState.PLAYER_ACTION:
+		return
 	action_panel.refresh(battle_manager.current_actor(), false)
 
 # ══════════════════════════════════════════════
@@ -1415,7 +1425,12 @@ func _show_tooltip(ch: BattleCharacter) -> void:
 			var turns: int = l.get("turns", 0)
 			if buf_text != "":
 				buf_text += "\n"
-			buf_text += "%s (%d)" % [name, turns]
+			if bid == "ghost_shield":
+				# 无敌盾：显示层数 xN 而非回合数
+				var charges := int(l.get("value", 1.0))
+				buf_text += "%s x%d" % [name, charges]
+			else:
+				buf_text += "%s (%d)" % [name, turns]
 	_tooltip_labels["buffs"].add_theme_color_override("font_color", Color(1, 0.4, 0.2) if has_debuff else Color(0.5, 1, 0.4))
 	_tooltip_labels["buffs"].text = buf_text if buf_text else ""
 	_tooltip_labels["buffs"].visible = not buf_text.is_empty()
@@ -1467,7 +1482,11 @@ func _buff_display_name(buff_id: String) -> String:
 		"bleed": return "流血"
 		"ghost_shield": return "鬼影护体"
 		"ghost_boost": return "鬼煞附体"
+		"ghost_gate": return "鬼门大开"
+		"invincible": return "无敌"
 		"失魂": return "失魂"
+		"regen": return "持续回血"
+		"silence": return "封印"
 		_: return buff_id
 
 
@@ -1617,19 +1636,54 @@ func _on_damage_floated(target: BattleCharacter, amount: int, float_type: String
 
 	var container := Node2D.new()
 	container.position = screen_pos
-	container.scale = Vector2(0.75, 0.75)
-	add_child(container)
+	container.scale = Vector2(0.08, 0.08)
+	# 避免 "Parent node is busy setting up children" 报错
+	if is_inside_tree():
+		add_child(container)
+	else:
+		call_deferred("add_child", container)
 
-	var prefix: String = "23"
+	# ── 数字图集切格参数（Graphic/UI/伤害and回血.png）──
+	# 图集 4696×1189，两行十列；但数字不是均匀分布！以下为扫描得到的真实内容坐标
+	# 顺序：数字1,2,3,4,5,6,7,8,9,0（0 在最后）
+	var digit_content_x := [184, 608, 1056, 1500, 1972, 2412, 2841, 3190, 3608, 4022]   # 各数字内容起点
+	var digit_content_r := [487, 943, 1406, 1910, 2371, 2787, 3188, 3563, 3961, 4403]   # 各数字内容右边界
+	var digit_row_h := 594.5     # 每行高度（1189/2）
+	var digit_row_offset := 0    # 行偏移（第一行伤害、第二行治疗；默认 0）
+	var digit_disp_x := 0.0      # 显示位置 X 偏移（正数向右）
+	var digit_disp_y := 0.0      # 显示位置 Y 偏移（正数向下）
+	# 数字图集：两行十列（第一行伤害、第二行治疗）
+	var atlas := load("res://Graphic/UI/伤害and回血.png") as Texture2D
+	var atlas_row := 0
+	var tint := Color(1, 1, 1)
+	var is_crit := false
 	match float_type:
 		"heal":
-			prefix = "21"
+			atlas_row = 1  # 第二行：治疗
 		"crit":
-			prefix = "22"
-		_:
-			prefix = "23"
+			pass  # 暴击用普通数字样式，左侧加大号"暴击"字
+		"mp":
+			atlas_row = 1  # 第二行：治疗（回蓝）
+			tint = Color(0.5, 0.7, 1.0)
+		"magic":
+			tint = Color(0.75, 0.45, 1.0)  # 法术伤害紫色
+	container.modulate = tint
 
-	# 如果是治疗量数字，前面加上"+" 小标记	
+	# 暴击：左边加大号"暴击"字
+	if is_crit:
+		var crit_lbl := Label.new()
+		crit_lbl.text = "暴击"
+		crit_lbl.add_theme_font_size_override("font_size", 50)
+		crit_lbl.add_theme_color_override("font_color", Color("#FFD700"))
+		crit_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+		crit_lbl.add_theme_constant_override("shadow_offset_x", 2)
+		crit_lbl.add_theme_constant_override("shadow_offset_y", 2)
+		var font: Font = load("res://Graphic/UI/Font/AaJianMingShouShu-2.ttf")
+		crit_lbl.add_theme_font_override("font", font)
+		crit_lbl.position = Vector2(-160, -28)
+		container.add_child(crit_lbl)
+
+	# 拆分数位
 	var digits: Array[int] = []
 	var n := amount
 	if n == 0:
@@ -1642,21 +1696,29 @@ func _on_damage_floated(target: BattleCharacter, amount: int, float_type: String
 	var total_width: float = 0.0
 	var digit_specs: Array[Dictionary] = []
 	for d in digits:
-		var tex_path := "res://Graphic/RANDOM/%s-%d.png" % [prefix, d + 1]
-		if not ResourceLoader.exists(tex_path):
-			continue
-		var tex := load(tex_path)
-		if tex == null:
-			continue
-		digit_specs.append({"tex": tex, "w": tex.get_width()})
-		total_width += tex.get_width()
+		# 图集顺序 1-9,0：数字 d 对应表中下标 = (d + 9) % 10
+		var idx := (d + 9) % 10
+		var cw: float = float(digit_content_r[idx]) - float(digit_content_x[idx])
+		digit_specs.append({"d": d, "idx": idx, "w": cw})
+		total_width += cw
 
-	var x_offset := -total_width * 0.4
-	var digit_spacing := 10.0  # 数字间距，越大越开
+	# 暴击时数字右移，给"暴击"字留空间
+	var x_offset := -total_width * 0.1
+
+	var digit_spacing := 4.0  # 数字间距
 	for spec in digit_specs:
 		var spr := Sprite2D.new()
-		spr.texture = spec["tex"]
-		spr.position.x = x_offset
+		spr.texture = atlas
+		spr.region_enabled = true
+		var idx: int = spec["idx"]
+		spr.region_rect = Rect2(
+			digit_content_x[idx],
+			(atlas_row + digit_row_offset) * digit_row_h,
+			digit_content_r[idx] - digit_content_x[idx],
+			digit_row_h
+		)
+		spr.position.x = x_offset + digit_disp_x
+		spr.position.y = digit_disp_y
 		x_offset += spec["w"] + digit_spacing
 		container.add_child(spr)
 

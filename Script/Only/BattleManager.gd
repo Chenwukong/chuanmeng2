@@ -47,6 +47,7 @@ var _free_items_used: int = 0  # 缩地成寸：本场已免费使用的道具�
 var _last_skill_id: String = "普通攻击"    # 连斩：上次使用的技能
 var _last_target: BattleCharacter = null   # 连斩：上次攻击目标
 var _combo_triggered: bool = false         # 连斩：本次行动已触发
+var _hit_stay_nodes: Array = []            # 本次行动中保持受击姿态的目标节点（技能播完统一恢复 idle）
 
 @export var action_delay: float = 2.0
 
@@ -102,6 +103,10 @@ func setup(
 		party.append(c)
 		if weapon_specials and i < weapon_specials.size() and not weapon_specials[i].is_empty():
 			c.equip_special = weapon_specials[i].duplicate()
+
+	# 神佑世人：给每个成员设置队友引用（不含自己，用于分担伤害）
+	for c in party:
+		c.ally_refs = party.filter(func(x): return x != c)
 
 	for i in enemy_chars.size():
 		var c: BattleCharacter = enemy_chars[i]
@@ -477,6 +482,19 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		await _finish_player_action()
 		return
 
+	# 鬼影护体：鬼魂不足直接失败（不施法、不进冷却、不跳回合）
+	if skill_id == "鬼影护体" and data:
+		var g_count = _current_actor.trait_data.get("_ghost_count", 0)
+		var g_per_charge = maxi(data.ghosts_per_charge, 1)
+		if int(g_count / g_per_charge) <= 0:
+			_push_log("【鬼影护体】鬼魂不足（需 %d 层/次），施放失败！" % g_per_charge, "system")
+			_play_error_sound()
+			# 撤销冷却 + 退还 MP
+			skill_cooldowns.erase(cd_key)
+			_current_actor.current_mp = mini(_current_actor.get_effective_max_mp(), _current_actor.current_mp + actual_mp_cost)
+			_change_state(BattleState.PLAYER_TURN)
+			return
+
 	# 摄魂痛击：绑定死亡计数
 	if skill_id == "摄魂痛击" and target and not target.is_dead:
 		target.died.connect(func():
@@ -490,9 +508,15 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 
 	# 驭鬼术特性：使用技能时鬼魂 +1（阎王令除外消耗鬼魂，普攻不加）
 	if _current_actor.trait_data.has("驭鬼术") and skill_id != "阎王令" and skill_id != "普通攻击":
-		var count = _current_actor.trait_data.get("_ghost_count", 0) + 1
+		# 鬼门大开：技能鬼魂获得 +1（基础 1 层 + 额外 1 层）
+		var add = 2 if _current_actor.has_buff("ghost_gate") else 1
+		var count = _current_actor.trait_data.get("_ghost_count", 0) + add
 		_current_actor.trait_data["_ghost_count"] = count
-		_update_ghost_label()
+		# 移动类技能先隐藏鬼魂（回到原点再显示）
+		if not _is_movement_skill(skill_id):
+			_update_ghost_label()
+		else:
+			_set_ghost_visible(false)
 
 	# 播放技能音效
 	if not data.sound_path.is_empty() and ResourceLoader.exists(data.sound_path):
@@ -539,33 +563,67 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		var fs_caster = _current_actor.get_parent()
 		if fs_caster and fs_caster.has_method("play_cast_sequence"):
 			await fs_caster.play_cast_sequence(skill_id)
-		if FullscreenAnimation.has_animation(data.fullscreen_anim):
-			await FullscreenAnimation.play(data.fullscreen_anim).finished
-		for e in enemies:
-			if e.is_dead and e.stats.rank != "boss":
-				var nd = e.get_parent()
-				if nd and is_instance_valid(nd):
-					var tw = nd.create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-					tw.tween_property(nd, "position", nd.position + Vector2(-600, -400), 0.8)
-					tw.parallel().tween_property(nd, "modulate:a", 0.0, 0.8)
-					tw.tween_callback(func(): nd.visible = false)
-		_push_log("%s 施展【%s】，全场震撼！" % [_current_actor.stats.get_display_name(), data.skill_name], "player_action")
+		# 先让所有目标播放受击动画（法术动画期间保持受击姿态），伤害延后结算
+		var pending_fs_dmg: Array = []
 		for t in fs_targets:
 			var tn = t.get_parent() as Node2D
+			# 落空判定（龙卷雨击等，受运气影响）：落空则跳过受击动画，只飘"闪避"字
+			var miss_rate = _calc_miss_chance(_current_actor, t, data.miss_chance)
+			if miss_rate > 0.0 and randf() < miss_rate:
+				if t.has_method("show_trait_float"):
+					t.show_trait_float("闪避")
+				_push_log("【%s】%s 闪避了攻击！" % [skill_id, t.stats.get_display_name()], "system")
+				continue
 			if tn:
-				if tn.has_method("play_hit_reaction"): tn.play_hit_reaction()
+				if tn.has_method("play_hit_reaction"):
+					tn.play_hit_reaction(true)
+					if not _hit_stay_nodes.has(tn):
+						_hit_stay_nodes.append(tn)
 				if tn.has_method("play_hit_flash"): tn.play_hit_flash()
 			var dmg = maxi(1, int((_current_actor.get_effective_magic_attack() if data.is_magic_damage else _current_actor.get_effective_attack()) * data.damage_multiplier) - int(t.get_effective_defense()))
 			dmg = int(dmg * randf_range(0.95, 1.05) * _current_actor.metamorphosis_mod)
+			pending_fs_dmg.append({"target": t, "dmg": dmg})
+		# 播放全屏法术动画（怪物保持受击姿态）；动画开始 3 秒后屏幕抖动
+		if FullscreenAnimation.has_animation(data.fullscreen_anim):
+			var fs_anim := FullscreenAnimation.play(data.fullscreen_anim)
+			# 寂静剑法动画较长：3.5 秒后抖；其他全屏技能 0.5 秒后抖
+			var shake_delay = 4 if skill_id == "寂静剑法" else 0.5
+			await get_tree().create_timer(shake_delay).timeout
+			GameData.hit_stop(0.55, 0.06, 15.0, 0.5)
+			# 动画若还在播放则等它播完；若已在延迟期间播完（finished 已发出）直接继续，
+			# 避免 await 已发出的信号导致战斗卡死
+			if fs_anim.is_playing():
+				await fs_anim.animation_finished
+		# 法术播放完后：统一结算伤害（死亡 + 屏幕震动发生在这里）
+		for entry in pending_fs_dmg:
+			var t: BattleCharacter = entry["target"]
+			var dmg: int = entry["dmg"]
 			dmg = SkillManager.apply_marked_bonus(_current_actor, t, dmg)
 			t.take_damage(dmg)
 			t.sync_visual()
-			damage_floated.emit(t, dmg, "normal")
-		# 全屏法术附带 debuff（灼烧等）
+			damage_floated.emit(t, dmg, "magic" if data.is_magic_damage else "normal")
+		# 法术播完：没死的怪物恢复待机（受击姿态结束）
+		for t in fs_targets:
+			if not t.is_dead:
+				var tn2 = t.get_parent()
+				if tn2 and tn2.has_method("play_idle"):
+					tn2.play_idle()
+		# 仅寂静剑法：把死亡的怪物吹走
+		if skill_id == "寂静剑法":
+			for e in enemies:
+				if e.is_dead and e.stats.rank != "boss":
+					var nd = e.get_parent()
+					if nd and is_instance_valid(nd):
+						var tw = nd.create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+						tw.tween_property(nd, "position", nd.position + Vector2(-600, -400), 0.8)
+						tw.parallel().tween_property(nd, "modulate:a", 0.0, 0.8)
+						tw.tween_callback(func(): nd.visible = false)
+		# 全屏法术附带 debuff（灼烧等，只对未死且非 boss 的目标）
 		if data.apply_buff_id != "":
 			for t in fs_targets:
-				if not t.is_dead and not t.stats.rank == "boss":
+				if not t.is_dead and t.stats.rank != "boss":
 					t.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
+		_push_log("%s 施展【%s】，全场震撼！" % [_current_actor.stats.get_display_name(), data.skill_name], "player_action")
 		await _finish_player_action()
 		return
 
@@ -655,39 +713,13 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		_set_ghost_visible(true)
 		# 横扫千军专属：降低双抗 30% 持续 3 回合
 		if skill_id == "横扫千军":
-			_current_actor.add_buff("def_broken", 3, 0.7, skill_id)
-			_current_actor.add_buff("mdef_broken", 3, 0.7, skill_id)
+			_current_actor.add_buff("def_broken", 3, 0.3, skill_id)
+			_current_actor.add_buff("mdef_broken", 3, 0.3, skill_id)
 			_push_log("【横扫千军】%s 双抗降低 30%" % _current_actor.stats.get_display_name(), "system")
 		await _finish_player_action()
 		return
 
 	# 一苇渡江：目标必加速 + 随机3个未加速队友加速
-	if skill_id == "一苇渡江":
-		_apply_aoe_buff(target, "haste", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.3, skill_id)
-		_try_add_lantern_to_targets(target)
-		return
-	if skill_id == "神行步":
-		_apply_aoe_buff(target, "haste", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.3, skill_id)
-		_try_add_lantern_to_targets(target)
-		return
-	# 达摩护体 / 金刚护体 / 金刚护法：目标 + 随机3个队友
-	if skill_id == "达摩护体":
-		_apply_aoe_buff(target, "hp_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.3, skill_id)
-		_try_add_lantern_to_targets(target)
-		return
-	if skill_id == "金刚护体":
-		_apply_aoe_buff(target, "def_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.5, skill_id)
-		_try_add_lantern_to_targets(target)
-		return
-	if skill_id == "金刚护法":
-		_apply_aoe_buff(target, "atk_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.5, skill_id)
-		_try_add_lantern_to_targets(target)
-		return
-	if skill_id == "金刚护魂":
-		_apply_aoe_buff(target, "mdef_up", 3, data.apply_buff_value if data.apply_buff_value != 0.0 else 1.5, skill_id)
-		_try_add_lantern_to_targets(target)
-		return
-
 	# 群体治疗（如沐春风等）：extra>0 的 HEAL 技能
 	if data and data.skill_type == SkillData.SkillType.HEAL and data.extra_targets > 0:
 		var heal_targets: Array[BattleCharacter] = [target]
@@ -720,6 +752,9 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			h.sync_visual()
 			damage_floated.emit(h, amt, "heal")
 			_push_log(GameData._T("LOG_ITEM_HEAL") % [h.stats.get_display_name(), amt], "system")
+			# 群体治疗附带 buff（五气朝元的持续回血等）
+			if data.apply_buff_id != "":
+				h.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
 		await get_tree().create_timer(action_delay).timeout
 		await _finish_player_action()
 		return
@@ -737,6 +772,14 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 
 		for bt in buff_targets:
 			bt.play_spell_effect(skill_id)
+			# 按 buff 类型播放特效（同原 _apply_aoe_buff）
+			var bv = bt.get_parent()
+			if data.apply_buff_id == "haste" and bv and bv.has_method("shake"):
+				bv.shake()
+			elif data.apply_buff_id == "atk_up" and bv and bv.has_method("play_power_up_scale"):
+				bv.play_power_up_scale()
+			elif (data.apply_buff_id == "def_up" or data.apply_buff_id == "mdef_up") and bv and bv.has_method("flash_gold"):
+				bv.flash_gold()
 
 		var caster_node2 = _current_actor.get_parent()
 		if caster_node2 and caster_node2.has_method("play_cast_sequence"):
@@ -744,12 +787,50 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 
 		for bt in buff_targets:
 			bt.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
-			# 金刚护体：额外施加魔防
-			if skill_id == "金刚护体":
-				bt.add_buff("mdef_up", data.apply_buff_turns, data.apply_buff_value, data.skill_id)
-			# 金刚护法：额外施加魔攻
-			elif skill_id == "金刚护法":
-				bt.add_buff("matk_up", data.apply_buff_turns, data.apply_buff_value, data.skill_id)
+			# 第二个 buff（双抗/双攻：金刚护体 mdef_up、金刚护法 matk_up 等）
+			if data.apply_buff2_id != "":
+				bt.add_buff(data.apply_buff2_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
+			# 加气血上限：血条 tween 效果（同达摩护体）
+			var bv2 = bt.get_parent()
+			if bv2 and bv2.has_method("stop_shake"):
+				bv2.stop_shake()
+			if data.apply_buff_id == "hp_up":
+				await bt.play_hp_up_effect()
+			else:
+				bt.sync_visual()
+		# 点天灯特性联动
+		_try_add_lantern_to_targets(target)
+		# 自身附加 buff（不灭金身的无敌等）
+		if data.self_buff_id != "":
+			_current_actor.add_buff(data.self_buff_id, data.self_buff_turns, null, data.skill_id)
+		await _finish_player_action()
+		return
+
+	# 群体减益（刀解其足等）：选中目标 + 随机 extra 个其他敌人，施加 debuff
+	if data and data.extra_targets > 0 and data.skill_type == SkillData.SkillType.DEBUFF:
+		var debuff_targets: Array[BattleCharacter] = [target]
+		var other_enemies2: Array[BattleCharacter] = []
+		for e in enemies:
+			if e != target and not e.is_dead:
+				other_enemies2.append(e)
+		other_enemies2.shuffle()
+		for j in mini(data.extra_targets, other_enemies2.size()):
+			debuff_targets.append(other_enemies2[j])
+
+		for t in debuff_targets:
+			t.play_spell_effect(skill_id)
+
+		var caster_node3 = _current_actor.get_parent()
+		if caster_node3 and caster_node3.has_method("play_cast_sequence"):
+			await caster_node3.play_cast_sequence(skill_id)
+
+		for t in debuff_targets:
+			var chance = SkillManager.calc_debuff_chance(_current_actor, t, data.apply_buff_chance)
+			if randf() <= chance:
+				t.add_buff(data.apply_buff_id, data.apply_buff_turns, data.apply_buff_value, data.skill_id)
+				_push_log("【%s】%s 被刀气缠足，速度降低！" % [skill_id, t.stats.get_display_name()], "player_action")
+			else:
+				_push_log("【%s】%s 抵抗了减速效果！" % [skill_id, t.stats.get_display_name()], "system")
 		await _finish_player_action()
 		return
 
@@ -781,13 +862,20 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		var eff_atk = _current_actor.get_effective_magic_attack() if is_magic else _current_actor.get_effective_attack()
 		var night_mul = _current_actor.get_night_dmg_mul()
 		for t in targets:
+			# 技能落空（如龙卷雨击，受运气影响）：只飘"闪避"字
+			var miss_rate = _calc_miss_chance(_current_actor, t, data.miss_chance)
+			if miss_rate > 0.0 and randf() < miss_rate:
+				if t.has_method("show_trait_float"):
+					t.show_trait_float("闪避")
+				_push_log("【%s】%s 闪避了攻击！" % [skill_id, t.stats.get_display_name()], "system")
+				continue
 			var def_val = t.get_effective_magic_defense() if is_magic else t.get_effective_defense()
 			var dmg = maxi(1, int(eff_atk * data.damage_multiplier * night_mul) - int(def_val * 0.6) + data.flat_damage)
 			dmg = int(dmg * randf_range(0.95, 1.05))
 			dmg = SkillManager.apply_marked_bonus(_current_actor, t, dmg)
 			t.take_damage(dmg)
 			t.sync_visual()
-			damage_floated.emit(t, dmg, "normal")
+			damage_floated.emit(t, dmg, "magic" if is_magic else "normal")
 			_push_log("[群体] %s 受到 %d 点伤害" % [t.stats.get_display_name(), dmg], "enemy_action")
 			var tn = t.get_parent() as Node2D
 			if tn and tn.has_method("play_idle") and not t.is_dead:
@@ -823,7 +911,9 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 				weapon_was.direction = 2
 			# 目标受击 + 武器特效
 			if enemy_nd and enemy_nd.has_method("play_hit_reaction"):
-				enemy_nd.play_hit_reaction()
+				enemy_nd.play_hit_reaction(true)
+				if not _hit_stay_nodes.has(enemy_nd):
+					_hit_stay_nodes.append(enemy_nd)
 			if nd.has_method("_spawn_hit_effect"):
 				nd._spawn_hit_effect(enemy_nd)
 			# 执行技能（伤害计算）
@@ -851,6 +941,8 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 
 	# 双生：姐妹协同攻击
 	if skill_id == "双生":
+		# 骨精灵离开原点时隐藏鬼魂
+		_set_ghost_visible(false)
 		var partner_id = "yingjingling" if _current_actor.member_id == "gujingling" else "gujingling"
 		var partner: BattleCharacter = null
 		for c in party:
@@ -873,6 +965,8 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 		var nd2 = partner.get_parent() as Node2D
 		var enemy_nd = target.get_parent() as Node2D
 		if nd1 and nd2 and enemy_nd:
+			# 双生冲刺期间隐藏骨精灵鬼魂，回到原点后再显示
+			_set_ghost_visible(false)
 			var orig1 = nd1.position; var z1 = nd1.z_index
 			var orig2 = nd2.position; var z2 = nd2.z_index
 			# 保存原始朝向
@@ -903,23 +997,27 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 				dlights += get_tree().root.find_children("", "DirectionalLight2D", true, false)
 				dlights += get_tree().root.find_children("", "CanvasModulate", true, false)
 			for l in dlights: l.visible = false
+			# 全屏闪黑（CanvasLayer 确保盖在灯光之上）
+			var flash_cl = CanvasLayer.new()
+			flash_cl.layer = 9999
+			get_tree().root.add_child(flash_cl)
 			var flash = ColorRect.new()
 			flash.color = Color(0, 0, 0, 0)
+			flash.set_anchors_preset(Control.PRESET_FULL_RECT)
 			flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			get_tree().root.add_child(flash)
-			var vs = get_viewport().size if get_viewport() else Vector2(1920, 1080)
-			flash.position = Vector2(0, 0)
-			flash.size = vs
+			flash_cl.add_child(flash)
 			var ft = create_tween()
 			ft.tween_property(flash, "color:a", 0.8, 0.05)
 			ft.tween_property(flash, "color:a", 0.0, 0.15).set_delay(0.1)
-			ft.finished.connect(func(): flash.queue_free(); for l in dlights: l.visible = true)
+			ft.finished.connect(func(): flash.queue_free(); flash_cl.queue_free(); for l in dlights: l.visible = true)
 			var tw1 = create_tween()
 			tw1.tween_property(nd1, "position", local_target + Vector2(-80, -100), 0.2)
 			var tw2 = create_tween()
 			tw2.tween_property(nd2, "position", local_target + Vector2(-80, 100), 0.2)
 			if enemy_nd and enemy_nd.has_method("play_hit_reaction"):
-				enemy_nd.play_hit_reaction()
+				enemy_nd.play_hit_reaction(true)
+				if not _hit_stay_nodes.has(enemy_nd):
+					_hit_stay_nodes.append(enemy_nd)
 			# 扣血
 			for dmg in result.damage_list:
 				target.take_damage(dmg)
@@ -938,6 +1036,11 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 					var w = nd_obj.get_node("WASAnimationPlayer")
 					w.direction = orig_dir
 					w.play("idle")
+				# 武器恢复 idle
+				var weapon_was = nd_obj.get_node_or_null("WeaponWAS")
+				if weapon_was:
+					weapon_was.direction = orig_dir
+					weapon_was.play("idle")
 			# 归位后才回血
 			var total_d = result.damage_list[0] if result.damage_list.size() > 0 else 0
 			_apply_lifesteal(_current_actor, total_d)
@@ -1037,7 +1140,9 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			se.play()
 			se.finished.connect(se.queue_free)
 			if enemy_nd and enemy_nd.has_method("play_hit_reaction"):
-				enemy_nd.play_hit_reaction()
+				enemy_nd.play_hit_reaction(true)
+				if not _hit_stay_nodes.has(enemy_nd):
+					_hit_stay_nodes.append(enemy_nd)
 			if nd.has_method("_spawn_hit_effect"):
 				nd._spawn_hit_effect(enemy_nd)
 			# 扣血
@@ -1069,15 +1174,17 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 				vn.visible = true
 			nd.position = orig_pos; nd.z_index = orig_z
 			_set_ghost_visible(true)
-			if nd.has_node("WASAnimationPlayer"):
-				var w = nd.get_node("WASAnimationPlayer")
-				w.direction = orig_dir
-				w.play("idle")
-			# 武器恢复 idle
-			var weapon_was = nd.get_node_or_null("WeaponWAS")
-			if weapon_was:
-				weapon_was.direction = orig_dir
-				weapon_was.play("idle")
+			if nd.has_method("play_idle"):
+				nd.play_idle()
+			else:
+				if nd.has_node("WASAnimationPlayer"):
+					var w = nd.get_node("WASAnimationPlayer")
+					w.direction = orig_dir
+					w.play("idle")
+				var weapon_was = nd.get_node_or_null("WeaponWAS")
+				if weapon_was:
+					weapon_was.direction = orig_dir
+					weapon_was.play("idle")
 		await _finish_player_action()
 		return
 
@@ -1097,12 +1204,19 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			var orig_pos = nd.position; var orig_z = nd.z_index
 			var orig_dir = nd.get_node("WASAnimationPlayer").direction if nd.has_node("WASAnimationPlayer") else 0
 			nd.z_index = 9999
-			# 远程施法：角色原地不动，鬼魂飞向敌人
-			if nd.has_node("WASAnimationPlayer"):
+			# 远程施法：完整施法动作（配音+特效+动画）
+			if nd.has_method("play_cast_sequence"):
+				await nd.play_cast_sequence(skill_id)
+			elif nd.has_node("WASAnimationPlayer"):
 				var w = nd.get_node("WASAnimationPlayer")
 				w.direction = 3
 				w.play("cast", false)
-			var center_local = nd.get_parent().to_local(enemy_nd.global_position)
+			# 鬼魂飞向敌人（CanvasLayer 可靠方案）
+			var gcl = CanvasLayer.new()
+			gcl.layer = 100
+			get_tree().root.add_child(gcl)
+			var start_g = nd.global_position
+			var end_g = enemy_nd.global_position
 			for i in range(ghost_count):
 				var g = Sprite2D.new()
 				if ghost_tex:
@@ -1113,22 +1227,23 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 					img.fill(Color(0.7, 0.8, 1.0, 0.7))
 					g.texture = ImageTexture.create_from_image(img)
 				g.centered = true
-				g.z_index = 9998
-				var start = Vector2(orig_pos.x + randf_range(-30, 30), orig_pos.y + randf_range(-10, 40))
-				g.position = start
-				nd.get_parent().add_child(g)
+				gcl.add_child(g)
+				g.position = start_g + Vector2(randf_range(-30, 30), randf_range(-10, 40))
 				var gt = create_tween().set_parallel()
-				gt.tween_property(g, "position", center_local + Vector2(randf_range(-10, 10), randf_range(-10, 10)), 0.4)
+				gt.tween_property(g, "position", end_g + Vector2(randf_range(-10, 10), randf_range(-10, 10)), 0.4)
 				gt.tween_property(g, "modulate:a", 0.0, 0.4)
 				gt.finished.connect(g.queue_free)
 			# 鬼魂命中
 			await get_tree().create_timer(0.4).timeout
+			gcl.queue_free()
 			GameData.hit_stop(0.05, 0.05, 15.0, 0.3)
 			# 播放阎王令技能特效
 			if target and target.has_method("play_spell_effect"):
 				target.play_spell_effect(skill_id)
 			if enemy_nd and enemy_nd.has_method("play_hit_reaction"):
-				enemy_nd.play_hit_reaction()
+				enemy_nd.play_hit_reaction(true)
+				if not _hit_stay_nodes.has(enemy_nd):
+					_hit_stay_nodes.append(enemy_nd)
 			var se = AudioStreamPlayer.new()
 			se.stream = load("res://Audio/SE/兵器-入肉.ogg")
 			se.bus = "SFX"
@@ -1158,25 +1273,100 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 
 	var result = SkillManager.execute(_current_actor, target, skill_id)
 	await _apply_skill_result(result, _current_actor, target)
+	# 中毒视觉：等攻击/施法动画播完后显示（毒刺、蛊毒咒等）
+	if result and result.applied_buff == "poison" and target and not target.is_dead and target.has_buff("poison") and target.has_method("show_debuff"):
+		target.show_debuff("中毒", true)
+	# 其他 debuff（刀解其足/识破弱点等）：动画播完后统一显示同名持续动画
+	if result and result.applied_buff != "" and target and target.has_method("_refresh_buff_icon"):
+		target._refresh_buff_icon()
+	# 自身附加 buff（不灭金身的无敌等，通用路径）
+	if data and data.self_buff_id != "":
+		_current_actor.add_buff(data.self_buff_id, data.self_buff_turns, null, data.skill_id)
+	# 鬼门大开：一大群鬼魂飞向敌人后消失
+	if skill_id == "鬼门大开" and target:
+		var gnd = _current_actor.get_parent()
+		var genemy = target.get_parent() as Node2D
+		if gnd and genemy:
+			# 取鬼魂精灵纹理
+			var ghost_node = gnd.get_node_or_null("Ghost")
+			var gtex = null
+			if ghost_node and ghost_node is AnimatedSprite2D and ghost_node.sprite_frames:
+				var anim = ghost_node.animation if ghost_node.animation != "" else "default"
+				if ghost_node.sprite_frames.has_animation(anim):
+					gtex = ghost_node.sprite_frames.get_frame_texture(anim, 0)
+			if gtex == null:
+				var img = Image.create(16, 16, false, Image.FORMAT_RGBA8)
+				img.fill(Color(0.7, 0.8, 1.0, 0.6))
+				gtex = ImageTexture.create_from_image(img)
+			# CanvasLayer 保证显示在最上层
+			var gcl = CanvasLayer.new()
+			gcl.layer = 100
+			get_tree().root.add_child(gcl)
+			var start_g = gnd.global_position
+			var dir_to_enemy = (genemy.global_position - start_g).normalized()
+			var dist_to_enemy = start_g.distance_to(genemy.global_position)
+			print("[鬼门大开] gtex=%s start=%s dir=%s dist=%d" % [gtex != null, start_g, dir_to_enemy, dist_to_enemy])
+			for i in range(20):
+				var g = Sprite2D.new()
+				g.texture = gtex
+				g.centered = true
+				g.scale = Vector2(randf_range(0.5, 1.2), randf_range(0.5, 1.2))
+				g.modulate = Color(1, 1, 1, randf_range(0.4, 0.8))
+				gcl.add_child(g)
+				# 先加入后再设置画布坐标（CanvasLayer 无变换，position=画布坐标）
+				g.position = start_g + Vector2(randf_range(-40, 40), randf_range(-30, 50))
+				# 朝敌人方向飞散（扇形偏移）
+				var spread = Vector2(randf_range(-0.6, 0.6), randf_range(-0.6, 0.6)).normalized() * randf_range(0, 120)
+				var fly_dir = (dir_to_enemy + spread).normalized()
+				var fly_dist = dist_to_enemy + randf_range(80, 200)
+				var dur = randf_range(0.6, 1.0)
+				var gt = create_tween().set_parallel()
+				gt.tween_property(g, "position", g.position + fly_dir * fly_dist, dur)
+				gt.tween_property(g, "modulate:a", 0.0, dur)
+				gt.tween_property(g, "scale", g.scale * 0.2, dur)
+				gt.finished.connect(g.queue_free)
+			# 定时清理 CanvasLayer
+			var clear_cl = func(): gcl.queue_free()
+			await get_tree().create_timer(1.5).timeout
+			clear_cl.call()
 	# 阎王令：更新鬼魂标签（计数器已在 _calc_damage 清零）
 	if skill_id == "阎王令":
 		_update_ghost_label()
-	# 鬼影护体 / 鬼煞附体：消耗鬼魂施加效果
+	# 鬼影护体 / 鬼煞附体：消耗鬼魂，按层数缩放效果
 	if skill_id == "鬼影护体" or skill_id == "鬼煞附体":
 		if data and _current_actor.trait_data.has("驭鬼术"):
-			var cost = data.ghost_cost
 			var count = _current_actor.trait_data.get("_ghost_count", 0)
-			if count < cost:
-				_push_log("【%s】鬼魂不足（需要 %d 层，当前 %d 层）！" % [skill_id, cost, count], "system")
+			if count <= 0:
+				_push_log("【%s】没有鬼魂！" % skill_id, "system")
 			else:
-				_current_actor.trait_data["_ghost_count"] = count - cost
-				_update_ghost_label()
+				var buff_id = data.apply_buff_id
+				if buff_id == "":
+					buff_id = "ghost_shield" if skill_id == "鬼影护体" else "ghost_boost"
 				if skill_id == "鬼影护体":
-					_current_actor.add_buff("ghost_shield", 999, 1.0, skill_id)
-					_push_log("【鬼影护体】鬼魂抵挡下一次攻击！", "system")
+					# 每 ghosts_per_charge 层 = 1 次抵挡，余数保留
+					var per_charge = maxi(data.ghosts_per_charge, 1)
+					var charges = int(count / per_charge)
+					if charges <= 0:
+						_push_log("【鬼影护体】鬼魂不足（需 %d 层/次）！" % per_charge, "system")
+					else:
+						var leftover = count % per_charge
+						_current_actor.trait_data["_ghost_count"] = leftover
+						_current_actor.add_buff(buff_id, 999, float(charges), skill_id)
+						# 修正值：SkillManager 预加的 buff value=0，这里覆盖为真实次数
+						var glayers: Array = _current_actor.buffs.get(buff_id, {}).get("layers", [])
+						if not glayers.is_empty():
+							glayers[0]["value"] = float(charges)
+						_push_log("【鬼影护体】消耗 %d 层鬼魂，抵挡 %d 次攻击，剩余 %d 层！" % [count - leftover, charges, leftover], "system")
 				elif skill_id == "鬼煞附体":
-					_current_actor.add_buff("ghost_boost", data.apply_buff_turns, data.boost_pct, skill_id)
-					_push_log("【鬼煞附体】伤害提升 %d%%！" % int(data.boost_pct * 100), "system")
+					var boost = data.boost_pct * count
+					_current_actor.trait_data["_ghost_count"] = 0
+					_current_actor.add_buff(buff_id, data.apply_buff_turns, boost, skill_id)
+					# 修正值：SkillManager 预加的 buff value=0，覆盖为真实 boost
+					var blayers: Array = _current_actor.buffs.get(buff_id, {}).get("layers", [])
+					if not blayers.is_empty():
+						blayers[0]["value"] = boost
+					_push_log("【鬼煞附体】消耗 %d 层鬼魂，伤害提升 %d%%！" % [count, int(boost * 100)], "system")
+				_update_ghost_label()
 	# 割喉之战：黑雾缠身
 	if skill_id == "死亡宣告" and target and not target.is_dead:
 		if target.has_method("_show_marked_effect"):
@@ -1248,6 +1438,7 @@ func player_use_item(item_id: String, target: BattleCharacter) -> void:
 		await target.play_spell_effect(anim_name)
 
 	var result = player_inventory.use_item(item_id, target)
+	print("[道具] item_id=%s success=%s heal=%d mp=%d buff=%s log=%s" % [item_id, result.success, result.heal_amount, result.mp_amount, result.applied_buff, result.log_text])
 	# 缩地成寸：战后道具不消耗（首次每级一次）
 	var free_max := GameData.get_talent_rank("support_free_item")
 	if free_max > 0 and _free_items_used < free_max:
@@ -1259,6 +1450,13 @@ func player_use_item(item_id: String, target: BattleCharacter) -> void:
 	if result.heal_amount > 0:
 		damage_floated.emit(target, result.heal_amount, "heal")
 		target.sync_visual()
+	# MP 回复飘字（蓝色）
+	if result.mp_amount > 0:
+		damage_floated.emit(target, result.mp_amount, "mp")
+		target.sync_visual()
+	# 增益道具：头顶显示 buff 名
+	if result.applied_buff != "":
+		target.show_trait_float(GameData._T(result.applied_buff))
 	# 治疗量加成（灵石疗伤）
 	var heal_bonus := GameData.get_talent_rank("support_heal_power")
 	if heal_bonus > 0 and result.heal_amount > 0:
@@ -1303,6 +1501,20 @@ func player_flee() -> void:
 		await _finish_player_action()
 
 func _finish_player_action() -> void:
+	# 统一恢复本次行动中保持受击姿态的目标（先归位再回 idle）
+	for node in _hit_stay_nodes:
+		if node and is_instance_valid(node):
+			var bc := node.get_node_or_null("BattleCharacter") as BattleCharacter
+			if bc and not bc.is_dead and not bc.is_frozen and not bc.is_weakened:
+				if node.has_meta("_hit_orig_pos") and node.has_method("play_idle"):
+					var orig: Vector2 = node.get_meta("_hit_orig_pos")
+					node.remove_meta("_hit_orig_pos")
+					var tw = node.create_tween()
+					tw.tween_property(node, "position", orig, 0.2)
+					tw.tween_callback(node.play_idle)
+				elif node.has_method("play_idle"):
+					node.play_idle()
+	_hit_stay_nodes.clear()
 	# 愈战愈勇特效（走回原地后播放）
 	if _current_actor:
 		var yzyy_stacks: int = _current_actor.trait_data.get("_yzyy_pending", 0)
@@ -1362,6 +1574,9 @@ func _apply_aoe_buff(target: BattleCharacter, buff_id: String, turns: int, value
 		b.play_spell_effect(skill_id)
 		# 提前上 buff（不等施法动画），触发头像变化
 		b.add_buff(buff_id, turns, value, skill_id)
+		# 金刚护体：双抗（额外施加魔防）
+		if skill_id == "金刚护体":
+			b.add_buff("mdef_up", turns, value, skill_id)
 		# 加速抖动
 		if buff_id == "haste":
 			var visual = b.get_parent()
@@ -1754,6 +1969,10 @@ func _pick_random_enemy() -> BattleCharacter:
 
 ## EnemyAI 决策后，调用此方法执行技能
 func execute_enemy_skill(actor: BattleCharacter, skill_id: String, target: BattleCharacter) -> void:
+	# 封印（似玉生香）：沉默敌人，下回合不能施法，强制普通攻击
+	if actor.has_buff("silence") and skill_id != "普通攻击":
+		skill_id = "普通攻击"
+		_push_log("【封印】%s 被封印，无法施法！" % actor.stats.get_display_name(), "system")
 	var data = SkillManager.get_skill(skill_id)
 	if data and not data.sound_path.is_empty() and ResourceLoader.exists(data.sound_path):
 		var snd = AudioStreamPlayer.new()
@@ -1765,6 +1984,9 @@ func execute_enemy_skill(actor: BattleCharacter, skill_id: String, target: Battl
 
 	var result = SkillManager.execute(actor, target, skill_id)
 	await _apply_skill_result(result, actor, target)
+	# 敌人施加的 debuff：动画播完后显示（同玩家技能）
+	if result and result.applied_buff != "" and target and target.has_method("_refresh_buff_icon"):
+		target._refresh_buff_icon()
 
 # ──────────────────────────────────────────────
 # 公共工具
@@ -1891,6 +2113,7 @@ func _apply_skill_result(
 
 	# 存入待显示伤害
 	var meta_mul = actor.metamorphosis_mod
+	var skill_data = SkillManager.get_skill(result.skill_id)
 	# 符能天赋：符咒伤害加成 5%/级
 	if is_ranged_attack and CharacterStats.has_role(actor.stats.role, CharacterStats.Role.MAIN):
 		var funeng_rank = GameData.get_talent_rank("funeng")
@@ -1898,6 +2121,9 @@ func _apply_skill_result(
 			meta_mul *= (1.0 + 0.05 * funeng_rank)
 	for dmg in result.damage_list:
 		var is_aoe = result.skill_type == SkillData.SkillType.AOE
+		# 提前判定技能落空（龙卷雨击等，受运气影响）
+		var miss_rate = _calc_miss_chance(actor, actual_target, skill_data.miss_chance if skill_data else 0.0)
+		var missed = miss_rate > 0.0 and randf() < miss_rate
 		pending_damage.append({
 			"attacker": actor,
 			"target": actual_target,
@@ -1905,9 +2131,9 @@ func _apply_skill_result(
 			"type": _damage_float_type(result),
 			"is_magic": result.is_magic,
 			"is_aoe": is_aoe,
+			"missed": missed,
 		})
 	if result.heal_amount > 0 or result.shield_amount > 0:
-		var skill_data = SkillManager.get_skill(result.skill_id)
 		var hsize = skill_data.heal_size if skill_data else "medium"
 		if result.heal_amount > 0:
 			pending_damage.append({
@@ -1933,6 +2159,9 @@ func _apply_skill_result(
 
 	if result.applied_buff != "":
 		_push_log(GameData._T("LOG_BUFF_GET") % [target.stats.get_display_name(), GameData._T(result.applied_buff)], "system")
+		# 单目标/自身 BUFF 的 hp_up：血条上限 tween 效果（同达摩护体）
+		if result.applied_buff == "hp_up" and actual_target and not actual_target.is_dead:
+			await actual_target.play_hp_up_effect()
 
 	# 特性：烈焰灼魂 — 技能命中后有概率让目标灼烧（Boss免疫）
 	if actor and target and not target.is_dead and target.stats.rank != "boss":
@@ -1966,6 +2195,9 @@ func flush_pending_damage() -> void:
 			d.target.last_attacker = d.get("attacker")
 			# 闪避 / 魔法吸收检查（在 take_damage 之前）
 			var dodged = false
+			# 技能提前判定的落空（龙卷雨击等）
+			if d.get("missed", false):
+				dodged = true
 			# 闪避：群攻概率闪避，单体法术必中
 			var can_dodge = d.get("is_aoe", false) or not d.get("is_magic", false)
 			if can_dodge:
@@ -1986,58 +2218,75 @@ func flush_pending_damage() -> void:
 					d.amount = remain
 			if dodged:
 				d.amount = 0
-				damage_floated.emit(d.target, 0, "dodge")
+				# 只飘"闪避"字，不飘数字0
+				if d.target.has_method("show_trait_float"):
+					d.target.show_trait_float("闪避")
+				_push_log("【%s】%s 闪避了攻击！" % [d.get("skill_id", "攻击"), d.target.stats.get_display_name()], "system")
 			else:
-				# 鬼影护体：抵挡一次攻击
-				if d.target.has_buff("ghost_shield"):
-					d.target.remove_buff("ghost_shield")
+				# 无敌（不灭金身）：免疫所有伤害，不扣血、不附加异常
+				if d.target.has_buff("invincible"):
 					d.amount = 0
-					damage_floated.emit(d.target, 0, "dodge")
-					_push_log("【鬼影护体】%s 抵挡了攻击！" % d.target.stats.get_display_name(), "system")
-				var actual = d.target.take_damage(d.amount)
-				# 反震（原逻辑 + 装备反震）
-				if not d.get("is_magic", false):
-					var reflect_all = d.target.equip_special.get("reflect", 0)
-					if d.target._has_book_type("reflect"):
-						reflect_all += int(d.target.get_reflect_ratio() * 100)
-					if reflect_all > 0 and d.has("attacker") and d.attacker and not d.attacker.is_dead:
-						var reflect_dmg = maxi(1, int(d.amount * reflect_all / 100.0))
-						d.attacker.take_damage(reflect_dmg)
-						d.attacker.sync_visual()
-						damage_floated.emit(d.attacker, reflect_dmg, "normal")
-						_push_log(GameData._T("LOG_REFLECT") % [d.target.stats.get_display_name(), d.attacker.stats.get_display_name(), reflect_dmg], "player_action" if d.target.is_player else "enemy_action")
-					# 吸血（原逻辑）
-					if d.has("attacker") and d.attacker and not d.attacker.is_dead:
-						var ls_ratio = d.attacker.get_lifesteal_ratio()
-						ls_ratio += d.attacker.equip_special.get("lifesteal", 0) / 100.0
-						# 特性吸血（如暗影汲取）
-						var drain_trait = d.attacker.trait_data.get("暗影汲取", {})
-						if not drain_trait.is_empty():
-							ls_ratio += drain_trait.get("drain_pct", 0.0)
-						# 吸血提高 buff（lifesteal_up）
-						if d.attacker.has_buff("lifesteal_up"):
-							var lv = d.attacker.get_buff_value("lifesteal_up")
-							if lv != null:
-								ls_ratio += lv
-						if ls_ratio > 0:
-							var heal_amt = maxi(1, int(d.amount * ls_ratio))
-							d.attacker.heal(heal_amt)
-							damage_floated.emit(d.attacker, heal_amt, "heal")
-							_push_log(GameData._T("LOG_LIFESTEAL") % [d.attacker.stats.get_display_name(), heal_amt], "heal")
-					# 毒（原逻辑）
-					if not d.target.is_dead:
-						var venom_chance = d.attacker.get_venom_chance()
-						if venom_chance > 0 and randf() < venom_chance and not d.target.is_immune_to_debuffs():
-							d.target.add_buff("poison", 3)
-							_push_log(GameData._T("LOG_POISON") % d.target.stats.get_display_name(), "debuff")
-							d.target.sync_visual()
-					# 裂伤天赋：攻击概率附加流血
-					if not d.target.is_dead:
-						var bleed_rank = GameData.get_talent_rank("attack_bleed")
-						if bleed_rank > 0 and randf() < 0.3 * bleed_rank and not d.target.is_immune_to_debuffs():
-							var bleed_dmg = int(d.target.stats.max_hp * 0.05 * bleed_rank)
-							d.target.add_buff("bleed", 3, bleed_dmg)
-							_push_log("%s 裂伤流血！" % d.target.stats.get_display_name(), "debuff")
+					if d.target.has_method("show_trait_float"):
+						d.target.show_trait_float("无敌")
+					_push_log("【无敌】%s 免疫了伤害！" % d.target.stats.get_display_name(), "system")
+				else:
+					# 鬼影护体：抵挡攻击（按层数扣减）
+					if d.target.has_buff("ghost_shield"):
+						var layer_arr: Array = d.target.buffs.get("ghost_shield", {}).get("layers", [])
+						if not layer_arr.is_empty():
+							var lv = layer_arr[0].get("value", 1.0)
+							layer_arr[0]["value"] = lv - 1.0
+							d.amount = 0
+							damage_floated.emit(d.target, 0, "dodge")
+							_push_log("【鬼影护体】%s 抵挡了攻击！剩余 %d 次" % [d.target.stats.get_display_name(), int(lv) - 1], "system")
+							if layer_arr[0]["value"] <= 0.0:
+								d.target.remove_buff("ghost_shield")
+								if d.target.has_method("hide_buff"):
+									d.target.hide_buff()
+					var actual = d.target.take_damage(d.amount)
+					# 反震（原逻辑 + 装备反震）
+					if not d.get("is_magic", false):
+						var reflect_all = d.target.equip_special.get("reflect", 0)
+						if d.target._has_book_type("reflect"):
+							reflect_all += int(d.target.get_reflect_ratio() * 100)
+						if reflect_all > 0 and d.has("attacker") and d.attacker and not d.attacker.is_dead:
+							var reflect_dmg = maxi(1, int(d.amount * reflect_all / 100.0))
+							d.attacker.take_damage(reflect_dmg)
+							d.attacker.sync_visual()
+							damage_floated.emit(d.attacker, reflect_dmg, "normal")
+							_push_log(GameData._T("LOG_REFLECT") % [d.target.stats.get_display_name(), d.attacker.stats.get_display_name(), reflect_dmg], "player_action" if d.target.is_player else "enemy_action")
+						# 吸血（原逻辑）
+						if d.has("attacker") and d.attacker and not d.attacker.is_dead:
+							var ls_ratio = d.attacker.get_lifesteal_ratio()
+							ls_ratio += d.attacker.equip_special.get("lifesteal", 0) / 100.0
+							# 特性吸血（如暗影汲取）
+							var drain_trait = d.attacker.trait_data.get("暗影汲取", {})
+							if not drain_trait.is_empty():
+								ls_ratio += drain_trait.get("drain_pct", 0.0)
+							# 吸血提高 buff（lifesteal_up）
+							if d.attacker.has_buff("lifesteal_up"):
+								var lv = d.attacker.get_buff_value("lifesteal_up")
+								if lv != null:
+									ls_ratio += lv
+							if ls_ratio > 0:
+								var heal_amt = maxi(1, int(d.amount * ls_ratio))
+								d.attacker.heal(heal_amt)
+								damage_floated.emit(d.attacker, heal_amt, "heal")
+								_push_log(GameData._T("LOG_LIFESTEAL") % [d.attacker.stats.get_display_name(), heal_amt], "heal")
+						# 毒（原逻辑）
+						if not d.target.is_dead:
+							var venom_chance = d.attacker.get_venom_chance()
+							if venom_chance > 0 and randf() < venom_chance and not d.target.is_immune_to_debuffs():
+								d.target.add_buff("poison", 3)
+								_push_log(GameData._T("LOG_POISON") % d.target.stats.get_display_name(), "debuff")
+								d.target.sync_visual()
+						# 裂伤天赋：攻击概率附加流血
+						if not d.target.is_dead:
+							var bleed_rank = GameData.get_talent_rank("attack_bleed")
+							if bleed_rank > 0 and randf() < 0.3 * bleed_rank and not d.target.is_immune_to_debuffs():
+								var bleed_dmg = int(d.target.stats.max_hp * 0.05 * bleed_rank)
+								d.target.add_buff("bleed", 3, bleed_dmg)
+								_push_log("%s 裂伤流血！" % d.target.stats.get_display_name(), "debuff")
 		# 仇恨
 		if d.type == "shield":
 			if d.has("attacker") and d.attacker:
@@ -2080,6 +2329,17 @@ func flush_guard_return() -> void:
 
 ## 持续伤害
 func _apply_dot(target: BattleCharacter) -> void:
+	# 持续回血（五气招元等 regen buff）：每回合恢复最大气血百分比
+	if target.has_buff("regen"):
+		var regen_pct: float = target.get_buff_value("regen")
+		if regen_pct == null: regen_pct = 0.05
+		var heal_amt = maxi(1, int(target.stats.max_hp * regen_pct))
+		var actual = target.heal(heal_amt)
+		if actual > 0:
+			target.sync_visual()
+			damage_floated.emit(target, actual, "heal")
+			_push_log(GameData._T("LOG_HP_REGEN") % [target.stats.get_display_name(), actual], "heal")
+			await get_tree().create_timer(0.3).timeout
 	for buff_id in ["poison", "burn"]:
 		if not target.has_buff(buff_id):
 			continue
@@ -2106,8 +2366,8 @@ func _apply_dot(target: BattleCharacter) -> void:
 				if i < burn_layers.size() - 1:
 					await get_tree().create_timer(0.35).timeout
 		else:
-			# 中毒：单层触发
-			var dmg = maxi(1, int(target.stats.max_hp * 0.025))
+			# 中毒：单层触发，每回合扣 5% 最大气血
+			var dmg = maxi(1, int(target.stats.max_hp * 0.05))
 			target.take_damage(dmg)
 			target.sync_visual()
 			damage_floated.emit(target, dmg, "poison")
@@ -2128,6 +2388,15 @@ func _apply_dot(target: BattleCharacter) -> void:
 		target.sync_visual()
 		damage_floated.emit(target, bleed_dmg, "bleed")
 		_push_log("%s 流血 %d 点" % [target.stats.get_display_name(), bleed_dmg], "debuff")
+
+## 计算技能落空概率（受双方运气影响：施法者运气高 → 更容易命中）
+func _calc_miss_chance(caster: BattleCharacter, target: BattleCharacter, base_miss: float) -> float:
+	if base_miss <= 0.0 or caster == null or target == null:
+		return base_miss
+	var caster_luck = caster.stats.luck + caster.equip_special.get("luck", 0)
+	var target_luck = target.stats.luck + target.equip_special.get("luck", 0)
+	var miss = base_miss - float(caster_luck - target_luck) / 100.0
+	return clampf(miss, 0.0, 1.0)
 
 ## 处理吸血/暗影汲取（给直接扣血的路径调用）
 func _apply_lifesteal(attacker: BattleCharacter, damage_amount: int) -> void:
@@ -2280,7 +2549,8 @@ func _calc_exp_reward(enemy: BattleCharacter) -> int:
 	for c in party:
 		avg_level += c.stats.level
 	avg_level = avg_level / maxi(1, party.size())
-	var base = 30 + enemy.stats.level * 15
+	# 怪物经验按自身等级计算（20+20lv）×阶段系数，与主角升级需求同档对应
+	var base = CharacterStats.calc_monster_exp(enemy.stats.level)
 	var diff = enemy.stats.level - avg_level
 	return maxi(5, int(base * (1.0 + diff * 0.1)))
 
@@ -2328,15 +2598,22 @@ func _record_ghost_home() -> void:
 				nd.set_meta("_ghost_home", nd.position)
 			break
 
-## 隐藏/显示骨精灵鬼魂
+## 隐藏/显示骨精灵鬼魂（同时更新数字）
 func _set_ghost_visible(v: bool) -> void:
 	for c in party:
 		if c.member_id == "gujingling":
 			var nd = c.get_parent()
 			var ghost = nd.get_node_or_null("Ghost") if nd else null
 			if ghost:
-				ghost.visible = v and c.trait_data.get("_ghost_count", 0) > 0
+				var count = c.trait_data.get("_ghost_count", 0)
+				var lbl = ghost.get_node_or_null("Label") as Label
+				if lbl: lbl.text = str(count)
+				ghost.visible = v and count > 0
 			break
+
+## 是否让骨精灵离开原点的移动类技能
+func _is_movement_skill(skill_id: String) -> bool:
+	return skill_id in ["双生", "割喉之战", "暗影突袭", "横扫千军", "破釜沉舟", "瞬狱影杀阵", "阎王令"]
 
 func _play_error_sound() -> void:
 	var snd = AudioStreamPlayer.new()

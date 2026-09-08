@@ -168,13 +168,19 @@ func _load_debuff_frames(parent: Node) -> void:
 func _load_buff_frames(parent: Node) -> void:
 	var scene = load("res://Component/buff.tscn")
 	if scene == null: return
-	var template = scene.instantiate() as AnimatedSprite2D
-	var buff_sprite = parent.get_node_or_null("BuffSprite") as AnimatedSprite2D
-	if buff_sprite and template and template.sprite_frames:
-		buff_sprite.sprite_frames = template.sprite_frames.duplicate()
-		buff_sprite.scale = template.scale
-		buff_sprite.position = template.position
-	template.queue_free()
+	# 移除旧 BuffSprite（先移出树避免同名冲突，再释放）
+	var old = parent.get_node_or_null("BuffSprite")
+	if old:
+		parent.remove_child(old)
+		old.queue_free()
+	var template = scene.instantiate()
+	template.name = "BuffSprite"
+	parent.add_child(template)
+	# 默认隐藏整个 BuffSprite 容器及所有图标
+	template.visible = false
+	for c in template.get_children():
+		if c is AnimatedSprite2D:
+			c.visible = false
 
 
 func _load_spell_frames(parent: Node) -> void:
@@ -234,9 +240,18 @@ func play_spell_effect(anim_name: String) -> void:
 	print("[play_spell_effect] playing ", anim_name, " frames=", ss.sprite_frames.get_frame_count("default"))
 	ss.stop()
 	ss.frame = 0
-	ss.sprite_frames.set_animation_loop("default", false)
+	# 动画名不一定是 "default"（如吃紫），用节点自身配置的动画名兜底
+	var play_anim := "default"
+	if ss.sprite_frames.has_animation("default"):
+		ss.sprite_frames.set_animation_loop("default", false)
+	elif ss.animation != "" and ss.sprite_frames.has_animation(ss.animation):
+		play_anim = ss.animation
+		ss.sprite_frames.set_animation_loop(ss.animation, false)
+	else:
+		print("[play_spell_effect] no playable animation for ", anim_name)
+		return
 	ss.visible = true
-	ss.play("default")
+	ss.play(play_anim)
 	await ss.animation_finished
 	ss.visible = false
 	print("[play_spell_effect] finished ", anim_name)
@@ -278,8 +293,8 @@ func show_trait_float(trait_name: String) -> void:
 	if parent == null: return
 	var lbl := Label.new()
 	lbl.text = trait_name
-	lbl.add_theme_color_override("font_color", Color(1, 0.2, 0.2))
-	lbl.add_theme_font_size_override("font_size", 20)
+	lbl.add_theme_color_override("font_color", "purple")
+	lbl.add_theme_font_size_override("font_size", 30)
 	lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
 	lbl.add_theme_constant_override("shadow_offset_x", 1)
 	lbl.add_theme_constant_override("shadow_offset_y", 1)
@@ -296,11 +311,19 @@ func show_trait_float(trait_name: String) -> void:
 func show_buff(anim_name: String) -> void:
 	var parent = get_parent()
 	if parent == null: return
-	var bs = parent.get_node_or_null("BuffSprite") as AnimatedSprite2D
-	if bs == null: return
-	bs.visible = true
-	if bs.sprite_frames and bs.sprite_frames.has_animation(anim_name):
-		bs.play(anim_name)
+	var bs_container = parent.get_node_or_null("BuffSprite")
+	if bs_container == null: return
+	bs_container.visible = true
+	# 只点亮目标动画，不隐藏其他 buff 动画（多个 buff 可同时显示）
+	var child = bs_container.get_node_or_null(anim_name)
+	if child and child is AnimatedSprite2D:
+		child.visible = true
+		if child.sprite_frames and child.sprite_frames.has_animation(child.name):
+			child.play(child.name)
+		elif child.sprite_frames and child.sprite_frames.has_animation("default"):
+			child.play("default")
+		else:
+			child.play()
 
 ## 施法完毕后触发 debuff 视觉（动画已完成）
 func apply_debuff_visual(buff_id: String) -> void:
@@ -320,8 +343,13 @@ func refresh_debuff_visuals() -> void:
 func hide_buff() -> void:
 	var parent = get_parent()
 	if parent == null: return
-	var bs = parent.get_node_or_null("BuffSprite") as AnimatedSprite2D
-	if bs: bs.visible = false
+	var bs = parent.get_node_or_null("BuffSprite")
+	if bs == null: return
+	# 还有其他 buff 则刷新显示，全部清空才隐藏
+	if buffs.is_empty():
+		bs.visible = false
+	else:
+		_refresh_buff_icon()
 
 
 ## 按约定文件名注册动画
@@ -350,7 +378,38 @@ func _register_was_anims(was: WASAnimationPlayer, base_path: String) -> void:
 	was.play("idle")
 
 # ─── HP / MP ─────────────────────────────────
+## 神佑世人：分担比例（存到 bearer 上的 share_pct）
+var ally_refs: Array = []  # 战斗中的队友列表（BattleManager 初始化时设置）
+var last_hit_target: String = ""  # 上次攻击的目标 key（弱点击破：连续打同一目标伤害 x2）
+
+## 受击入口：无敌免疫 + 神佑世人分担队友伤害
 func take_damage(amount: int) -> int:
+	# 无敌（不灭金身）：免疫所有伤害
+	if has_buff("invincible"):
+		return 0
+	# 神佑世人：找存活队友中带此天赋者分担伤害（自己除外，不递归）
+	if not ally_refs.is_empty():
+		for ally in ally_refs:
+			if ally == self or ally.is_dead:
+				continue
+			var cfg = ally.trait_data.get("神佑世人", {})
+			if cfg is Dictionary and not cfg.is_empty():
+				var share_pct: float = cfg.get("share_pct", 0.3)
+				if share_pct > 0.0:
+					var shared = maxi(1, int(amount * share_pct))
+					amount -= shared
+					# 神天兵无敌时：分担依然生效（队友少扣），但自己免疫那部分伤害
+					if not ally.has_buff("invincible"):
+						ally._take_damage_raw(shared)
+					if ally.has_method("show_trait_float"):
+						ally.show_trait_float("神佑")
+					if has_method("show_trait_float"):
+						show_trait_float("神佑分担")
+				break
+	return _take_damage_raw(amount)
+
+## 原始扣血逻辑（无无敌/分担，供内部调用避免递归）
+func _take_damage_raw(amount: int) -> int:
 	var old = current_hp
 	# 护盾优先吸收伤害
 	if _shield_hp > 0:
@@ -509,7 +568,7 @@ func reset_sp() -> void:
 
 ## 冻结类 buff ID 列表
 const FREEZE_BUFF_IDS: Array[String] = ["frozen", "freeze", "冰封", "失魂"]
-const DEBUFF_IDS: Array[String] = ["poison", "burn", "bleed", "slow", "def_broken", "mdef_broken", "atk_down", "marked", "frozen", "freeze", "冰封", "失魂", "weakened"]
+const DEBUFF_IDS: Array[String] = ["poison", "burn", "bleed", "slow", "def_broken", "mdef_broken", "atk_down", "marked", "frozen", "freeze", "冰封", "失魂", "weakened", "silence"]
 
 # ─── BUFF 系统（分层叠加，max 3 层，同源不重复） ───
 const MAX_BUFF_LAYERS := 3
@@ -524,6 +583,12 @@ func add_buff(buff_id: String, turns: int, value: Variant = null, source: String
 			return
 	# Boss 免疫灼烧
 	if buff_id == "burn" and stats.rank == "boss":
+		return
+	# Boss 免疫中毒（毒刺等）
+	if buff_id == "poison" and stats.rank == "boss":
+		return
+	# Boss 免疫封印（似玉生香）
+	if buff_id == "silence" and stats.rank == "boss":
 		return
 	if not buffs.has(buff_id):
 		buffs[buff_id] = { "layers": [] }
@@ -551,16 +616,81 @@ func add_buff(buff_id: String, turns: int, value: Variant = null, source: String
 	if buff_id in FREEZE_BUFF_IDS:
 		is_frozen = true
 	if buff_id == "poison":
-		show_debuff("中毒", true)
+		# 视觉由 BattleManager 在技能动画完成后触发（毒刺等，避免动画未播完就显示）
+		pass
 	if buff_id == "marked":
 		# 视觉效果由 BattleManager 在技能动画完成后触发
 		pass
+	if buff_id == "invincible":
+		_apply_invincible_visual(true)
+	# 持续 buff 图标立即显示；debuff 等技能动画播完后由 BattleManager 统一刷新显示
+	if buff_id not in DEBUFF_IDS:
+		_refresh_buff_icon()
+
+func _buff_anim_name(buff_id: String) -> String:
+	var map := {
+		"atk_up": "加力", "def_up": "加物防", "mdef_up": "加魔防",
+		"haste": "加速", "hp_up": "加血上限", "heal_up": "治疗提升",
+		"ghost_shield": "鬼影护体", "ghost_boost": "鬼煞附体",
+		"ghost_gate": "鬼门大开", "lifesteal_up": "吸血提升",
+		"regen": "持续回血",
+		"invincible": "不灭金身",
+	}
+	return map.get(buff_id, buff_id)
+
+## 刷新持续 buff 图标：按施加来源的技能名播放同名动画（不灭金身→"不灭金身"节点），多个 buff 同时显示
+func _refresh_buff_icon() -> void:
+	var parent = get_parent()
+	if parent == null: return
+	var bs = parent.get_node_or_null("BuffSprite")
+	if bs == null: return
+	# 先全部隐藏
+	for c in bs.get_children():
+		if c is AnimatedSprite2D:
+			c.visible = false
+			c.stop()
+	var found = false
+	for bid in buffs:
+		# DOT 类由 show_debuff 在攻击动画后单独显示（避免提前）
+		if bid == "poison" or bid == "burn" or bid == "bleed": continue
+		var layers2: Array = buffs[bid].get("layers", [])
+		if layers2.is_empty(): continue
+		# 按来源技能名查找同名动画节点
+		for l in layers2:
+			var src: String = str(l.get("source", ""))
+			if src.is_empty(): continue
+			var child = bs.get_node_or_null(src)
+			if child and child is AnimatedSprite2D:
+				child.visible = true
+				if child.sprite_frames and child.sprite_frames.has_animation(src):
+					child.play(src)
+				elif child.sprite_frames and child.sprite_frames.has_animation("default"):
+					child.play("default")
+				else:
+					child.play()
+				found = true
+	bs.visible = found
+
+## 无敌（不灭金身）：角色变金黄色，buff 结束时恢复
+func _apply_invincible_visual(on: bool) -> void:
+	var parent = get_parent()
+	if parent == null: return
+	var sp = parent.get_node_or_null("Sprite2D") as Sprite2D
+	var target: CanvasItem = sp if sp else (parent as CanvasItem)
+	if target == null: return
+	if on:
+		if not target.has_meta("_inv_orig_modulate"):
+			target.set_meta("_inv_orig_modulate", target.modulate)
+		target.modulate = Color(1.35, 1.15, 0.35)
+	else:
+		if target.has_meta("_inv_orig_modulate"):
+			target.modulate = target.get_meta("_inv_orig_modulate")
+			target.remove_meta("_inv_orig_modulate")
 
 func _show_marked_effect() -> void:
 	# 角色变暗：黑气缠身（只影响 sprite，不影响血条等 UI）
 	var parent = get_parent()
-	if parent == null: return
-	# 停止旧脉冲
+	if parent == null: return	# 停止旧脉冲
 	var old_tw = get_meta("_marked_pulse_tween") if has_meta("_marked_pulse_tween") else null
 	if old_tw and old_tw.is_valid():
 		old_tw.kill()
@@ -579,6 +709,9 @@ func remove_buff(buff_id: String) -> void:
 	if buff_id in buffs:
 		buffs.erase(buff_id)
 		buff_removed.emit(buff_id)
+		# 无敌：恢复角色颜色
+		if buff_id == "invincible":
+			_apply_invincible_visual(false)
 
 		if buff_id in FREEZE_BUFF_IDS:
 			var still_frozen := false
@@ -621,6 +754,12 @@ func remove_buff(buff_id: String) -> void:
 				dt.tween_property(dot, "size", Vector2(4, 4), 0.35)
 				dt.tween_property(dot, "rotation", randf_range(-3, 3), 0.35)
 				dt.finished.connect(dot.queue_free)
+	# 鬼煞附体/鬼影护体 buff 移除后隐藏图标
+	if buff_id == "ghost_boost" or buff_id == "ghost_shield":
+		hide_buff()
+	# 刷新持续 buff 图标（显示下一个仍生效的 buff 或隐藏）
+	if buff_id not in DEBUFF_IDS:
+		_refresh_buff_icon()
 
 func has_buff(buff_id: String) -> bool:
 	return buff_id in buffs
@@ -794,7 +933,7 @@ func get_effective_attack() -> int:
 	var base = stats.attack * _waste_boost("atk_mul")
 	base = int(base * _book_mul("atk_up"))
 	if has_buff("atk_up"):   base = int(base * clamp(get_buff_value("atk_up") if get_buff_value("atk_up") != null else 1.5, 1.0, 3.0))
-	if has_buff("atk_down"): base = int(base * clamp(get_buff_value("atk_down") if get_buff_value("atk_down") != null else 0.7, 0.1, 1.0))
+	if has_buff("atk_down"): base = int(base * (1.0 - clamp(get_buff_value("atk_down") if get_buff_value("atk_down") != null else 0.3, 0.0, 0.95)))
 	# 愈战愈勇：永久叠伤
 	var yzyy_cfg = trait_data.get("愈战愈勇", {})
 	if not yzyy_cfg.is_empty():
@@ -817,7 +956,7 @@ func get_effective_magic_attack() -> int:
 		var bv = get_buff_value("matk_up")
 		if bv != null:
 			base = int(base * bv)
-	if has_buff("atk_down"): base = int(base * clamp(get_buff_value("atk_down") if get_buff_value("atk_down") != null else 0.7, 0.1, 1.0))
+	if has_buff("atk_down"): base = int(base * (1.0 - clamp(get_buff_value("atk_down") if get_buff_value("atk_down") != null else 0.3, 0.0, 0.95)))
 	base = int(base * _elem_resonance_boost("matk_up") * _talent_boost("matk_up"))
 	return base
 
@@ -826,7 +965,7 @@ func get_effective_defense() -> int:
 	base = int(base * _book_mul("def_up"))
 	if has_buff("shield"):     base = int(base * clamp(get_buff_value("shield") if get_buff_value("shield") != null else 2.0, 1.0, 5.0))
 	if has_buff("def_up"):     base = int(base * clamp(get_buff_value("def_up") if get_buff_value("def_up") != null else 1.5, 1.0, 5.0))
-	if has_buff("def_broken"): base = int(base * clamp(get_buff_value("def_broken") if get_buff_value("def_broken") != null else 0.5, 0.1, 1.0))
+	if has_buff("def_broken"): base = int(base * (1.0 - clamp(get_buff_value("def_broken") if get_buff_value("def_broken") != null else 0.5, 0.0, 0.95)))
 	# 兽王血脉：每只宠物加防御%
 	var sw_cfg2 = trait_data.get("兽王血脉", {})
 	if not sw_cfg2.is_empty():
@@ -840,7 +979,7 @@ func get_effective_magic_defense() -> int:
 	var base = stats.magic_defense * _waste_boost("def_mul")
 	base = int(base * _book_mul("mdef_up"))
 	if has_buff("mdef_up"): base = int(base * clamp(get_buff_value("mdef_up") if get_buff_value("mdef_up") != null else 1.5, 1.0, 5.0))
-	if has_buff("mdef_broken"): base = int(base * clamp(get_buff_value("mdef_broken") if get_buff_value("mdef_broken") != null else 0.5, 0.1, 1.0))
+	if has_buff("mdef_broken"): base = int(base * (1.0 - clamp(get_buff_value("mdef_broken") if get_buff_value("mdef_broken") != null else 0.5, 0.0, 0.95)))
 	return base
 
 func get_effective_speed() -> int:
@@ -902,22 +1041,29 @@ func get_effective_max_hp() -> int:
 func get_effective_max_mp() -> int:
 	return int(stats.max_mp * _talent_boost("mp_up"))
 
+## 暴击率完全由运气决定：1 点 luck = 1% 暴击率
+## 必杀/高级必杀书籍、法术暴击书籍、暴击天赋均折算为运气加成
 func get_effective_crit_rate() -> float:
-	var rate = stats.crit_rate
+	var total_luck = stats.luck + equip_special.get("luck", 0)
+	# 必杀/高级必杀、法术暴击/高级法术暴击书籍 → 加运气（value×100 点）
 	for b in book_skills:
 		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
-		if db.get("type", "") == "crit_up":
-			rate += db.get("value", 0.0)
-	rate += _talent_boost("crit_up") - 1.0
-	return clampf(rate, 0.0, 1.0)
+		if db.get("type", "") == "crit_up" or db.get("type", "") == "mcrit_up":
+			total_luck += int(db.get("value", 0.0) * 100.0)
+	# 天赋暴击加成（攻击暴击）→ 加运气
+	total_luck += int((_talent_boost("crit_up") - 1.0) * 100.0)
+	return clampf(total_luck / 100.0, 0.0, 1.0)
 
+## 法术暴击：需要"法术暴击/高级法术暴击"书籍解锁；解锁后按运气暴击（不再额外加概率）
 func get_effective_magic_crit_rate() -> float:
-	var rate = 0.05  # 基础法术暴击率 5%
+	var unlocked := false
 	for b in book_skills:
-		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
-		if db.get("type", "") == "mcrit_up":
-			rate += db.get("value", 0.0)
-	return clampf(rate, 0.0, 1.0)
+		if SkillDB.BOOK_SKILL_DB.get(b, {}).get("type", "") == "mcrit_up":
+			unlocked = true
+			break
+	if not unlocked:
+		return 0.0
+	return get_effective_crit_rate()
 
 ## 慧根：MP 消耗减免比例
 func get_mp_cost_reduction() -> float:

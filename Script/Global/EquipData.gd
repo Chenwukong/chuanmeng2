@@ -2,6 +2,9 @@
 class_name EquipData
 extends RefCounted
 
+# ═══ 武器子类型（对应 TCP/ 目录下的武器图标文件夹） ═══
+const WEAPON_TYPES: Array[String] = ["剑", "刀", "双刀", "巨剑", "扇", "斧", "杖", "枪", "棍", "灯", "爪", "锤", "鞭"]
+
 # ═══ 槽位 ═══
 enum SlotType {
 	WEAPON,     # 武器
@@ -32,33 +35,6 @@ static func slot_label(slot: SlotType) -> String:
 		SlotType.SHOES:    return "鞋子"
 	return ""
 
-# ═══ 品质 ═══
-enum Rarity {
-	COMMON,     # 普通
-	UNCOMMON,   # 优秀
-	RARE,       # 稀有
-	EPIC,       # 史诗
-	LEGENDARY,  # 传说
-}
-
-static func rarity_name(r: Rarity) -> String:
-	match r:
-		Rarity.COMMON:    return "普通"
-		Rarity.UNCOMMON:  return "优秀"
-		Rarity.RARE:      return "稀有"
-		Rarity.EPIC:      return "史诗"
-		Rarity.LEGENDARY: return "传说"
-	return ""
-
-static func rarity_color(r: Rarity) -> Color:
-	match r:
-		Rarity.COMMON:    return Color(0.75, 0.75, 0.75)
-		Rarity.UNCOMMON:  return Color(0.3, 1.0, 0.3)
-		Rarity.RARE:      return Color(0.3, 0.5, 1.0)
-		Rarity.EPIC:      return Color(0.85, 0.3, 1.0)
-		Rarity.LEGENDARY: return Color(1.0, 0.55, 0.05)
-	return Color.WHITE
-
 # ═══ 词缀类型 ═══
 enum AffixType {
 	LIFESTEAL,   # 吸血 +N%
@@ -88,7 +64,7 @@ static func affix_label(a: AffixType) -> String:
 	return ""
 
 ## 完全随机一条词缀（值和类型皆随机）
-static func random_affix(rarity: Rarity) -> Dictionary:
+static func random_affix() -> Dictionary:
 	var pool: Array = [
 		AffixType.LIFESTEAL, AffixType.STRENGTH, AffixType.INTELLECT,
 		AffixType.CRIT_RATE, AffixType.CRIT_DMG, AffixType.HASTE,
@@ -98,13 +74,7 @@ static func random_affix(rarity: Rarity) -> Dictionary:
 	var rng = RandomNumberGenerator.new()
 	rng.randomize()
 	var af_type = pool[rng.randi_range(0, pool.size() - 1)]
-	var base_val := 5.0
-	match rarity:
-		Rarity.UNCOMMON:  base_val = rng.randf_range(3.0, 7.0)
-		Rarity.RARE:      base_val = rng.randf_range(5.0, 12.0)
-		Rarity.EPIC:      base_val = rng.randf_range(8.0, 20.0)
-		Rarity.LEGENDARY: base_val = rng.randf_range(15.0, 35.0)
-		_:                base_val = rng.randf_range(2.0, 5.0)
+	var base_val := rng.randf_range(2.0, 20.0)
 	return {"type": af_type, "value": snapped(base_val, 1.0)}
 
 
@@ -114,19 +84,25 @@ static func random_affix(rarity: Rarity) -> Dictionary:
 static var named_db: Dictionary = {}
 
 ## 注册一件命名装备（TCP 路径可为空）
-static func register_named(id: String, slot: SlotType, rarity: Rarity,
+static func register_named(id: String, slot: SlotType,
 		name_str: String, base: Dictionary, tcp_path: String = "",
 		level: int = 1, affixes: Array = [], price: int = 0) -> void:
+	# 武器子类型：按 TCP 子目录自动推断（res://TCP/剑/1001.tcp → "剑"），便于 can_equip 校验
+	var weapon_type := ""
+	if slot == SlotType.WEAPON and not tcp_path.is_empty():
+		var segs := tcp_path.split("/")
+		if segs.size() >= 2:
+			weapon_type = segs[segs.size() - 2]
 	named_db[id] = {
 		"id": id,
 		"slot": slot,
-		"rarity": rarity,
 		"level": level,
 		"name": name_str,
-		"display_name": "%s·%s" % [rarity_name(rarity), name_str] if rarity != Rarity.COMMON else name_str,
+		"display_name": name_str,
 		"base": base,
 		"affixes": affixes,
 		"tcp_path": tcp_path,
+		"weapon_type": weapon_type,
 		"price": price,
 	}
 
@@ -137,12 +113,11 @@ static func get_named(id: String) -> Dictionary:
 
 # ═══ 工厂：创建一件装备（返回纯 Dictionary） ═══
 
-static func create_equip(slot: SlotType, rarity: Rarity, level: int = 1) -> Dictionary:
+static func create_equip(slot: SlotType, level: int = 1) -> Dictionary:
 	var rng = RandomNumberGenerator.new()
 	rng.randomize()
 	var eq: Dictionary = {
 		"slot": slot,
-		"rarity": rarity,
 		"level": level,
 		"name": "",
 		"affixes": [],
@@ -153,7 +128,9 @@ static func create_equip(slot: SlotType, rarity: Rarity, level: int = 1) -> Dict
 	var lv := float(maxi(1, level))
 	match slot:
 		SlotType.WEAPON:
-			eq.name = "武器"
+			var wt := WEAPON_TYPES[rng.randi_range(0, WEAPON_TYPES.size() - 1)]
+			eq["weapon_type"] = wt   # 武器子类型：剑/刀/锤…（角色按此限制可装备类型）
+			eq.name = "武器·%s" % wt
 			eq.base = {
 				"atk": int(rng.randf_range(8, 14) * lv),
 			}
@@ -186,31 +163,10 @@ static func create_equip(slot: SlotType, rarity: Rarity, level: int = 1) -> Dict
 				"spd": int(rng.randf_range(4, 10) * lv),
 			}
 
-	# ── 根据品质补派生属性 ──
-	var mul := 1.0 + float(rarity) * 0.25
-	for k in eq.base:
-		eq.base[k] = maxi(1, int(eq.base[k] * mul))
-
-	# ── 词缀（只有武器有，品质越高越多） ──
-	if slot == SlotType.WEAPON:
-		var affix_count := 0
-		match rarity:
-			Rarity.COMMON:    affix_count = 0
-			Rarity.UNCOMMON:  affix_count = 1
-			Rarity.RARE:      affix_count = rng.randi_range(1, 2)
-			Rarity.EPIC:      affix_count = rng.randi_range(2, 3)
-			Rarity.LEGENDARY: affix_count = rng.randi_range(3, 4)
-		for _i in affix_count:
-			eq.affixes.append(random_affix(rarity))
-
-	# 品质前缀
-	var prefix := ""
-	match rarity:
-		Rarity.UNCOMMON:  prefix = "优秀·"
-		Rarity.RARE:      prefix = "稀有·"
-		Rarity.EPIC:      prefix = "史诗·"
-		Rarity.LEGENDARY: prefix = "传说·"
-	eq.display_name = "%s%s" % [prefix, eq.name]
+	# ── 词缀（武器有概率获得 1 条随机词缀） ──
+	if slot == SlotType.WEAPON and rng.randi() % 3 == 0:
+		eq.affixes.append(random_affix())
+	eq.display_name = eq.name
 
 	return eq
 
@@ -229,7 +185,7 @@ static func calc_stats(equipment: Dictionary) -> Dictionary:
 			AffixType.LIFESTEAL:   s["lifesteal"] = s.get("lifesteal", 0.0) + af.value * 0.01
 			AffixType.STRENGTH:    s["atk"] = int(s.atk * (1.0 + af.value * 0.01))
 			AffixType.INTELLECT:   s["mdef"] = int(s.mdef * (1.0 + af.value * 0.01))
-			AffixType.CRIT_RATE:   s["crit_rate"] = s.get("crit_rate", 0.0) + af.value * 0.01
+			AffixType.CRIT_RATE:   s["luck"] = s.get("luck", 0) + af.value
 			AffixType.CRIT_DMG:    s["crit_dmg"] = s.get("crit_dmg", 0.0) + af.value * 0.01
 			AffixType.HASTE:       s["spd"] = int(s.spd * (1.0 + af.value * 0.01))
 			AffixType.PENETRATION: s["penetration"] = s.get("penetration", 0.0) + af.value * 0.01

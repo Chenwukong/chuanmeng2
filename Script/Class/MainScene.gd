@@ -75,9 +75,9 @@ func _ready() -> void:
 	_add_btn_labels()
 	add_child(load("res://Script/Class/CursorController.gd").new())
 	GameData.add_party_by_name("游霄云")
-	GameData.add_party_by_name("骨精灵")
+	GameData.add_party_by_name("英女侠")
 	#GameData.add_party_by_name("桃夭夭")
-	GameData.add_party_by_name("影精灵")
+	#GameData.add_party_by_name("影精灵")
 	#GameData.add_party_by_name("叮咚")
 
 	#ameData.add_party_by_name("大将军")
@@ -257,7 +257,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.is_pressed() and not event.is_echo():
 		if event.keycode == KEY_F2:
 			get_viewport().set_input_as_handled()
-			open_shop()
+			open_shop("", 10)  # 调试：打开 10 级装备商店
 		if event.keycode == KEY_F1:
 			var bs = get_tree().root.get_node_or_null("BattleScene")
 			if bs and bs.has_method("_toggle_double_speed"):
@@ -765,11 +765,16 @@ func show_normal_chat(dialogue_file: String, title: String, flag: String = "") -
 
 
 ## 打开商店弹窗（由 NPC 对话调用）
-func open_shop(npc_name: String = "") -> void:
+## 传 shop_level>0 直接卖 ≤该等级的装备（等级档表）；否则按 npc_name 查 SHOP_NPC_DB
+func open_shop(npc_name: String = "", shop_level: int = 0) -> void:
 	var shop = preload("res://Component/ShopPopup.tscn").instantiate()
 	add_child(shop)
 	shop.closed.connect(func(): shop.queue_free(); _unregister_popup())
-	var items = GameData.get_shop_items(npc_name)
+	var items: Array[Dictionary] = []
+	if shop_level > 0:
+		items = GameData.get_equip_shop_items(shop_level)
+	elif not npc_name.is_empty():
+		items = GameData.get_shop_items(npc_name)
 	if not items.is_empty():
 		shop.set_item_list(items)
 	_register_popup()

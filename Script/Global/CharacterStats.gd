@@ -66,9 +66,17 @@ static func role_name(roles: int) -> String:
 @export var defense: int = 10      # 物理防御
 @export var magic_defense: int = 8 # 法术防御
 @export var speed: int = 12        # 速度（决定行动顺序）
-@export var crit_rate: float = 0.15  # 暴击率 0.0~1.0
-@export var crit_mult: float = 1.5   # 暴击倍率
+@export var crit_mult: float = 1.5   # 暴击倍率（暴击率由运气决定，1 点 luck = 1%）
 @export var luck: int = 0            # 运气（影响封印/异常成功率）
+
+## 能力点（升级手动加点，洗髓丹返还用）
+@export var potential_left: int = 0   # 剩余可分配能力点
+@export var alloc_hp: int = 0         # 已分配：体质（+气血）
+@export var alloc_mp: int = 0         # 已分配：蓝量
+@export var alloc_atk: int = 0        # 已分配：力量
+@export var alloc_def: int = 0        # 已分配：耐力
+@export var alloc_spd: int = 0        # 已分配：敏捷
+@export var alloc_magic: int = 0      # 已分配：魔力（+气血/+蓝量/+法攻）
 
 ## 成长属性（玩家专用）
 @export var level: int = 1
@@ -133,23 +141,31 @@ var traits: Dictionary = {}
 ## 宠物被动技能书
 @export var book_skills: Array[String] = []
 
+## 阶段系数：主角升级需求与怪物经验共用同一套 10 级档位，保证两边同步抬档
+## 档位：1-9×1, 10-19×1.5, 20-29×2, 30-39×2.5, 40-49×3,
+##       50-59×3.5, 60-69×4, 70-79×4.5, 80-89×5, 90+×5.5
+static func stage_multiplier(lv: int) -> float:
+	if lv <= 9:     return 1.0
+	if lv <= 19:    return 1.5
+	if lv <= 29:    return 2.0
+	if lv <= 39:    return 2.5
+	if lv <= 49:    return 3.0
+	if lv <= 59:    return 3.5
+	if lv <= 69:    return 4.0
+	if lv <= 79:    return 4.5
+	if lv <= 89:    return 5.0
+	return 5.5
+
 ## 升级所需经验公式：100+50×lv+6×lv²，再乘阶段系数
-## 阶段：1-9×1, 10-19×1.5, 20-29×2, 30-39×2.5, 40-49×3,
-##       50-59×3.5, 60-69×4, 70-79×4.5, 80-89×5, 90-99×5.5
 static func calc_exp_to_next(lv: int) -> int:
 	var base = 100 + 50 * lv + 6 * lv * lv
-	var mul: float
-	if lv <= 9:     mul = 1.0
-	elif lv <= 19:  mul = 1.5
-	elif lv <= 29:  mul = 2.0
-	elif lv <= 39:  mul = 2.5
-	elif lv <= 49:  mul = 3.0
-	elif lv <= 59:  mul = 3.5
-	elif lv <= 69:  mul = 4.0
-	elif lv <= 79:  mul = 4.5
-	elif lv <= 89:  mul = 5.0
-	else:           mul = 5.5
-	return int(base * mul)
+	return int(base * stage_multiplier(lv))
+
+## 怪物经验公式：(20+20×lv) × 阶段系数 —— 线性数字、与主角需求同档抬升，
+## 但增速低于需求，后期升 1 级所需杀怪数温和增多（约 4 只 → 30 只/级），不会失控
+static func calc_monster_exp(lv: int) -> int:
+	var base = 20 + 1.5 * lv 
+	return maxi(5, int(base * stage_multiplier(lv)))
 
 ## 克隆一份运行时数据（避免修改原始资源）
 func duplicate_for_battle() -> CharacterStats:
@@ -165,9 +181,15 @@ func duplicate_for_battle() -> CharacterStats:
 	copy.defense         = defense
 	copy.magic_defense   = magic_defense
 	copy.speed           = speed
-	copy.crit_rate       = crit_rate
 	copy.crit_mult       = crit_mult
 	copy.luck            = luck
+	copy.potential_left  = potential_left
+	copy.alloc_hp        = alloc_hp
+	copy.alloc_mp        = alloc_mp
+	copy.alloc_atk       = alloc_atk
+	copy.alloc_def       = alloc_def
+	copy.alloc_spd       = alloc_spd
+	copy.alloc_magic     = alloc_magic
 	copy.level           = level
 	copy.saved_hp        = saved_hp
 	copy.saved_mp        = saved_mp
@@ -216,9 +238,15 @@ func save_to_dict() -> Dictionary:
 		"def":     defense,
 		"mdef":    magic_defense,
 		"spd":     speed,
-		"crit":    crit_rate,
 		"critmul": crit_mult,
 		"luck":    luck,
+		"pot_left": potential_left,
+		"alloc_hp": alloc_hp,
+		"alloc_mp": alloc_mp,
+		"alloc_atk": alloc_atk,
+		"alloc_def": alloc_def,
+		"alloc_spd": alloc_spd,
+		"alloc_magic": alloc_magic,
 		"lv":      level,
 		"saved_hp": saved_hp,
 		"saved_mp": saved_mp,
@@ -260,9 +288,15 @@ func load_from_dict(d: Dictionary) -> void:
 	defense         = d.get("def", 5)
 	magic_defense   = d.get("mdef", 5)
 	speed           = d.get("spd", 10)
-	crit_rate       = d.get("crit", 0.1)
 	crit_mult       = d.get("critmul", 1.5)
 	luck            = d.get("luck", 0)
+	potential_left  = d.get("pot_left", level * 5)
+	alloc_hp        = d.get("alloc_hp", 0)
+	alloc_mp        = d.get("alloc_mp", 0)
+	alloc_atk       = d.get("alloc_atk", 0)
+	alloc_def       = d.get("alloc_def", 0)
+	alloc_spd       = d.get("alloc_spd", 0)
+	alloc_magic     = d.get("alloc_magic", 0)
 	level           = d.get("lv", 1)
 	saved_hp        = d.get("saved_hp", 0)
 	saved_mp        = d.get("saved_mp", 0)

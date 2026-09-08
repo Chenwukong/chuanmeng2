@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://c88c4ijox8kxx"
+path="res://.godot/imported/法术 爆炸.ogg-c33212fff25c15025a9a9e2f926a52c4.oggvorbisstr"
+
+[deps]
+
+source_file="res://Audio/SE/法术 爆炸.ogg"
+dest_files=["res://.godot/imported/法术 爆炸.ogg-c33212fff25c15025a9a9e2f926a52c4.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

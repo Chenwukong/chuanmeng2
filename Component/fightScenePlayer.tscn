@@ -81,13 +81,9 @@ animations = [{
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_vr8dx"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_mukxi"]
-atlas = ExtResource("11_ovimw")
-region = Rect2(576, 192, 192, 192)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_bd5f2"]
-atlas = ExtResource("11_ovimw")
-region = Rect2(768, 192, 192, 192)
+[sub_resource type="AtlasTexture" id="AtlasTexture_woe8l"]
+atlas = ExtResource("16_cvivd")
+region = Rect2(576, 384, 192, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_kn67w"]
 atlas = ExtResource("11_vo2sq")
@@ -153,10 +149,6 @@ region = Rect2(560, 0, 280, 222)
 atlas = ExtResource("14_cvivd")
 region = Rect2(840, 0, 280, 222)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_woe8l"]
-atlas = ExtResource("16_cvivd")
-region = Rect2(576, 384, 192, 192)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_82k2n"]
 atlas = ExtResource("11_ovimw")
 region = Rect2(0, 0, 192, 192)
@@ -189,10 +181,16 @@ region = Rect2(192, 192, 192, 192)
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_mukxi")
+"texture": SubResource("AtlasTexture_woe8l")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_bd5f2")
+"texture": SubResource("AtlasTexture_woe8l")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_woe8l")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_woe8l")
 }],
 "loop": false,
 "name": &"敖白attack",
@@ -470,7 +468,7 @@ sprite_frames = SubResource("SpriteFrames_vr8dx")
 visible = false
 position = Vector2(5, -31)
 sprite_frames = SubResource("SpriteFrames_mukxi")
-animation = &"敖白hurt"
+animation = &"敖白attack"
 
 [node name="Ghost" type="AnimatedSprite2D" parent="." unique_id=1662731808]
 visible = false

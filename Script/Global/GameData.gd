@@ -3,6 +3,8 @@
 # 项目设置 → Autoload 中添加，名称设为 "GameData"
 extends Node
 
+## 命名装备全量注册器（维护文件：Script/Data/EquipDB.gd）
+const EquipDB := preload("res://Script/Data/EquipDB.gd")
 var item_db:  Dictionary = {}  # { item_id: ItemData }
 var party_db: Dictionary = {}  # { member_id: CharacterStats }
 var party_order: Array[String] = []  # 队伍出场顺序
@@ -197,16 +199,16 @@ func _load_languages() -> void:
 ## GameData.debug_exp(10)  → 打印 10 级怪物给多少经验
 ## GameData.debug_exp_table(1, 100)  → 打印 1-100 级经验表
 func debug_exp(level: int) -> void:
-	var auto = 30 + level * 15
-	print("【怪物经验】等级 %d 的怪物：自动经验 = %d" % [level, auto])
+	var auto = CharacterStats.calc_monster_exp(level)
+	print("【怪物经验】等级 %d 的怪物：经验 = %d" % [level, auto])
 	print("  每级需要经验 = %d" % CharacterStats.calc_exp_to_next(level))
 	print("  杀同级的怪需要 %d 只才能升级" % ceili(float(CharacterStats.calc_exp_to_next(level)) / float(auto)))
 
 func debug_exp_table(from_lv: int = 1, to_lv: int = 100) -> void:
-	var s = "等级\t自动经验\t升级需要\t杀怪数\n"
+	var s = "等级\t怪物经验\t升级需要\t杀怪数\n"
 	for lv in range(from_lv, to_lv + 1):
 		var exp_needed = CharacterStats.calc_exp_to_next(lv)
-		var monster_exp = 30 + lv * 15
+		var monster_exp = CharacterStats.calc_monster_exp(lv)
 		s += "%d\t%d\t\t%d\t\t%d\n" % [lv, monster_exp, exp_needed, ceili(float(exp_needed) / float(monster_exp))]
 	print(s)
 
@@ -317,7 +319,7 @@ func debug_party() -> void:
 		print("--- %s (%s) Lv.%d  [%s/%s] ---" % [c.character_name, c.character_class, c.level, CharacterStats.element_name(c.element), CharacterStats.role_name(c.role)])
 		print("  HP: %d   MP: %d" % [c.max_hp, c.max_mp])
 		print("  ATK: %d  MATK: %d  DEF: %d  MDEF: %d  SPD: %d" % [c.attack, c.magic_attack, c.defense, c.magic_defense, c.speed])
-		print("  暴击率: %.0f%%  暴击伤害: %.0f%%" % [c.crit_rate * 100, c.crit_mult * 100])
+		print("  暴击伤害: %.0f%%" % [c.crit_mult * 100])
 		print("  经验: %d / %d" % [c.exp, c.exp_to_next])
 	print("================")
 
@@ -611,7 +613,8 @@ func add_party_by_name(p_name: String, p_class: String = "", p_role: String = ""
 				return  # 已在队
 			var dd: Dictionary = CharacterDB.CHARACTER_DB[mid].duplicate()
 			_add_member(mid, dd)
-			if p_level > 1:
+			if p_level > party_db[mid].level:
+				_apply_growth_range(party_db[mid], party_db[mid].level, p_level)
 				party_db[mid].level = p_level
 			party_order.append(mid)
 			return
@@ -631,7 +634,9 @@ func add_party_by_name(p_name: String, p_class: String = "", p_role: String = ""
 	}
 	print(123)
 	_add_member(mid, dd)
-	party_db[mid].level = p_level
+	if p_level > 1:
+		_apply_growth_range(party_db[mid], party_db[mid].level, p_level)
+		party_db[mid].level = p_level
 	party_order.append(mid)
 
 
@@ -716,26 +721,61 @@ func _roll_aptitude(rank: String, lv: int = 1) -> int:
 
 # ══════════════════════════════════════════════
 const SHOP_NPC_DB = {
-		"镖头": { "items": ["equip_2952", "equip_2953", "equip_2902"],
-				  "prices": {"equip_2952": 60} },
+	# NPC 商店配置：level = 商店装备档位（自动卖 ≤level 的所有等级档装备，见 EQUIP_SHOP_TABLE）
+	# items/prices = 旧式固定商品清单（会追加在等级档商品之后，可留空）
+	"镖头": { "level": 1, "items": ["equip_2902", "equip_2952", "equip_2953"] },
 }
+
+# ══════════════════════════════════════════════
+# 装备商店等级档位表：key = 商品等级（1 级村装 / 10 级城装 …）
+# 商店等级 shop_level 会卖出所有 key ≤ shop_level 的档位（如 10 级商店 = 档 1/5/10 全卖）
+# value = 该档上架的命名装备 id 列表（装备在 EquipData.register_named 注册，见 _init_equip_db）
+# ══════════════════════════════════════════════
+const EQUIP_SHOP_TABLE := {
+	1:  ["青锋剑", "朴刀", "竹杖"],
+	5:  ["精钢剑", "铁骨扇", "红缨枪"],
+	10: ["寒光剑", "流星锤", "蛇形杖"],
+}
+
+## 把一件命名装备包装成商店货架商品（找不到返回空字典）
+static func _build_shop_item(eid: String, price_override: int = 0) -> Dictionary:
+	var eq := EquipData.get_named(eid)
+	if eq.is_empty():
+		return {}
+	var price := price_override if price_override > 0 else int(eq.get("price", 0))
+	return {
+		"name": eq.get("display_name", eq.get("name", "装备")),
+		"price": price,
+		"tcp_path": eq.get("tcp_path", ""),
+		"equip_data": eq,
+	}
+
+## 按商店等级取装备货架：收集所有 商品等级 ≤ shop_level 的档位装备
+static func get_equip_shop_items(shop_level: int) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for lv in EQUIP_SHOP_TABLE:
+		if int(lv) > shop_level:
+			continue
+		for eid in EQUIP_SHOP_TABLE[lv]:
+			var it := _build_shop_item(eid)
+			if not it.is_empty():
+				result.append(it)
+	return result
 
 static func get_shop_items(npc_name: String) -> Array[Dictionary]:
 	var entry = SHOP_NPC_DB.get(npc_name, {})
+	var result: Array[Dictionary] = []
+	# 等级档商品：NPC 配置了 level 就按表卖 ≤level 的装备
+	var lv := int(entry.get("level", 0))
+	if lv > 0:
+		result.append_array(get_equip_shop_items(lv))
+	# 旧式固定清单（追加在等级档之后）
 	var item_ids: Array = entry.get("items", [])
 	var custom_prices: Dictionary = entry.get("prices", {})
-	var result: Array[Dictionary] = []
 	for eid in item_ids:
-		var eq = EquipData.get_named(eid)
-		if eq.is_empty(): continue
-		var price = custom_prices.get(eid, eq.get("price", 0))
-		result.append({
-			"name": eq.get("display_name", eq.get("name", "装备")),
-			"price": price,
-			"tcp_path": eq.get("tcp_path", ""),
-			"equip_data": eq,
-			"rarity": eq.get("rarity", 0),
-		})
+		var it := _build_shop_item(eid, int(custom_prices.get(eid, 0)))
+		if not it.is_empty():
+			result.append(it)
 	return result
 
 
@@ -758,6 +798,21 @@ func _init_party() -> void:
 	party_db.clear()
 	party_order.clear()
 
+
+## 按成长系数把 s 的面板属性从 from_level 补到 to_level（每级加成与 _level_up_member 一致；
+## 不含能力点/经验/技能——技能与能力点在入队时已按最终等级另行处理）
+func _apply_growth_range(s: CharacterStats, from_level: int, to_level: int) -> void:
+	var steps := to_level - from_level
+	if steps <= 0:
+		return
+	s.max_hp         += s.hp_growth * steps
+	s.max_mp         += s.mp_growth * steps
+	s.attack         += s.atk_growth * steps
+	s.magic_attack   += s.matk_growth * steps
+	s.defense        += s.def_growth * steps
+	s.magic_defense  += s.mdef_growth * steps
+	s.speed          += s.speed_growth * steps
+
 func _add_member(member_id: String, d: Dictionary) -> void:
 	var s = CharacterStats.new()
 	s.character_name  = d.name;   s.character_class = d.class
@@ -765,9 +820,10 @@ func _add_member(member_id: String, d: Dictionary) -> void:
 	s.max_hp          = d.hp;     s.max_mp          = d.mp
 	s.attack          = d.atk;    s.magic_attack    = d.matk
 	s.defense         = d.def;    s.magic_defense   = d.mdef
-	s.speed           = d.spd;    s.level           = 1
+	s.speed           = d.spd;    s.level           = d.get("lv", 1)   # 入队初始等级：读 CharacterDB 条目的 "lv"（缺省 1）
+	s.potential_left  = s.level * 5  # 初始能力点池（1 级 5 点，之后每级 +5）
 	s.exp_to_next     = CharacterStats.calc_exp_to_next(s.level)
-	s.crit_rate       = d.crit;   s.crit_mult       = d.crit_mult
+	s.crit_mult       = d.get("crit_mult", 1.5)
 	s.luck            = d.get("luck", 0)
 	s.was_base_path   = d.get("was_base_path", "")
 	s.was_direction   = d.get("was_direction", 2)  # 主角团默认朝左上角
@@ -791,6 +847,8 @@ func _add_member(member_id: String, d: Dictionary) -> void:
 	s.role    = _parse_role(d.get("role", "攻"))
 	s.skill_ids       = _get_initial_skills(member_id, d)
 	s.traits          = d.get("traits", {})
+	# 初始等级 >1：按成长系数补齐 1→level 的面板成长（与逐级升级成长一致）
+	_apply_growth_range(s, 1, s.level)
 	party_db[member_id] = s
 
 
@@ -832,6 +890,23 @@ func gain_exp(member_id: String, amount: int) -> bool:
 		return levels_gained > 0
 	return false
 
+## 洗髓丹：返还该角色全部已分配的能力点，返回返还点数（0 = 无可返还）
+func refund_ability_points(member_id: String) -> int:
+	var s = party_db.get(member_id)
+	if s == null: return 0
+	var total = s.alloc_hp + s.alloc_mp + s.alloc_atk + s.alloc_def + s.alloc_spd + s.alloc_magic
+	if total <= 0: return 0
+	s.max_hp = maxi(s.max_hp - (s.alloc_hp + s.alloc_magic), 1)
+	s.max_mp = maxi(s.max_mp - (s.alloc_mp + s.alloc_magic), 0)
+	s.attack = maxi(s.attack - s.alloc_atk, 1)
+	s.defense = maxi(s.defense - s.alloc_def, 0)
+	s.speed = maxi(s.speed - s.alloc_spd, 1)
+	s.magic_attack = maxi(s.magic_attack - s.alloc_magic, 0)
+	s.potential_left += total
+	s.alloc_hp = 0; s.alloc_mp = 0; s.alloc_atk = 0
+	s.alloc_def = 0; s.alloc_spd = 0; s.alloc_magic = 0
+	return total
+
 ## 根据 SkillDB.SKILL_LEARN_DB 获取角色初始技能（包含≤等级的所有技能）
 func _get_initial_skills(member_id: String, d: Dictionary) -> Array[String]:
 	var table = SkillDB.SKILL_LEARN_DB.get(member_id)
@@ -860,6 +935,7 @@ func _level_up_member(s: CharacterStats) -> int:
 	while s.exp_to_next > 0 and s.exp >= s.exp_to_next:
 		s.exp -= s.exp_to_next
 		s.level += 1
+		s.potential_left += 5  # 每级 +5 能力点
 		s.exp_to_next = CharacterStats.calc_exp_to_next(s.level)
 		s.max_hp      += s.hp_growth
 		s.max_mp      += s.mp_growth
@@ -891,6 +967,7 @@ func _init_inventory() -> void:
 	player_inventory.add_item(item_db["mp_potion_s"], 2)
 	player_inventory.add_item(item_db["atk_pill"],    1)
 	player_inventory.add_item(item_db["revive_pill"], 1)
+	player_inventory.add_item(item_db["item_xisuidan"], 1)
 	# 测试用宠物技能书（全部40本，每种2本）
 	var all_book_ids := [
 		"book_haste_high","book_haste","book_hp_high","book_hp",
@@ -988,17 +1065,22 @@ func _register_skills() -> void:
 		sk.heal_size         = row.get("hsize", "medium")
 		sk.flat_damage       = row.get("flat_dmg", 0)
 		sk.ignore_defense_ratio = row.get("ignore_def", 0.0)
+		sk.miss_chance = row.get("miss_chance", 0.0)
 		sk.target_atk_dmg_mult = row.get("tatk_dmg", 0.0)
 		sk.cooldown_turns    = row.get("cd", 0)
 		sk.apply_buff_id     = row.get("buff", "")
+		sk.apply_buff2_id    = row.get("buff2", "")
 		sk.apply_buff_turns  = row.get("bturn", 0)
 		sk.apply_buff_chance = row.get("bchance", 0.0)
 		sk.apply_buff_value  = row.get("bvalue", 0.0)
+		sk.self_buff_id      = row.get("self_buff", "")
+		sk.self_buff_turns   = row.get("self_bturn", 0)
 		sk.extra_targets    = row.get("extra", 0)
 		sk.fullscreen_anim  = row.get("fullscreen", "")
 		sk.sacrifice_hp_pct = row.get("sac_hp", 0.5)
 		sk.sacrifice_def_pct = row.get("sac_def", 0.5)
 		sk.ghost_cost = row.get("ghost_cost", 0)
+		sk.ghosts_per_charge = row.get("ghosts_per_charge", 2)
 		sk.boost_pct = row.get("boost_pct", 0.0)
 		sk.sound_path        = row.get("sound", "")
 		SkillManager.register_skill(sk)
@@ -1041,10 +1123,10 @@ func _register_items() -> void:
 		{ id = "book_atk",         name = "强力",     icon = "💪", type = BOOK, book_id = "强力",     desc = "攻击+12%" },
 		{ id = "book_matk_high",   name = "高级魔之心", icon = "💜", type = BOOK, book_id = "高级魔之心", desc = "法伤+25%" },
 		{ id = "book_matk",        name = "魔之心",   icon = "💜", type = BOOK, book_id = "魔之心",   desc = "法伤+12%" },
-		{ id = "book_crit_high",   name = "高级必杀", icon = "💥", type = BOOK, book_id = "高级必杀", desc = "暴击率+20%" },
-		{ id = "book_crit",        name = "必杀",     icon = "💥", type = BOOK, book_id = "必杀",     desc = "暴击率+10%" },
-		{ id = "book_mcrit_high",  name = "高级法术暴击", icon = "🌟", type = BOOK, book_id = "高级法术暴击", desc = "法术暴击率+20%" },
-		{ id = "book_mcrit",       name = "法术暴击", icon = "🌟", type = BOOK, book_id = "法术暴击", desc = "法术暴击率+10%" },
+		{ id = "book_crit_high",   name = "高级必杀", icon = "💥", type = BOOK, book_id = "高级必杀", desc = "运气+20" },
+		{ id = "book_crit",        name = "必杀",     icon = "💥", type = BOOK, book_id = "必杀",     desc = "运气+10" },
+		{ id = "book_mcrit_high",  name = "高级法术暴击", icon = "🌟", type = BOOK, book_id = "高级法术暴击", desc = "运气+20，法术可暴击" },
+		{ id = "book_mcrit",       name = "法术暴击", icon = "🌟", type = BOOK, book_id = "法术暴击", desc = "运气+10，法术可暴击" },
 		{ id = "book_regen_high",  name = "高级生命恢复", icon = "💚", type = BOOK, book_id = "高级生命恢复", desc = "每回合回血10%" },
 		{ id = "book_regen",       name = "生命恢复", icon = "💚", type = BOOK, book_id = "生命恢复", desc = "每回合回血5%" },
 		{ id = "book_double_atk",  name = "高级连击", icon = "👊", type = BOOK, book_id = "高级连击", desc = "普攻45%二连" },
@@ -1076,13 +1158,15 @@ func _register_items() -> void:
 		{ id = "talisman_haste",     name = "加速符咒", icon = "💨", tcp = "res://TCP/符咒/3290.tcp", type = SP, hit_sound = "res://Audio/SE/法术5.ogg", desc = "为队友施加加速效果" },
 		{ id = "talisman_ceasefire", name = "止战符咒", icon = "🕊️", tcp = "res://TCP/符咒/3290.tcp", type = SP, hit_sound = "res://Audio/SE/法术5.ogg", desc = "削减敌人灵力" },
 		{ id = "talisman_revive",    name = "借尸符",   icon = "💀", tcp = "res://TCP/符咒/3290.tcp", type = SP, hit_sound = "res://Audio/SE/heal 1.ogg", desc = "复活一名阵亡队友，恢复30%气血" },
+		# ── 洗髓丹（场外道具：返还能力点）──
+		{ id = "item_xisuidan", name = "洗髓丹", tcp = "res://TCP/丹药/0677.tcp", cat = ItemData.ItemCategory.MISC, type = SP, desc = "使用后返还该角色全部已分配的能力点（在属性加点面板使用）" },
 	]
 
 	for row in rows:
 		var d = ItemData.new()
 		d.item_id           = row.id
 		d.item_name         = row.name
-		d.icon_emoji        = row.icon
+		d.icon_emoji        = row.get("icon", "")
 		d.icon_path         = row.get("tcp", "")
 		d.item_type         = row.type
 		d.item_category     = row.get("cat", ItemData.ItemCategory.CONSUMABLE)
@@ -1132,16 +1216,41 @@ func _ensure_equip_dict(member_id: String) -> Dictionary:
 		player_equipment[member_id] = {}
 	return player_equipment[member_id]
 
+## 检查某角色能否把该装备穿到指定槽位；返回空串 = 允许，否则为拒绝原因
+## 规则：槽位必须匹配；武器还会校验角色的 "weapons" 允许列表（CharacterDB，空 = 不限）
+func can_equip(member_id: String, equip_item: Dictionary, slot_key: String) -> String:
+	if equip_item.is_empty():
+		return ""
+	var item_slot: int = equip_item.get("slot", -1)
+	if item_slot >= 0:
+		var expect := EquipData.slot_key(item_slot)
+		if not expect.is_empty() and expect != slot_key:
+			return "不能放在 %s 槽，该装备只能放在 %s 槽" % [slot_key, expect]
+	if item_slot == EquipData.SlotType.WEAPON:
+		var wtype: String = equip_item.get("weapon_type", "")
+		if not wtype.is_empty():
+			var row: Dictionary = CharacterDB.CHARACTER_DB.get(member_id, {})
+			var allowed: Array = row.get("weapons", [])
+			if not allowed.is_empty() and not allowed.has(wtype):
+				var who: String = row.get("name", member_id)
+				return "%s 只能装备%s武器，无法使用「%s」" % [who, "、".join(allowed), wtype]
+	return ""
+
 ## 穿上一件装备（by 背包索引，自动替换同槽位，旧装备退回背包）
-func equip_item_by_index(member_id: String, slot_key: String, bag_index: int) -> void:
-	if bag_index < 0 or bag_index >= equip_bag.size(): return
+## 返回是否穿成功；槽位/武器类型不匹配会拒绝（原因可用 can_equip 查询）
+func equip_item_by_index(member_id: String, slot_key: String, bag_index: int) -> bool:
+	if bag_index < 0 or bag_index >= equip_bag.size():
+		return false
 	var eq_dict = _ensure_equip_dict(member_id)
 	var equip_item = equip_bag[bag_index]
+	if not can_equip(member_id, equip_item, slot_key).is_empty():
+		return false
 	var old = eq_dict.get(slot_key, {})
 	if not old.is_empty():
 		equip_bag.append(old)
 	eq_dict[slot_key] = equip_item
 	equip_bag.remove_at(bag_index)
+	return true
 
 ## 卸下一件装备，退回背包
 func unequip_item(member_id: String, slot_key: String) -> Dictionary:
@@ -1172,9 +1281,8 @@ func get_equipment_stats(member_id: String) -> Dictionary:
 
 ## 生成随机装备（测试用）
 func generate_random_equip(slot: EquipData.SlotType = EquipData.SlotType.WEAPON,
-		rarity: EquipData.Rarity = EquipData.Rarity.COMMON,
 		level: int = 1) -> Dictionary:
-	return EquipData.create_equip(slot, rarity, level)
+	return EquipData.create_equip(slot, level)
 
 
 # ══════════════════════════════════════════════
@@ -1182,40 +1290,8 @@ func generate_random_equip(slot: EquipData.SlotType = EquipData.SlotType.WEAPON,
 # ══════════════════════════════════════════════
 
 func _init_equip_db() -> void:
-	# ── 腰带 ──
-	EquipData.register_named("equip_2902", EquipData.SlotType.BELT, EquipData.Rarity.COMMON,
-		"粗腰带", {"hp": 80}, "res://TCP/腰带/2902.tcp", 1, [], 100)
-	EquipData.register_named("equip_2903", EquipData.SlotType.BELT, EquipData.Rarity.COMMON,
-		"细腰带", {"hp": 60}, "res://TCP/腰带/2903.tcp", 1, [], 80)
-	EquipData.register_named("equip_2906", EquipData.SlotType.BELT, EquipData.Rarity.UNCOMMON,
-		"牛皮腰带", {"hp": 140}, "res://TCP/腰带/2906.tcp", 1, [], 300)
-	EquipData.register_named("equip_2908", EquipData.SlotType.BELT, EquipData.Rarity.UNCOMMON,
-		"犀皮腰带", {"hp": 180}, "res://TCP/腰带/2908.tcp", 1, [], 400)
-	EquipData.register_named("equip_2910", EquipData.SlotType.BELT, EquipData.Rarity.RARE,
-		"虎筋腰带", {"hp": 260}, "res://TCP/腰带/2910.tcp", 1, [], 800)
-	EquipData.register_named("equip_2912", EquipData.SlotType.BELT, EquipData.Rarity.RARE,
-		"龙鳞腰带", {"hp": 340}, "res://TCP/腰带/2912.tcp", 1, [], 1200)
-	EquipData.register_named("equip_2950", EquipData.SlotType.BELT, EquipData.Rarity.EPIC,
-		"玄武腰带", {"hp": 480}, "res://TCP/腰带/2950.tcp", 1, [], 2500)
-	EquipData.register_named("equip_2952", EquipData.SlotType.BELT, EquipData.Rarity.COMMON,
-		"布腰带", {"hp": 50}, "res://TCP/腰带/2952.tcp", 1, [], 50)
-	EquipData.register_named("equip_2953", EquipData.SlotType.BELT, EquipData.Rarity.COMMON,
-		"棉腰带", {"hp": 70}, "res://TCP/腰带/2953.tcp", 1, [], 60)
-	EquipData.register_named("equip_2954", EquipData.SlotType.BELT, EquipData.Rarity.UNCOMMON,
-		"铁腰带", {"hp": 160}, "res://TCP/腰带/2954.tcp", 1, [], 350)
-	EquipData.register_named("equip_2955", EquipData.SlotType.BELT, EquipData.Rarity.EPIC,
-		"朱雀腰带", {"hp": 440, "spd": 12}, "res://TCP/腰带/2955.tcp", 1, [], 3000)
-	EquipData.register_named("equip_2956", EquipData.SlotType.BELT, EquipData.Rarity.EPIC,
-		"白虎腰带", {"hp": 460, "atk": 15}, "res://TCP/腰带/2956.tcp", 1, [], 3200)
-	EquipData.register_named("equip_2957", EquipData.SlotType.BELT, EquipData.Rarity.LEGENDARY,
-		"青龙腰带", {"hp": 600, "spd": 2000}, "res://TCP/腰带/2957.tcp", 1, [], 6000)
-	EquipData.register_named("equip_2958", EquipData.SlotType.BELT, EquipData.Rarity.LEGENDARY,
-		"九龙神腰带", {"hp": 750, "def": 30}, "res://TCP/腰带/2958.tcp", 1, [], 8000)
-	# --- 武器
-	EquipData.register_named("equip_2958", EquipData.SlotType.WEAPON, EquipData.Rarity.LEGENDARY,
-		"九龙神腰带", {"hp": 750, "def": 30,"spd": 2000}, "res://TCP/腰带/2958.tcp", 1, [], 8000)
-
-## 调试：往背包放几件腰带看看效果
+	# 命名装备全部在 Script/Data/EquipDB.gd 注册
+	EquipDB.register_all()
 func _debug_equip_belt() -> void:
 	equip_bag = equip_bag.filter(func(eq): return eq is Dictionary and not eq.is_empty())
 	if equip_bag.is_empty():

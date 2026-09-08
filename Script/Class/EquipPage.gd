@@ -449,8 +449,7 @@ func _render_equip_item(idx: int, slot: Panel, icon: TextureRect) -> void:
 	var name_str = eq.get("display_name", eq.get("name", ""))
 	var lv = eq.get("_build_level", 0)
 	if lv > 0: name_str += " +%d" % lv
-	var rarity_name = EquipData.rarity_name(eq.get("rarity", EquipData.Rarity.COMMON))
-	lines.append("%s [%s]" % [name_str, rarity_name])
+	lines.append(name_str)
 
 	# 背包装备的基础属性
 	var base_labels = {"atk":"攻击", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度", "heal_up":"治疗量"}
@@ -460,7 +459,7 @@ func _render_equip_item(idx: int, slot: Panel, icon: TextureRect) -> void:
 			lines.append("  %s +%d" % [base_labels.get(bk, bk), val])
 
 	# 武器特殊属性
-	var special_labels = {"lifesteal":"吸血","gold_boost":"金币加成","reflect":"反弹","night_dmg":"夜战增伤","dodge":"闪避","true_dmg":"真实伤害","crit_rate":"暴击率","heal_targets":"多目标治疗","threat_reduce":"减仇恨"}
+	var special_labels = {"lifesteal":"吸血","gold_boost":"金币加成","reflect":"反弹","night_dmg":"夜战增伤","dodge":"闪避","true_dmg":"真实伤害","crit_rate":"暴击(运气)","heal_targets":"多目标治疗","threat_reduce":"减仇恨"}
 
 	if lv > 0: lines.append("  [color=#aaa]打造 +%d[/color]" % lv)
 	for sk in special_labels:
@@ -481,7 +480,7 @@ func _render_equip_item(idx: int, slot: Panel, icon: TextureRect) -> void:
 		if not worn.is_empty():
 			lines.append("[u]── 已穿 ──[/u]")
 			var worn_name = worn.get("display_name", worn.get("name", ""))
-			lines.append("%s [%s]" % [worn_name, EquipData.rarity_name(worn.get("rarity", 0))])
+			lines.append(worn_name)
 			# 合并所有属性键（已穿 + 未穿的）
 			var all_keys: Array[String] = []
 			for bk in worn.get("base", {}): all_keys.append(bk)
@@ -737,8 +736,7 @@ func _refresh_equip_slots() -> void:
 			else:
 				var lines: Array[String] = []
 				var name_str = eq.get("display_name", eq.get("name", ""))
-				var rt = EquipData.rarity_name(eq.get("rarity", 0))
-				lines.append("%s [%s]" % [name_str, rt])
+				lines.append(name_str)
 
 				# 基础属性翻译
 				var base_labels = {"atk":"攻击", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度"}
@@ -753,22 +751,12 @@ func _refresh_equip_slots() -> void:
 					if af_label != "":
 						lines.append("  %s +%d%%" % [af_label, int(af.get("value", 0))])
 
-				# 武器额外专属词条
+				# 武器额外专属词条（由打造产生）
 				if slot_key == "武器":
-					var weapon_bonus = eq.get("weapon_affixes", [])
-					if weapon_bonus.is_empty():
-						var rarity_lv = eq.get("rarity", 0)
-						if rarity_lv >= 1:
-							lines.append("  ★ 吸血 +5%")
-						if rarity_lv >= 2:
-							lines.append("  ★ 力量 +8%")
-						if rarity_lv >= 4:
-							lines.append("  ★ 暴击率 +3%")
-					else:
-						for wa in weapon_bonus:
-							var wlabel = EquipData.affix_label(wa.get("type", -1))
-							if wlabel != "":
-								lines.append("  ★ %s +%d%%" % [wlabel, int(wa.get("value", 0))])
+					for wa in eq.get("weapon_affixes", []):
+						var wlabel = EquipData.affix_label(wa.get("type", -1))
+						if wlabel != "":
+							lines.append("  ★ %s +%d%%" % [wlabel, int(wa.get("value", 0))])
 
 				lines.append("")
 				lines.append("右键卸下")
@@ -794,7 +782,7 @@ func _on_equip_slot_hovered(slot_key: String) -> void:
 	if eq.is_empty(): return
 	var lines: Array[String] = []
 	var name_str = eq.get("display_name", eq.get("name", ""))
-	lines.append("[b]%s[/b] [%s]" % [name_str, EquipData.rarity_name(eq.get("rarity", 0))])
+	lines.append("[b]%s[/b]" % name_str)
 	var base_labels = {"atk":"攻击", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度"}
 	for bk in eq.get("base", {}):
 		var val = eq.base[bk]
@@ -835,9 +823,10 @@ func _on_equip_slot_pressed(slot_key: String) -> void:
 	var eq: Dictionary = equipment.get(slot_key, {})
 	if _selected_equip_idx >= 0 and _selected_equip_idx < equip_bag.size():
 		var selected = equip_bag[_selected_equip_idx]
-		var expected_key = EquipData.slot_key(selected.get("slot", -1))
-		if expected_key != slot_key:
-			detail_label.text = "不能放在 %s 槽，该装备只能放在 %s 槽" % [slot_key, expected_key]
+		var reason := GameData.can_equip(_member_id, selected, slot_key)
+		if not reason.is_empty():
+			detail_label.text = reason
+			_play_sfx("res://Audio/SE/002-System02.ogg")
 			return
 		GameData.equip_item_by_index(_member_id, slot_key, _selected_equip_idx)
 		equip_bag = GameData.equip_bag
@@ -853,9 +842,8 @@ func _on_equip_slot_pressed(slot_key: String) -> void:
 		detail_label.text = "%s（空）-- 先在装备标签里选一件装备" % slot_key
 	else:
 		pass
-		detail_label.text = "%s [%s] %s" % [
+		detail_label.text = "%s %s" % [
 			eq.get("display_name", ""),
-			EquipData.rarity_name(eq.get("rarity", EquipData.Rarity.COMMON)),
 			_format_base_stats(eq.get("base", {})),
 		]
 
@@ -886,6 +874,11 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 		if _current_tab == ItemTab.EQUIP and bag_idx < GameData.equip_bag.size():
 			var eq: Dictionary = GameData.equip_bag[bag_idx]
 			var slot = EquipData.slot_key(eq.get("slot", 0))
+			var reason := GameData.can_equip(_member_id, eq, slot)
+			if not reason.is_empty():
+				detail_label.text = reason
+				_play_sfx("res://Audio/SE/002-System02.ogg")
+				return
 			GameData.equip_item_by_index(_member_id, slot, bag_idx)
 			equip_bag = GameData.equip_bag
 			equipment = GameData.player_equipment.get(_member_id, {})
@@ -924,6 +917,11 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 		var slot_key = EquipData.slot_key(eq.get("slot", -1))
 		if slot_key.is_empty():
 			return
+		var reason := GameData.can_equip(_member_id, eq, slot_key)
+		if not reason.is_empty():
+			detail_label.text = reason
+			_play_sfx("res://Audio/SE/002-System02.ogg")
+			return
 		GameData.equip_item_by_index(_member_id, slot_key, idx)
 		equip_bag = GameData.equip_bag
 		_selected_equip_idx = -1
@@ -937,9 +935,8 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 	# 单击选中
 	_selected_equip_idx = idx
 	var sel = equip_bag[idx]
-	detail_label.text = "已选中 %s [%s] -- 点击左侧槽位穿上或双击自动穿戴" % [
+	detail_label.text = "已选中 %s -- 点击左侧槽位穿上或双击自动穿戴" % [
 		sel.get("display_name", ""),
-		EquipData.rarity_name(sel.get("rarity", EquipData.Rarity.COMMON)),
 	]
 	_render_page()
 	_refresh_equip_slots()

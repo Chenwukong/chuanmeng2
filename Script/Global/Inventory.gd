@@ -60,9 +60,10 @@ func use_item(item_id: String, target: BattleCharacter) -> UseResult:
 	match data.item_type:
 		ItemData.ItemType.HP_POTION:
 			var amt = data.hp_restore + int(target.stats.max_hp * data.hp_restore_percent)
-			var actual = target.heal(amt)
-			result.heal_amount = actual
-			result.log_text = "使用【%s】，恢复 %d 点气血" % [data.item_name, actual]
+			target.heal(amt)
+			# 显示意图恢复量（与 MP 一致，满血也显示数字）
+			result.heal_amount = amt
+			result.log_text = "使用【%s】，恢复 %d 点气血" % [data.item_name, amt]
 
 		ItemData.ItemType.MP_POTION:
 			var amt = data.mp_restore + int(target.stats.max_mp * data.mp_restore_percent)
@@ -81,7 +82,7 @@ func use_item(item_id: String, target: BattleCharacter) -> UseResult:
 				result.log_text = "【%s】只能对阵亡角色使用！" % data.item_name
 				return result
 			target.is_dead = false
-			target.heal(int(target.stats.max_hp * data.revive_hp_percent))
+			result.heal_amount = target.heal(int(target.stats.max_hp * data.revive_hp_percent))
 			result.log_text = "使用【%s】，九死一生！" % data.item_name
 
 		_:

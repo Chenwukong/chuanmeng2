@@ -43,8 +43,9 @@ func _setup() -> void:
 	for mid in _members:
 		if not _potential_pool.has(mid):
 			var s = GameData.party_db[mid]
-			_potential_pool[mid] = s.level * 2 if s else 10
+			_potential_pool[mid] = s.potential_left if s else 0
 	_reset_temp()
+	_add_xisuidan_button()
 	_refresh()
 
 	_hp_btn.pressed.connect(func(): _add_temp("hp"))
@@ -135,6 +136,14 @@ func _confirm() -> void:
 	var mid = _members[_current_idx]
 	var used := _tmp_hp + _tmp_mp + _tmp_atk + _tmp_def + _tmp_spd + _tmp_magic
 	_potential_pool[mid] = maxi(0, _potential_pool.get(mid, 0) - used)
+	# 记录已分配的能力点（洗髓丹返还用）
+	s.alloc_hp    += _tmp_hp
+	s.alloc_mp    += _tmp_mp
+	s.alloc_atk   += _tmp_atk
+	s.alloc_def   += _tmp_def
+	s.alloc_spd   += _tmp_spd
+	s.alloc_magic += _tmp_magic
+	s.potential_left = _potential_pool[mid]
 	s.max_hp        += _tmp_hp + _tmp_magic
 	s.max_mp        += _tmp_mp + _tmp_magic
 	s.attack        += _tmp_atk
@@ -251,6 +260,75 @@ func _load_portrait(s: CharacterStats) -> void:
 	if not r.load_from_file(p): _portrait.texture = null; return
 	var d := r.decode_frame(0, 0)
 	_portrait.texture = d.get("texture", null) if not d.is_empty() else null
+
+
+## 洗髓丹按钮（右下角，动态创建避免改场景）
+var _xisuidan_btn: Button = null
+
+func _add_xisuidan_button() -> void:
+	if _xisuidan_btn: return
+	var btn := Button.new()
+	var item: ItemData = GameData.item_db.get("item_xisuidan")
+	if item and not item.icon_path.is_empty():
+		var reader := TcpReader.new()
+		if reader.load_from_file(item.icon_path):
+			var d := reader.decode_frame(0)
+			if not d.is_empty():
+				var tex: Texture2D = d.get("texture", null)
+				if tex:
+					btn.icon = tex
+					btn.expand_icon = true
+	btn.pressed.connect(_use_xisuidan)
+	btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	btn.position = Vector2(-300, -70)
+	btn.custom_minimum_size = Vector2(280, 44)
+	add_child(btn)
+	_xisuidan_btn = btn
+	_refresh_xisuidan_text()
+
+
+## 刷新按钮上的洗髓丹剩余数量（x1/x2…）
+func _refresh_xisuidan_text() -> void:
+	if _xisuidan_btn == null: return
+	var cnt := GameData.player_inventory.get_count("item_xisuidan")
+	_xisuidan_btn.text = "使用洗髓丹（返还能力点）x%d" % cnt
+
+
+## 使用洗髓丹：返还当前角色全部已分配的能力点
+func _use_xisuidan() -> void:
+	if _members.is_empty(): return
+	if not GameData.player_inventory.has_item("item_xisuidan"):
+		_show_toast("背包中没有洗髓丹！")
+		return
+	var mid = _members[_current_idx]
+	var refunded := GameData.refund_ability_points(mid)
+	if refunded <= 0:
+		_show_toast("该角色没有已分配的能力点")
+		return
+	GameData.player_inventory.remove_item("item_xisuidan", 1)
+	var s: CharacterStats = GameData.party_db.get(mid)
+	if s:
+		_potential_pool[mid] = s.potential_left
+	_reset_temp()
+	_refresh()
+	_refresh_xisuidan_text()
+	_show_toast("使用洗髓丹，返还 %d 点能力点！" % refunded)
+
+
+## 右下角提示文字
+func _show_toast(msg: String) -> void:
+	var label := Label.new()
+	label.text = msg
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", Color(1, 0.9, 0.4))
+	label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	label.position = Vector2(-400, -120)
+	label.custom_minimum_size = Vector2(800, 40)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(label)
+	var tw := create_tween()
+	tw.tween_interval(2.0)
+	tw.tween_callback(label.queue_free)
 
 
 func _on_close_button_pressed() -> void:

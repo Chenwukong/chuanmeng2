@@ -26,6 +26,7 @@
 [ext_resource type="Texture2D" uid="uid://cisfuyciwa4h2" path="res://Graphic/UI/剧情回顾-removebg-preview.png" id="25_ag87l"]
 [ext_resource type="PackedScene" uid="uid://dno5u7h0tr5vo" path="res://scenes/tcp_sprite.tscn" id="25_pd17h"]
 [ext_resource type="Texture2D" uid="uid://do5jth1vrgcla" path="res://Graphic/RANDOM/lightTexture.png" id="26_ag87l"]
+[ext_resource type="Texture2D" uid="uid://cxukyrpw2ucld" path="res://Graphic/UI/伤害and回血.png" id="27_7tj2a"]
 
 [node name="BattleScene" type="CanvasLayer" unique_id=1995866063]
 layer = 3
@@ -407,3 +408,10 @@ position = Vector2(883, 472.5)
 scale = Vector2(2.171875, 1.2597656)
 energy = 2.0
 texture = ExtResource("26_ag87l")
+
+[node name="伤害and回血" type="Sprite2D" parent="." unique_id=441339751]
+visible = false
+modulate = Color(0.627451, 0.1254902, 0.9411765, 1)
+position = Vector2(857, 195)
+scale = Vector2(0.08, 0.08)
+texture = ExtResource("27_7tj2a")

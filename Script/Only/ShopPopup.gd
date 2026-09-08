@@ -106,7 +106,6 @@ func _setup_default_items() -> void:
 			"price": price,
 			"tcp_path": eq.get("tcp_path", ""),
 			"equip_data": eq,
-			"rarity": eq.get("rarity", 0),
 		})
 
 
@@ -151,15 +150,7 @@ func _show_item_info(idx: int) -> void:
 	var item = _items[idx]
 	var eq: Dictionary = item.get("equip_data", {})
 	if info_name:
-		var rarity_colors = {
-			EquipData.Rarity.COMMON: Color(0.75, 0.75, 0.75),
-			EquipData.Rarity.UNCOMMON: Color(0.3, 1.0, 0.3),
-			EquipData.Rarity.RARE: Color(0.3, 0.5, 1.0),
-			EquipData.Rarity.EPIC: Color(0.85, 0.3, 1.0),
-			EquipData.Rarity.LEGENDARY: Color(1.0, 0.55, 0.05),
-		}
 		info_name.text = item.get("name", "")
-		info_name.add_theme_color_override("font_color", rarity_colors.get(item.get("rarity", 0), Color.WHITE))
 	if info_stats:
 		var stats_text = ""
 		var base: Dictionary = eq.get("base", {})
@@ -252,7 +243,7 @@ func _do_sell(bag_idx: int) -> void:
 	if ep == null: return
 	if bag_idx < 0 or bag_idx >= GameData.equip_bag.size(): return
 	var eq = GameData.equip_bag[bag_idx]
-	var price = eq.get("price", int(eq.get("rarity", 0)) * 100 + 50)
+	var price = eq.get("price", 100)
 	var sell_price = maxi(1, int(price * 0.5))
 	_push_msg("出售 %s，获得 %d 金币" % [eq.get("display_name", ""), sell_price])
 	GameData.equip_bag.remove_at(bag_idx)

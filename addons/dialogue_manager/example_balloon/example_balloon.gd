@@ -188,10 +188,10 @@ func _load_portrait(character_name: String) -> void:
 	# 1) CHARACTER_DB
 	var was_path := ""
 	var png_portrait := ""
-	for mid in GameData.CHARACTER_DB:
-		if GameData.CHARACTER_DB[mid].name == character_name:
-			was_path = GameData.CHARACTER_DB[mid].get("was_base_path", "")
-			png_portrait = GameData.CHARACTER_DB[mid].get("portrait_path", "")
+	for mid in CharacterDB.CHARACTER_DB:
+		if CharacterDB.CHARACTER_DB[mid].name == character_name:
+			was_path = CharacterDB.CHARACTER_DB[mid].get("was_base_path", "")
+			png_portrait = CharacterDB.CHARACTER_DB[mid].get("portrait_path", "")
 			break
 	# 2) 敌人数据库
 	if was_path.is_empty():

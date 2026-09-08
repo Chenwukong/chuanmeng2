@@ -32,6 +32,11 @@ static func play(skill_name: String, fps: float = 15.0, loop: bool = false) -> F
 	return play_folder(BASE_DIR.path_join(skill_name), fps, loop)
 
 
+## 当前是否还在播放（帧切换 Timer 运行中）
+func is_playing() -> bool:
+	return _timer != null and not _timer.is_stopped()
+
+
 ## 按文件夹路径播放，返回实例（可 await inst.finished）
 static func play_folder(folder: String, fps: float = 15.0, loop: bool = false) -> FullscreenAnimation:
 	var tree := Engine.get_main_loop() as SceneTree
