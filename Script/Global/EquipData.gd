@@ -86,7 +86,7 @@ static var named_db: Dictionary = {}
 ## 注册一件命名装备（TCP 路径可为空）
 static func register_named(id: String, slot: SlotType,
 		name_str: String, base: Dictionary, tcp_path: String = "",
-		level: int = 1, affixes: Array = [], price: int = 0) -> void:
+		level: int = 1, affixes: Array = [], price: int = 0, desc: String = "") -> void:
 	# 武器子类型：按 TCP 子目录自动推断（res://TCP/剑/1001.tcp → "剑"），便于 can_equip 校验
 	var weapon_type := ""
 	if slot == SlotType.WEAPON and not tcp_path.is_empty():
@@ -104,6 +104,7 @@ static func register_named(id: String, slot: SlotType,
 		"tcp_path": tcp_path,
 		"weapon_type": weapon_type,
 		"price": price,
+		"desc": desc,
 	}
 
 ## 按 ID 取一件命名装备的副本（不影响原模板）
@@ -132,7 +133,7 @@ static func create_equip(slot: SlotType, level: int = 1) -> Dictionary:
 			eq["weapon_type"] = wt   # 武器子类型：剑/刀/锤…（角色按此限制可装备类型）
 			eq.name = "武器·%s" % wt
 			eq.base = {
-				"atk": int(rng.randf_range(8, 14) * lv),
+				"dmg": int(rng.randf_range(8, 14) * lv),   # dmg = 最终伤害（真伤）
 			}
 		SlotType.HEAD:
 			var is_hairpin := rng.randi() % 2 == 0

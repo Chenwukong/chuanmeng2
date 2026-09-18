@@ -28,6 +28,8 @@ var _tmp_magic: int = 0
 var _tmp_matk: int = 0
 var _potential_pool: Dictionary = {}
 var _animating: bool = false
+var _step5_mode: bool = false      # 每次 +5 模式（toggle）
+@onready var _step_btn: TextureButton = %StepButton  # 场景中的加点步长切换按钮
 
 
 static func open() -> StatusPopup:
@@ -46,13 +48,15 @@ func _setup() -> void:
 			_potential_pool[mid] = s.potential_left if s else 0
 	_reset_temp()
 	_add_xisuidan_button()
+	_step_btn.toggled.connect(_on_step_toggled)
+	_update_step_btn()
 	_refresh()
 
-	_hp_btn.pressed.connect(func(): _add_temp("hp"))
-	_magic_btn.pressed.connect(func(): _add_magic())
-	_str_btn.pressed.connect(func(): _add_temp("atk"))
-	_def_btn.pressed.connect(func(): _add_temp("def"))
-	_spd_btn.pressed.connect(func(): _add_temp("spd"))
+	_hp_btn.pressed.connect(func(): _add_step("hp"))
+	_magic_btn.pressed.connect(func(): _add_magic_step())
+	_str_btn.pressed.connect(func(): _add_step("atk"))
+	_def_btn.pressed.connect(func(): _add_step("def"))
+	_spd_btn.pressed.connect(func(): _add_step("spd"))
 	_prev_btn.pressed.connect(_prev_char)
 	_next_btn.pressed.connect(_next_char)
 	_confirm_btn.pressed.connect(_confirm)
@@ -76,21 +80,62 @@ func _potential() -> int:
 	return maxi(0, pool - used)
 
 
-func _add_temp(stat: String) -> void:
-	if _potential() <= 0: return
+## 本次加点步长：+5 模式开启 或 按住 Shift 点击 → 5，否则 1
+func _current_step() -> int:
+	if _step5_mode or Input.is_key_pressed(KEY_SHIFT):
+		return 5
+	return 1
+
+
+## 当前模式下的最少可用潜力（按钮禁用阈值）
+func _min_step() -> int:
+	return 5 if _step5_mode else 1
+
+
+func _add_step(stat: String) -> void:
+	var step := _current_step()
+	if _potential() < step:
+		_play_sfx("res://Audio/SE/002-System02.ogg")
+		if step > 1:
+			_show_toast("潜力不足 %d 点" % step)
+		return
 	match stat:
-		"hp":  _tmp_hp += 1
-		"mp":  _tmp_mp += 1
-		"atk": _tmp_atk += 1
-		"def": _tmp_def += 1
-		"spd": _tmp_spd += 1
+		"hp":  _tmp_hp += step
+		"mp":  _tmp_mp += step
+		"atk": _tmp_atk += step
+		"def": _tmp_def += step
+		"spd": _tmp_spd += step
+	_play_sfx("res://Audio/SE/001-System01.ogg")
 	_refresh()
 
 
-func _add_magic() -> void:
-	if _potential() <= 0: return
-	_tmp_magic += 1; _tmp_matk += 1
+func _add_magic_step() -> void:
+	var step := _current_step()
+	if _potential() < step:
+		_play_sfx("res://Audio/SE/002-System02.ogg")
+		if step > 1:
+			_show_toast("潜力不足 %d 点" % step)
+		return
+	_tmp_magic += step; _tmp_matk += step
+	_play_sfx("res://Audio/SE/001-System01.ogg")
 	_refresh()
+
+
+## 步长切换（场景中的 StepButton 节点，toggle）
+func _on_step_toggled(on: bool) -> void:
+	_step5_mode = on
+	_update_step_btn()
+	_play_sfx("res://Audio/SE/001-System01.ogg")
+	_refresh()
+
+
+func _update_step_btn() -> void:
+	if _step_btn == null: return
+	_step_btn.button_pressed = _step5_mode
+	var lbl := _step_btn.get_node_or_null("Label") as Label
+	if lbl:
+		lbl.text = "+5" if _step5_mode else "+1"
+	_step_btn.modulate = Color(1, 0.85, 0.2) if _step5_mode else Color.WHITE
 
 
 
@@ -98,6 +143,7 @@ func _add_magic() -> void:
 func _prev_char() -> void:
 	if _members.is_empty() or _animating: return
 	_animating = true
+	_play_sfx("res://Audio/SE/001-System01.ogg")
 	_reset_temp()
 	var orig := offset.x
 	await _shift_x(orig + 30)
@@ -110,6 +156,7 @@ func _prev_char() -> void:
 func _next_char() -> void:
 	if _members.is_empty() or _animating: return
 	_animating = true
+	_play_sfx("res://Audio/SE/001-System01.ogg")
 	_reset_temp()
 	var orig := offset.x
 	await _shift_x(orig - 30)
@@ -135,6 +182,7 @@ func _confirm() -> void:
 	if s == null or _members.is_empty(): return
 	var mid = _members[_current_idx]
 	var used := _tmp_hp + _tmp_mp + _tmp_atk + _tmp_def + _tmp_spd + _tmp_magic
+	_play_sfx("res://Audio/SE/001-System01.ogg" if used > 0 else "res://Audio/SE/002-System02.ogg")
 	_potential_pool[mid] = maxi(0, _potential_pool.get(mid, 0) - used)
 	# 记录已分配的能力点（洗髓丹返还用）
 	s.alloc_hp    += _tmp_hp
@@ -155,17 +203,13 @@ func _confirm() -> void:
 
 
 func close_popup() -> void:
-	var snd = AudioStreamPlayer.new()
-	snd.stream = load("res://Audio/SE/003-System03.ogg")
-	snd.bus = "SFX"
-	get_tree().root.add_child(snd)
-	snd.play()
-	snd.finished.connect(snd.queue_free)
+	_play_sfx("res://Audio/SE/003-System03.ogg")
 	closed.emit()
 	queue_free()
 
 
 func _cancel() -> void:
+	_play_sfx("res://Audio/SE/003-System03.ogg")
 	_reset_temp()
 	_refresh()
 
@@ -217,12 +261,13 @@ func _refresh() -> void:
 	set_label("潜力", "%d" % _potential())
 
 	var pot := _potential()
-	_hp_btn.disabled = pot <= 0
-	_magic_btn.disabled = pot <= 0
-	_str_btn.disabled = pot <= 0
-	_def_btn.disabled = pot <= 0
-	_spd_btn.disabled = pot <= 0
-	var gray := Color(0.4, 0.4, 0.4) if pot <= 0 else Color.WHITE
+	var min_step := _min_step()
+	_hp_btn.disabled = pot < min_step
+	_magic_btn.disabled = pot < min_step
+	_str_btn.disabled = pot < min_step
+	_def_btn.disabled = pot < min_step
+	_spd_btn.disabled = pot < min_step
+	var gray := Color(0.4, 0.4, 0.4) if pot < min_step else Color.WHITE
 	_hp_btn.modulate = gray
 	_magic_btn.modulate = gray
 	_str_btn.modulate = gray
@@ -298,11 +343,13 @@ func _refresh_xisuidan_text() -> void:
 func _use_xisuidan() -> void:
 	if _members.is_empty(): return
 	if not GameData.player_inventory.has_item("item_xisuidan"):
+		_play_sfx("res://Audio/SE/002-System02.ogg")
 		_show_toast("背包中没有洗髓丹！")
 		return
 	var mid = _members[_current_idx]
 	var refunded := GameData.refund_ability_points(mid)
 	if refunded <= 0:
+		_play_sfx("res://Audio/SE/002-System02.ogg")
 		_show_toast("该角色没有已分配的能力点")
 		return
 	GameData.player_inventory.remove_item("item_xisuidan", 1)
@@ -312,7 +359,20 @@ func _use_xisuidan() -> void:
 	_reset_temp()
 	_refresh()
 	_refresh_xisuidan_text()
+	_play_sfx("res://Audio/SE/001-System01.ogg")
 	_show_toast("使用洗髓丹，返还 %d 点能力点！" % refunded)
+
+
+## 播放 UI 音效（与其它界面同套规则：001 点击/成功、002 失败、003 取消/关闭）
+func _play_sfx(path: String) -> void:
+	if not ResourceLoader.exists(path):
+		return
+	var snd := AudioStreamPlayer.new()
+	snd.stream = load(path)
+	snd.bus = "SFX"
+	get_tree().root.add_child(snd)
+	snd.play()
+	snd.finished.connect(snd.queue_free)
 
 
 ## 右下角提示文字

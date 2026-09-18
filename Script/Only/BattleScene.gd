@@ -171,12 +171,16 @@ func _ready() -> void:
 			var char_equip = GameData.player_equipment.get(pid, {})
 			var weapon_special: Dictionary = {}
 			if char_equip is Dictionary:
-				for eq in char_equip.values():
+				for slot_key in char_equip:
+					var eq = char_equip[slot_key]
 					if eq is Dictionary:
 						var b = eq.get("base", {})
 						merged.max_hp += b.get("hp", 0)
 						merged.max_mp += b.get("mp", 0)
 						merged.attack += b.get("atk", 0)
+						# base.dmg = 最终伤害（真伤）：每次直接伤害（普攻/技能/符咒等）额外固定附加（穿防、不吃倍率/防御）
+						if int(b.get("dmg", 0)) > 0:
+							weapon_special["true_dmg"] = weapon_special.get("true_dmg", 0) + int(b.get("dmg", 0))
 						merged.magic_attack += b.get("matk", 0)
 						merged.defense += b.get("def", 0)
 						merged.magic_defense += b.get("mdef", 0)

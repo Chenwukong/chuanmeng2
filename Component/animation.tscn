@@ -7007,7 +7007,7 @@ frame_progress = 0.85643053
 
 [node name="达摩护体" type="AnimatedSprite2D" parent="." unique_id=2090996420]
 visible = false
-position = Vector2(-156, -33)
+position = Vector2(-155, -62)
 sprite_frames = SubResource("SpriteFrames_o5vn1")
 
 [node name="金刚护体" type="AnimatedSprite2D" parent="." unique_id=1623379923]

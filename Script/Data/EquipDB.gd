@@ -208,15 +208,24 @@ static func register_all() -> void:
 	EquipData.register_named("饰品_2858", EquipData.SlotType.NECKLACE,
 		"饰品2858", {}, "res://TCP/饰品/2858.tcp", 1, [], 0)
 
+
+	# ═══════════════════════════════════
+	# 符咒（EquipData.SlotType.WEAPON）
+	# ═══════════════════════════════════
+	EquipData.register_named("基础符纸", EquipData.SlotType.WEAPON,
+		"基础符纸", {"dmg": 10}, "res://TCP/符咒/3290.tcp", 1, [], 120, "最基础的符纸")
+	EquipData.register_named("赦令符纸", EquipData.SlotType.WEAPON,
+		"赦令符纸", {"dmg": 40}, "res://TCP/符咒/6016.tcp", 5, [], 450, "急急如律令，赦！")
+
 	# ═══════════════════════════════════
 	# 剑（EquipData.SlotType.WEAPON）
 	# ═══════════════════════════════════
 	EquipData.register_named("青锋剑", EquipData.SlotType.WEAPON,
-		"青锋剑", {"atk": 10}, "res://TCP/剑/1001.tcp", 1, [], 120)
+		"青锋剑", {"dmg": 10}, "res://TCP/剑/1001.tcp", 1, [], 120)
 	EquipData.register_named("精钢剑", EquipData.SlotType.WEAPON,
-		"精钢剑", {"atk": 58}, "res://TCP/剑/1003.tcp", 5, [], 450)
+		"精钢剑", {"dmg": 58}, "res://TCP/剑/1003.tcp", 5, [], 450)
 	EquipData.register_named("寒光剑", EquipData.SlotType.WEAPON,
-		"寒光剑", {"atk": 110}, "res://TCP/剑/1005.tcp", 10, [], 1400)
+		"寒光剑", {"dmg": 110}, "res://TCP/剑/1005.tcp", 10, [], 1400)
 	EquipData.register_named("剑_1002", EquipData.SlotType.WEAPON,
 		"剑1002", {}, "res://TCP/剑/1002.tcp", 1, [], 0)
 	EquipData.register_named("剑_1004", EquipData.SlotType.WEAPON,
@@ -250,7 +259,7 @@ static func register_all() -> void:
 	# 刀（EquipData.SlotType.WEAPON）
 	# ═══════════════════════════════════
 	EquipData.register_named("朴刀", EquipData.SlotType.WEAPON,
-		"朴刀", {"atk": 10}, "res://TCP/刀/1101.tcp", 1, [], 120)
+		"朴刀", {"dmg": 10}, "res://TCP/刀/1101.tcp", 1, [], 120)
 	EquipData.register_named("刀_1102", EquipData.SlotType.WEAPON,
 		"刀1102", {}, "res://TCP/刀/1102.tcp", 1, [], 0)
 	EquipData.register_named("刀_1103", EquipData.SlotType.WEAPON,
@@ -364,7 +373,7 @@ static func register_all() -> void:
 	# 扇（EquipData.SlotType.WEAPON）
 	# ═══════════════════════════════════
 	EquipData.register_named("铁骨扇", EquipData.SlotType.WEAPON,
-		"铁骨扇", {"atk": 55}, "res://TCP/扇/1503.tcp", 5, [], 420)
+		"铁骨扇", {"dmg": 55}, "res://TCP/扇/1503.tcp", 5, [], 420)
 	EquipData.register_named("扇_1501", EquipData.SlotType.WEAPON,
 		"扇1501", {}, "res://TCP/扇/1501.tcp", 1, [], 0)
 	EquipData.register_named("扇_1502", EquipData.SlotType.WEAPON,
@@ -440,9 +449,9 @@ static func register_all() -> void:
 	# 杖（EquipData.SlotType.WEAPON）
 	# ═══════════════════════════════════
 	EquipData.register_named("竹杖", EquipData.SlotType.WEAPON,
-		"竹杖", {"atk": 9}, "res://TCP/杖/2201.tcp", 1, [], 100)
+		"竹杖", {"dmg": 9}, "res://TCP/杖/2201.tcp", 1, [], 100)
 	EquipData.register_named("蛇形杖", EquipData.SlotType.WEAPON,
-		"蛇形杖", {"atk": 105}, "res://TCP/杖/2205.tcp", 10, [], 1300)
+		"蛇形杖", {"dmg": 105}, "res://TCP/杖/2205.tcp", 10, [], 1300)
 	EquipData.register_named("杖_2202", EquipData.SlotType.WEAPON,
 		"杖2202", {}, "res://TCP/杖/2202.tcp", 1, [], 0)
 	EquipData.register_named("杖_2203", EquipData.SlotType.WEAPON,
@@ -478,7 +487,7 @@ static func register_all() -> void:
 	# 枪（EquipData.SlotType.WEAPON）
 	# ═══════════════════════════════════
 	EquipData.register_named("红缨枪", EquipData.SlotType.WEAPON,
-		"红缨枪", {"atk": 60}, "res://TCP/枪/1603.tcp", 5, [], 460)
+		"红缨枪", {"dmg": 60}, "res://TCP/枪/1603.tcp", 5, [], 460)
 	EquipData.register_named("枪_1601", EquipData.SlotType.WEAPON,
 		"枪1601", {}, "res://TCP/枪/1601.tcp", 1, [], 0)
 	EquipData.register_named("枪_1602", EquipData.SlotType.WEAPON,
@@ -630,7 +639,7 @@ static func register_all() -> void:
 	# 锤（EquipData.SlotType.WEAPON）
 	# ═══════════════════════════════════
 	EquipData.register_named("流星锤", EquipData.SlotType.WEAPON,
-		"流星锤", {"atk": 112}, "res://TCP/锤/1205.tcp", 10, [], 1350)
+		"流星锤", {"dmg": 112}, "res://TCP/锤/1205.tcp", 10, [], 1350)
 	EquipData.register_named("锤_1201", EquipData.SlotType.WEAPON,
 		"锤1201", {}, "res://TCP/锤/1201.tcp", 1, [], 0)
 	EquipData.register_named("锤_1202", EquipData.SlotType.WEAPON,

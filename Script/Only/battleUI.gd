@@ -855,12 +855,12 @@ func _execute_talisman_attack(actor: BattleCharacter, target: BattleCharacter) -
 					t_node.play_hit_once()
 				if t_node.has_method("play_hit_flash"):
 					t_node.play_hit_flash()
-			t.take_damage(total_dmg)
+			var actual_dmg := t.take_damage(total_dmg, actor)
 			if not t.is_dead:
 				t.killed_by_fire = false
 			t.sync_visual()
-			battle_manager.damage_floated.emit(t, total_dmg, "magic")
-			battle_manager._push_log("%s 受到 %d 点伤害" % [t.stats.get_display_name(), total_dmg], "player_action")
+			battle_manager.damage_floated.emit(t, actual_dmg, "magic")
+			battle_manager._push_log("%s 受到 %d 点伤害" % [t.stats.get_display_name(), actual_dmg], "player_action")
 			var _t := t
 			var _tn = t_node
 			var _is_fire := actor and actor.stats.talisman_type == CharacterStats.TalismanType.FIRE
@@ -2820,9 +2820,9 @@ func switch_talisman(actor: BattleCharacter, ttype: int) -> void:
 
 
 # ══ 三符咒显示 ══
-var _talisman_types: Array[int] = [CharacterStats.TalismanType.FIRE, CharacterStats.TalismanType.SLEEP, CharacterStats.TalismanType.ICE, CharacterStats.TalismanType.HASTE, CharacterStats.TalismanType.CEASEFIRE, CharacterStats.TalismanType.REVIVE]
-var _talisman_names: Array[String] = ["星火篆", "五雷咒", "冰冻", "加速", "止战", "借尸符"]
-var _talisman_item_ids: Array[String] = ["talisman_fire", "talisman_thunder", "talisman_ice", "talisman_haste", "talisman_ceasefire", "talisman_revive"]
+var _talisman_types: Array[int] = [CharacterStats.TalismanType.FIRE, CharacterStats.TalismanType.SLEEP, CharacterStats.TalismanType.ICE, CharacterStats.TalismanType.HASTE, CharacterStats.TalismanType.CEASEFIRE, CharacterStats.TalismanType.REVIVE, CharacterStats.TalismanType.BASIC]
+var _talisman_names: Array[String] = ["星火篆", "五雷咒", "冰冻", "加速", "止战", "借尸符", "无字符"]
+var _talisman_item_ids: Array[String] = ["talisman_fire", "talisman_thunder", "talisman_ice", "talisman_haste", "talisman_ceasefire", "talisman_revive", "talisman_basic"]
 var _free_talismans_left: int = 0  # 节约成本天赋：本场剩余免费符咒次数
 var _free_items_left: int = 0  # 缩地成寸：战斗剩余免费道具次数
 var _talisman_attacking := false   # 防止重复点击
@@ -2851,6 +2851,10 @@ static func get_pet_stat_mult(stat: String) -> float:
 
 ## 消耗当前符咒（节约成本天赋可能跳过）
 func _consume_talisman() -> bool:
+	# 保底符咒：永不消耗（主角保底攻击手段，避免符咒用完无法攻击）
+	var cur = battle_manager.current_actor() if battle_manager else null
+	if cur and cur.stats.talisman_type == CharacterStats.TalismanType.BASIC:
+		return true
 	if _free_talismans_left > 0:
 		_free_talismans_left -= 1
 		return true
@@ -2871,8 +2875,11 @@ func _consume_talisman() -> bool:
 		var lbl = nd.get_node_or_null("Label") as Label
 		if lbl:
 			var iname = _talisman_names[type_idx] if type_idx < _talisman_names.size() else ""
-			var c = battle_manager.player_inventory.get_count(_talisman_item_ids[type_idx])
-			lbl.text = "%s(%d)" % [iname, c]
+			if type_idx < _talisman_types.size() and _talisman_types[type_idx] == CharacterStats.TalismanType.BASIC:
+				lbl.text = "%s(∞)" % iname
+			else:
+				var c = battle_manager.player_inventory.get_count(_talisman_item_ids[type_idx])
+				lbl.text = "%s(%d)" % [iname, c]
 	return true
 
 ## 更新所有符咒的 num label
@@ -2946,8 +2953,11 @@ func _set_talisman_slot(name_prefix: String, type_idx: int) -> void:
 	if lbl:
 		var name = _talisman_names[type_idx] if type_idx < _talisman_names.size() else ""
 		var item_id = _talisman_item_ids[type_idx] if type_idx < _talisman_item_ids.size() else ""
-		var item_count = battle_manager.player_inventory.get_count(item_id)
-		lbl.text = "%s(%d)" % [name, item_count]
+		if type_idx < _talisman_types.size() and _talisman_types[type_idx] == CharacterStats.TalismanType.BASIC:
+			lbl.text = "%s(∞)" % name
+		else:
+			var item_count = battle_manager.player_inventory.get_count(item_id)
+			lbl.text = "%s(%d)" % [name, item_count]
 
 func _set_talisman_visible(val: bool) -> void:
 	for name_prefix in ["符咒1", "符咒2", "符咒3"]:

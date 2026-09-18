@@ -450,13 +450,16 @@ func _render_equip_item(idx: int, slot: Panel, icon: TextureRect) -> void:
 	var lv = eq.get("_build_level", 0)
 	if lv > 0: name_str += " +%d" % lv
 	lines.append(name_str)
+	if str(eq.get("desc", "")) != "":
+		lines.append("[color=#9fd]%s[/color]" % eq.get("desc"))
 
 	# 背包装备的基础属性
-	var base_labels = {"atk":"攻击", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度", "heal_up":"治疗量"}
+	var base_labels = {"atk":"攻击", "dmg":"最终伤害", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度", "heal_up":"治疗量"}
 	for bk in eq.get("base", {}):
 		var val = eq.base[bk]
 		if val != 0:
-			lines.append("  %s +%d" % [base_labels.get(bk, bk), val])
+			var stat_lbl = base_labels.get(bk, bk)
+			lines.append("  %s +%d" % [stat_lbl, val])
 
 	# 武器特殊属性
 	var special_labels = {"lifesteal":"吸血","gold_boost":"金币加成","reflect":"反弹","night_dmg":"夜战增伤","dodge":"闪避","true_dmg":"真实伤害","crit_rate":"暴击(运气)","heal_targets":"多目标治疗","threat_reduce":"减仇恨"}
@@ -737,13 +740,16 @@ func _refresh_equip_slots() -> void:
 				var lines: Array[String] = []
 				var name_str = eq.get("display_name", eq.get("name", ""))
 				lines.append(name_str)
+				if str(eq.get("desc", "")) != "":
+					lines.append("[color=#9fd]%s[/color]" % eq.get("desc"))
 
 				# 基础属性翻译
-				var base_labels = {"atk":"攻击", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度"}
+				var base_labels = {"atk":"攻击", "dmg":"最终伤害", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度"}
 				for bk in eq.get("base", {}):
 					var val = eq.base[bk]
 					if val != 0:
-						lines.append("  %s +%d" % [base_labels.get(bk, bk), val])
+						var stat_lbl = base_labels.get(bk, bk)
+						lines.append("  %s +%d" % [stat_lbl, val])
 
 				# 词缀
 				for af in eq.get("affixes", []):

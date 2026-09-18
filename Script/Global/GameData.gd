@@ -154,7 +154,7 @@ signal battle_ended_for_save()
 ## 快捷施法（Alt+Q）已迁移到 battleUI 的 _quick_skill_per_char
 const ENCOUNTER_CONFIG := {
 	"东海湾": {
-		"pool": ["毒云龟", "黑熊", "火沙虫"],
+		"pool": [ "火沙虫"],
 		"min": 8,
 	},
 }
@@ -165,6 +165,7 @@ func _init() -> void:
 	randomize()
 
 func _ready() -> void:
+	
 	_load_languages()
 	_register_skills()
 	_register_items()
@@ -175,7 +176,10 @@ func _ready() -> void:
 	_init_mech_pets()
 	_init_equip_db()
 	_debug_equip_belt()  # 测试：穿一件粗腰带
+	_debug_unlock_all_talents()  # 测试：全部天赋开启
 	debug_party()
+	add_equip_to_bag(EquipData.get_named("基础符纸"))
+	add_equip_to_bag(EquipData.get_named("赦令符纸"))
 
 # ══════════════════════════════════════════════
 # 多语言
@@ -668,15 +672,27 @@ func create_enemy(enemy_name: String) -> CharacterStats:
 	var s = CharacterStats.new()
 	s.character_name = row.name
 	var nm := 1.3 if is_night_time() else 1.0
-	s.max_hp         = int(row.hp * nm);    s.max_mp        = int(row.mp * nm)
-	s.attack         = int(row.atk * nm)
-	s.defense        = int(row.def * nm)
-	s.speed          = int(row.spd * nm);   s.level         = row.lv
-	s.skill_ids      = row.skills.duplicate()
+	# 属性来源：敌表里显式写了该属性 → 用它；没写 → 按分类模板（arch）× 等级推导（boss 额外加成）
+	var lv := int(row.get("lv", 1))
+	var arch := str(row.get("arch", EnemyDB.DEFAULT_ARCH))
+	var d: Dictionary = EnemyDB.derive_arch_stats(arch, lv)
+	var boss_mul: float = EnemyDB.BOSS_MUL if str(row.get("rank", "")) == "boss" else 1.0
+	var v := func(key: String, fallback: int) -> int:
+		if row.has(key):
+			return int(row.get(key))
+		return int(int(d.get(key, fallback)) * boss_mul)
+	s.max_hp         = int(v.call("hp", 90) * nm);   s.max_mp = int(v.call("mp", 30) * nm)
+	s.attack         = int(v.call("atk", 20) * nm)
+	s.defense        = int(v.call("def", 8) * nm)
+	s.speed          = int(v.call("spd", 10) * nm);  s.level = lv
+	s.skill_ids      = row.get("skills", ["普通攻击"]).duplicate()
 	s.ai_strategy    = row.get("ai_strategy", "balanced")
 	s.luck           = row.get("luck", 0)
-	s.magic_attack   = int(row.get("matk", row.atk) * nm)
-	s.magic_defense  = int(row.get("mdef", int(row.def * 0.8)) * nm)
+	# 法伤/法防：显式优先 → 否则沿用旧规则（参考攻击/物防）→ 否则模板
+	var ma_fallback := int(row.get("atk", int(int(d.get("matk", 20)) * boss_mul)))
+	var md_fallback := int(row.get("def", int(d.get("def", 8))) * 0.8) if row.has("def") else int(int(d.get("mdef", 12)) * boss_mul)
+	s.magic_attack   = int(row.get("matk", ma_fallback) * nm)
+	s.magic_defense  = int(row.get("mdef", md_fallback) * nm)
 	s.was_base_path  = row.get("was_base_path", "")
 	s.was_direction  = row.get("was_direction", 0)
 	s.portrait_path  = row.get("portrait_path", "")
@@ -1158,6 +1174,7 @@ func _register_items() -> void:
 		{ id = "talisman_haste",     name = "加速符咒", icon = "💨", tcp = "res://TCP/符咒/3290.tcp", type = SP, hit_sound = "res://Audio/SE/法术5.ogg", desc = "为队友施加加速效果" },
 		{ id = "talisman_ceasefire", name = "止战符咒", icon = "🕊️", tcp = "res://TCP/符咒/3290.tcp", type = SP, hit_sound = "res://Audio/SE/法术5.ogg", desc = "削减敌人灵力" },
 		{ id = "talisman_revive",    name = "借尸符",   icon = "💀", tcp = "res://TCP/符咒/3290.tcp", type = SP, hit_sound = "res://Audio/SE/heal 1.ogg", desc = "复活一名阵亡队友，恢复30%气血" },
+		{ id = "talisman_basic",     name = "无字符", icon = "📜", tcp = "res://TCP/符咒/3290.tcp", type = SP, dmg = 0.6, hit_sound = "res://Audio/SE/法术5.ogg", desc = "主角保底符咒，无限使用（不消耗）" },
 		# ── 洗髓丹（场外道具：返还能力点）──
 		{ id = "item_xisuidan", name = "洗髓丹", tcp = "res://TCP/丹药/0677.tcp", cat = ItemData.ItemCategory.MISC, type = SP, desc = "使用后返还该角色全部已分配的能力点（在属性加点面板使用）" },
 	]
@@ -1292,6 +1309,27 @@ func generate_random_equip(slot: EquipData.SlotType = EquipData.SlotType.WEAPON,
 func _init_equip_db() -> void:
 	# 命名装备全部在 Script/Data/EquipDB.gd 注册
 	EquipDB.register_all()
+## 测试用：把天赋树（Component/TalentTree.tscn）里所有天赋设为满级
+func _debug_unlock_all_talents() -> void:
+	var scene: PackedScene = load("res://Component/TalentTree.tscn")
+	if scene == null:
+		push_warning("未找到 Component/TalentTree.tscn，无法开启天赋")
+		return
+	var inst := scene.instantiate()
+	var stack: Array = [inst]
+	var count := 0
+	while not stack.is_empty():
+		var n = stack.pop_back()
+		if n is TalentNode and not (n as TalentNode).talent_id.is_empty():
+			var tid: String = (n as TalentNode).talent_id
+			talent_ranks[tid] = maxi(int(talent_ranks.get(tid, 0)), (n as TalentNode).max_rank)
+			count += 1
+		for c in n.get_children():
+			stack.append(c)
+	inst.free()
+	print("[测试] 已开启全部天赋：%d 个" % count)
+
+
 func _debug_equip_belt() -> void:
 	equip_bag = equip_bag.filter(func(eq): return eq is Dictionary and not eq.is_empty())
 	if equip_bag.is_empty():

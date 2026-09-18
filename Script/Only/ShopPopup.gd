@@ -155,7 +155,11 @@ func _show_item_info(idx: int) -> void:
 		var stats_text = ""
 		var base: Dictionary = eq.get("base", {})
 		for key in base:
-			stats_text += "%s +%d  " % [{"hp":"气血","atk":"攻击","def":"防御","spd":"速度","matk":"法攻","mdef":"法防"}.get(key, key), base[key]]
+			var stat_lbl = {"hp":"气血","atk":"攻击","dmg":"最终伤害","def":"防御","spd":"速度","matk":"法攻","mdef":"法防"}.get(key, key)
+			stats_text += "%s +%d  " % [stat_lbl, base[key]]
+		var eq_desc: String = str(eq.get("desc", ""))
+		if eq_desc != "":
+			stats_text += "\n%s" % eq_desc
 		info_stats.text = stats_text if stats_text else "无属性"
 	if info_price:
 		info_price.text = "单价: %d" % item.price

@@ -30,7 +30,7 @@ const SKILL_DB := {
 	},
 	"寂静剑法": {
 		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
-		"mp": 30, "dmg": 1.3, "cd": 2, "sound": "res://Audio/SE/男-枪.ogg",
+		"mp": 30, "dmg": 21.3, "cd": 2, "sound": "res://Audio/SE/男-枪.ogg",
 		"fullscreen": "寂静剑法",
 		"desc": "寂静剑气覆盖全场，对所有敌人造成 130% 物理伤害",
 	},

@@ -599,9 +599,9 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			var t: BattleCharacter = entry["target"]
 			var dmg: int = entry["dmg"]
 			dmg = SkillManager.apply_marked_bonus(_current_actor, t, dmg)
-			t.take_damage(dmg)
+			var actual := t.take_damage(dmg, _current_actor)
 			t.sync_visual()
-			damage_floated.emit(t, dmg, "magic" if data.is_magic_damage else "normal")
+			damage_floated.emit(t, actual, "magic" if data.is_magic_damage else "normal")
 		# 法术播完：没死的怪物恢复待机（受击姿态结束）
 		for t in fs_targets:
 			if not t.is_dead:
@@ -644,9 +644,9 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			var on_hit = func():
 				var dmg = maxi(1, mech.stats.attack - int(target.get_effective_defense()))
 				dmg = int(dmg * randf_range(0.95, 1.05) * _current_actor.metamorphosis_mod)
-				target.take_damage(dmg)
+				var actual := target.take_damage(dmg, mech)
 				target.sync_visual()
-				damage_floated.emit(target, dmg, "normal")
+				damage_floated.emit(target, actual, "normal")
 				_push_log(GameData._T("LOG_MECH_ATK") % [mech.stats.get_display_name(), target.stats.get_display_name(), dmg], "player_action")
 			if nd and nd.has_method("play_attack_sequence"):
 				await nd.play_attack_sequence(target_pos, target.get_parent() as EnemyNode, on_hit)
@@ -692,12 +692,12 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 				blitz_total_dmg += dmg_list[i]
 			var actual_total = 0
 			for dmg in dmg_list:
-				var actual = actual_target.take_damage(dmg)
+				var actual = actual_target.take_damage(dmg, _current_actor)
 				actual_total += actual
 				if actual_target.is_dead:
 					break
 			actual_target.sync_visual()
-			damage_floated.emit(actual_target, blitz_total_dmg, "crit" if result.is_crit else "normal")
+			damage_floated.emit(actual_target, actual_total, "crit" if result.is_crit else "normal")
 			_push_log(result.log_text, "player_action")
 		
 		if nd and nd.has_method("play_blitz_sequence") and skill_id == "暗影突袭":
@@ -873,10 +873,10 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			var dmg = maxi(1, int(eff_atk * data.damage_multiplier * night_mul) - int(def_val * 0.6) + data.flat_damage)
 			dmg = int(dmg * randf_range(0.95, 1.05))
 			dmg = SkillManager.apply_marked_bonus(_current_actor, t, dmg)
-			t.take_damage(dmg)
+			var actual := t.take_damage(dmg, _current_actor)
 			t.sync_visual()
-			damage_floated.emit(t, dmg, "magic" if is_magic else "normal")
-			_push_log("[群体] %s 受到 %d 点伤害" % [t.stats.get_display_name(), dmg], "enemy_action")
+			damage_floated.emit(t, actual, "magic" if is_magic else "normal")
+			_push_log("[群体] %s 受到 %d 点伤害" % [t.stats.get_display_name(), actual], "enemy_action")
 			var tn = t.get_parent() as Node2D
 			if tn and tn.has_method("play_idle") and not t.is_dead:
 				tn.play_idle()
@@ -919,10 +919,11 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			# 执行技能（伤害计算）
 			var result = SkillManager.execute(_current_actor, target, skill_id)
 			if result.success:
+				var sum_actual := 0
 				for dmg in result.damage_list:
-					target.take_damage(dmg)
+					sum_actual += target.take_damage(dmg, _current_actor)
 				target.sync_visual()
-				damage_floated.emit(target, result.damage_list[0] if result.damage_list.size() > 0 else 0, "crit" if result.is_crit else "normal")
+				damage_floated.emit(target, sum_actual, "crit" if result.is_crit else "normal")
 				_push_log(result.log_text, "player_action")
 			# 走回来
 			await get_tree().create_timer(1).timeout
@@ -1019,10 +1020,11 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 				if not _hit_stay_nodes.has(enemy_nd):
 					_hit_stay_nodes.append(enemy_nd)
 			# 扣血
+			var sum_actual := 0
 			for dmg in result.damage_list:
-				target.take_damage(dmg)
+				sum_actual += target.take_damage(dmg, _current_actor)
 			target.sync_visual()
-			damage_floated.emit(target, result.damage_list[0] if result.damage_list.size() > 0 else 0, "crit" if result.is_crit else "normal")
+			damage_floated.emit(target, sum_actual, "crit" if result.is_crit else "normal")
 			_push_log(result.log_text, "player_action")
 			await get_tree().create_timer(1).timeout
 			# 归位（恢复位置/朝向/z）
@@ -1148,10 +1150,11 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			# 扣血
 			var result = SkillManager.execute(_current_actor, target, skill_id)
 			if result.success:
+				var sum_actual := 0
 				for dmg in result.damage_list:
-					target.take_damage(dmg)
+					sum_actual += target.take_damage(dmg, _current_actor)
 				target.sync_visual()
-				damage_floated.emit(target, result.damage_list[0] if result.damage_list.size() > 0 else 0, "crit" if result.is_crit else "normal")
+				damage_floated.emit(target, sum_actual, "crit" if result.is_crit else "normal")
 				_push_log(result.log_text, "player_action")
 			# 处决：低于5%血量的敌人直接死亡
 			for e in enemies:
@@ -1253,10 +1256,11 @@ func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 			# 扣血
 			var result = SkillManager.execute(_current_actor, target, skill_id)
 			if result.success:
+				var sum_actual := 0
 				for dmg in result.damage_list:
-					target.take_damage(dmg)
+					sum_actual += target.take_damage(dmg, _current_actor)
 				target.sync_visual()
-				damage_floated.emit(target, result.damage_list[0] if result.damage_list.size() > 0 else 0, "crit" if result.is_crit else "normal")
+				damage_floated.emit(target, sum_actual, "crit" if result.is_crit else "normal")
 				_push_log(result.log_text, "player_action")
 			# 收招
 			await get_tree().create_timer(0.3).timeout
@@ -2243,7 +2247,8 @@ func flush_pending_damage() -> void:
 								d.target.remove_buff("ghost_shield")
 								if d.target.has_method("hide_buff"):
 									d.target.hide_buff()
-					var actual = d.target.take_damage(d.amount)
+					var actual = d.target.take_damage(d.amount, d.get("attacker", null))
+					d["actual"] = actual
 					# 反震（原逻辑 + 装备反震）
 					if not d.get("is_magic", false):
 						var reflect_all = d.target.equip_special.get("reflect", 0)
@@ -2297,7 +2302,7 @@ func flush_pending_damage() -> void:
 		else:
 			if d.has("attacker") and d.attacker:
 				_threat_mgr.add_damage_threat(d.attacker, d.amount)
-		damage_floated.emit(d.target, d.amount, d.type)
+		damage_floated.emit(d.target, int(d.get("actual", d.amount)), d.type)
 		if not synced.has(d.target):
 			synced[d.target] = true
 			d.target.sync_visual()

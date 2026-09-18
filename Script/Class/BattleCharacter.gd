@@ -383,10 +383,15 @@ var ally_refs: Array = []  # 战斗中的队友列表（BattleManager 初始化�
 var last_hit_target: String = ""  # 上次攻击的目标 key（弱点击破：连续打同一目标伤害 x2）
 
 ## 受击入口：无敌免疫 + 神佑世人分担队友伤害
-func take_damage(amount: int) -> int:
+func take_damage(amount: int, attacker: BattleCharacter = null) -> int:
 	# 无敌（不灭金身）：免疫所有伤害
 	if has_buff("invincible"):
 		return 0
+	# 真实伤害：攻击者的武器 atk + 打造 true_dmg 额外附加（穿防、不乘倍率；仍走护盾/闪避/无敌规则）
+	if attacker != null and attacker != self and not attacker.is_dead:
+		var true_dmg := attacker.get_true_dmg()
+		if true_dmg > 0:
+			amount += true_dmg
 	# 神佑世人：找存活队友中带此天赋者分担伤害（自己除外，不递归）
 	if not ally_refs.is_empty():
 		for ally in ally_refs:
@@ -406,7 +411,8 @@ func take_damage(amount: int) -> int:
 					if has_method("show_trait_float"):
 						show_trait_float("神佑分担")
 				break
-	return _take_damage_raw(amount)
+	_take_damage_raw(amount)
+	return amount  # 返回本次“伤害量”（含真伤），供飘字/日志显示；实际扣血见血条
 
 ## 原始扣血逻辑（无无敌/分担，供内部调用避免递归）
 func _take_damage_raw(amount: int) -> int:
@@ -1080,6 +1086,10 @@ func get_effective_heal_rate() -> float:
 		rate = get_buff_value("heal_up") if get_buff_value("heal_up") != null else 1.15
 	rate *= _elem_resonance_boost("heal_up") * _talent_boost("heal_up")
 	return rate
+
+## 真实伤害附加值：武器提供的 atk + 打造 true_dmg（每次主动攻击/技能额外附加）
+func get_true_dmg() -> int:
+	return maxi(0, int(equip_special.get("true_dmg", 0)))
 
 ## 吸血比例
 func get_lifesteal_ratio() -> float:

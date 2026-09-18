@@ -83,7 +83,7 @@ func _apply_flight_damage() -> void:
 			continue
 		_hit_enemies.append(enemy)
 		var dmg = maxi(1, int(flythrough_dmg * 0.1))
-		enemy.take_damage(dmg)
+		enemy.take_damage(dmg, attacker)
 		enemy.sync_visual()
 		bm.damage_floated.emit(enemy, dmg, "pass_through")
 
@@ -95,7 +95,7 @@ func _hit():
 	# 先应用符咒效果，再扣血（否则敌人直接死了就冻不住了）
 	_apply_talisman_effect()
 	# 从道具数据读取符咒命中音效
-	var talisman_ids := ["talisman_fire", "talisman_thunder", "talisman_ice", "talisman_haste", "talisman_ceasefire"]
+	var talisman_ids := ["talisman_fire", "talisman_thunder", "talisman_ice", "talisman_haste", "talisman_ceasefire", "talisman_revive", "talisman_basic"]
 	var hit_sound := "res://Audio/SE/法术5.ogg"
 	if talisman_type >= 0 and talisman_type < talisman_ids.size():
 		var item_data = GameData.item_db.get(talisman_ids[talisman_type]) as ItemData
