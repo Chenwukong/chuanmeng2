@@ -49,7 +49,7 @@ enabled = true   # language server tools; servers launch lazily when used
 # Rules are "Tool" or "Tool(specifier)"; e.g. Bash(go test:*), Edit(src/**).
 mode  = "ask"
 # deny = ["Bash(rm -rf*)", "Bash(git push*)"]   # hard-blocked in every mode
-allow = ["Edit", "task"]
+allow = ["Edit", "task", "Bash=cd \"D:/Godot/传梦之路1.5/新建游戏项目\" && echo \"== 注册条目数 ==\" && grep -c '\"tcp_path\": \"res://TCP/草药/0' Script/Data/MaterialDB.gd && echo \"== 是否误含0004 ==\" && grep -c '\"0004\"' Script/Data/MaterialDB.gd && echo \"== 草药文件夹0xxx文件数 ==\" && ls TCP/草药 | grep -c '^0' && echo \"== 文件缺失对照(应为空) ==\" && for f in $(ls TCP/草药 | grep '^0'); do n=${f%.tcp}; grep -q \"\\\"$n\\\":\" Script/Data/MaterialDB.gd || echo \"MISSING DB: $f\"; done && echo \"== 括号配平 ==\" && grep -c '^\\t\"' Script/Data/MaterialDB.gd", "Bash=cd \"D:/Godot/传梦之路1.5/新建游戏项目\" && echo \"== 每个0xxx文件都在DB(无输出=全部命中) ==\" ; for f in $(ls TCP/草药 | grep '^0'); do n=${f%.tcp}; grep -q \"\\\"$n\\\":\" Script/Data/MaterialDB.gd || echo \"MISSING DB: $f\"; done ; echo \"== 括号配平(base d={}) ==\" ; awk 'BEGIN{d=0} {n=gsub(/{/,\"{\"); m=gsub(/}/,\"}\"); d+=n-m} END{print \"net braces:\", d}' Script/Data/MaterialDB.gd ; echo \"== 头部 ==\" ; head -6 Script/Data/MaterialDB.gd ; echo \"== 尾部 ==\" ; tail -8 Script/Data/MaterialDB.gd"]
 # ask = ["Edit(src/**)"]   # force a prompt even if otherwise allowed
 
 [sandbox]

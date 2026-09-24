@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dm7rivfqw71m7" path="res://Script/Class/BountyPopup.gd" id="1_root"]
 [ext_resource type="Texture2D" uid="uid://dogla7dqe8t0c" path="res://Graphic/UI/法术道具顶图.png" id="2_dposg"]
-[ext_resource type="Texture2D" uid="uid://cmb56qejeq2li" path="res://Graphic/UI/法术道具底图.png" id="3_q1kg6"]
+[ext_resource type="Texture2D" uid="uid://bqu7f4gldd5v2" path="res://Graphic/UI/acf6105d-2892-4943-a4b1-6f27c4ed2bdc.png" id="3_hqpej"]
 [ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="4_hqpej"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_cgls6"]
@@ -28,9 +28,9 @@ scale = Vector2(0.7693896, 1.3822714)
 texture = ExtResource("2_dposg")
 
 [node name="法术道具底图" type="Sprite2D" parent="." unique_id=1629393740]
-position = Vector2(663.37036, 376.75)
-scale = Vector2(0.6201696, 0.7926683)
-texture = ExtResource("3_q1kg6")
+position = Vector2(665, 356)
+scale = Vector2(0.63015467, 0.6301546)
+texture = ExtResource("3_hqpej")
 
 [node name="Background" type="ColorRect" parent="." unique_id=1115526085]
 visible = false
@@ -44,7 +44,7 @@ color = Color(0.02, 0.04, 0.12, 0.75)
 layout_mode = 3
 anchors_preset = 0
 offset_left = 276.74072
-offset_top = 93.5
+offset_top = 132.0
 offset_right = 1076.7407
 offset_bottom = 655.5
 mouse_filter = 2
@@ -58,6 +58,7 @@ mouse_filter = 2
 color = Color(0.03, 0.08, 0.2, 0.94)
 
 [node name="TitleBar" type="ColorRect" parent="Panel" unique_id=1249497700]
+visible = false
 layout_mode = 0
 offset_right = 800.0
 offset_bottom = 40.0
@@ -65,11 +66,11 @@ color = Color(0.06, 0.15, 0.35, 0.6)
 
 [node name="TitleLabel" type="Label" parent="Panel" unique_id=654976912]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 8.0
-offset_right = 300.0
-offset_bottom = 36.0
-text = "◆ 悬赏任务 ◆"
+offset_left = 101.25928
+offset_top = -32.0
+offset_right = 201.25928
+offset_bottom = -4.0
+text = " 悬赏任务 "
 
 [node name="ScrollContainer" type="ScrollContainer" parent="Panel" unique_id=1017890460]
 layout_mode = 0
@@ -129,11 +130,12 @@ offset_bottom = 250.0
 text = "取消"
 
 [node name="CloseBtn" type="TextureButton" parent="Panel" unique_id=2126576937]
+modulate = Color(1, 1, 1, 0)
 layout_mode = 0
-offset_left = 971.2593
-offset_top = -45.5
-offset_right = 1051.2593
-offset_bottom = -15.5
+offset_left = 805.2593
+offset_top = -48.0
+offset_right = 885.2593
+offset_bottom = -18.0
 texture_normal = SubResource("AtlasTexture_cgls6")
 texture_pressed = SubResource("AtlasTexture_nk5td")
 texture_hover = SubResource("AtlasTexture_fwt1c")

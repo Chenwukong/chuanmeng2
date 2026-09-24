@@ -168,7 +168,7 @@ class SkillButton:
 		skill_data = data
 		index = idx
 		self.disabled = disabled
-		custom_minimum_size = Vector2(210, 56)
+		custom_minimum_size = Vector2(220, 65)
 
 		# 第一行：名字
 		text = data.skill_name
@@ -193,16 +193,76 @@ class ItemButton:
 	var item_data: ItemData
 	var item_count: int
 	var index: int = 0
+	var _icon_rect: TextureRect
+	var _name_lb: Label
+	var _count_lb: Label
 
 	func setup(data: ItemData, count: int, idx: int, disabled: bool) -> void:
 		item_data = data
 		item_count = count
 		index = idx
 		self.disabled = disabled
-		custom_minimum_size = Vector2(210, 56)
+		custom_minimum_size = Vector2(220, 65)
+		text = ""
+		clip_text = false
 
-		text = "%s\n×%d" % [data.item_name, count]
-		clip_text = true
+		# 三分布局：[图标] [名字·居中] [数量·靠右]
+		var margin = MarginContainer.new()
+		margin.name = "Row"
+		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		margin.add_theme_constant_override("margin_left", 8)
+		margin.add_theme_constant_override("margin_right", 8)
+		margin.add_theme_constant_override("margin_top", 4)
+		margin.add_theme_constant_override("margin_bottom", 4)
+		add_child(margin)
+
+		var row = HBoxContainer.new()
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_theme_constant_override("separation", 6)
+		margin.add_child(row)
+
+		# 左：图标
+		_icon_rect = TextureRect.new()
+		_icon_rect.custom_minimum_size = Vector2(36, 36)
+		_icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_icon_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		_icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_icon_rect.visible = false
+		row.add_child(_icon_rect)
+
+		# 中：名字（居中，占据中间伸缩区）
+		_name_lb = Label.new()
+		_name_lb.text = data.item_name
+		_name_lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_name_lb.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_name_lb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_name_lb.clip_text = true
+		_name_lb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_name_lb.add_theme_font_size_override("font_size", 14)
+		_name_lb.add_theme_color_override("font_color", Color(0.85, 0.85, 0.9, 1.0))
+		row.add_child(_name_lb)
+
+		# 右：数量
+		_count_lb = Label.new()
+		_count_lb.text = "×%d" % count
+		_count_lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_count_lb.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_count_lb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_count_lb.add_theme_font_size_override("font_size", 14)
+		_count_lb.add_theme_color_override("font_color", Color(0.85, 0.85, 0.9, 1.0))
+		row.add_child(_count_lb)
+
+	## 设置左侧图标；传 null 则隐藏图标占位
+	func set_icon_texture(tex: Texture2D) -> void:
+		if _icon_rect == null:
+			return
+		if tex == null:
+			_icon_rect.visible = false
+			return
+		_icon_rect.texture = tex
+		_icon_rect.visible = true
 
 
 # ══════════════════════════════════════════════
@@ -257,6 +317,25 @@ func _build_skill_list() -> void:
 # 内部 — 道具
 # ══════════════════════════════════════════════
 
+# 道具 tcp 图标缓存（避免每次打开弹窗重复解析）
+var _icon_cache: Dictionary = {}
+
+## 把 tcp 文件第 0 帧解码成 Texture2D；失败返回 null
+func _tcp_icon(path: String) -> Texture2D:
+	if path.is_empty():
+		return null
+	if _icon_cache.has(path):
+		return _icon_cache[path]
+	var tex: Texture2D = null
+	if FileAccess.file_exists(path):
+		var reader = WASReader.new()
+		if reader.load_from_file(path):
+			var decoded = reader.decode_frame(0, 0)
+			if decoded != null and not decoded.is_empty():
+				tex = decoded.get("texture")
+	_icon_cache[path] = tex
+	return tex
+
 func _build_item_list() -> void:
 	# 清空旧按钮
 	for c in skill_grid.get_children(): c.queue_free()
@@ -283,6 +362,8 @@ func _build_item_list() -> void:
 
 		var btn = ItemButton.new()
 		btn.setup(data, count, idx, count <= 0)
+		# 道具 tcp 图片：解析 icon_path 并显示在按钮最左侧
+		btn.set_icon_texture(_tcp_icon(data.icon_path))
 		btn.focus_mode = Control.FOCUS_NONE
 		_buttons.append(btn)
 		_skill_datas.append(null)

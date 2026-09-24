@@ -155,11 +155,11 @@ func _show_item_info(idx: int) -> void:
 		var stats_text = ""
 		var base: Dictionary = eq.get("base", {})
 		for key in base:
-			var stat_lbl = {"hp":"气血","atk":"攻击","dmg":"最终伤害","def":"防御","spd":"速度","matk":"法攻","mdef":"法防"}.get(key, key)
+			var stat_lbl = {"hp":"气血","atk":"攻击","dmg":"伤害","def":"防御","spd":"速度","matk":"法攻","mdef":"法防"}.get(key, key)
 			stats_text += "%s +%d  " % [stat_lbl, base[key]]
-		var eq_desc: String = str(eq.get("desc", ""))
-		if eq_desc != "":
-			stats_text += "\n%s" % eq_desc
+		# 装备描述
+		if str(eq.get("desc", "")) != "":
+			stats_text += "\n%s" % eq.get("desc")
 		info_stats.text = stats_text if stats_text else "无属性"
 	if info_price:
 		info_price.text = "单价: %d" % item.price
@@ -251,8 +251,8 @@ func _do_sell(bag_idx: int) -> void:
 	var sell_price = maxi(1, int(price * 0.5))
 	_push_msg("出售 %s，获得 %d 金币" % [eq.get("display_name", ""), sell_price])
 	GameData.equip_bag.remove_at(bag_idx)
-	_player_gold += sell_price
-	GameData.player_gold = _player_gold
+	GameData.add_gold(sell_price)
+	_player_gold = GameData.player_gold
 	if ep.has_method("set_equip_bag"):
 		ep.set_equip_bag(GameData.equip_bag)
 		ep.full_refresh()

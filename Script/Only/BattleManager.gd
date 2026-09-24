@@ -56,6 +56,7 @@ var _hit_stay_nodes: Array = []            # 本次行动中保持受击姿态�
 # ── 待显示伤害（动画完成后才展示）────────────
 var pending_damage: Array[Dictionary] = []
 var pending_guard_anim: Dictionary = {}  # { guardian, ally_global_pos, ally_node }
+var pass_through_hit: Dictionary = {}  # 本场战斗已被穿透命中的敌人（instance_id → true，避免重复穿透）
 
 # ── 信号 ─────────────────────────────────────
 signal state_changed(new_state: BattleState)
@@ -169,6 +170,7 @@ func remove_character(bc: BattleCharacter) -> void:
 
 func start_battle() -> void:
 	_battle_ended_flag = false
+	pass_through_hit.clear()
 	# 爆冲天赋：全员开局增加行动条
 	var baochong_rank = GameData.get_talent_rank("baochong")
 	if baochong_rank > 0:
@@ -1671,16 +1673,21 @@ func player_guard(ally: BattleCharacter) -> void:
 	if state != BattleState.PLAYER_TURN: return
 	_change_state(BattleState.PLAYER_ACTION)
 	guard_relations[ally] = _current_actor
-	# 保护动画：守护者播放防御/守护动画
+	# 保护动画：守护者瞬移到被保护者身前播放防御动画
 	var nd = _current_actor.get_parent()
-	if nd and nd.has_method("play_guard_cast"):
+	var ally_nd = ally.get_parent()
+	if nd and nd.has_method("guard_warp") and ally_nd is Node2D:
+		nd.guard_warp((ally_nd as Node2D).global_position, (ally_nd as Node2D).z_index)
+	elif nd and nd.has_method("play_guard_cast"):
 		nd.play_guard_cast()
 	_current_actor.show_trait_float("守护")
 	_current_actor.play_dual_spell_effect()
 	_push_log(GameData._T("LOG_GUARD_SET") % [_current_actor.stats.get_display_name(), ally.stats.get_display_name()], "player_action")
 	await get_tree().create_timer(action_delay).timeout
-	# 防御动画播完后切回 idle
-	if nd and nd.has_method("play_idle"):
+	# 保护动画播完后瞬移回原位
+	if nd and nd.has_method("guard_return"):
+		nd.guard_return()
+	elif nd and nd.has_method("play_idle"):
 		nd.play_idle()
 	await _finish_player_action()
 
@@ -2532,14 +2539,14 @@ func _check_battle_end() -> void:
 					"atk_gain": c.stats.attack,
 					"def_gain": c.stats.defense,
 				})
-		GameData.player_gold += total_gold
+		var gold_gained: int = GameData.add_gold(total_gold)
 		# 等死亡动画播放
 		await get_tree().create_timer(1.2).timeout
 		for e in enemies:
 			var nd = e.get_parent()
 			if nd: nd.visible = false
 		await get_tree().create_timer(0.5).timeout
-		battle_ended.emit(true, total_exp, total_gold, level_ups)
+		battle_ended.emit(true, total_exp, gold_gained, level_ups)
 
 	elif all_party_dead:
 		_change_state(BattleState.BATTLE_LOSE)

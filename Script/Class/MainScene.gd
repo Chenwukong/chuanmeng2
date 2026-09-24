@@ -50,10 +50,13 @@ const PERIOD_TINTS: Array = [
 @onready var _day_night_icon: TextureRect = $UI/坐标图/dayNightIcon
 @onready var _shichen_icon: TextureRect = $UI/坐标图/shichenIcon
 @onready var _shichen_fallback: Label = $UI/坐标图/shichenFallback
+@onready var _story_hint_bg: Panel = $UI/坐标图/storyHintBG
+@onready var _story_hint_label: Label = $UI/坐标图/storyHintBG/storyHint
 
 @export var camera_follow_player: bool = true
 
 var _tex_cache: Dictionary = {}
+var _last_story_hint: String = ""  # 上次显示的目标提示（用于检测变化）
 
 
 
@@ -75,13 +78,14 @@ func _ready() -> void:
 	_add_btn_labels()
 	add_child(load("res://Script/Class/CursorController.gd").new())
 	GameData.add_party_by_name("游霄云")
-	GameData.add_party_by_name("英女侠")
+	#GameData.add_party_by_name("英女侠")
 	#GameData.add_party_by_name("桃夭夭")
 	#GameData.add_party_by_name("影精灵")
-	#GameData.add_party_by_name("叮咚")
+	GameData.add_party_by_name("叮咚")
 
 	#ameData.add_party_by_name("大将军")
 	_update_time_volume()
+	_refresh_story_hint()
 	
 # ════════════════════════════
 # UI 按钮系统
@@ -265,41 +269,42 @@ func _unhandled_input(event: InputEvent) -> void:
 				bs._toggle_double_speed()
 
 
-## ESC 依次关闭已打开的面板（队伍/道具/宠物/天赋/悬赏/存档等），全关掉后开存档
-func _esc_close_or_save() -> void:
+## 关闭任意一个已打开的弹窗（返回是否真的关掉了一个）
+func _close_top_popup() -> bool:
 	if _team_popup and is_instance_valid(_team_popup):
 		_team_popup.close()
-		return
+		return true
 	if _build_popup and is_instance_valid(_build_popup):
 		_build_popup.close()
 		_build_popup = null
 		_unregister_popup()
-		return
+		return true
 	if _status_popup and is_instance_valid(_status_popup):
 		_status_popup.close_popup()
 		_status_popup = null
 		_unregister_popup()
-		return
+		return true
 	if _equip_page and is_instance_valid(_equip_page):
 		_close_popup(_equip_page)
-		return
+		return true
 	if _pet_popup and is_instance_valid(_pet_popup):
 		_close_popup(_pet_popup)
-		return
+		return true
 	if _talent_tree and is_instance_valid(_talent_tree):
 		_close_popup(_talent_tree)
-		return
+		return true
 	if _map_popup and is_instance_valid(_map_popup):
 		_close_popup(_map_popup)
-		return
+		return true
 	if _setting_popup and is_instance_valid(_setting_popup):
 		_setting_popup.close()
 		_setting_popup = null
-		return
+		_unregister_popup()
+		return true
 	if _hint_popup and is_instance_valid(_hint_popup):
 		_hint_popup.closed.emit()
 		_hint_popup = null
-		return
+		return true
 	if _bounty_popup and is_instance_valid(_bounty_popup) and _bounty_open:
 		var snd = AudioStreamPlayer.new()
 		snd.stream = load("res://Audio/SE/003-System03.ogg")
@@ -310,14 +315,38 @@ func _esc_close_or_save() -> void:
 		_bounty_popup.hide()
 		_bounty_open = false
 		_unregister_popup()
-		return
+		return true
 	if _save_popup and is_instance_valid(_save_popup):
 		_close_popup(_save_popup)
-		return
+		return true
 	if _shop_popup and is_instance_valid(_shop_popup):
 		_close_popup(_shop_popup)
-		return
-	_open_save_popup()
+		return true
+	return false
+
+
+## 强制关闭所有菜单弹窗（进入战斗等场景前调用，确保 HUD 干净）
+func _close_all_popups() -> void:
+	var guard: int = 0
+	while guard < 30:
+		guard += 1
+		if not _close_top_popup():
+			break
+	# 兜底：悬赏弹窗若状态不一致，也强制关掉
+	if _bounty_popup and is_instance_valid(_bounty_popup):
+		_bounty_popup.hide()
+		_bounty_popup.queue_free()
+		_bounty_popup = null
+	_bounty_open = false
+	# 兜底：清掉弹窗阻塞状态并恢复 HUD
+	GameData.ui_blocked = false
+	_unregister_popup()
+
+
+## ESC 依次关闭已打开的面板（队伍/道具/宠物/天赋/悬赏/存档等），全关掉后开存档
+func _esc_close_or_save() -> void:
+	if not _close_top_popup():
+		_open_save_popup()
 
 
 func _play_sprite_anim(sprite: AnimatedSprite2D, anim: String):
@@ -596,9 +625,12 @@ func _close_popup(node: Node):
 
 
 func _process(delta: float) -> void:
+	_refresh_story_hint()
 	if GameData.in_battle:
 		if not _was_in_battle:
 			_was_in_battle = true
+			# 进入战斗：强制关掉所有菜单弹窗（防止过渡中打开的 UI 留在战斗界面上）
+			_close_all_popups()
 		$UI/坐标图.visible = false
 		$UI/按钮底图.visible = false
 		if bounty_btn: bounty_btn.visible = false
@@ -916,6 +948,24 @@ func _show_dialogue_balloon(balloon_scene: String, dialogue_file: String, title:
 		balloon.queue_free()
 	if not flag.is_empty():
 		GameData.game_flags[flag] = true
+	_refresh_story_hint()
+
+
+## 刷新"当前目标/剧情提示"面板（对话里 set GameData.story_hint 后自动更新）
+func _refresh_story_hint() -> void:
+	if _story_hint_label == null:
+		return
+	var hint: String = str(GameData.story_hint)
+	if hint == _last_story_hint:
+		return
+	_last_story_hint = hint
+	if hint.strip_edges().is_empty():
+		if _story_hint_bg != null:
+			_story_hint_bg.visible = false
+		return
+	if _story_hint_bg != null:
+		_story_hint_bg.visible = true
+	_story_hint_label.text = hint
 
 
 func _on_bounty_pressed() -> void:

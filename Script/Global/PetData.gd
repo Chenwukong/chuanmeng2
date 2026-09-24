@@ -74,14 +74,14 @@ func from_enemy(row: Dictionary, base_lv: int, rank: String = "") -> void:
 		_:         aptitude = _random_aptitude()
 
 	var mul = APT_GROWTH_MUL[aptitude]
-
-	max_hp        = int(row.hp * mul);   max_mp        = int(row.get("mp", 0) * mul)
-	attack        = int(row.atk * mul)
-	magic_attack  = int(row.get("matk", row.atk) * mul)
-	defense       = int(row.def * mul)
-	magic_defense = int(row.get("mdef", int(row.def * 0.8)) * mul)
-	speed         = int(row.spd * mul)
-	skill_ids     = row.skills.duplicate()
+	var st := EnemyDB.resolve_enemy_stats(row)
+	max_hp        = int(int(st.get("hp", 0)) * mul);   max_mp = int(int(st.get("mp", 0)) * mul)
+	attack        = int(int(st.get("atk", 0)) * mul)
+	magic_attack  = int(int(st.get("matk", 0)) * mul)
+	defense       = int(int(st.get("def", 0)) * mul)
+	magic_defense = int(int(st.get("mdef", 0)) * mul)
+	speed         = int(int(st.get("spd", 0)) * mul)
+	skill_ids     = EnemyDB.resolve_enemy_skills(row)
 	was_base_path = row.get("was_base_path", "")
 
 ## 从敌人数据创建宠物（指定资质，不随机）
@@ -91,13 +91,14 @@ func from_enemy_with_apt(row: Dictionary, base_lv: int, forced_apt: Aptitude) ->
 	level = base_lv
 	aptitude = forced_apt
 	var mul = APT_GROWTH_MUL[aptitude]
-	max_hp        = int(row.hp * mul);   max_mp        = int(row.get("mp", 0) * mul)
-	attack        = int(row.atk * mul)
-	magic_attack  = int(row.get("matk", row.atk) * mul)
-	defense       = int(row.def * mul)
-	magic_defense = int(row.get("mdef", int(row.def * 0.8)) * mul)
-	speed         = int(row.spd * mul)
-	skill_ids     = row.skills.duplicate()
+	var st := EnemyDB.resolve_enemy_stats(row)
+	max_hp        = int(int(st.get("hp", 0)) * mul);   max_mp = int(int(st.get("mp", 0)) * mul)
+	attack        = int(int(st.get("atk", 0)) * mul)
+	magic_attack  = int(int(st.get("matk", 0)) * mul)
+	defense       = int(int(st.get("def", 0)) * mul)
+	magic_defense = int(int(st.get("mdef", 0)) * mul)
+	speed         = int(int(st.get("spd", 0)) * mul)
+	skill_ids     = EnemyDB.resolve_enemy_skills(row)
 	was_base_path = row.get("was_base_path", "")
 
 ## 转换为 CharacterStats（战斗中召唤用）

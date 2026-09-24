@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://u7gb3pw88qct"]
 
 [ext_resource type="Script" uid="uid://cffrs2xsu5s7f" path="res://Script/Class/SkillPopup.gd" id="1_root"]
-[ext_resource type="Texture2D" uid="uid://dogla7dqe8t0c" path="res://Graphic/UI/法术道具顶图.png" id="2_top"]
+[ext_resource type="Texture2D" uid="uid://cxwv38m3t4tfu" path="res://Graphic/UI/法术背景.png" id="2_td0dq"]
 [ext_resource type="Texture2D" uid="uid://cmb56qejeq2li" path="res://Graphic/UI/法术道具底图.png" id="3_bottom"]
 
 [node name="SkillPopup" type="CanvasLayer" unique_id=804594648]
@@ -26,14 +26,18 @@ mouse_filter = 2
 [node name="TopBg" type="TextureRect" parent="PanelWindow" unique_id=338300248]
 modulate = Color(1, 1, 1, 0.79607844)
 layout_mode = 0
-offset_right = 700.0
-offset_bottom = 230.0
+offset_left = -555.0
+offset_top = -17.0
+offset_right = 1304.5652
+offset_bottom = 594.0
+scale = Vector2(0.9554436, 1)
 mouse_filter = 2
-texture = ExtResource("2_top")
+texture = ExtResource("2_td0dq")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="BottomBg" type="TextureRect" parent="PanelWindow" unique_id=1407948301]
+visible = false
 self_modulate = Color(1, 1, 1, 0.79607844)
 layout_mode = 0
 offset_top = 230.0
@@ -46,18 +50,20 @@ stretch_mode = 5
 
 [node name="TitleLabel" type="Label" parent="PanelWindow" unique_id=1492891695]
 layout_mode = 0
-offset_left = 14.0
-offset_top = 10.0
-offset_right = 200.0
-offset_bottom = 38.0
+offset_left = 16.0
+offset_top = 26.0
+offset_right = 199.0
+offset_bottom = 54.0
 text = "✦ 选择仙术"
+horizontal_alignment = 1
 
 [node name="CloseBtn" type="Button" parent="PanelWindow" unique_id=914574405]
+self_modulate = Color(1, 1, 1, 0)
 layout_mode = 0
-offset_left = 660.0
-offset_top = 8.0
-offset_right = 690.0
-offset_bottom = 36.0
+offset_left = 687.0
+offset_top = 15.0
+offset_right = 717.0
+offset_bottom = 46.0
 mouse_filter = 2
 text = "✕"
 
@@ -91,10 +97,9 @@ autowrap_mode = 2
 
 [node name="ScrollContainer" type="ScrollContainer" parent="PanelWindow" unique_id=886811722]
 layout_mode = 0
-offset_left = 35.0
-offset_top = 259.0
-offset_right = 663.0
-offset_bottom = 512.0
+offset_top = 213.0
+offset_right = 725.0
+offset_bottom = 521.0
 mouse_filter = 2
 
 [node name="SkillGrid" type="GridContainer" parent="PanelWindow/ScrollContainer" unique_id=232060735]

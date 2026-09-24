@@ -177,10 +177,12 @@ func _ready() -> void:
 	_init_equip_db()
 	_debug_equip_belt()  # 测试：穿一件粗腰带
 	_debug_unlock_all_talents()  # 测试：全部天赋开启
+	_debug_add_all_equips()  # 测试：把全部装备加进背包
 	debug_party()
 	add_equip_to_bag(EquipData.get_named("基础符纸"))
 	add_equip_to_bag(EquipData.get_named("赦令符纸"))
-
+	add_equip_to_bag(EquipData.get_named("朱砂符纸"))
+	add_equip_to_bag(EquipData.get_named("八卦符纸"))
 # ══════════════════════════════════════════════
 # 多语言
 # ══════════════════════════════════════════════
@@ -228,10 +230,11 @@ func _init_debug_pets() -> void:
 		pet.level = 5
 		pet.aptitude = apts[i]
 		var mul = PetData.APT_GROWTH_MUL[pet.aptitude]
-		pet.max_hp = int(row.hp * mul); pet.max_mp = int(row.get("mp", 0) * mul)
-		pet.attack = int(row.atk * mul); pet.magic_attack = int(row.get("matk", row.atk) * mul)
-		pet.defense = int(row.def * mul); pet.magic_defense = int(row.get("mdef", int(row.def * 0.8)) * mul)
-		pet.speed = int(row.spd * mul); pet.skill_ids = ["普通攻击","妖术"]
+		var st := EnemyDB.resolve_enemy_stats(row)
+		pet.max_hp = int(int(st.get("hp", 0)) * mul); pet.max_mp = int(int(st.get("mp", 0)) * mul)
+		pet.attack = int(int(st.get("atk", 0)) * mul); pet.magic_attack = int(int(st.get("matk", 0)) * mul)
+		pet.defense = int(int(st.get("def", 0)) * mul); pet.magic_defense = int(int(st.get("mdef", 0)) * mul)
+		pet.speed = int(int(st.get("spd", 0)) * mul); pet.skill_ids = ["普通攻击","妖术"]
 		pet.was_base_path = row.get("was_base_path", "")
 		pet.pet_id = "debug_pet_%d" % i
 		pet_db[pet.pet_id] = pet
@@ -656,13 +659,29 @@ func remove_party_member(member_id: String) -> void:
 ## 按等级范围随机返回怪物 ID（随机遇敌用）
 ## 按等级范围随机返回怪物 ID（随机遇敌用）
 func get_random_enemy_id(min_lv: int = 1, max_lv: int = 99) -> String:
-	var candidates = EnemyDB.ENEMY_DB.filter(func(row): return row.lv >= min_lv and row.lv <= max_lv)
+	var candidates = EnemyDB.ENEMY_DB.filter(func(row):
+		var r: Vector2i = EnemyDB.enemy_lv_range(row)
+		return r.y >= min_lv and r.x <= max_lv)
 	if candidates.is_empty():
 		return EnemyDB.ENEMY_DB[0].name
 	return candidates[randi() % candidates.size()].name
 
 func is_night_time() -> bool:
 	return shichen_idx <= 2 or shichen_idx >= 9
+
+## 参战队伍中的最高等级（口径与 BattleScene 一致：pending_party 优先，其次 party_order；无参战队伍返回 0）
+func highest_party_level() -> int:
+	var ids: Array = []
+	if has_meta("pending_party"):
+		ids = get_meta("pending_party")
+	if ids.is_empty():
+		ids = party_order
+	var top := 0
+	for mid in ids:
+		var s = party_db.get(mid)
+		if s is CharacterStats:
+			top = maxi(top, int((s as CharacterStats).level))
+	return top
 
 func create_enemy(enemy_name: String) -> CharacterStats:
 	var row = _enemy_db_cache.get(enemy_name)
@@ -671,9 +690,10 @@ func create_enemy(enemy_name: String) -> CharacterStats:
 		row = _enemy_db_cache.values()[0]
 	var s = CharacterStats.new()
 	s.character_name = row.name
-	var nm := 1.3 if is_night_time() else 1.0
+	var lv := EnemyDB.roll_enemy_level(row)
+	# 总倍率 = 夜晚加成(×1.3) × 等级档倍率（EnemyDB.LEVEL_STAT_MUL，档位取总倍率，不累乘）
+	var nm := (1.3 if is_night_time() else 1.0) * EnemyDB.level_stat_mul(lv)
 	# 属性来源：敌表里显式写了该属性 → 用它；没写 → 按分类模板（arch）× 等级推导（boss 额外加成）
-	var lv := int(row.get("lv", 1))
 	var arch := str(row.get("arch", EnemyDB.DEFAULT_ARCH))
 	var d: Dictionary = EnemyDB.derive_arch_stats(arch, lv)
 	var boss_mul: float = EnemyDB.BOSS_MUL if str(row.get("rank", "")) == "boss" else 1.0
@@ -707,7 +727,7 @@ func create_enemy(enemy_name: String) -> CharacterStats:
 	s.traits  = row.get("traits", {}).duplicate()
 	s.use_png = row.get("use_png", false)
 	# 进场时随机资质（捕捉时保留）
-	s.capture_aptitude = _roll_aptitude(row.get("rank", ""), row.lv)
+	s.capture_aptitude = _roll_aptitude(row.get("rank", ""), lv)
 	return s
 
 
@@ -748,9 +768,9 @@ const SHOP_NPC_DB = {
 # value = 该档上架的命名装备 id 列表（装备在 EquipData.register_named 注册，见 _init_equip_db）
 # ══════════════════════════════════════════════
 const EQUIP_SHOP_TABLE := {
-	1:  ["青锋剑", "朴刀", "竹杖"],
-	5:  ["精钢剑", "铁骨扇", "红缨枪"],
-	10: ["寒光剑", "流星锤", "蛇形杖"],
+	1:  ["青铜短剑", "柳叶刀", "曲柳杖"],
+	5:  ["吴越剑", "精钢扇", "锯齿矛"],
+	10: ["龙泉剑", "烈焰锤", "玄铁牛角杖"],
 }
 
 ## 把一件命名装备包装成商店货架商品（找不到返回空字典）
@@ -912,7 +932,7 @@ func refund_ability_points(member_id: String) -> int:
 	if s == null: return 0
 	var total = s.alloc_hp + s.alloc_mp + s.alloc_atk + s.alloc_def + s.alloc_spd + s.alloc_magic
 	if total <= 0: return 0
-	s.max_hp = maxi(s.max_hp - (s.alloc_hp + s.alloc_magic), 1)
+	s.max_hp = maxi(s.max_hp - s.alloc_hp, 1)   # 魔力不再加气血（与加点一致）
 	s.max_mp = maxi(s.max_mp - (s.alloc_mp + s.alloc_magic), 0)
 	s.attack = maxi(s.attack - s.alloc_atk, 1)
 	s.defense = maxi(s.defense - s.alloc_def, 0)
@@ -1013,6 +1033,15 @@ func _init_inventory() -> void:
 	player_inventory.add_item(item_db["talisman_haste"], 5)
 	player_inventory.add_item(item_db["talisman_ceasefire"], 5)
 	player_inventory.add_item(item_db["talisman_revive"], 5)
+	# 测试用恢复丹药（全部，TCP/丹药；洗髓丹已在上面单独加入）
+	var all_pill_ids = [
+		"0029","0030","0031","0032","0034","0035",
+		"0041","0042","0043","0044","0045","0046","0047","0048",
+		"0049","0050","0051","0052","0074","0077","0078",
+	]
+	for pid in all_pill_ids:
+		if item_db.has(pid):
+			player_inventory.add_item(item_db[pid], 5)
 
 
 # ══════════════════════════════════════════════
@@ -1044,10 +1073,31 @@ func check_bounty_items(item_id: String, count: int) -> bool:
 func consume_bounty_items(item_id: String, count: int) -> bool:
 	return player_inventory.remove_item(item_id, count)
 
+## 装备提供的金币收益倍率（所有角色已穿装备的 gold_boost 之和；1.0 = 无加成）
+func get_gold_multiplier() -> float:
+	var total: int = 0
+	for mid in player_equipment:
+		var eq_dict: Dictionary = player_equipment.get(mid, {})
+		if not eq_dict is Dictionary:
+			continue
+		for slot_key in eq_dict:
+			var item = eq_dict[slot_key]
+			if item is Dictionary:
+				total += int(item.get("gold_boost", 0))
+	return 1.0 + float(total) / 100.0
+
+
+## 发放金币（自动应用装备金币加成），返回实际到帐数
+func add_gold(amount: int) -> int:
+	var gained: int = int(round(float(amount) * get_gold_multiplier()))
+	player_gold += gained
+	gold += gained  # 同步全局 gold 字段
+	return gained
+
+
 ## 发放金币奖励
 func give_bounty_reward(amount: int) -> void:
-	player_gold += amount
-	gold += amount  # 同步全局 gold 字段
+	add_gold(amount)
 
 ## 标记任务为已完成（不再出现）
 func complete_bounty(bounty_id: String) -> void:
@@ -1113,13 +1163,6 @@ func _register_items() -> void:
 	const SP = ItemData.ItemType.SPECIAL
 
 	var rows = [
-		# ── 回复类 ──
-		{ id = "hp_potion_s", name = "小还魂丹", icon = "🟥", type = HP, hp = 50,  desc = "恢复50点气血" },
-		{ id = "hp_potion_m", name = "中还魂丹", icon = "🔴", type = HP, hp = 120, desc = "恢复120点气血" },
-		{ id = "hp_potion_l", name = "大还魂丹", icon = "❤️", type = HP, hp = 300, desc = "恢复300点气血" },
-		{ id = "mp_potion_s", name = "小灵力石", icon = "🟦", type = MP, mp = 30,  desc = "恢复30点灵力" },
-		{ id = "mp_potion_m", name = "中灵力石", icon = "🔵", type = MP, mp = 70,  desc = "恢复70点灵力" },
-		{ id = "mp_potion_l", name = "大灵力石", icon = "💙", type = MP, mp = 150, desc = "恢复150点灵力" },
 		# ── 增益类 ──
 		{ id = "atk_pill",    name = "大力仙丹", icon = "🟡", type = BF, buff_id = "atk_up", buff_turns = 3, desc = "攻击力提升3回合" },
 		{ id = "shield_pill", name = "铁甲仙丹", icon = "🟤", type = BF, buff_id = "shield", buff_turns = 3, desc = "防御力提升3回合" },
@@ -1177,6 +1220,31 @@ func _register_items() -> void:
 		{ id = "talisman_basic",     name = "无字符", icon = "📜", tcp = "res://TCP/符咒/3290.tcp", type = SP, dmg = 0.6, hit_sound = "res://Audio/SE/法术5.ogg", desc = "主角保底符咒，无限使用（不消耗）" },
 		# ── 洗髓丹（场外道具：返还能力点）──
 		{ id = "item_xisuidan", name = "洗髓丹", tcp = "res://TCP/丹药/0677.tcp", cat = ItemData.ItemCategory.MISC, type = SP, desc = "使用后返还该角色全部已分配的能力点（在属性加点面板使用）" },
+		# ── 恢复丹药（TCP/丹药，数值待定）──
+		# ==================== HP ====================
+		{ id = "0041", name = "金创药", tcp = "res://TCP/丹药/0041.tcp", type = HP, hp = 200, desc = "用云南白药制成的疗伤药，可以止血、消毒，是常见的药品，具有补充气血的作用。【功效】恢复气血400点" },
+		{ id = "0029", name = "龙之心屑", tcp = "res://TCP/丹药/0029.tcp", type = HP, hp = 300, hp_pct = 0.20, desc = "用龙心提炼出的灵药，只在魔界存在，可以补充极大量的气血。【功效】恢复气血300点，并额外恢复最大气血20%" },
+		{ id = "0042", name = "小还丹", tcp = "res://TCP/丹药/0042.tcp", type = HP, hp = 500, desc = "载于中国古老药书《千金方》，散发着香气的紫色药丸，具有疗伤的功效。【功效】治疗伤势=品质*18+200" },
+		{ id = "0051", name = "红雪散", tcp = "res://TCP/丹药/0051.tcp", type = HP, desc = "仙家灵药，用仙家红血制成，具有补充气血、解除毒类异常状态以及恢复战斗中某些情况下损失的防御的功效。【功效】解除毒类异常状态 恢复气血=品质*4 恢复防御=品质*0.4" },
+		{ id = "0052", name = "五龙丹", tcp = "res://TCP/丹药/0052.tcp", type = HP, desc = "来自东海龙宫的珍贵药品，是用五颗龙珠凝炼的，具有补充气血和解除封类异常状态的功效（解封几率与品质相关）。若未在封类异常状态服用五龙丹，会进入睡眠状态。【功效】解除封类异常状态 恢复气血=品质*3" },
+		{ id = "0043", name = "千年保心丹", tcp = "res://TCP/丹药/0043.tcp", type = HP, desc = "用大量名贵药品，经过名师的精心加工制成的药丹，具有补充气血和疗伤的功效。【功效】恢复气血=品质*8+100 治疗伤势=品质*8+100" },
+		{ id = "0049", name = "金香玉", tcp = "res://TCP/丹药/0049.tcp", type = HP, desc = "仙子仙女常用的药物，除了可以养颜之外，服用后具有恢复气血的作用。【功效】恢复气血=品质*12+150" },
+		# ==================== MP ====================
+		{ id = "0034", name = "麝香", tcp = "res://TCP/丹药/0034.tcp", type = MP, mp = 100, desc = "仙山灵麝的麝香，是名贵的中药材，可以补充些许法力。【功效】恢复魔法100点" },
+		{ id = "0035", name = "丁香水", tcp = "res://TCP/丹药/0035.tcp", type = MP, mp = 200, desc = "从仙岛上的丁香花中精心提炼而成，可以补充些许法力。【功效】恢复魔法200点" },
+		{ id = "0032", name = "仙狐涎", tcp = "res://TCP/丹药/0032.tcp", type = MP, mp = 400, desc = "东方青丘国九尾仙狐的涎水制成的药草，可以补充些许法力。【功效】恢复魔法100点" },
+		{ id = "0031", name = "天龙水", tcp = "res://TCP/丹药/0031.tcp", type = MP, mp = 800, desc = "九天真龙的血液炼成的药物，可以补充些许法力。【功效】恢复魔法150点" },
+		{ id = "0045", name = "定神香", tcp = "res://TCP/丹药/0045.tcp", type = MP, desc = "有定神凝气的功效，名贵药物，精心炼成的丹药，具有补充法力的功效。【功效】恢复魔法=品质*5+50" },
+		{ id = "0046", name = "十香返生丸", tcp = "res://TCP/丹药/0046.tcp", type = MP, desc = "用十种仙山上奇香的药草制成，奇异的药丸，具有补充法力和解除酒类异常状态的作用。【功效】解除酒类异常状态 恢复魔法=品质*3+50" },
+		{ id = "0044", name = "风水混元丹", tcp = "res://TCP/丹药/0044.tcp", type = MP, desc = "有混元之神效，用各类名贵药品精练的丹药，具有补充法力和恢复战斗中某些情况下损失的灵力的功效。【功效】恢复魔法=品质*3+50 恢复灵力=品质*0.3" },
+		{ id = "0048", name = "蛇蝎美人", tcp = "res://TCP/丹药/0048.tcp", type = MP, desc = "魔王妖王常用的药物，具有补充法力的作用。【功效】恢复魔法=品质*5+100" },
+		{ id = "0074", name = "黑玉云苓膏", tcp = "res://TCP/丹药/0074.tcp", type = MP, desc = "用名贵药材熬制的奇妙药膏，温润如黑玉，具有补充魔法功效。【功效】从当前回合开始,持续三回合恢复目标魔法值与流失的速度。每回合恢复魔法=品质*1.5+50 每回合恢复速度=品质*0.1" },
+		{ id = "0030", name = "火凤之睛", tcp = "res://TCP/丹药/0030.tcp", type = MP, mp = 300, mp_pct = 0.20, desc = "无色界天的火凤凰的眼睛，可以补充极大量的灵力。【功效】恢复灵力300点，并额外恢复最大灵力20%" },
+		# ==================== RV ====================
+		{ id = "0078", name = "生骨续命膏", tcp = "res://TCP/丹药/0078.tcp", type = RV, desc = "用名贵中药熬制七七四十九日而成的药膏，具有补充气血、疗伤和起死回生的功效。【功效】复活、恢复目标当前气血=品质*3+50，气血上限变为品质*3+50（不超过上限）。" },
+		{ id = "0047", name = "佛光舍利子", tcp = "res://TCP/丹药/0047.tcp", type = RV, desc = "佛的舍利子具有补充气血、疗伤和起死回生的功效。【功效】复活、恢复气血=品质*3 临时气血上限变为品质*7+100" },
+		{ id = "0050", name = "九转回魂丹", tcp = "res://TCP/丹药/0050.tcp", type = RV, desc = "炼过九转的仙丹，用极为珍贵而特殊的药物制成，具有补充气血、疗伤和起死回生的功效。【功效】复活、恢复气血=品质*5+100 临时气血上限变为品质*5+100" },
+		{ id = "0077", name = "金石返魂丹", tcp = "res://TCP/丹药/0077.tcp", type = RV, desc = "传说是根据华佗遗留的药方炼制而成的丹药，具有补充气血、疗伤和起死回生的功效。【功效】复活、恢复目标当前气血=品质*2+50 气血上限变为品质*9+100（不超过上限）" },
 	]
 
 	for row in rows:
@@ -1188,7 +1256,9 @@ func _register_items() -> void:
 		d.item_type         = row.type
 		d.item_category     = row.get("cat", ItemData.ItemCategory.CONSUMABLE)
 		d.hp_restore        = row.get("hp", 0)
+		d.hp_restore_percent = row.get("hp_pct", 0.0)
 		d.mp_restore        = row.get("mp", 0)
+		d.mp_restore_percent = row.get("mp_pct", 0.0)
 		d.buff_id           = row.get("buff_id", "")
 		d.buff_turns        = row.get("buff_turns", 0)
 		d.revive_hp_percent = row.get("revive_pct", 0.0)
@@ -1197,6 +1267,9 @@ func _register_items() -> void:
 		d.book_skill_id     = row.get("book_id", "")
 		d.description       = row.desc
 		d.max_stack         = 10
+		# 宠物技能书统一图标：高级书用 3514，其余（低级）用 5159
+		if d.item_type == BOOK and d.icon_path.is_empty():
+			d.icon_path = "res://TCP/UI/3514.tcp" if d.item_name.begins_with("高级") else "res://TCP/UI/5159.tcp"
 		item_db[d.item_id]  = d
 
 	# ── 任务道具（悬赏用）──
@@ -1328,6 +1401,21 @@ func _debug_unlock_all_talents() -> void:
 			stack.append(c)
 	inst.free()
 	print("[测试] 已开启全部天赋：%d 个" % count)
+
+
+## 测试用：把全部命名装备加入背包（已存在的跳过，避免重复堆积）
+func _debug_add_all_equips() -> void:
+	var have: Dictionary = {}
+	for eq in equip_bag:
+		if eq is Dictionary:
+			have[str(eq.get("id", ""))] = true
+	var added: int = 0
+	for eid in EquipData.named_db:
+		if have.has(str(eid)):
+			continue
+		add_equip_to_bag(EquipData.get_named(str(eid)))
+		added += 1
+	print("[测试] 已加入全部装备 %d 件（背包共 %d 件）" % [added, equip_bag.size()])
 
 
 func _debug_equip_belt() -> void:

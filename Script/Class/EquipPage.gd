@@ -4,6 +4,8 @@ extends Panel
 enum ItemTab { EQUIP, CONSUMABLE, KEY_ITEM, MATERIAL }
 
 const SLOTS_PER_PAGE := 20
+const AFFIX_COLOR: String = "#ff5c5c"  # 词缀文字/数值颜色
+const HEADER_COLOR: String = "yellow"  # tooltip 分区标题颜色
 
 const SLOT_NODE_MAP := {
 	"Slot_Weapon": "武器",
@@ -22,6 +24,8 @@ var _member_id: String = ""
 var _member_ids: Array[String] = []
 var _member_idx: int = 0
 var shop_mode: bool = false  # 商店模式下双击=售卖
+var show_all_equips: bool = false  # 勾选后：背包显示"当前角色穿不上"的装备
+@onready var _toggle_wear: CheckButton = %ToggleShowAllEquip  # 显示/隐藏不可穿戴装备的开关
 
 @onready var portrait: TextureRect = %Portrait
 @onready var detail_label: Label = %DetailLabel
@@ -70,9 +74,14 @@ func _ready() -> void:
 	_tooltip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_tooltip_label.bbcode_enabled = true
 	_tooltip_label.fit_content = true
-	_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tooltip_label.custom_minimum_size = Vector2(460, 0)
 	_tooltip_label.add_theme_stylebox_override("normal", _make_tooltip_style())
 	add_child(_tooltip_label)
+	# "显示不可穿"开关（节点已在 scenes/EquipPage.tscn 里，这里只接信号）
+	if _toggle_wear != null:
+		_toggle_wear.button_pressed = show_all_equips
+		_toggle_wear.toggled.connect(_on_toggle_show_all)
 
 
 func _make_tooltip_style() -> StyleBoxFlat:
@@ -95,12 +104,26 @@ func _show_tooltip(text: String, local_pos: Vector2) -> void:
 	if _tooltip_label == null: return
 	_tooltip_label.text = text
 	_tooltip_label.position = local_pos + Vector2(20, 20)
-	_tooltip_label.reset_size()
+	# 固定宽度：字多时向下换行变高，而不是把宽度越拉越宽
+	_tooltip_label.size = Vector2(460, 0)
 	_tooltip_label.visible = true
 
 
 func _hide_tooltip() -> void:
 	if _tooltip_label: _tooltip_label.visible = false
+
+
+## 对比表的一行：左=已穿、右=未穿，中间一列是竖分割条（三列写法，最明显）
+func _row(left_cell: String, right_cell: String) -> String:
+	return "[cell bg=#20202c]%s[/cell][cell bg=#9aa0d0 padding=0]   [/cell][cell bg=#101018]%s[/cell]" % [left_cell, right_cell]
+
+
+## 对比表的右列单元：新值 + 红绿差值（suffix 传 "%" 表示百分比词缀）
+func _compare_cell(label: String, old_val: int, new_val: int, suffix: String) -> String:
+	var tag: String = "color=green"
+	if new_val < old_val: tag = "color=red"
+	elif new_val == old_val: tag = "color=gray"
+	return "%s +%d%s [%s](%+d%s)[/color]" % [label, new_val, suffix, tag, new_val - old_val, suffix]
 
 
 func _collect_item_slots() -> void:
@@ -329,9 +352,37 @@ func _switch_tab(tab: ItemTab) -> void:
 	tab_consumable.button_pressed = tab == ItemTab.CONSUMABLE
 	tab_keyitem.button_pressed = tab == ItemTab.KEY_ITEM
 	tab_material.button_pressed = tab == ItemTab.MATERIAL
+	if _toggle_wear != null:
+		_toggle_wear.visible = (tab == ItemTab.EQUIP)
 
 	_rebuild_filtered_list()
 	_render_page()
+
+
+## 勾选/取消"显示不可穿"：切回第一页并重绘背包
+func _on_toggle_show_all(on: bool) -> void:
+	show_all_equips = on
+	_current_page = 0
+	_render_page()
+
+
+## 当前角色能穿上的背包装备索引（不能穿的不在背包显示）
+## 勾选"显示不可穿"或商店模式时返回全部
+func _visible_equip_indices() -> Array:
+	var out: Array = []
+	# 商店/出售模式、或手动勾选"显示不可穿"时不过滤
+	if shop_mode or show_all_equips:
+		for i in equip_bag.size():
+			out.append(i)
+		return out
+	for i in equip_bag.size():
+		var eq: Dictionary = equip_bag[i]
+		if not (eq is Dictionary) or eq.is_empty():
+			continue
+		var sk: String = EquipData.slot_key(int(eq.get("slot", -1)))
+		if sk.is_empty() or GameData.can_equip(_member_id, eq, sk).is_empty():
+			out.append(i)
+	return out
 
 
 func _rebuild_filtered_list() -> void:
@@ -367,8 +418,10 @@ func _rebuild_filtered_list() -> void:
 
 func _render_page() -> void:
 	if _current_tab == ItemTab.EQUIP:
-		# 装备标签直接按 equip_bag 渲染，不用 _filtered_ids
-		var total_pages = maxi(1, ceili(float(equip_bag.size()) / SLOTS_PER_PAGE))
+		# 装备标签：只显示当前角色能穿上的
+		var vis: Array = _visible_equip_indices()
+		var total_pages = maxi(1, ceili(float(vis.size()) / SLOTS_PER_PAGE))
+		_current_page = clampi(_current_page, 0, total_pages - 1)
 		page_label.text = "%d/%d" % [_current_page + 1, total_pages]
 		var start_idx = _current_page * SLOTS_PER_PAGE
 
@@ -377,11 +430,11 @@ func _render_page() -> void:
 			var icon: TextureRect = _item_icons[i] if i < _item_icons.size() else null
 			if slot == null or icon == null:
 				continue
-			var idx = start_idx + i
-			if idx >= equip_bag.size():
+			var vi = start_idx + i
+			if vi >= vis.size():
 				_clear_item_slot(slot, icon)
 			else:
-				_render_equip_item(idx, slot, icon)
+				_render_equip_item(vis[vi], slot, icon)
 		return
 
 	# 材料标签：直接渲染 material_items
@@ -444,87 +497,114 @@ func _render_equip_item(idx: int, slot: Panel, icon: TextureRect) -> void:
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 
-	# 背包格 tooltip：当前装备 vs 已穿装备对比
+	# 背包格 tooltip：左=已穿，右=未穿（新）；两边格式一致，右侧数值带红绿对比
 	var lines: Array[String] = []
-	var name_str = eq.get("display_name", eq.get("name", ""))
-	var lv = eq.get("_build_level", 0)
-	if lv > 0: name_str += " +%d" % lv
-	lines.append(name_str)
-	if str(eq.get("desc", "")) != "":
-		lines.append("[color=#9fd]%s[/color]" % eq.get("desc"))
-
-	# 背包装备的基础属性
-	var base_labels = {"atk":"攻击", "dmg":"最终伤害", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度", "heal_up":"治疗量"}
-	for bk in eq.get("base", {}):
-		var val = eq.base[bk]
-		if val != 0:
-			var stat_lbl = base_labels.get(bk, bk)
-			lines.append("  %s +%d" % [stat_lbl, val])
-
-	# 武器特殊属性
+	var base_labels = {"atk":"攻击", "dmg":"伤害", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度", "heal_up":"治疗量"}
 	var special_labels = {"lifesteal":"吸血","gold_boost":"金币加成","reflect":"反弹","night_dmg":"夜战增伤","dodge":"闪避","true_dmg":"真实伤害","crit_rate":"暴击(运气)","heal_targets":"多目标治疗","threat_reduce":"减仇恨"}
-
-	if lv > 0: lines.append("  [color=#aaa]打造 +%d[/color]" % lv)
-	for sk in special_labels:
-		var sv = eq.get(sk, 0)
-		if sv > 0:
-			lines.append("  %s +%d" % [special_labels[sk], sv])
-
-	# 词缀
-	for af in eq.get("affixes", []):
-		var af_label = EquipData.affix_label(af.get("type", -1))
-		if af_label != "":
-			lines.append("  %s +%d%%" % [af_label, int(af.get("value", 0))])
-
-	# 对比已穿装备
-	var slot_key = EquipData.slot_key(eq.get("slot", -1))
+	var slot_key: String = EquipData.slot_key(eq.get("slot", -1))
+	var worn: Dictionary = {}
 	if not slot_key.is_empty():
-		var worn = equipment.get(slot_key, {})
-		if not worn.is_empty():
-			lines.append("[u]── 已穿 ──[/u]")
-			var worn_name = worn.get("display_name", worn.get("name", ""))
-			lines.append(worn_name)
-			# 合并所有属性键（已穿 + 未穿的）
-			var all_keys: Array[String] = []
-			for bk in worn.get("base", {}): all_keys.append(bk)
-			for bk in eq.get("base", {}): 
-				if not bk in all_keys: all_keys.append(bk)
-			for bk in all_keys:
-				var worn_val = worn.get("base", {}).get(bk, 0)
-				var new_val = eq.get("base", {}).get(bk, 0)
-				if worn_val == 0 and new_val == 0: continue
-				var tag = "color=green"
-				if new_val < worn_val: tag = "color=red"
-				elif new_val == worn_val: tag = "color=gray"
-				if worn_val == 0:
-					lines.append("  %s [%s]新增 +%d[/color]" % [base_labels.get(bk, bk), tag, new_val])
-				elif new_val == 0:
-					lines.append("  %s %d  [%s]失去 %d[/color]" % [base_labels.get(bk, bk), worn_val, tag, -worn_val])
-				else:
-					var diff = new_val - worn_val
-					lines.append("  %s %d → %d  [%s]%+d[/color]" % [base_labels.get(bk, bk), worn_val, new_val, tag, diff])
-			var all_affix_types: Array[int] = []
+		worn = equipment.get(slot_key, {})
+
+	var new_name: String = eq.get("display_name", eq.get("name", ""))
+	var new_lv: int = int(eq.get("_build_level", 0))
+	if new_lv > 0: new_name += " +%d" % new_lv
+
+	if worn.is_empty():
+		# 该槽位没穿装备：单列显示未穿装备
+		lines.append(new_name)
+		if str(eq.get("desc", "")) != "":
+			lines.append("[color=#9fd]%s[/color]" % eq.get("desc"))
+		lines.append("[color=%s]属性[/color]" % HEADER_COLOR)
+		for bk in eq.get("base", {}):
+			if eq.base[bk] != 0:
+				lines.append("  %s +%d" % [base_labels.get(bk, bk), eq.base[bk]])
+		for sk in special_labels:
+			if int(eq.get(sk, 0)) > 0:
+				lines.append("  %s +%d" % [special_labels[sk], int(eq.get(sk, 0))])
+		# 词缀区：与属性分开，带标题，整条显示红色
+		if not eq.get("affixes", []).is_empty():
+			lines.append("")
+			lines.append("[color=%s]词缀[/color]" % AFFIX_COLOR)
+		for af in eq.get("affixes", []):
+			var fl: String = EquipData.affix_label(af.get("type", -1))
+			if fl != "": lines.append("[color=%s]  %s +%d%%[/color]" % [AFFIX_COLOR, fl, int(af.get("value", 0))])
+	else:
+		var worn_name: String = worn.get("display_name", worn.get("name", ""))
+		var worn_lv: int = int(worn.get("_build_level", 0))
+		if worn_lv > 0: worn_name += " +%d" % worn_lv
+
+		lines.append("[table=3]")
+		lines.append(_row("[b]已穿[/b]", "[b]未穿[/b]"))
+		lines.append(_row(worn_name, new_name))
+		# 描述（缺描述时给出提示；已穿装备若没有 desc 则按 id 回库里取一次）
+		var wdesc: String = str(worn.get("desc", ""))
+		if wdesc == "" and worn.has("id"):
+			var w_named: Dictionary = EquipData.get_named(str(worn.get("id", "")))
+			if not w_named.is_empty():
+				wdesc = str(w_named.get("desc", ""))
+		var ndesc: String = str(eq.get("desc", ""))
+		if wdesc == "": wdesc = "[color=#666]（无描述）[/color]"
+		else: wdesc = "[color=#9fd]%s[/color]" % wdesc
+		if ndesc == "": ndesc = "[color=#666]（无描述）[/color]"
+		else: ndesc = "[color=#9fd]%s[/color]" % ndesc
+		lines.append(_row(wdesc, ndesc))
+		# 打造等级
+		if worn_lv > 0 or new_lv > 0:
+			lines.append(_row(
+				("打造 +%d" % worn_lv) if worn_lv > 0 else "",
+				("打造 +%d" % new_lv) if new_lv > 0 else ""))
+
+		# 基础属性（合并键，逐行；右侧带红绿差值）
+		lines.append(_row("[color=%s]属性[/color]" % HEADER_COLOR, ""))
+		var all_keys: Array[String] = []
+		for bk in worn.get("base", {}):
+			if not bk in all_keys: all_keys.append(bk)
+		for bk in eq.get("base", {}):
+			if not bk in all_keys: all_keys.append(bk)
+		for bk in all_keys:
+			var wv: int = int(worn.get("base", {}).get(bk, 0))
+			var nv: int = int(eq.get("base", {}).get(bk, 0))
+			if wv == 0 and nv == 0: continue
+			var blbl: String = base_labels.get(bk, bk)
+			lines.append(_row(
+				("%s +%d" % [blbl, wv]) if wv != 0 else "",
+				_compare_cell(blbl, wv, nv, "")))
+
+		# 武器特殊属性（逐项）
+		for sk in special_labels:
+			var wv2: int = int(worn.get(sk, 0))
+			var nv2: int = int(eq.get(sk, 0))
+			if wv2 == 0 and nv2 == 0: continue
+			lines.append(_row(
+				("%s +%d" % [special_labels[sk], wv2]) if wv2 != 0 else "",
+				_compare_cell(special_labels[sk], wv2, nv2, "")))
+
+		# 词缀（按类型合并）
+		var all_affix_types: Array[int] = []
+		for af in worn.get("affixes", []):
+			var t0: int = af.get("type", -1)
+			if not t0 in all_affix_types: all_affix_types.append(t0)
+		for af in eq.get("affixes", []):
+			var t0b: int = af.get("type", -1)
+			if not t0b in all_affix_types: all_affix_types.append(t0b)
+		# 词缀区：与属性隔开，带标题，名称显示红色
+		if not all_affix_types.is_empty():
+			lines.append(_row("", ""))
+			lines.append(_row("[color=%s]词缀[/color]" % AFFIX_COLOR, ""))
+		for t in all_affix_types:
+			var wv3: int = 0
+			var nv3: int = 0
 			for af in worn.get("affixes", []):
-				var t = af.get("type", -1)
-				if not t in all_affix_types: all_affix_types.append(t)
+				if af.get("type", -1) == t: wv3 = int(af.get("value", 0)); break
 			for af in eq.get("affixes", []):
-				var t = af.get("type", -1)
-				if not t in all_affix_types: all_affix_types.append(t)
-			for t in all_affix_types:
-				var worn_val = 0; var new_val = 0
-				for af in worn.get("affixes", []):
-					if af.get("type", -1) == t: worn_val = int(af.get("value", 0)); break
-				for af in eq.get("affixes", []):
-					if af.get("type", -1) == t: new_val = int(af.get("value", 0)); break
-				if worn_val == 0 and new_val == 0: continue
-				var af_label = EquipData.affix_label(t)
-				var tag = "color=green" if new_val > worn_val else ("color=red" if new_val < worn_val else "color=gray")
-				if worn_val == 0:
-					lines.append("  %s [%s]新增 +%d%%[/color]" % [af_label, tag, new_val])
-				elif new_val == 0:
-					lines.append("  %s [%s]失去 %d%%[/color]" % [af_label, tag, worn_val])
-				else:
-					lines.append("  %s %d%% → %d%% [%s]%+d%%[/color]" % [af_label, worn_val, new_val, tag, new_val - worn_val])
+				if af.get("type", -1) == t: nv3 = int(af.get("value", 0)); break
+			if wv3 == 0 and nv3 == 0: continue
+			var fl3: String = "[color=%s]%s[/color]" % [AFFIX_COLOR, EquipData.affix_label(t)]
+			lines.append(_row(
+				("%s +%d%%" % [fl3, wv3]) if wv3 != 0 else "",
+				_compare_cell(fl3, wv3, nv3, "%")))
+		lines.append("[/table]")
 
 	lines.append("")
 	lines.append("[color=gray]左键选中  双击装备[/color]")
@@ -731,42 +811,11 @@ func _refresh_equip_slots() -> void:
 			if lbl:
 				lbl.text = ""  # 已装备不显示名字
 
-		# 装备信息 tooltip，挂在 ClickBtn 上让鼠标悬停弹窗
+		# 装备槽 tooltip：统一由 _on_equip_slot_hovered 自定义弹窗，
+		# 这里清空系统 tooltip，避免鼠标悬停时同时弹出两个
 		var btn = slot.get_node_or_null("ClickBtn") as Button
 		if btn:
-			if eq.is_empty():
-				btn.tooltip_text = "%s（空）" % slot_key
-			else:
-				var lines: Array[String] = []
-				var name_str = eq.get("display_name", eq.get("name", ""))
-				lines.append(name_str)
-				if str(eq.get("desc", "")) != "":
-					lines.append("[color=#9fd]%s[/color]" % eq.get("desc"))
-
-				# 基础属性翻译
-				var base_labels = {"atk":"攻击", "dmg":"最终伤害", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度"}
-				for bk in eq.get("base", {}):
-					var val = eq.base[bk]
-					if val != 0:
-						var stat_lbl = base_labels.get(bk, bk)
-						lines.append("  %s +%d" % [stat_lbl, val])
-
-				# 词缀
-				for af in eq.get("affixes", []):
-					var af_label = EquipData.affix_label(af.get("type", -1))
-					if af_label != "":
-						lines.append("  %s +%d%%" % [af_label, int(af.get("value", 0))])
-
-				# 武器额外专属词条（由打造产生）
-				if slot_key == "武器":
-					for wa in eq.get("weapon_affixes", []):
-						var wlabel = EquipData.affix_label(wa.get("type", -1))
-						if wlabel != "":
-							lines.append("  ★ %s +%d%%" % [wlabel, int(wa.get("value", 0))])
-
-				lines.append("")
-				lines.append("右键卸下")
-				btn.tooltip_text = "\n".join(lines)
+			btn.tooltip_text = ""
 
 		if _selected_equip_idx >= 0 and _selected_equip_idx < equip_bag.size():
 			var selected_eq = equip_bag[_selected_equip_idx]
@@ -790,14 +839,19 @@ func _on_equip_slot_hovered(slot_key: String) -> void:
 	var name_str = eq.get("display_name", eq.get("name", ""))
 	lines.append("[b]%s[/b]" % name_str)
 	var base_labels = {"atk":"攻击", "def":"防御", "mdef":"法防", "hp":"气血", "mp":"蓝量", "spd":"速度"}
+	lines.append("[color=%s]属性[/color]" % HEADER_COLOR)
 	for bk in eq.get("base", {}):
 		var val = eq.base[bk]
 		if val != 0:
 			lines.append("  %s +%d" % [base_labels.get(bk, bk), val])
+	# 词缀区：与属性分开，带标题，显示红色
+	if not eq.get("affixes", []).is_empty():
+		lines.append("")
+		lines.append("[color=%s]词缀[/color]" % AFFIX_COLOR)
 	for af in eq.get("affixes", []):
-		var af_label = EquipData.affix_label(af.get("type", -1))
+		var af_label: String = EquipData.affix_label(af.get("type", -1))
 		if af_label != "":
-			lines.append("  %s +%d%%" % [af_label, int(af.get("value", 0))])
+			lines.append("[color=%s]  %s +%d%%[/color]" % [AFFIX_COLOR, af_label, int(af.get("value", 0))])
 	lines.append("")
 	lines.append("[color=gray]右键卸下[/color]")
 	_show_tooltip("\n".join(lines), get_local_mouse_position())
@@ -806,7 +860,9 @@ func _on_equip_slot_hovered(slot_key: String) -> void:
 func _on_item_slot_hovered(slot_index: int) -> void:
 	var idx = _current_page * SLOTS_PER_PAGE + slot_index
 	if _current_tab == ItemTab.EQUIP:
-		if idx >= equip_bag.size(): return
+		var vis: Array = _visible_equip_indices()
+		var vi = _current_page * SLOTS_PER_PAGE + slot_index
+		if vi < 0 or vi >= vis.size(): return
 		var slot = _item_slots[slot_index] if slot_index < _item_slots.size() else null
 		if slot == null: return
 		var bbcode = slot.get_meta("tooltip_bbcode", "")
@@ -910,6 +966,14 @@ func _on_item_slot_input(event: InputEvent, slot_index: int) -> void:
 			if data:
 				detail_label.text = "%s ×%d -- %s" % [data.item_name, entry.get("count", 0), data.description]
 		return
+
+	if _current_tab == ItemTab.EQUIP:
+		# 装备标签显示的是过滤后的列表，换算回背包真实索引
+		var vis: Array = _visible_equip_indices()
+		var vi = _current_page * SLOTS_PER_PAGE + slot_index
+		if vi < 0 or vi >= vis.size():
+			return
+		idx = vis[vi]
 
 	if idx >= equip_bag.size():
 		return

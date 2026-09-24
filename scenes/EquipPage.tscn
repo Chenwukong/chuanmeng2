@@ -536,6 +536,16 @@ text = "1/1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="ToggleShowAllEquip" type="CheckButton" parent="RightArea" unique_id=1487795647]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 415.0
+offset_top = 468.0
+offset_right = 555.0
+offset_bottom = 499.0
+tooltip_text = "勾选后显示当前角色穿不上的装备"
+text = "显示不可穿"
+
 [node name="NextButton" type="TextureButton" parent="RightArea" unique_id=1774645849]
 unique_name_in_owner = true
 layout_mode = 0

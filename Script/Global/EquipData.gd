@@ -63,6 +63,16 @@ static func affix_label(a: AffixType) -> String:
 		AffixType.LUCK:        return "运气"
 	return ""
 
+
+## 特殊属性键：写在 base 字典里也会被自动提到装备顶层（供战斗/结算读取），
+## 这样"基础属性 + 特殊属性"可以写在同一个字典里
+const SPECIAL_STATS: Array[String] = [
+	"lifesteal", "true_dmg", "gold_boost", "reflect", "night_dmg", "dodge",
+	"crit_rate", "crit_dmg", "heal_up", "heal_targets", "threat_reduce",
+	"penetration", "luck", "atk", "matk", "dmg",
+]
+
+
 ## 完全随机一条词缀（值和类型皆随机）
 static func random_affix() -> Dictionary:
 	var pool: Array = [
@@ -86,11 +96,12 @@ static var named_db: Dictionary = {}
 ## 注册一件命名装备（TCP 路径可为空）
 static func register_named(id: String, slot: SlotType,
 		name_str: String, base: Dictionary, tcp_path: String = "",
-		level: int = 1, affixes: Array = [], price: int = 0, desc: String = "") -> void:
+		level: int = 1, affixes: Array = [], price: int = 0, desc: String = "",
+		extra: Dictionary = {}) -> void:
 	# 武器子类型：按 TCP 子目录自动推断（res://TCP/剑/1001.tcp → "剑"），便于 can_equip 校验
-	var weapon_type := ""
+	var weapon_type: String = ""
 	if slot == SlotType.WEAPON and not tcp_path.is_empty():
-		var segs := tcp_path.split("/")
+		var segs: PackedStringArray = tcp_path.split("/")
 		if segs.size() >= 2:
 			weapon_type = segs[segs.size() - 2]
 	named_db[id] = {
@@ -106,6 +117,13 @@ static func register_named(id: String, slot: SlotType,
 		"price": price,
 		"desc": desc,
 	}
+	# base 里若混写了特殊属性（如 gold_boost/lifesteal），自动提到顶层，效果不变
+	for k in SPECIAL_STATS:
+		if base.has(k) and not named_db[id].has(k):
+			named_db[id][k] = base[k]
+	# extra 里的额外字段也挂到顶层
+	for k in extra:
+		named_db[id][k] = extra[k]
 
 ## 按 ID 取一件命名装备的副本（不影响原模板）
 static func get_named(id: String) -> Dictionary:

@@ -883,7 +883,7 @@ func _execute_talisman_attack(actor: BattleCharacter, target: BattleCharacter) -
 					if not _t.is_frozen and _tn.has_method("play_idle"):
 						_tn.play_idle()
 				, CONNECT_ONE_SHOT)
-		, self, actor, actor.stats.talisman_type, _get_talisman_texture(actor), total_dmg)
+		, self, actor, actor.stats.talisman_type, _get_talisman_texture(actor), total_dmg, all_targets)
 	while caster_nd and caster_nd.has_method("play_ranged_attack") and caster_nd._ranged_animating:
 		await get_tree().process_frame
 	_talisman_attacking = false
@@ -1402,7 +1402,7 @@ func _show_tooltip(ch: BattleCharacter) -> void:
 	if ch == null or _tooltip == null:
 		return
 	var eff_max_hp := ch.get_effective_max_hp()
-	_tooltip_labels["name"].text = ch.stats.get_display_name()
+	_tooltip_labels["name"].text = "%s  lv%d" % [ch.stats.get_display_name(), ch.stats.level]
 	_tooltip_labels["name"].add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 
 	_tooltip_labels["hp"].text = "HP: %d / %d" % [ch.current_hp, eff_max_hp]

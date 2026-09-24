@@ -192,7 +192,7 @@ func _confirm() -> void:
 	s.alloc_spd   += _tmp_spd
 	s.alloc_magic += _tmp_magic
 	s.potential_left = _potential_pool[mid]
-	s.max_hp        += _tmp_hp + _tmp_magic
+	s.max_hp        += _tmp_hp   # 魔力不再加气血（只加法攻+蓝量）
 	s.max_mp        += _tmp_mp + _tmp_magic
 	s.attack        += _tmp_atk
 	s.defense       += _tmp_def
@@ -238,7 +238,7 @@ func _refresh() -> void:
 					eq_atk += b.get("atk", 0); eq_def += b.get("def", 0)
 					eq_spd += b.get("spd", 0); eq_matk += b.get("matk", 0)
 
-	var hp := s.max_hp + eq_hp + _tmp_hp + _tmp_magic
+	var hp := s.max_hp + eq_hp + _tmp_hp
 	var mp := s.max_mp + eq_mp + _tmp_mp + _tmp_magic
 	var atk := s.attack + eq_atk + _tmp_atk
 	var df := s.defense + eq_def + _tmp_def
@@ -247,12 +247,12 @@ func _refresh() -> void:
 
 	_set_attr("名称", s.get_display_name(), Color(1, 0.85, 0.2))
 	_set_attr("等级", "%d" % s.level, Color.WHITE)
-	_set_attr("气血", "%d/%d" % [s.saved_hp if s.saved_hp > 0 else hp, hp], _green_if(_tmp_hp > 0 or _tmp_magic > 0))
+	_set_attr("气血", "%d/%d" % [s.saved_hp if s.saved_hp > 0 else hp, hp], _green_if(_tmp_hp > 0))
 	_set_attr("蓝量", "%d/%d" % [s.saved_mp if s.saved_mp > 0 else mp, mp], _green_if(_tmp_mp > 0 or _tmp_magic > 0))
 	_set_attr("升级经验", "%d" % s.exp, Color.WHITE)
 	_set_attr("所需经验", "%d" % s.exp_to_next, Color.WHITE)
 
-	_set_attr("体质", "%d" % hp, _green_if(_tmp_hp > 0 or _tmp_magic > 0))
+	_set_attr("体质", "%d" % hp, _green_if(_tmp_hp > 0))
 	_set_attr("魔力", "%d" % matk, _green_if(_tmp_matk > 0))
 	_set_attr("力量", "%d" % atk, _green_if(_tmp_atk > 0))
 	_set_attr("耐力", "%d" % df, _green_if(_tmp_def > 0))

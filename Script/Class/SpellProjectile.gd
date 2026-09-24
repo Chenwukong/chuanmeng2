@@ -10,6 +10,8 @@ var texture: Texture2D
 var talisman_type: int = 0
 var attacker: BattleCharacter = null
 var flythrough_dmg: int = 0
+var primary_target: BattleCharacter = null  # 本次攻击选定的主目标（穿透不命中它）
+var exclude_targets: Array = []  # 本次攻击的全部目标（穿透一律不命中它们）
 
 var _finished: bool = false
 var _hit_enemies: Array = []
@@ -18,10 +20,12 @@ signal hit
 
 
 func _ready():
-	if target_node and flythrough_dmg > 0:
-		var bc = target_node.get_node_or_null("BattleCharacter") as BattleCharacter
-		if bc:
-			_hit_enemies.append(bc)
+	if flythrough_dmg > 0:
+		if primary_target:
+			_hit_enemies.append(primary_target)
+		for e in exclude_targets:
+			if e is BattleCharacter and not (e in _hit_enemies):
+				_hit_enemies.append(e)
 	# 场景已自带 Sprite2D 子节点（position 0, -30），直接复用
 	var spr = get_node_or_null("Sprite2D") as Sprite2D
 	if spr == null:
@@ -73,15 +77,23 @@ func _apply_flight_damage() -> void:
 			if bm: break
 	if bm == null:
 		return
+	# 主目标（本次攻击选定的敌人）不再吃穿透，避免"打两次"
+	var main_target: BattleCharacter = primary_target
+	if main_target == null and target_node and is_instance_valid(target_node):
+		main_target = target_node.get_node_or_null("BattleCharacter") as BattleCharacter
+	var pass_hit: Dictionary = bm.pass_through_hit
 	for enemy in bm.enemies:
-		if enemy in _hit_enemies or enemy.is_dead:
+		if enemy == main_target or enemy in exclude_targets or enemy in _hit_enemies or enemy.is_dead:
 			continue
+		if pass_hit.has(enemy.get_instance_id()):
+			continue   # 本场已被穿透打过 → 不再重复
 		var enemy_node = enemy.get_parent()
 		if enemy_node == null or not is_instance_valid(enemy_node):
 			continue
 		if enemy_node.global_position.distance_squared_to(global_position) > 12000:
 			continue
 		_hit_enemies.append(enemy)
+		pass_hit[enemy.get_instance_id()] = true
 		var dmg = maxi(1, int(flythrough_dmg * 0.1))
 		enemy.take_damage(dmg, attacker)
 		enemy.sync_visual()
@@ -211,6 +223,15 @@ func _apply_talisman_effect():
 						bm._push_log("%s 被扣除 %d 点蓝量" % [target_bc.stats.get_display_name(), mp_loss], "debuff")
 
 
+## 从节点取 BattleCharacter（兼容传入“敌人父节点”或“BattleCharacter 自身”）
+static func _bc_of(node) -> BattleCharacter:
+	if node is BattleCharacter:
+		return node
+	if node and node.has_method("get_node_or_null"):
+		return node.get_node_or_null("BattleCharacter") as BattleCharacter
+	return null
+
+
 static func shoot(
 	from_pos: Vector2,
 	to_pos: Vector2,
@@ -220,7 +241,8 @@ static func shoot(
 	attacker: BattleCharacter = null,
 	talisman: int = 0,
 	icon_texture: Texture2D = null,
-	flythrough_dmg: int = 0
+	flythrough_dmg: int = 0,
+	exclude: Array = []
 ) -> Signal:
 	var p = SpellProjectile.new()
 	p.target_pos = to_pos
@@ -230,6 +252,8 @@ static func shoot(
 	p.talisman_type = talisman
 	p.attacker = attacker
 	p.flythrough_dmg = flythrough_dmg
+	p.primary_target = _bc_of(target_node_ref)
+	p.exclude_targets = exclude.duplicate()
 	from_pos.x -= 240
 	from_pos.y -= 400
 	p.global_position = from_pos

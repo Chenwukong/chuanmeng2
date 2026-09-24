@@ -11,12 +11,12 @@ extends RefCounted
 
 const CHARACTER_DB := {
 	"youxiaoyun": {
-		"name": "游霄云", "class": "战神", "elem": "无", "role": "主", "lv": 10,
+		"name": "游霄云", "class": "战神", "elem": "无", "role": "主", "lv": 100,
 		"weapons": ["符咒"],
 		"en_name": "YouXiaoYun",
-		"hp": 150, "mp": 80,  "atk": 30, "matk": 70, "def": 14, "mdef": 10, "spd": 78, "luck": 0.1,
+		"hp": 150, "mp": 80,  "atk": 30, "matk": 70, "def": 14, "mdef": 10, "spd": 10, "luck": 0.1,
 		"crit": 0.18, "crit_mult": 1.7,
-		"hp_g": 25, "mp_g": 15, "atk_g": 5, "def_g": 4, "spd_g": 5, "matk_g": 5, "mdef_g": 4,
+		"hp_g": 25, "mp_g": 15, "atk_g": 5, "def_g": 4, "spd_g": 2, "matk_g": 5, "mdef_g": 4,
 		"was_base_path": "res://WAS/游霄云/",
 		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴","神行步"],
 		"attack_sound": "res://Audio/SE/男-法术-呀.ogg", "cast_sound": "res://Audio/SE/男-法术-呀.ogg",
