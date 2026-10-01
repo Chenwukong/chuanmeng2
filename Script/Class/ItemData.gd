@@ -33,6 +33,7 @@ enum ItemCategory {
 @export var hp_restore_percent: float = 0.0 # 回复 HP 百分比
 @export var mp_restore: int = 0
 @export var mp_restore_percent: float = 0.0
+@export var cleanse_seal: bool = false      # 使用后解除封类异常状态（如五龙丹）
 @export var buff_id: String = ""          # 施加的 Buff ID
 @export var buff_turns: int = 3
 @export var revive_hp_percent: float = 0.5 # 复活时恢复 HP 百分比

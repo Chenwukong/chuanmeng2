@@ -315,10 +315,13 @@ func _run_actor_turn(actor: BattleCharacter) -> void:
 				_push_log(GameData._T("LOG_HP_REGEN") % [actor.stats.get_display_name(), actual], "heal")
 				await get_tree().create_timer(0.3).timeout
 
-	# 冰冻/虚弱检查 — 跳过回合（不 await，不占回合时间）
-	if actor.is_frozen:
-		_push_log(GameData._T("BATTLE_FROZEN") % actor.stats.get_display_name(), "system")
-		actor.sync_freeze_anim()
+	# 冰冻/催眠/失魂/虚弱检查 — 跳过回合（不 await，不占回合时间）
+	if actor.cannot_act():
+		if actor.is_frozen:
+			_push_log(GameData._T("BATTLE_FROZEN") % actor.stats.get_display_name(), "system")
+			actor.sync_freeze_anim()
+		else:
+			_push_log("%s 正在沉睡，无法行动！" % actor.stats.get_display_name(), "system")
 		actor.tick_buffs()
 		_current_actor.reset_sp()
 		_change_state(BattleState.CHECK_BATTLE_END)
@@ -335,6 +338,26 @@ func _run_actor_turn(actor: BattleCharacter) -> void:
 
 	# 正常行动前 tick buff（每回合一次，在自己的回合计数）
 	actor.tick_buffs()
+
+	# 疯魔：失去控制，随机普通攻击一名队友
+	if actor.has_buff("confuse"):
+		var conf_allies: Array = []
+		var conf_pool: Array = party if actor.is_player else enemies
+		for c in conf_pool:
+			if c != actor and not c.is_dead:
+				conf_allies.append(c)
+		if not conf_allies.is_empty():
+			var conf_victim: BattleCharacter = conf_allies[randi() % conf_allies.size()]
+			_push_log("%s 陷入疯魔，攻击了队友 %s！" % [actor.stats.get_display_name(), conf_victim.stats.get_display_name()], "system")
+			var conf_result = SkillManager.execute(actor, conf_victim, "普通攻击")
+			await _apply_skill_result(conf_result, actor, conf_victim)
+			await get_tree().create_timer(0.3).timeout
+			await _check_battle_end()
+			if state in [BattleState.BATTLE_WIN, BattleState.BATTLE_LOSE]:
+				return
+		_current_actor.reset_sp()
+		_change_state(BattleState.CHECK_BATTLE_END)
+		return
 
 	if actor.is_player:
 		# 玩家角色：切换到等待输入状态
@@ -401,6 +424,11 @@ func player_use_normal_attack(target: BattleCharacter) -> void:
 ## 使用技能
 func player_use_skill(skill_id: String, target: BattleCharacter) -> void:
 	if state != BattleState.PLAYER_TURN:
+		return
+	# 封技能：被封印时不能使用技能（仍可普通攻击）
+	if _current_actor.has_buff("silence"):
+		_push_log("【封印】%s 被封技能，无法使用技能！" % _current_actor.stats.get_display_name(), "system")
+		_play_error_sound()
 		return
 	var cd_key = _cd_key(_current_actor, skill_id)
 	# 横扫不休：跳过冷却

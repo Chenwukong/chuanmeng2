@@ -29,10 +29,15 @@ const BUFF_ICONS = {
 	"atk_down": "⬇️",
 	"poison": "☠️",
 	"freeze": "❄️",
+	"失魂": "👻",
 	"def_broken": "💢",
 	"haste": "⚡",
 	"slow": "🐢",
 	"burn": "🔥",
+	"sleep": "💤",
+	"confuse": "🌀",
+	"dmg_down": "🔻",
+	"silence": "🔒",
 }
 
 var _pending_action: Callable  = Callable()
@@ -868,12 +873,8 @@ func _execute_talisman_attack(actor: BattleCharacter, target: BattleCharacter) -
 				get_tree().create_timer(1.5).timeout.connect(func():
 					if not is_instance_valid(_tn) or not _t: return
 					if _t.is_dead: return
-					if _t.is_frozen and _is_fire:
+					if _t.has_buff("freeze") and _is_fire:
 						_t.remove_buff("freeze")
-						_t.remove_buff("frozen")
-						_t.remove_buff("冰封")
-						_t.remove_buff("失魂")
-						_t.is_frozen = false
 						_t.sync_freeze_anim()
 						var spr = _tn.get_node_or_null("Sprite2D") as Sprite2D
 						if spr:
@@ -1471,8 +1472,11 @@ func _buff_display_name(buff_id: String) -> String:
 		"mdef_up": return "魔防↑"
 		"lifesteal_up": return "吸血↑"
 		"burn": return "灼烧"
-		"freeze": return "冰冻"
+		"freeze": return "冰封"
 		"slow": return "减速"
+		"sleep": return "催眠"
+		"confuse": return "疯魔"
+		"dmg_down": return "减伤"
 		"poison": return "中毒"
 		"weakened": return "虚弱"
 		"def_broken": return "破甲"

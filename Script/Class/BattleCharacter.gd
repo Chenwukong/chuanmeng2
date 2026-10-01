@@ -412,6 +412,9 @@ func take_damage(amount: int, attacker: BattleCharacter = null) -> int:
 						show_trait_float("神佑分担")
 				break
 	_take_damage_raw(amount)
+	# 催眠：受到任何伤害立即醒来
+	if amount > 0 and has_buff("sleep"):
+		remove_buff("sleep")
 	return amount  # 返回本次“伤害量”（含真伤），供飘字/日志显示；实际扣血见血条
 
 ## 原始扣血逻辑（无无敌/分担，供内部调用避免递归）
@@ -572,14 +575,36 @@ func reset_sp() -> void:
 	_update_sp_bar()
 	sp_changed.emit(100.0, 0.0, 100.0)
 
-## 冻结类 buff ID 列表
-const FREEZE_BUFF_IDS: Array[String] = ["frozen", "freeze", "冰封", "失魂"]
-const DEBUFF_IDS: Array[String] = ["poison", "burn", "bleed", "slow", "def_broken", "mdef_broken", "atk_down", "marked", "frozen", "freeze", "冰封", "失魂", "weakened", "silence"]
+## 冻结类 buff ID 列表（冰封 + 失魂，均跳过行动）
+const FREEZE_BUFF_IDS: Array[String] = ["freeze", "失魂"]
+## 封类（控制）异常 buff：五龙丹等解封类道具会一并解除
+const SEAL_BUFF_IDS: Array[String] = ["silence", "freeze", "失魂"]
+## 新增异常：催眠(不能行动，被打醒)、疯魔(随机普攻队友)、减伤(输出降低)
+const SLEEP_BUFF_IDS: Array[String] = ["sleep"]
+const CONFUSE_BUFF_IDS: Array[String] = ["confuse"]
+const DMG_DOWN_BUFF_IDS: Array[String] = ["dmg_down"]
+## 冰封系（不含失魂）：期间双抗 +40%
+const FROZEN_ONLY_IDS: Array[String] = ["freeze"]
+const DEBUFF_IDS: Array[String] = ["poison", "burn", "bleed", "slow", "def_broken", "mdef_broken", "atk_down", "marked", "freeze", "失魂", "weakened", "silence", "sleep", "confuse", "dmg_down"]
+
+## 是否处于冰封（冻结系，不含失魂）——期间双抗 +40%
+func has_freeze_buff() -> bool:
+	for b in FROZEN_ONLY_IDS:
+		if has_buff(b):
+			return true
+	return false
+
+## 是否完全无法行动（冰封/失魂 由 is_frozen 覆盖，另含催眠）
+func cannot_act() -> bool:
+	return is_frozen or has_buff("sleep")
 
 # ─── BUFF 系统（分层叠加，max 3 层，同源不重复） ───
 const MAX_BUFF_LAYERS := 3
 ## 添加 Buff，turns=-1 表示永久，source 为技能名（空=不追踪来源）
 func add_buff(buff_id: String, turns: int, value: Variant = null, source: String = "") -> void:
+	# 失魂：最强控制，强制至少 4 回合不能操作
+	if buff_id == "失魂":
+		turns = maxi(turns, 4)
 	# 神迹：免疫/抵抗异常状态
 	if buff_id in DEBUFF_IDS:
 		if is_immune_to_debuffs():
@@ -813,7 +838,7 @@ func sync_freeze_anim() -> void:
 		# 确定是哪种封印，显示对应 debuff
 		var debuff_name := "冰封"
 		var body_color := Color(0.5, 0.6, 1.0)
-		for bid in ["失魂", "冰封", "freeze", "frozen"]:
+		for bid in ["失魂", "freeze"]:
 			if has_buff(bid):
 				debuff_name = "失魂" if bid == "失魂" else "冰封"
 				body_color = Color(0.6, 0.5, 0.9) if bid == "失魂" else Color(0.5, 0.6, 1.0)
@@ -953,6 +978,8 @@ func get_effective_attack() -> int:
 		if pet_count > 0:
 			base = int(base * (1.0 + pet_count * sw_cfg.get("atk_pct", 0.0)))
 	base = int(base * _elem_resonance_boost("atk_up") * _talent_boost("atk_up"))
+	# 减伤：物理输出降低
+	if has_buff("dmg_down"): base = int(base * clamp(get_buff_value("dmg_down") if get_buff_value("dmg_down") != null else 0.7, 0.1, 1.0))
 	return base
 
 func get_effective_magic_attack() -> int:
@@ -964,6 +991,8 @@ func get_effective_magic_attack() -> int:
 			base = int(base * bv)
 	if has_buff("atk_down"): base = int(base * (1.0 - clamp(get_buff_value("atk_down") if get_buff_value("atk_down") != null else 0.3, 0.0, 0.95)))
 	base = int(base * _elem_resonance_boost("matk_up") * _talent_boost("matk_up"))
+	# 减伤：法术输出降低
+	if has_buff("dmg_down"): base = int(base * clamp(get_buff_value("dmg_down") if get_buff_value("dmg_down") != null else 0.7, 0.1, 1.0))
 	return base
 
 func get_effective_defense() -> int:
@@ -979,6 +1008,8 @@ func get_effective_defense() -> int:
 		if pet_count > 0:
 			base = int(base * (1.0 + pet_count * sw_cfg2.get("def_pct", 0.0)))
 	base = int(base * _elem_resonance_boost("def_up") * _talent_boost("def_up"))
+	# 冰封：期间双抗 +40%
+	if has_freeze_buff(): base = int(base * 1.4)
 	return base
 
 func get_effective_magic_defense() -> int:
@@ -986,6 +1017,8 @@ func get_effective_magic_defense() -> int:
 	base = int(base * _book_mul("mdef_up"))
 	if has_buff("mdef_up"): base = int(base * clamp(get_buff_value("mdef_up") if get_buff_value("mdef_up") != null else 1.5, 1.0, 5.0))
 	if has_buff("mdef_broken"): base = int(base * (1.0 - clamp(get_buff_value("mdef_broken") if get_buff_value("mdef_broken") != null else 0.5, 0.0, 0.95)))
+	# 冰封：期间双抗 +40%
+	if has_freeze_buff(): base = int(base * 1.4)
 	return base
 
 func get_effective_speed() -> int:

@@ -64,6 +64,15 @@ func use_item(item_id: String, target: BattleCharacter) -> UseResult:
 			# 显示意图恢复量（与 MP 一致，满血也显示数字）
 			result.heal_amount = amt
 			result.log_text = "使用【%s】，恢复 %d 点气血" % [data.item_name, amt]
+			# 解除封类异常状态（如五龙丹）
+			if data.cleanse_seal:
+				var cured: Array[String] = []
+				for bid in BattleCharacter.SEAL_BUFF_IDS:
+					if target.has_buff(bid):
+						target.remove_buff(bid)
+						cured.append(bid)
+				if not cured.is_empty():
+					result.log_text += "，并解除了封类异常状态"
 
 		ItemData.ItemType.MP_POTION:
 			var amt = data.mp_restore + int(target.stats.max_mp * data.mp_restore_percent)
