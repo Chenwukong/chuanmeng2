@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="700" viewBox="0 0 240 700">
+<defs>
+ <linearGradient id="steel"><stop stop-color="#567d9d"/><stop offset=".45" stop-color="#d5f5ff"/><stop offset=".50" stop-color="#fff"/><stop offset=".53" stop-color="#8ab5d3"/><stop offset="1" stop-color="#31526f"/></linearGradient>
+ <linearGradient id="jade" x2="1" y2="1"><stop stop-color="#e8ffff"/><stop offset=".4" stop-color="#75c5df"/><stop offset="1" stop-color="#193c65"/></linearGradient>
+ <linearGradient id="silver" x2="0" y2="1"><stop stop-color="#fff"/><stop offset=".5" stop-color="#a0d1ea"/><stop offset="1" stop-color="#315980"/></linearGradient>
+</defs>
+<path d="M108 202 L132 202 L139 570 L120 680 L101 570Z" fill="#91d9ff" opacity=".20" stroke="#c0f2ff" stroke-width="12"/>
+<path d="M104 198 L136 198 L132 570 L120 670 L108 570Z" fill="url(#steel)" stroke="#d5f3ff" stroke-width="1.6"/>
+<path d="M120 215 L120 652" stroke="#fff" stroke-width="1.5"/>
+<path d="M113 253 L120 238 L127 253 L120 274Z M114 290 L120 280 L126 290 L120 305Z" fill="none" stroke="#e5fcff" stroke-width="1.2"/>
+<path d="M120 49 C104 76 108 130 108 165 L132 165 C132 130 136 76 120 49Z" fill="url(#jade)" stroke="#d3efff" stroke-width="2"/>
+<path d="M109 84 L132 96 M108 104 L132 116 M108 124 L132 136 M108 144 L132 156" stroke="#284c70" stroke-width="5"/>
+<path d="M110 81 L132 93 M108 101 L132 113 M108 121 L132 133 M108 141 L132 153" stroke="#d6edfa" stroke-width="1.5"/>
+<path d="M120 18 L139 46 L120 72 L101 46Z" fill="url(#silver)" stroke="#d6faff" stroke-width="2"/>
+<path d="M120 29 L129 46 L120 58 L111 46Z" fill="url(#jade)"/>
+<path d="M120 167 C93 180 68 178 30 153 L46 185 Q76 208 105 197 L120 218 L135 197 Q164 208 194 185 L210 153 C172 178 147 180 120 167Z" fill="url(#silver)" stroke="#def7ff" stroke-width="2"/>
+<path d="M45 169 Q78 193 106 182 M195 169 Q162 193 134 182" fill="none" stroke="#31577b" stroke-width="3"/>
+<path d="M120 173 L134 188 L120 205 L106 188Z" fill="url(#jade)" stroke="#fff"/>
+<path d="M130 60 C188 74 143 121 174 151 C153 118 207 83 130 60" fill="#b9ebff" opacity=".85"/>
+</svg>

@@ -1,0 +1,127 @@
+[gd_scene format=3 uid="uid://b347wbulu6613"]
+
+[ext_resource type="Script" path="res://Script/UI/SummonPopup.gd" id="1_root"]
+[ext_resource type="Script" path="res://Script/Assets/WASAnimationPlayer.gd" id="2_was"]
+
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowCloseButton.tscn" id="shared_close"]
+
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="theme"]
+
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="window_skin"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowTitle.tscn" id="shared_title"]
+
+[sub_resource type="StyleBoxTexture" id="summon_window"]
+texture = ExtResource("window_skin")
+content_margin_left = 18.0
+content_margin_right = 18.0
+content_margin_top = 0.0
+content_margin_bottom = 14.0
+
+[node name="SummonPopup" type="CanvasLayer" unique_id=1940227101]
+layer = 5
+script = ExtResource("1_root")
+
+[node name="Background" type="ColorRect" parent="." unique_id=517794324]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+color = Color(0, 0, 0, 0.55)
+
+[node name="Panel" type="PanelContainer" parent="." unique_id=1338021940]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -376.0
+offset_top = -228.0
+offset_right = 376.0
+offset_bottom = 228.0
+mouse_filter = 0
+theme = ExtResource("theme")
+theme_override_styles/panel = SubResource("summon_window")
+
+[node name="VBox" type="VBoxContainer" parent="Panel" unique_id=407677184]
+layout_mode = 2
+
+theme_override_constants/separation = 12
+
+[node name="TopBar" type="HBoxContainer" parent="Panel/VBox" unique_id=1577104756]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TitleInset" type="Control" parent="Panel/VBox/TopBar"]
+custom_minimum_size = Vector2(48, 0)
+mouse_filter = 2
+
+[node name="Title" parent="Panel/VBox/TopBar" unique_id=2097915221 instance=ExtResource("shared_title")]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "召唤灵宠"
+
+[node name="CloseBtn" parent="Panel/VBox/TopBar" unique_id=526652334 instance=ExtResource("shared_close")]
+layout_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="Panel/VBox" unique_id=1351791805]
+layout_mode = 2
+
+[node name="PetGrid" type="GridContainer" parent="Panel/VBox" unique_id=1095355205]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 8
+columns = 6
+
+[node name="HSeparator2" type="HSeparator" parent="Panel/VBox" unique_id=811064876]
+layout_mode = 2
+
+[node name="Detail" type="HBoxContainer" parent="Panel/VBox" unique_id=1787657598]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxLeft" type="VBoxContainer" parent="Panel/VBox/Detail" unique_id=1480797183]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Name" type="Label" parent="Panel/VBox/Detail/VBoxLeft" unique_id=877189568]
+layout_mode = 2
+
+[node name="Info" type="Label" parent="Panel/VBox/Detail/VBoxLeft" unique_id=1916011447]
+layout_mode = 2
+
+[node name="WASPreview" type="Control" parent="Panel/VBox/Detail/VBoxLeft" unique_id=1169716979]
+custom_minimum_size = Vector2(180, 106)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="Panel/VBox/Detail/VBoxLeft/WASPreview" unique_id=2113285277]
+position = Vector2(90, 66)
+
+[node name="WASAnimationPlayer" type="Node" parent="Panel/VBox/Detail/VBoxLeft/WASPreview" unique_id=942661272]
+script = ExtResource("2_was")
+target_sprite = NodePath("../Sprite2D")
+
+[node name="VBoxRight" type="VBoxContainer" parent="Panel/VBox/Detail" unique_id=1226256280]
+layout_mode = 2
+
+[node name="BtnConfirm" type="Button" parent="Panel/VBox/Detail/VBoxRight" unique_id=1099495040]
+custom_minimum_size = Vector2(124, 42)
+layout_mode = 2
+text = "召 唤 出 战"
+
+[node name="Hint" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.23, 0.33, 0.52, 1)
+text = "← → 选择灵宠    ·    Enter 召唤    ·    Esc 关闭"
+horizontal_alignment = 2
+
+[node name="PetTooltip" type="PanelContainer" parent="."]
+visible = false
+theme = ExtResource("theme")
+mouse_filter = 2
+
+[node name="Text" type="Label" parent="PetTooltip"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13

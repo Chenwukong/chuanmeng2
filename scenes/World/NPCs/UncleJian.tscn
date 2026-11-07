@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/World/Npc.tscn" id="npc"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/UncleJian-walk.png" id="walk"]
+
+[node name="坚叔" instance=ExtResource("npc")]
+scale = Vector2(0.88, 0.88)
+event_id = "childhood_UncleJian"
+npc_name = "坚叔"
+walk_sheet = ExtResource("walk")
+direction = 3
+walk_speed = 320.0
+auto_look_at_player = false
+
+[node name="Shadow(2)" parent="." index="2"]
+visible = false

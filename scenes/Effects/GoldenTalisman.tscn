@@ -1,0 +1,8 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Script/Effects/GoldenRuneGlyph.gd" id="Rune"]
+[sub_resource type="CanvasItemMaterial" id="Add"]
+blend_mode = 1
+[node name="GoldenTalisman" type="Node2D"]
+[node name="Rune" type="Node2D" parent="."]
+material = SubResource("Add")
+script = ExtResource("Rune")

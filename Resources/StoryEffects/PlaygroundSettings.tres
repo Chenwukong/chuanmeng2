@@ -1,0 +1,6 @@
+[gd_resource type="Resource" format=3 uid="uid://dn42bngbo3ris"]
+
+[ext_resource type="Script" uid="uid://be1a88ncc5tkp" path="res://Script/Tests/StoryPlaygroundSettings.gd" id="Settings"]
+
+[resource]
+script = ExtResource("Settings")

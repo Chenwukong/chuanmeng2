@@ -1,0 +1,59 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Script/UI/KeyboardHintBar.gd" id="script"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/坐标图.png" id="skin"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="font"]
+[sub_resource type="AtlasTexture" id="cloud_strip"]
+atlas = ExtResource("skin")
+region = Rect2(0, 0, 166, 27)
+[sub_resource type="StyleBoxTexture" id="hint_skin"]
+texture = SubResource("cloud_strip")
+texture_margin_left = 12.0
+texture_margin_right = 32.0
+texture_margin_top = 4.0
+texture_margin_bottom = 6.0
+content_margin_left = 14.0
+content_margin_right = 30.0
+content_margin_top = 5.0
+content_margin_bottom = 7.0
+
+[node name="KeyboardHint" type="PanelContainer"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -48.0
+offset_right = 340.0
+offset_bottom = -12.0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("hint_skin")
+script = ExtResource("script")
+
+[node name="Row" type="HBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Row"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("font")
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
+text = "操作提示"
+vertical_alignment = 1
+
+[node name="Divider" type="VSeparator" parent="Row"]
+layout_mode = 2
+mouse_filter = 2
+modulate = Color(0.67, 0.8, 0.99, 0.55)
+
+[node name="Content" type="RichTextLabel" parent="Row"]
+layout_mode = 2
+mouse_filter = 2
+fit_content = true
+scroll_active = false
+bbcode_enabled = true
+custom_minimum_size = Vector2(150, 24)
+theme_override_font_sizes/normal_font_size = 14
+theme_override_colors/default_color = Color(0.93, 0.96, 1, 1)
+text = "[color=#ffe5a0]Tab[/color] 菜单 · [color=#ffe5a0]Esc[/color] 存档"

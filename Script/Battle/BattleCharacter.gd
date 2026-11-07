@@ -1,0 +1,1379 @@
+# BattleCharacter.gd
+# BattleCharacter.gd
+# 战斗中角色的运行时状态（HP/MP 实时值、Buff 列表等）
+# 作为 fightScenePlayer 的子节点存在，直接控制头顶血条
+class_name BattleCharacter
+extends Node
+const BattleAssets := preload("res://Script/Assets/BattleAssetLoader.gd")
+
+## 基础数据引用
+var stats: CharacterStats
+var is_player: bool = false
+var member_id: String = ""  # 玩家角色 ID（用于永久存档）
+var pet_id: String = ""      # 如果是宠物，记录 pet_id
+var summoner_member_id: String = ""  # 宠物/召唤物的主人 member_id（用于统计归因）
+var trait_data: Dictionary = {}       # 特性运行时状态
+var metamorphosis_mod: float = 1.0   # 千变万化技能倍率（默认1.0，变身0.7）
+var mech_fusion: Dictionary = {}
+var mech_durability: int = 0
+var fish_bond: RefCounted = null
+var completed_actions: int = 0
+## 道具可按技能 ID 减少入场等待，不必修改技能或行动计数。
+var initial_skill_wait_reductions: Dictionary = {}
+var dice_pending_multiplier: float = 1.0
+var dice_has_pending: bool = false
+var dice_action_multiplier: float = 1.0
+
+func skill_wait_remaining(data: SkillData) -> int:
+	if data == null: return 0
+	var reduction := maxi(0, int(initial_skill_wait_reductions.get(data.skill_id, 0)))
+	reduction += maxi(0, int(equip_special.get("initial_skill_wait_reduction", 0)))
+	return maxi(0, data.initial_wait_actions - reduction - completed_actions)
+
+func begin_dice_attack() -> void:
+	dice_action_multiplier = dice_pending_multiplier if dice_has_pending else 1.0
+	# 落空保留结果；有效命中即解锁重掷，包括零伤害。
+
+func settle_dice_hit() -> void:
+	dice_has_pending = false
+	dice_pending_multiplier = 1.0
+
+## 运行时战斗状态
+var current_hp: int = 0
+var current_mp: int = 0
+var shattered: bool = false  # 被碎冰击杀，不可复活
+var last_attacker: BattleCharacter = null  # 最后一击的来源
+var equip_special: Dictionary = {}  # 武器特殊属性（吸血、反弹等）
+var hidden_blade_ready := false
+var hidden_blade_turn_open := false
+var hidden_blade_dealt_damage := false
+var hidden_blade_action_multiplier := 1.0
+
+## Buff / Debuff 列表  { buff_id: { "turns": int, "value": Variant } }
+var buffs: Dictionary = {}
+
+## 状态标记
+var is_dead: bool = false
+var is_frozen: bool = false  # 冰冻：跳过本回合
+var is_weakened: bool = false  # 虚弱：跳过本回合（横扫千军后触发）
+var killed_by_fire: bool = false  # 被火焰击杀标记
+var is_summoned_pet: bool = false  # 战斗中召唤出的宠物
+var consecutive_turns: int = 0  # 连续行动次数（连续衰减用）
+
+## 技能列表（skill_ids 来自 stats）
+var book_skills: Array[String] = []  # 被动书技能（战斗中用）
+
+## 运行时 SP（行动条 0~100）
+var current_sp: float = 0.0
+
+## 信号（供 UI 中的状态卡监听）
+signal hp_changed(old_val: int, new_val: int, max_val: int)
+signal mp_changed(old_val: int, new_val: int, max_val: int)
+signal sp_changed(old_val: float, new_val: float, max_val: float)
+signal buff_added(buff_id: String)
+signal buff_removed(buff_id: String)
+signal died
+signal revived
+
+## 头顶 UI（兄弟节点，setup 后才可用）
+var _hp_bar:      TextureProgressBar = null
+var _mp_bar:      TextureProgressBar = null
+var _sp_bar:      TextureProgressBar = null
+var _name_label:  Label       = null
+var _hp_tween_node: Node
+var _mp_tween_node: Node
+var _shield_hp: int = 0
+var _shield_bar: TextureProgressBar = null
+
+# ─────────────────────────────────────────────
+func setup(character_stats: CharacterStats, for_player: bool = false) -> void:
+	hidden_blade_ready = false
+	hidden_blade_turn_open = false
+	hidden_blade_dealt_damage = false
+	hidden_blade_action_multiplier = 1.0
+	completed_actions = 0
+	initial_skill_wait_reductions.clear()
+	dice_has_pending = false
+	dice_pending_multiplier = 1.0
+	dice_action_multiplier = 1.0
+	stats = character_stats.duplicate_for_battle()
+	is_player = for_player
+	book_skills = stats.book_skills.duplicate()
+	trait_data = stats.traits.duplicate()
+	_apply_talent_boosts()
+	# 废物觉醒：80级后解锁技能
+	if trait_data.has("废物") and stats.level >= trait_data["废物"].get("break_lv", 80):
+		var aw = trait_data["废物"].get("awaken_skills", [])
+		for sk in aw:
+			if sk not in stats.skill_ids:
+				stats.skill_ids.append(sk)
+	current_hp = stats.saved_hp if stats.saved_hp > 0 else get_effective_max_hp()
+	current_hp = mini(current_hp, get_effective_max_hp())
+	current_mp = stats.saved_mp if stats.saved_mp > 0 else get_effective_max_mp()
+	current_mp = mini(current_mp, get_effective_max_mp())
+
+	# 初始化专用 tween 容器（避免 HP/MP 互相覆盖）
+	if not _hp_tween_node:
+		_hp_tween_node = Node.new(); _hp_tween_node.name = "HPTween"
+		add_child(_hp_tween_node)
+	if not _mp_tween_node:
+		_mp_tween_node = Node.new(); _mp_tween_node.name = "MPTween"
+		add_child(_mp_tween_node)
+
+	# 找兄弟节点上的头顶 UI（英雄和敌人结构一致）
+	var parent = get_parent()
+	if parent == null: return
+	_hp_bar     = parent.get_node_or_null("WorldUI/HPBar") as TextureProgressBar
+	_mp_bar     = parent.get_node_or_null("WorldUI/MPBar") as TextureProgressBar
+	_sp_bar     = parent.get_node_or_null("WorldUI/SPBar") as TextureProgressBar
+	_name_label = parent.get_node_or_null("WorldUI/NameLabel")
+	if _hp_bar:
+		_hp_bar.max_value = get_effective_max_hp()
+		_hp_bar.value     = current_hp
+	if _mp_bar:
+		_mp_bar.max_value = get_effective_max_mp()
+		_mp_bar.value     = current_mp
+	if _sp_bar:
+		_sp_bar.max_value = 100
+		_sp_bar.value     = current_sp
+	if _name_label:
+		_name_label.text = stats.get_display_name()
+	if _hp_bar:
+		_hp_bar.tooltip_text = "HP: %d/%d" % [current_hp, get_effective_max_hp()]
+
+	# 查找场景中已有的 ShieldBar
+	_shield_bar = parent.get_node_or_null("WorldUI/ShieldBar") as TextureProgressBar
+
+	# 加载 WAS 动画
+	if not stats.was_base_path.is_empty():
+		var was = parent.get_node_or_null("WASAnimationPlayer") as WASAnimationPlayer
+		if was:
+			was.direction = stats.was_direction
+			if stats.was_base_path.trim_suffix("/") == "res://WAS/游霄云":
+				was.set_dye("res://Resources/Dye/游霄云白衣/{file}.wpal", _white_clothes_choices())
+			_register_was_anims(was, stats.was_base_path)
+		# 检测武器 WAS
+		if parent.has_method("setup_weapon"):
+			parent.setup_weapon(stats.was_base_path)
+	# 检测 PNG/WAS 模式（自动检测 PNG 节点是否有匹配动画）
+	if parent.has_method("set_png_mode"):
+		parent.set_png_mode(stats.use_png)
+
+	# 加载角色专属攻击音效
+	if not stats.attack_sound_path.is_empty():
+		var audio = parent.get_node_or_null("Audio_Attack") as AudioStreamPlayer
+		if audio and ResourceLoader.exists(stats.attack_sound_path):
+			audio.stream = load(stats.attack_sound_path)
+
+	# 加载角色专属施法音效（喊声）
+	if not stats.cast_sound_path.is_empty():
+		var audio = parent.get_node_or_null("Audio_Cast") as AudioStreamPlayer
+		if audio and ResourceLoader.exists(stats.cast_sound_path):
+			audio.stream = load(stats.cast_sound_path)
+
+	# 加载 Debuff/Buff 精灵帧
+	_load_debuff_frames(parent)
+	_load_buff_frames(parent)
+	_load_spell_frames(parent)
+	# 点天灯：如果有灯天赋则创建灯笼控制器
+	if trait_data.has("点天灯"):
+		var lantern = parent.get_node_or_null("LanternDisplay") as LanternDisplay
+		if lantern == null:
+			lantern = LanternDisplay.new()
+			lantern.name = "LanternDisplay"
+			parent.add_child(lantern)
+
+
+var _debuff_container: Node2D = null  # debuff.tscn 实例
+var _debuff_children: Dictionary = {}  # name -> AnimatedSprite2D
+
+func _load_debuff_frames(parent: Node) -> void:
+	var scene = BattleAssets.cached_scene("res://scenes/Battle/debuff.tscn")
+	if scene == null: return
+	# 删掉旧的 DebuffSprite
+	var old = parent.get_node_or_null("DebuffSprite")
+	if old: old.queue_free()
+	# 实例化新的
+	_debuff_container = scene.instantiate() as Node2D
+	_debuff_container.name = "DebuffSprite"
+	_debuff_children.clear()
+	for child in _debuff_container.get_children():
+		if child is AnimatedSprite2D:
+			_debuff_children[child.name] = child
+			child.visible = false
+	parent.add_child(_debuff_container)
+
+
+func _load_buff_frames(parent: Node) -> void:
+	var scene = BattleAssets.cached_scene("res://scenes/Battle/buff.tscn")
+	if scene == null: return
+	# 移除旧 BuffSprite（先移出树避免同名冲突，再释放）
+	var old = parent.get_node_or_null("BuffSprite")
+	if old:
+		parent.remove_child(old)
+		old.queue_free()
+	var template = scene.instantiate()
+	template.name = "BuffSprite"
+	parent.add_child(template)
+	# 默认隐藏整个 BuffSprite 容器及所有图标
+	template.visible = false
+	for c in template.get_children():
+		if c is AnimatedSprite2D:
+			c.visible = false
+
+
+func _load_spell_frames(parent: Node) -> void:
+	var scene = BattleAssets.cached_scene("res://scenes/Battle/animation.tscn")
+	if scene == null:
+		print("[_load_spell_frames] scene load FAILED")
+		return
+	# 替换旧的 Animation 节点
+	var old = parent.get_node_or_null("Animation")
+	if old: old.queue_free()
+	var template = scene.instantiate()
+	template.name = "Animation"
+	parent.add_child(template)
+	# 验证星火篆子节点
+	var check = template.get_node_or_null("星火篆") as AnimatedSprite2D
+
+
+## 显示 Debuff 动画（"冰封"/"虚弱"等）
+func show_debuff(anim_name: String, persistent: bool = false) -> void:
+	if _debuff_container == null: return
+	if not persistent and _debuff_container.get_meta("persistent_debuff", false):
+		return
+	_debuff_container.set_meta("persistent_debuff", persistent)
+	_debuff_container.visible = true
+	for c in _debuff_children.values():
+		c.visible = false
+		c.stop()
+	var target = _debuff_children.get(anim_name)
+	if target:
+		target.visible = true
+		target.play()
+
+func hide_debuff() -> void:
+	if _debuff_container == null: return
+	_debuff_container.set_meta("persistent_debuff", false)
+	for c in _debuff_children.values():
+		c.visible = false
+		c.stop()
+	_debuff_container.visible = false
+
+func play_spell_effect(anim_name: String) -> void:
+	var parent = get_parent()
+	if parent == null:
+		print("[play_spell_effect] parent null for ", anim_name)
+		return
+	# 懒加载：如果 Animation 节点不存在，现场创建
+	if not parent.has_node("Animation"):
+		print("[play_spell_effect] Animation missing on parent=%s, loading now..." % parent.name)
+		_load_spell_frames(parent)
+	var ss = parent.get_node_or_null("Animation/%s" % anim_name) as AnimatedSprite2D
+	if ss == null:
+		print("[play_spell_effect] node not found: Animation/%s (parent=%s)" % [anim_name, parent.name])
+		return
+	if ss.sprite_frames == null:
+		print("[play_spell_effect] sprite_frames null for ", anim_name)
+		return
+	print("[play_spell_effect] playing ", anim_name, " frames=", ss.sprite_frames.get_frame_count("default"))
+	ss.stop()
+	ss.frame = 0
+	# 动画名不一定是 "default"（如吃紫），用节点自身配置的动画名兜底
+	var play_anim := "default"
+	if ss.sprite_frames.has_animation("default"):
+		ss.sprite_frames.set_animation_loop("default", false)
+	elif ss.animation != "" and ss.sprite_frames.has_animation(ss.animation):
+		play_anim = ss.animation
+		ss.sprite_frames.set_animation_loop(ss.animation, false)
+	else:
+		print("[play_spell_effect] no playable animation for ", anim_name)
+		return
+	ss.visible = true
+	ss.play(play_anim)
+	await ss.animation_finished
+	ss.visible = false
+	print("[play_spell_effect] finished ", anim_name)
+
+## 同时播放两个法术特效（金刚护法 + 一苇渡江），调用方无需 await
+func play_dual_spell_effect() -> void:
+	var parent = get_parent()
+	if parent == null: return
+	var ss1 = parent.get_node_or_null("Animation/金刚护法") as AnimatedSprite2D
+	var ss2 = parent.get_node_or_null("Animation/一苇渡江") as AnimatedSprite2D
+	if ss1 == null or ss2 == null: return
+	if not ss1.sprite_frames or not ss2.sprite_frames: return
+	# 播放
+	var has_jg = ss1.sprite_frames.has_animation("default")
+	var has_yw = ss2.sprite_frames.has_animation("default")
+	if has_jg:
+		ss1.stop()
+		ss1.sprite_frames.set_animation_loop("default", false)
+		ss1.visible = true
+		ss1.play("default")
+	if has_yw:
+		ss2.sprite_frames.set_animation_loop("default", false)
+		ss2.visible = true
+		ss2.play("default")
+	# 用 Timer 等两个都播完（避免 animation_finished 信号竞态）
+	var max_frames := 0
+	if has_jg:
+		max_frames = maxi(max_frames, ss1.sprite_frames.get_frame_count("default"))
+	if has_yw:
+		max_frames = maxi(max_frames, ss2.sprite_frames.get_frame_count("default"))
+	var duration := maxi(0.5, float(max_frames) / 15.0)
+	await get_tree().create_timer(duration).timeout
+	ss1.visible = false
+	ss2.visible = false
+
+## 特性触发红字飘字：从角色身上浮起再消失
+func show_trait_float(trait_name: String) -> void:
+	var parent = get_parent()
+	if parent == null: return
+	var lbl := Label.new()
+	lbl.text = trait_name
+	lbl.add_theme_color_override("font_color", "purple")
+	lbl.add_theme_font_size_override("font_size", 30)
+	lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.position = Vector2(-40, -70)
+	lbl.size = Vector2(80, 30)
+	parent.add_child(lbl)
+	var tw := lbl.create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tw.tween_property(lbl, "position:y", lbl.position.y - 50, 1)
+	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 1.5)
+	tw.tween_callback(lbl.queue_free)
+
+func show_buff(anim_name: String) -> void:
+	var parent = get_parent()
+	if parent == null: return
+	var bs_container = parent.get_node_or_null("BuffSprite")
+	if bs_container == null: return
+	bs_container.visible = true
+	# 只点亮目标动画，不隐藏其他 buff 动画（多个 buff 可同时显示）
+	var child = bs_container.get_node_or_null(anim_name)
+	if child and child is AnimatedSprite2D:
+		child.visible = true
+		if child.sprite_frames and child.sprite_frames.has_animation(child.name):
+			child.play(child.name)
+		elif child.sprite_frames and child.sprite_frames.has_animation("default"):
+			child.play("default")
+		else:
+			child.play()
+
+## 施法完毕后触发 debuff 视觉（动画已完成）
+func apply_debuff_visual(buff_id: String) -> void:
+	if buff_id in FREEZE_BUFF_IDS:
+		sync_freeze_anim()
+	elif buff_id == "weakened":
+		show_debuff("虚弱")
+
+## 刷新所有 debuff 视觉（动画完成后调用）
+func refresh_debuff_visuals() -> void:
+	if is_frozen:
+		sync_freeze_anim()
+	if is_weakened:
+		show_debuff("虚弱")
+
+
+func hide_buff() -> void:
+	var parent = get_parent()
+	if parent == null: return
+	var bs = parent.get_node_or_null("BuffSprite")
+	if bs == null: return
+	# 还有其他 buff 则刷新显示，全部清空才隐藏
+	if buffs.is_empty():
+		bs.visible = false
+	else:
+		_refresh_buff_icon()
+
+
+## 按约定文件名注册动画
+func _register_was_anims(was: WASAnimationPlayer, base_path: String) -> void:
+	var dir = DirAccess.open(base_path)
+	if dir == null:
+		return
+	# 尝试中/英文文件名，优先中文
+	var anim_names = {
+		"idle":   ["待机", "idle"],
+		"attack": ["攻击", "attack"],
+		"hit":    ["挨打", "hit"],
+		"die":    ["死亡", "die"],
+		"cast":   ["施法", "cast"],
+		"defend": ["防御", "defend"],
+		"move":   ["移动", "move", "行走", "walk"],
+	}
+	for anim_name in anim_names:
+		for candidate in anim_names[anim_name]:
+			var full = base_path.path_join(candidate + ".was")
+			if FileAccess.file_exists(full):
+				was.add_anim(anim_name, full)
+				break
+	was.load_all()
+	# 默认播放 idle
+	was.play("idle")
+
+# ─── HP / MP ─────────────────────────────────
+## 神佑世人：分担比例（存到 bearer 上的 share_pct）
+var ally_refs: Array = []  # 战斗中的队友列表（BattleManager 初始化时设置）
+var last_hit_target: String = ""  # 上次攻击的目标 key（弱点击破：连续打同一目标伤害 x2）
+
+## 受击入口：无敌免疫 + 神佑世人分担队友伤害
+func take_damage(amount: int, attacker: BattleCharacter = null, dodge_checked: bool = false) -> int:
+	if not dodge_checked and (amount > 0 or (attacker != null and attacker.get_true_dmg() > 0)) and preload("res://Script/Battle/AccessoryEffects.gd").try_evade(self):
+		return 0
+	# 无敌（不灭金身）：免疫所有伤害
+	if has_buff("invincible"):
+		return 0
+	# 真实伤害：攻击者的武器 atk + 打造 true_dmg 额外附加（穿防、不乘倍率；仍走护盾/闪避/无敌规则）
+	if attacker != null and attacker != self and not attacker.is_dead:
+		var true_dmg := attacker.get_true_dmg()
+		if true_dmg > 0:
+			amount += true_dmg
+	# 神佑世人：找存活队友中带此天赋者分担伤害（自己除外，不递归）
+	if not ally_refs.is_empty():
+		for ally in ally_refs:
+			if ally == self or ally.is_dead:
+				continue
+			var cfg = ally.trait_data.get("神佑世人", {})
+			if cfg is Dictionary and not cfg.is_empty():
+				var share_pct: float = cfg.get("share_pct", 0.3)
+				if share_pct > 0.0:
+					var shared = maxi(1, int(amount * share_pct))
+					amount -= shared
+					# 神天兵无敌时：分担依然生效（队友少扣），但自己免疫那部分伤害
+					if not ally.has_buff("invincible"):
+						ally._take_damage_raw(shared)
+					if ally.has_method("show_trait_float"):
+						ally.show_trait_float("神佑")
+					if has_method("show_trait_float"):
+						show_trait_float("神佑分担")
+				break
+	_take_damage_raw(amount, true)
+	# 催眠：受到任何伤害立即醒来
+	if amount > 0 and has_buff("sleep"):
+		remove_buff("sleep")
+	return amount  # 返回本次“伤害量”（含真伤），供飘字/日志显示；实际扣血见血条
+
+## 原始扣血逻辑（无无敌/分担，供内部调用避免递归）
+func _take_damage_raw(amount: int, dodge_checked: bool = false, bypass_bond: bool = false) -> int:
+	# 分担伤害等直接扣血入口也支持闪避，正常伤害不会在此重复抽取。
+	if amount > 0 and not dodge_checked and preload("res://Script/Battle/AccessoryEffects.gd").try_evade(self):
+		return 0
+	var old = current_hp
+	if mech_durability > 0:
+		var absorbed := mini(mech_durability, amount)
+		mech_durability -= absorbed
+		amount -= absorbed
+		if mech_durability == 0:
+			preload("res://Script/Battle/MechFusion.gd").leave(self)
+			show_trait_float("机甲破损")
+		elif _shield_bar:
+			_shield_bar.value = mini(get_effective_max_hp(), get_shield())
+	# 护盾优先吸收伤害
+	if _shield_hp > 0:
+		var shield_absorb = mini(_shield_hp, amount)
+		_shield_hp -= shield_absorb
+		amount -= shield_absorb
+		# 更新护盾条
+		if _shield_bar:
+			var tw = _hp_tween_node.create_tween().set_ease(Tween.EASE_OUT)
+			tw.tween_property(_shield_bar, "value", float(_shield_hp), 0.25)
+			if get_shield() <= 0:
+				_shield_bar.visible = false
+	var next_hp := maxi(0, current_hp - amount)
+	if next_hp == 0 and current_hp > 0 and not bypass_bond and fish_bond != null and fish_bond.prevent_death(self):
+		next_hp = 1
+	current_hp = next_hp
+	hp_changed.emit(old, current_hp, get_effective_max_hp())
+	_tween_hp_bar()
+	_update_hp_tooltip()
+	if current_hp == 0 and not is_dead:
+		preload("res://Script/Battle/MechFusion.gd").leave(self, false)
+		is_dead = true
+		GameData.death_hit_stop(stats.rank == "boss")
+		died.emit()
+	return old - current_hp  # 实际扣血量
+
+func heal(amount: int) -> int:
+	var old = current_hp
+	var eff_max = get_effective_max_hp()
+	current_hp = mini(eff_max, current_hp + amount)
+	hp_changed.emit(old, current_hp, eff_max)
+	_tween_hp_bar()
+	_update_hp_tooltip(eff_max)
+	if old == 0 and current_hp > 0:
+		if shattered:
+			# 碎冰击杀不可复活，强制保持死亡
+			is_dead = true
+			current_hp = 0
+			return 0
+		is_dead = false
+		revived.emit()
+	return current_hp - old  # 实际回复量
+
+func use_mp(amount: int) -> bool:
+	if current_mp < amount:
+		return false
+	current_mp -= amount
+	_tween_mp_bar()
+	return true
+
+func restore_mp(amount: int) -> void:
+	current_mp = mini(get_effective_max_mp(), current_mp + amount)
+	_tween_mp_bar()
+
+## 动画结束后统一同步视觉（头顶条 + 面板信号）
+func sync_visual() -> void:
+	var eff_max_hp = get_effective_max_hp()
+	_update_hp_bar()
+	_update_mp_bar()
+	# 同步护盾条
+	if _shield_bar:
+		_shield_bar.max_value = eff_max_hp
+		_shield_bar.value = mini(eff_max_hp, get_shield())
+		_shield_bar.visible = get_shield() > 0
+	# 更新血条 tooltip
+	_update_hp_tooltip(eff_max_hp)
+	# 面板通过信号同步，但不要覆盖头顶正在跑的 tween
+	hp_changed.emit(current_hp, current_hp, eff_max_hp)
+	mp_changed.emit(current_mp, current_mp, get_effective_max_mp())
+
+
+## 更新血条 tooltip 显示 HP 和护盾信息
+func _update_hp_tooltip(eff_max: int = -1) -> void:
+	if _hp_bar == null:
+		return
+	if eff_max < 0:
+		eff_max = get_effective_max_hp()
+	if get_shield() > 0:
+		_hp_bar.tooltip_text = "HP: %d/%d  🛡️%d" % [current_hp, eff_max, get_shield()]
+		if not mech_fusion.is_empty(): _hp_bar.tooltip_text += "\n机甲耐久：%d" % mech_durability
+	else:
+		_hp_bar.tooltip_text = "HP: %d/%d" % [current_hp, eff_max]
+
+
+## 设置护盾值（白色护盾条，优先吸收伤害）
+func set_shield(amount: int) -> void:
+	_shield_hp = maxi(0, amount)
+	if _shield_bar:
+		var eff_max = get_effective_max_hp()
+		_shield_bar.max_value = eff_max
+		var tw = _hp_tween_node.create_tween().set_ease(Tween.EASE_OUT)
+		tw.tween_property(_shield_bar, "value", mini(eff_max, float(get_shield())), 0.25)
+		_shield_bar.visible = get_shield() > 0
+	_update_hp_tooltip()
+
+
+func get_shield() -> int:
+	return _shield_hp + mech_durability
+
+func _update_hp_bar() -> void:
+	if _hp_bar:
+		_hp_bar.max_value = get_effective_max_hp()
+
+## 平滑 tween 血条数值变化（加血/扣血/扣蓝/回蓝）
+func _tween_hp_bar() -> void:
+	if not _hp_bar: return
+	var tw = _hp_tween_node.create_tween().set_ease(Tween.EASE_OUT)
+	tw.tween_property(_hp_bar, "value", float(current_hp), 0.25)
+
+func _tween_mp_bar() -> void:
+	if not _mp_bar: return
+	var tw = _mp_tween_node.create_tween().set_ease(Tween.EASE_OUT)
+	tw.tween_property(_mp_bar, "value", float(current_mp), 0.25)
+
+
+## 播放加血上限的胀缩动画（变大 → 暂停 → 更新上限 → 缩小）
+func play_hp_up_effect() -> void:
+	if not _hp_bar: return
+	var orig_scale = _hp_bar.scale
+	var tw = create_tween().set_ease(Tween.EASE_OUT)
+	tw.tween_property(_hp_bar, "scale", Vector2(1.8, 1.5), 0.2)
+	await tw.finished
+	await get_tree().create_timer(0.1).timeout
+	# 此时更新血条上限（视觉上在极限大小处生效）
+	sync_visual()
+	tw = create_tween().set_ease(Tween.EASE_IN)
+	tw.tween_property(_hp_bar, "scale", orig_scale, 0.3)
+
+func _update_mp_bar() -> void:
+	if _mp_bar:
+		_mp_bar.max_value = get_effective_max_mp()
+
+func _update_sp_bar() -> void:
+	if _sp_bar:
+		_sp_bar.value = current_sp
+
+## SP 行动条积累，返回是否已满（>=100）
+func accumulate_sp(delta: float) -> bool:
+	if is_dead:
+		return false
+	# 已满 = 等待行动，不再积累但仍报告 ready
+	if current_sp >= 100.0:
+		return true
+	var old = current_sp
+	var rate = 5.0 + get_effective_speed() * 0.8  # 速度越快积累越快
+	# 连续行动衰减：第二回合 -20%，第三回合 -40%，以此类推
+	if consecutive_turns > 1:
+		rate *= maxf(0.2, 1.0 - 0.2 * (consecutive_turns - 1))
+	current_sp += rate * delta
+	if current_sp > 100.0:
+		current_sp = 100.0
+	sp_changed.emit(old, current_sp, 100.0)
+	_update_sp_bar()
+	return current_sp >= 100.0
+
+## 回合开始时清零 SP
+func reset_sp() -> void:
+	current_sp = 0.0
+	_update_sp_bar()
+	sp_changed.emit(100.0, 0.0, 100.0)
+
+## 冻结类 buff ID 列表（冰封 + 失魂，均跳过行动）
+const FREEZE_BUFF_IDS: Array[String] = ["freeze", "失魂"]
+## 封类（控制）异常 buff：五龙丹等解封类道具会一并解除
+const SEAL_BUFF_IDS: Array[String] = ["silence", "freeze", "失魂"]
+## 新增异常：催眠(不能行动，被打醒)、疯魔(随机普攻队友)、减伤(输出降低)
+const SLEEP_BUFF_IDS: Array[String] = ["sleep"]
+const CONFUSE_BUFF_IDS: Array[String] = ["confuse"]
+const DMG_DOWN_BUFF_IDS: Array[String] = ["dmg_down"]
+## 冰封系（不含失魂）：期间双抗 +40%
+const FROZEN_ONLY_IDS: Array[String] = ["freeze"]
+const DEBUFF_IDS: Array[String] = ["poison", "burn", "bleed", "slow", "def_broken", "mdef_broken", "atk_down", "marked", "freeze", "失魂", "weakened", "silence", "sleep", "confuse", "dmg_down"]
+
+## 是否处于冰封（冻结系，不含失魂）——期间双抗 +40%
+func has_freeze_buff() -> bool:
+	for b in FROZEN_ONLY_IDS:
+		if has_buff(b):
+			return true
+	return false
+
+## 是否完全无法行动（冰封/失魂 由 is_frozen 覆盖，另含催眠）
+func cannot_act() -> bool:
+	return is_frozen or has_buff("sleep")
+
+# ─── BUFF 系统（分层叠加，max 3 层，同源不重复） ───
+const MAX_BUFF_LAYERS := 3
+## 添加 Buff，turns=-1 表示永久，source 为技能名（空=不追踪来源）
+func add_buff(buff_id: String, turns: int, value: Variant = null, source: String = "", instigator: BattleCharacter = null) -> void:
+	if preload("res://Script/Battle/AccessoryEffects.gd").blocks_debuff(self, buff_id, instigator):
+		preload("res://Script/Battle/AccessoryEffects.gd").notify_immunity(self, buff_id)
+		return
+	# 失魂：最强控制，强制至少 4 回合不能操作
+	if buff_id == "失魂":
+		turns = maxi(turns, 4)
+	# 神迹：免疫/抵抗异常状态
+	if buff_id in DEBUFF_IDS:
+		if is_immune_to_debuffs():
+			return
+		var resist = get_debuff_resist_chance()
+		if resist > 0 and randf() < resist:
+			return
+	# Boss 免疫灼烧
+	if buff_id == "burn" and stats.rank == "boss":
+		return
+	# Boss 免疫中毒（毒刺等）
+	if buff_id == "poison" and stats.rank == "boss":
+		return
+	# Boss 免疫封印（似玉生香）
+	if buff_id == "silence" and stats.rank == "boss":
+		return
+	if not buffs.has(buff_id):
+		buffs[buff_id] = { "layers": [] }
+	var layers: Array = buffs[buff_id]["layers"]
+	# 同源刷新回合，不新增
+	if not source.is_empty():
+		for l in layers:
+			if l.get("source", "") == source:
+				l["turns"] = maxi(l["turns"], turns)
+				# 重复施放割喉之战时刷新视觉效果
+				if buff_id == "marked":
+					_show_marked_effect()
+				return
+	# 已达最大层数
+	if layers.size() >= MAX_BUFF_LAYERS:
+		return
+	layers.append({ "source": source, "turns": turns, "value": value, "instigator_id": instigator.get_instance_id() if instigator else 0 })
+	buff_added.emit(buff_id)
+
+	if buff_id in FREEZE_BUFF_IDS:
+		is_frozen = true
+	if buff_id == "poison":
+		# 视觉由 BattleManager 在技能动画完成后触发（毒刺等，避免动画未播完就显示）
+		pass
+	if buff_id == "marked":
+		# 视觉效果由 BattleManager 在技能动画完成后触发
+		pass
+	if buff_id == "invincible":
+		_apply_invincible_visual(true)
+	# 持续 buff 图标立即显示；debuff 等技能动画播完后由 BattleManager 统一刷新显示
+	if buff_id not in DEBUFF_IDS:
+		_refresh_buff_icon()
+
+func _buff_anim_name(buff_id: String) -> String:
+	var map := {
+		"atk_up": "加力", "def_up": "加物防", "mdef_up": "加魔防",
+		"haste": "加速", "hp_up": "加血上限", "heal_up": "治疗提升",
+		"ghost_shield": "鬼影护体", "ghost_boost": "鬼煞附体",
+		"ghost_gate": "鬼门大开", "lifesteal_up": "吸血提升",
+		"regen": "持续回血",
+		"sancai": "三才阵",
+		"invincible": "不灭金身",
+	}
+	return map.get(buff_id, buff_id)
+
+## 刷新持续 buff 图标：按施加来源的技能名播放同名动画（不灭金身→"不灭金身"节点），多个 buff 同时显示
+func _refresh_buff_icon() -> void:
+	var parent = get_parent()
+	if parent == null: return
+	var bs = parent.get_node_or_null("BuffSprite")
+	if bs == null: return
+	# 先全部隐藏
+	for c in bs.get_children():
+		if c is AnimatedSprite2D:
+			c.visible = false
+			c.stop()
+	var found = false
+	for bid in buffs:
+		# DOT 类由 show_debuff 在攻击动画后单独显示（避免提前）
+		if bid == "poison" or bid == "burn" or bid == "bleed": continue
+		var layers2: Array = buffs[bid].get("layers", [])
+		if layers2.is_empty(): continue
+		# 按来源技能名查找同名动画节点
+		for l in layers2:
+			var src: String = str(l.get("source", ""))
+			if src.is_empty(): continue
+			var child = bs.get_node_or_null(src)
+			if child and child is AnimatedSprite2D:
+				child.visible = true
+				if child.sprite_frames and child.sprite_frames.has_animation(src):
+					child.play(src)
+				elif child.sprite_frames and child.sprite_frames.has_animation("default"):
+					child.play("default")
+				else:
+					child.play()
+				found = true
+	bs.visible = found
+
+## 无敌（不灭金身）：角色变金黄色，buff 结束时恢复
+func _apply_invincible_visual(on: bool) -> void:
+	var parent = get_parent()
+	if parent == null: return
+	var sp = parent.get_node_or_null("Sprite2D") as Sprite2D
+	var target: CanvasItem = sp if sp else (parent as CanvasItem)
+	if target == null: return
+	if on:
+		if not target.has_meta("_inv_orig_modulate"):
+			target.set_meta("_inv_orig_modulate", target.modulate)
+		target.modulate = Color(1.35, 1.15, 0.35)
+	else:
+		if target.has_meta("_inv_orig_modulate"):
+			target.modulate = target.get_meta("_inv_orig_modulate")
+			target.remove_meta("_inv_orig_modulate")
+
+func _show_marked_effect() -> void:
+	# 角色变暗：黑气缠身（只影响 sprite，不影响血条等 UI）
+	var parent = get_parent()
+	if parent == null: return	# 停止旧脉冲
+	var old_tw = get_meta("_marked_pulse_tween") if has_meta("_marked_pulse_tween") else null
+	if old_tw and old_tw.is_valid():
+		old_tw.kill()
+	# Sprite2D 在 parent 上（HeroNode/EnemyNode 的直接子节点）
+	var sprite = parent.get_node_or_null("Sprite2D") as Sprite2D
+	if sprite:
+		sprite.set_meta("_marked_orig_modulate", sprite.modulate)
+		sprite.modulate = Color(0.3, 0.3, 0.3)
+		var tw = create_tween().set_loops()
+		tw.tween_property(sprite, "modulate", Color(0.2, 0.2, 0.2), 1.0)
+		tw.tween_property(sprite, "modulate", Color(0.4, 0.3, 0.4), 1.0)
+		set_meta("_marked_pulse_tween", tw)
+
+
+func remove_buff(buff_id: String) -> void:
+	if buff_id in buffs:
+		buffs.erase(buff_id)
+		buff_removed.emit(buff_id)
+		# 无敌：恢复角色颜色
+		if buff_id == "invincible":
+			_apply_invincible_visual(false)
+
+		if buff_id in FREEZE_BUFF_IDS:
+			var still_frozen := false
+			for bid in buffs:
+				if bid in FREEZE_BUFF_IDS:
+					still_frozen = true
+					break
+			if not still_frozen:
+				is_frozen = false
+				sync_freeze_anim()
+		if buff_id == "poison":
+			if not has_buff("poison"):
+				hide_debuff()
+	# 清除标记特效
+	if buff_id == "marked":
+		# 停止脉冲动画
+		var pulse_tw = get_meta("_marked_pulse_tween") if has_meta("_marked_pulse_tween") else null
+		if pulse_tw and pulse_tw.is_valid():
+			pulse_tw.kill()
+		var parent = get_parent()
+		if parent:
+			# 恢复颜色（只恢复 sprite）
+			var sp = parent.get_node_or_null("Sprite2D") as Sprite2D
+			if sp and sp.has_meta("_marked_orig_modulate"):
+				sp.modulate = sp.get_meta("_marked_orig_modulate")
+			elif parent.has_meta("_marked_orig_modulate"):
+				parent.modulate = parent.get_meta("_marked_orig_modulate")
+			# 爆散黑雾
+			var dirs := [Vector2(1,0), Vector2(-1,0), Vector2(0,1), Vector2(0,-1),
+						Vector2(0.7,0.7), Vector2(-0.7,0.7), Vector2(0.7,-0.7), Vector2(-0.7,-0.7)]
+			for d in dirs:
+				var dot = ColorRect.new()
+				dot.color = Color(0.1, 0.1, 0.1, 0.8); dot.size = Vector2(16, 16)
+				dot.position = Vector2(-8, -8); dot.z_index = 150
+				dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				parent.add_child(dot)
+				var dt = create_tween().set_parallel()
+				dt.tween_property(dot, "position", d * 80, 0.35)
+				dt.tween_property(dot, "color:a", 0.0, 0.35)
+				dt.tween_property(dot, "size", Vector2(4, 4), 0.35)
+				dt.tween_property(dot, "rotation", randf_range(-3, 3), 0.35)
+				dt.finished.connect(dot.queue_free)
+	# 鬼煞附体/鬼影护体 buff 移除后隐藏图标
+	if buff_id == "ghost_boost" or buff_id == "ghost_shield":
+		hide_buff()
+	# 刷新持续 buff 图标（显示下一个仍生效的 buff 或隐藏）
+	if buff_id not in DEBUFF_IDS:
+		_refresh_buff_icon()
+
+func has_buff(buff_id: String) -> bool:
+	return buff_id in buffs
+
+## 检查是否有来自某技能的 buff 层
+func has_buff_source(buff_id: String, source: String) -> bool:
+	if not buffs.has(buff_id): return false
+	for l in buffs[buff_id]["layers"]:
+		if l.get("source", "") == source:
+			return true
+	return false
+
+## 返回 buff 总层数
+func get_buff_layer_count(buff_id: String) -> int:
+	if not buffs.has(buff_id): return 0
+	return buffs[buff_id]["layers"].size()
+
+## 返回 buff 叠加后的综合值（各层乘积）
+func get_buff_value(buff_id: String) -> Variant:
+	if not buffs.has(buff_id): return null
+	var layers: Array = buffs[buff_id]["layers"]
+	if layers.is_empty(): return null
+	var total: float = 1.0
+	for l in layers:
+		var v = l.get("value")
+		if v is float or v is int:
+			total += (float(v) - 1.0)
+	return total
+
+## 设置头顶名字颜色（用于标识当前行动者）
+func set_name_label_color(color: Color) -> void:
+	if _name_label:
+		_name_label.add_theme_color_override("font_color", color)
+
+## 同步冻结状态：冰封 debuff + WAS 循环挨打，解冻清除
+func sync_freeze_anim() -> void:
+	if is_dead or shattered:
+		return
+	var parent = get_parent()
+	if parent == null: return
+	var was = parent.get_node_or_null("WASAnimationPlayer")
+	if was == null: return
+
+	if is_frozen:
+		# 确定是哪种封印，显示对应 debuff
+		var debuff_name := "冰封"
+		var body_color := Color(0.5, 0.6, 1.0)
+		for bid in ["失魂", "freeze"]:
+			if has_buff(bid):
+				debuff_name = "失魂" if bid == "失魂" else "冰封"
+				body_color = Color(0.6, 0.5, 0.9) if bid == "失魂" else Color(0.5, 0.6, 1.0)
+				break
+		show_debuff(debuff_name, true)
+		if parent.has_node("Sprite2D"):
+			parent.get_node("Sprite2D").modulate = body_color
+		was.play("hit", false)
+	else:
+		hide_debuff()
+		# 恢复本色
+		if parent.has_node("Sprite2D"):
+			parent.get_node("Sprite2D").modulate = Color.WHITE
+		was.play("idle")
+
+## 每回合结束时调用，递减 Buff 持续时间
+func tick_buffs() -> Array[String]:
+	var expired: Array[String] = []
+	for buff_id in buffs.keys():
+		var layers: Array = buffs[buff_id]["layers"]
+		for i in range(layers.size() - 1, -1, -1):
+			var l: Dictionary = layers[i]
+			if l["turns"] > 0:
+				l["turns"] -= 1
+				if l["turns"] == 0:
+					layers.remove_at(i)
+		if layers.is_empty():
+			expired.append(buff_id)
+	for buff_id in expired:
+		remove_buff(buff_id)
+	# buff 过期后刷新视觉（血条上限 tween 归位）
+	sync_visual()
+	# 所有 buff 过期后隐藏精灵
+	if buffs.is_empty():
+		hide_buff()
+	return expired
+
+# ─── 属性计算（含 Buff + 被动书加成）─────────
+## 累加同类书技能（高级和普通叠加）
+## 检查某本书技能的纯数字 value
+func _book_num(type: String, fallback: float = 0.0) -> float:
+	var result = fallback
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == type:
+			var v = db.get("value", 1.0)
+			if v is float or v is int:
+				result += v
+	return result
+
+func _book_mul(type: String, fallback: float = 1.0) -> float:
+	var mul = 1.0
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == type:
+			var v = db.get("value", 1.0)
+			if v is float or v is int:
+				mul *= v
+	return mul if mul != 1.0 else fallback
+
+func _has_book_type(type: String) -> bool:
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == type:
+			return true
+	return false
+
+func _waste_boost(stat: String) -> int:
+	if trait_data.has("废物") and stats.level >= trait_data["废物"].get("break_lv", 80):
+		return int(trait_data["废物"].get(stat, 1.0))
+	return 1
+
+func _apply_talent_boosts() -> void:
+	if not is_player:
+		return
+	trait_data["_talent_boosts"] = get_talent_stat_bonuses(stats, is_summoned_pet)
+	if is_summoned_pet and stats.character_class == "铁甲" and talent_rank("guard_shield") > 0:
+		trait_data["_has_shield"] = true
+
+## 所有按角色触发的天赋都经此入口，敌人和普通宠物不会借用玩家天赋。
+func talent_rank(talent_id: String) -> int:
+	if not is_player: return 0
+	return preload("res://Script/Battle/TalentRules.gd").rank_for(stats, talent_id, is_summoned_pet)
+
+## 属性详情和战斗共用天赋倍率，避免展示与实战计算分离。
+static func get_talent_stat_bonuses(stats: CharacterStats, summoned_pet: bool = false) -> Dictionary:
+	var boosts := {
+		"main_root": {"hp_up": 0.03, "mp_up": 0.03},
+		"main_focus": {"hp_up": 0.05},
+		"main_recover": {"mp_up": 0.05},
+		"main_channel": {"haste": 0.04},
+		"guard_armor": {"def_up": 0.05},
+		"attack_strike": {"atk_up": 0.05},
+		"attack_crit": {"crit_up": 0.03},
+		"attack_speed": {"haste": 0.02},
+	}
+	# 召定位基础加成；铁甲的护系系数也供战外属性预览使用。
+	var is_mech = stats.character_class == "铁甲"
+	boosts["summon_call"] = {"hp_up": 0.04, "atk_up": 0.04, "def_up": 0.04, "haste": 0.03}
+	if is_mech: boosts["guard_armor"] = {"def_up": 0.06}
+	var bonuses: Dictionary = {}
+	for tid in boosts:
+		var rank := preload("res://Script/Battle/TalentRules.gd").rank_for(stats, tid, summoned_pet)
+		if rank <= 0: continue
+		for stat_key in boosts[tid]:
+			var val = boosts[tid][stat_key] * rank
+			bonuses[stat_key] = bonuses.get(stat_key, 0.0) + val
+	return bonuses
+
+func _talent_boost(stat: String) -> float:
+	var tb: Dictionary = trait_data.get("_talent_boosts", {})
+	return 1.0 + tb.get(stat, 0.0)
+
+func _elem_resonance_boost(buff_id: String) -> float:
+	var er: Dictionary = trait_data.get("_elem_resonance", {})
+	var total := 0.0
+	var v = er.get(buff_id)
+	if v is float or v is int:
+		total += float(v) - 1.0
+	v = er.get("all_" + buff_id)
+	if v is float or v is int:
+		total += float(v) - 1.0
+	return 1.0 + total
+
+func get_effective_attack() -> int:
+	var base = stats.attack * _waste_boost("atk_mul")
+	base = int(base * _book_mul("atk_up"))
+	if has_buff("atk_up"):   base = int(base * clamp(get_buff_value("atk_up") if get_buff_value("atk_up") != null else 1.5, 1.0, 3.0))
+	if has_buff("atk_down"): base = int(base * (1.0 - clamp(get_buff_value("atk_down") if get_buff_value("atk_down") != null else 0.3, 0.0, 0.95)))
+	# 愈战愈勇：永久叠伤
+	var yzyy_cfg = trait_data.get("愈战愈勇", {})
+	if not yzyy_cfg.is_empty():
+		var yzyy_stacks: int = trait_data.get("_yzyy_stacks", 0)
+		if yzyy_stacks > 0:
+			base = int(base * (1.0 + yzyy_stacks * yzyy_cfg.get("dmg_pct", 0.0)))
+	# 兽王血脉：每只宠物加攻击%
+	var sw_cfg = trait_data.get("兽王血脉", {})
+	if not sw_cfg.is_empty():
+		var pet_count: int = trait_data.get("_summon_pet_count", 0)
+		if pet_count > 0:
+			base = int(base * (1.0 + pet_count * sw_cfg.get("atk_pct", 0.0)))
+	base = int(base * _elem_resonance_boost("atk_up") * _talent_boost("atk_up"))
+	# 减伤：物理输出降低
+	if has_buff("dmg_down"): base = int(base * clamp(get_buff_value("dmg_down") if get_buff_value("dmg_down") != null else 0.7, 0.1, 1.0))
+	return base
+
+func get_effective_magic_attack() -> int:
+	var base = stats.magic_attack * _waste_boost("atk_mul")
+	base = int(base * _book_mul("matk_up"))
+	if has_buff("matk_up"):
+		var bv = get_buff_value("matk_up")
+		if bv != null:
+			base = int(base * bv)
+	if has_buff("atk_down"): base = int(base * (1.0 - clamp(get_buff_value("atk_down") if get_buff_value("atk_down") != null else 0.3, 0.0, 0.95)))
+	base = int(base * _elem_resonance_boost("matk_up") * _talent_boost("matk_up"))
+	# 减伤：法术输出降低
+	if has_buff("dmg_down"): base = int(base * clamp(get_buff_value("dmg_down") if get_buff_value("dmg_down") != null else 0.7, 0.1, 1.0))
+	return base
+
+func get_effective_defense() -> int:
+	var base = stats.defense * _waste_boost("def_mul")
+	base = int(base * _book_mul("def_up"))
+	if has_buff("shield"):     base = int(base * clamp(get_buff_value("shield") if get_buff_value("shield") != null else 2.0, 1.0, 5.0))
+	if has_buff("def_up"):     base = int(base * clamp(get_buff_value("def_up") if get_buff_value("def_up") != null else 1.5, 1.0, 5.0))
+	if has_buff("sancai"): base = int(base * float(get_buff_value("sancai")))
+	if has_buff("def_broken"): base = int(base * (1.0 - clamp(get_buff_value("def_broken") if get_buff_value("def_broken") != null else 0.5, 0.0, 0.95)))
+	# 兽王血脉：每只宠物加防御%
+	var sw_cfg2 = trait_data.get("兽王血脉", {})
+	if not sw_cfg2.is_empty():
+		var pet_count: int = trait_data.get("_summon_pet_count", 0)
+		if pet_count > 0:
+			base = int(base * (1.0 + pet_count * sw_cfg2.get("def_pct", 0.0)))
+	base = int(base * _elem_resonance_boost("def_up") * _talent_boost("def_up"))
+	# 冰封：期间双抗 +40%
+	if has_freeze_buff(): base = int(base * 1.4)
+	return base
+
+func get_effective_magic_defense() -> int:
+	var base = stats.magic_defense * _waste_boost("def_mul")
+	base = int(base * _book_mul("mdef_up"))
+	if has_buff("mdef_up"): base = int(base * clamp(get_buff_value("mdef_up") if get_buff_value("mdef_up") != null else 1.5, 1.0, 5.0))
+	if has_buff("sancai"): base = int(base * float(get_buff_value("sancai")))
+	if has_buff("mdef_broken"): base = int(base * (1.0 - clamp(get_buff_value("mdef_broken") if get_buff_value("mdef_broken") != null else 0.5, 0.0, 0.95)))
+	# 冰封：期间双抗 +40%
+	if has_freeze_buff(): base = int(base * 1.4)
+	return base
+
+func get_effective_speed() -> int:
+	var base = stats.speed * _waste_boost("spd_mul")
+	base = int(base * _book_mul("haste"))
+	base = int(base * get_night_spd_mul())
+	# 迟钝降速
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == "slow_tank":
+			base = int(base * db.value.speed)
+	if has_buff("haste"): base = int(base * clamp(get_buff_value("haste") if get_buff_value("haste") != null else 1.3, 1.0, 3.0))
+	if has_buff("slow"):  base = int(base * clamp(get_buff_value("slow") if get_buff_value("slow") != null else 0.7, 0.1, 1.0))
+	# 愈战愈勇：永久叠速
+	var yzyy_cfg2 = trait_data.get("愈战愈勇", {})
+	if not yzyy_cfg2.is_empty():
+		var yzyy_stacks: int = trait_data.get("_yzyy_stacks", 0)
+		if yzyy_stacks > 0:
+			base = int(base * (1.0 + yzyy_stacks * yzyy_cfg2.get("spd_pct", 0.0)))
+	# 兽王血脉：每只宠物加速度%
+	var sw_cfg3 = trait_data.get("兽王血脉", {})
+	if not sw_cfg3.is_empty():
+		var pet_count: int = trait_data.get("_summon_pet_count", 0)
+		if pet_count > 0:
+			base = int(base * (1.0 + pet_count * sw_cfg3.get("spd_pct", 0.0)))
+	# 舍己为妹
+	var sjjw_cfg = trait_data.get("舍己为妹", {})
+	if not sjjw_cfg.is_empty():
+		var sc := _has_sister_in_party(sjjw_cfg)
+		if sc > 0:
+			base = int(base * (1.0 + sc * sjjw_cfg.get("spd_pct", 0.0)))
+	base = int(base * _elem_resonance_boost("haste") * _talent_boost("haste"))
+	return base
+
+func get_effective_max_hp() -> int:
+	var base = stats.max_hp * _waste_boost("hp_mul")
+	base = int(base * _book_mul("hp_up"))
+	# 迟钝加血
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == "slow_tank":
+			base = int(base * db.value.hp)
+	if has_buff("hp_up"): base = int(base * clamp(get_buff_value("hp_up") if get_buff_value("hp_up") != null else 1.3, 1.0, 3.0))
+	# 兽王血脉：每只宠物加气血%
+	var sw_cfg4 = trait_data.get("兽王血脉", {})
+	if not sw_cfg4.is_empty():
+		var pet_count: int = trait_data.get("_summon_pet_count", 0)
+		if pet_count > 0:
+			base = int(base * (1.0 + pet_count * sw_cfg4.get("hp_pct", 0.0)))
+	# 舍己为妹
+	var sjjw_cfg2 = trait_data.get("舍己为妹", {})
+	if not sjjw_cfg2.is_empty():
+		var sc := _has_sister_in_party(sjjw_cfg2)
+		if sc > 0:
+			base = int(base * (1.0 + sc * sjjw_cfg2.get("hp_pct", 0.0)))
+	base = int(base * _elem_resonance_boost("hp_up") * _talent_boost("hp_up"))
+	return base
+
+func get_effective_max_mp() -> int:
+	return int(stats.max_mp * _talent_boost("mp_up"))
+
+## 暴击率完全由运气决定：1 点 luck = 1% 暴击率
+## 必杀/高级必杀书籍、法术暴击书籍、暴击天赋均折算为运气加成
+func get_effective_crit_rate() -> float:
+	var total_luck = stats.luck + equip_special.get("luck", 0)
+	# 必杀/高级必杀、法术暴击/高级法术暴击书籍 → 加运气（value×100 点）
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == "crit_up" or db.get("type", "") == "mcrit_up":
+			total_luck += int(db.get("value", 0.0) * 100.0)
+	# 天赋暴击加成（攻击暴击）→ 加运气
+	total_luck += int((_talent_boost("crit_up") - 1.0) * 100.0)
+	return clampf(total_luck / 100.0, 0.0, 1.0)
+
+## 法术暴击：需要"法术暴击/高级法术暴击"书籍解锁；解锁后按运气暴击（不再额外加概率）
+func get_effective_magic_crit_rate() -> float:
+	var unlocked := false
+	for b in book_skills:
+		if SkillDB.BOOK_SKILL_DB.get(b, {}).get("type", "") == "mcrit_up":
+			unlocked = true
+			break
+	if not unlocked:
+		return 0.0
+	return get_effective_crit_rate()
+
+## 慧根：MP 消耗减免比例
+func get_mp_cost_reduction() -> float:
+	var base := _book_num("mp_save")
+	# 灵力节约天赋：辅助角色耗蓝减 10%/级
+	base += 0.1 * talent_rank("support_mp_save")
+	base += float(equip_special.get("mp_cost_reduction", 0.0))
+	return clampf(base, 0.0, 0.8)
+
+func get_skill_mp_cost(base_cost: int) -> int:
+	return maxi(1, int(base_cost * (1.0 - get_mp_cost_reduction()) + 0.000001)) if base_cost > 0 else 0
+
+## 治疗加成
+func get_effective_heal_rate() -> float:
+	var rate := 1.0
+	if has_buff("heal_up"):
+		rate = get_buff_value("heal_up") if get_buff_value("heal_up") != null else 1.15
+	rate *= _elem_resonance_boost("heal_up") * _talent_boost("heal_up")
+	return rate
+
+## 真实伤害附加值：武器提供的 atk + 打造 true_dmg（每次主动攻击/技能额外附加）
+func get_true_dmg() -> int:
+	return maxi(0, int(equip_special.get("true_dmg", 0)))
+
+## 吸血比例
+func get_lifesteal_ratio() -> float:
+	var v = 0.0
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == "lifesteal":
+			v += db.get("value", 0.0)
+	return minf(v, 0.5)
+
+## 反震比例
+func get_reflect_ratio() -> float:
+	var v = 0.0
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == "reflect":
+			v += db.get("value", 0.0)
+	# 守中有攻天赋：反伤 10%/级
+	var counter_rank = talent_rank("guard_counter")
+	if counter_rank > 0:
+		v += 0.1 * counter_rank
+	return minf(v, 0.6)
+
+## 毒概率
+func get_venom_chance() -> float:
+	var v = 0.0
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == "venom":
+			v += db.get("value", 0.0)
+	return minf(v, 0.5)
+
+## 来财金币倍率
+func get_gold_boost() -> float:
+	var v = 1.0
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == "gold_boost":
+			v *= db.get("value", 1.0)
+	return v
+
+## 神迹免疫异常？
+func is_immune_to_debuffs() -> bool:
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == "immune" and db.get("value", 1.0) >= 1.0:
+			return true
+	return false
+
+## 神迹抵抗异常概率
+func get_debuff_resist_chance() -> float:
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == "immune":
+			return db.get("value", 0.0)
+	return 0.0
+
+## 夜战：是否在夜间（暂时总返回 true，后续可接入系统时间或游戏昼夜系统）
+func is_night_time() -> bool:
+	return true
+
+## 夜战伤害倍率
+func get_night_dmg_mul() -> float:
+	if not is_night_time():
+		return 1.0
+	return _book_mul("night")
+
+## 夜战速度倍率
+func get_night_spd_mul() -> float:
+	if not is_night_time():
+		return 1.0
+	var mul = 1.0
+	for b in book_skills:
+		var db = SkillDB.BOOK_SKILL_DB.get(b, {})
+		if db.get("type", "") == "night":
+			var v = db.get("value", {})
+			mul *= v.get("spd", 1.0)
+	return mul
+
+# ─── 升级（玩家专用）────────────────────────
+func gain_exp(amount: int) -> bool:
+	if not is_player:
+		return false
+	stats.exp += amount
+	if stats.exp >= stats.exp_to_next:
+		_level_up()
+		return true
+	return false
+
+## 战斗中升级：恢复部分 HP/MP，更新头顶显示
+## 注：永久属性提升在 GameData._level_up 中处理
+func _level_up() -> void:
+	while stats.exp_to_next > 0 and stats.exp >= stats.exp_to_next:
+		stats.exp -= stats.exp_to_next
+		stats.level += 1
+		stats.exp_to_next = CharacterStats.calc_exp_to_next(stats.level)
+	# 废物觉醒
+	if trait_data.has("废物") and stats.level >= trait_data["废物"].get("break_lv", 80):
+		var aw = trait_data["废物"].get("awaken_skills", [])
+		for sk in aw:
+			if sk not in stats.skill_ids:
+				stats.skill_ids.append(sk)
+		if not member_id.is_empty() and GameData.party_db.has(member_id):
+			for sk in aw:
+				if sk not in GameData.party_db[member_id].skill_ids:
+					GameData.party_db[member_id].skill_ids.append(sk)
+	# 升级时恢复部分 HP / MP
+	current_hp = mini(stats.max_hp, current_hp + stats.hp_growth)
+	current_mp = mini(get_effective_max_mp(), current_mp + stats.mp_growth)
+	_update_hp_bar()
+	_update_mp_bar()
+	if _name_label:
+		_name_label.text = stats.get_display_name()
+
+# ─── 工具 ────────────────────────────────────
+func hp_percent() -> float:
+	return float(current_hp) / float(stats.max_hp)
+
+func mp_percent() -> float:
+	return float(current_mp) / float(get_effective_max_mp())
+
+## 检查是否有某本书技能
+func has_book_skill(skill_name: String) -> bool:
+	return skill_name in book_skills
+
+## 获取书技能参数值
+func get_book_value(skill_name: String, fallback: float = 1.0) -> float:
+	if not has_book_skill(skill_name):
+		return fallback
+	var db = SkillDB.BOOK_SKILL_DB.get(skill_name, {})
+	return db.get("value", fallback)
+
+
+# ══ 特性系统 ══
+
+## 横扫不休：横扫千军有概率不冷却
+func check_no_cooldown_after_skill(skill_id: String) -> bool:
+	if skill_id != "横扫千军": return false
+	var cfg = trait_data.get("横扫不休", {})
+	if cfg.is_empty(): return false
+	return randf() < cfg.get("chance", 0.0)
+
+
+## 愈战愈勇：普攻永久叠伤+速，返回当前层数（0=无此特性）
+func apply_stacking_buff() -> int:
+	var cfg = trait_data.get("愈战愈勇", {})
+	if cfg.is_empty(): return 0
+	var stacks: int = trait_data.get("_yzyy_stacks", 0) + 1
+	trait_data["_yzyy_stacks"] = stacks
+	trait_data["_yzyy_pending"] = stacks  # 等攻击走回原地后播特效
+	return stacks
+
+
+## 兽王血脉：场上每只宠物加属性百分比
+func recalc_summon_buffs(pet_count: int) -> void:
+	var cfg = trait_data.get("兽王血脉", {})
+	if cfg.is_empty(): return
+	var old_count: int = trait_data.get("_summon_pet_count", 0)
+	trait_data["_summon_pet_count"] = pet_count
+	# 刷新 HP（等比缩放）
+	if pet_count != old_count:
+		var old_effective := get_effective_max_hp()
+		# 临时回退旧计数来算旧有效值
+		trait_data["_summon_pet_count"] = old_count
+		var old_max := get_effective_max_hp()
+		trait_data["_summon_pet_count"] = pet_count
+		var new_max := get_effective_max_hp()
+		if old_max > 0 and new_max != old_max:
+			current_hp = maxi(1, int(float(current_hp) * float(new_max) / float(old_max)))
+		if _hp_bar:
+			_hp_bar.max_value = new_max
+			_hp_bar.value = current_hp
+		show_trait_float("兽王血脉")
+
+func _has_sister_in_party(cfg: Dictionary) -> int:
+	var sisters: Array = cfg.get("sisters", [])
+	if sisters.is_empty(): return 0
+	var count := 0
+	for mid in sisters:
+		if GameData.party_db.has(mid):
+			count += 1
+	return count
+
+func _white_clothes_choices() -> PackedInt32Array:
+	var choices := PackedInt32Array()
+	choices.resize(256)
+	choices.fill(1)
+	return choices
+

@@ -1,0 +1,139 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/UI/Battle/TalismanTutorial.gd" id="Script"]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="Theme"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="Skin"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="Font"]
+
+[ext_resource type="StyleBox" path="res://Component/TutorialButtonFocus.tres" id="ButtonFocus"]
+
+[sub_resource type="StyleBoxTexture" id="Frame"]
+texture = ExtResource("Skin")
+region_rect = Rect2(0, 60, 1586, 932)
+texture_margin_left = 5.0
+texture_margin_top = 5.0
+texture_margin_right = 5.0
+texture_margin_bottom = 5.0
+content_margin_left = 28.0
+content_margin_top = 22.0
+content_margin_right = 28.0
+content_margin_bottom = 22.0
+
+[node name="TalismanTutorial" type="CanvasLayer"]
+process_mode = 3
+layer = 120
+script = ExtResource("Script")
+headings = PackedStringArray("符咒教学", "按 Q / E，切换符咒", "选择目标")
+explanations = PackedStringArray("符咒是主角的主要战斗手段。\n\n轮到主角行动时，身旁会出现三张符咒；中间的一张就是当前选中的符咒。下方的名称和数字表示符咒种类及剩余数量。\n\n先记住：选中什么符，主角就使用什么符。", "按 Q 切换到上一种符咒，按 E 切换到下一种，也可以点击两侧的符咒。切换本身不消耗行动。\n\n星火篆用于火焰攻击；冰冻符可控制目标。加速、借尸符等支援符咒则需要选择合适的队友。\n\n根据敌人和队伍的状态，选择需要的符咒。", "没有选择其他战斗指令时，直接点击机关人，即可使用当前符咒。也可以先选择“攻击”，再选择目标。\n\n大部分符咒会消耗符纸，留意名称旁的数量；“无字符”显示 ∞，可以无限使用。\n\n教学结束后，试着切换一种符咒，选择机关人进行攻击。")
+continue_text = "下一步"
+finish_text = "完成教学"
+
+[node name="Screen" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Shade" type="ColorRect" parent="Screen"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.08, 0.16, 0.28, 0.28)
+
+[node name="Window" type="PanelContainer" parent="Screen"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -340.0
+offset_top = 55.0
+offset_right = 340.0
+offset_bottom = 430.0
+grow_horizontal = 2
+theme = ExtResource("Theme")
+theme_override_styles/panel = SubResource("Frame")
+
+[node name="Body" type="VBoxContainer" parent="Screen/Window"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Step" type="Label" parent="Screen/Window/Body"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.43, 0.64, 1)
+theme_override_font_sizes/font_size = 17
+text = "1 / 3"
+horizontal_alignment = 2
+
+[node name="Heading" type="Label" parent="Screen/Window/Body"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("Font")
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(0.13, 0.27, 0.48, 1)
+text = "符咒教学"
+
+[node name="Explanation" type="Label" parent="Screen/Window/Body"]
+custom_minimum_size = Vector2(0, 210)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_fonts/font = ExtResource("Font")
+theme_override_font_sizes/font_size = 21
+theme_override_colors/font_color = Color(0.14, 0.24, 0.4, 1)
+autowrap_mode = 2
+text = "符咒是主角的主要战斗手段。"
+
+[node name="KeyboardHint" type="Label" parent="Screen/Window/Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.23, 0.36, 0.55, 1)
+text = "← / → 或 Tab 切换按钮 · Enter 确认 · 黄框为当前选中"
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Screen/Window/Body"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Skip" type="Button" parent="Screen/Window/Body/Buttons"]
+theme_override_styles/focus = ExtResource("ButtonFocus")
+focus_neighbor_left = NodePath("../Next")
+focus_neighbor_right = NodePath("../Previous")
+focus_neighbor_top = NodePath(".")
+focus_neighbor_bottom = NodePath(".")
+focus_next = NodePath("../Previous")
+focus_previous = NodePath("../Next")
+custom_minimum_size = Vector2(115, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "跳过教学"
+
+[node name="Space" type="Control" parent="Screen/Window/Body/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="Previous" type="Button" parent="Screen/Window/Body/Buttons"]
+theme_override_styles/focus = ExtResource("ButtonFocus")
+focus_neighbor_left = NodePath("../Skip")
+focus_neighbor_right = NodePath("../Next")
+focus_neighbor_top = NodePath(".")
+focus_neighbor_bottom = NodePath(".")
+focus_next = NodePath("../Next")
+focus_previous = NodePath("../Skip")
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "上一步"
+
+[node name="Next" type="Button" parent="Screen/Window/Body/Buttons"]
+theme_override_styles/focus = ExtResource("ButtonFocus")
+focus_neighbor_left = NodePath("../Previous")
+focus_neighbor_right = NodePath("../Skip")
+focus_neighbor_top = NodePath(".")
+focus_neighbor_bottom = NodePath(".")
+focus_next = NodePath("../Skip")
+focus_previous = NodePath("../Previous")
+custom_minimum_size = Vector2(125, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "下一步"

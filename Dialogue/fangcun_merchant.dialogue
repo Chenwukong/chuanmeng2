@@ -1,0 +1,36 @@
+~ 商人招呼
+if not GameData.story_flag("教学/制符/已完成"):
+	符材商人: 上山少不了符咒。我这里有符纸和各类原料，也可以教你买材料、亲手制符。
+else:
+	符材商人: 道友，又来补充材料？符纸和灵草都备着呢。
+- 学习购买和打造 => 制符教学
+- 购买符咒材料 => 买材料
+- 打开打造 => 打开打造
+- 稍后再来 => END
+
+~ 制符教学
+符材商人: 先做一份星火篆。需要符纸一张、火焰花三份。
+符材商人: 左键增加选购数量，右键减少数量；选好一种后点购买，再买下一种。材料共440金币，另留110金币制符。
+do StoryDirector.open_shop("符材商人", true)
+if not GameData.story_flag("教学/商店/已完成"):
+	符材商人: 先试着买一份材料。还没准备好也无妨，下次可以继续。
+	=> END
+if not StoryDirector.has_crafting_materials():
+	符材商人: 材料还没备齐：符纸一张、火焰花三份。凑齐后再来，我随时教你。
+	=> END
+符材商人: 接下来打开打造界面。先从左侧放入符纸，再从右侧放入三份火焰花，填满四个槽位后点打造。
+do StoryDirector.open_crafting(true)
+if GameData.story_flag("教学/制符/已完成"):
+	游霄云: 原来如此！一份材料能制成三张星火篆。
+	符材商人: 成品已放入道具，战斗时切换就能用。以后也可以从菜单打开打造，随时制符。
+else:
+	符材商人: 没做完可以下次接着练，材料还在道具里。
+=> END
+
+~ 买材料
+do StoryDirector.open_shop("符材商人", not GameData.story_flag("教学/商店/已完成"))
+=> END
+
+~ 打开打造
+do StoryDirector.open_crafting(not GameData.story_flag("教学/制符/已完成"))
+=> END

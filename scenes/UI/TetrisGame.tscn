@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://wlgfpktwjttf"]
+
+[ext_resource type="Script" path="res://Script/UI/TetrisGame.gd" id="1_scr"]
+
+[node name="TetrisGame" type="CanvasLayer" unique_id=100001]
+layer = 50
+script = ExtResource("1_scr")

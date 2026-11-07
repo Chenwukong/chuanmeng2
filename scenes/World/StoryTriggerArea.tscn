@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/World/StoryTriggerArea.gd" id="Script"]
+
+[sub_resource type="RectangleShape2D" id="TriggerShape"]
+resource_local_to_scene = true
+size = Vector2(160, 120)
+
+[node name="剧情触发区域" type="Area2D"]
+collision_layer = 0
+collision_mask = 0
+monitoring = false
+monitorable = false
+script = ExtResource("Script")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("TriggerShape")

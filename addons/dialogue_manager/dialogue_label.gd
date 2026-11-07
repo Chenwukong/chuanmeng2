@@ -71,6 +71,11 @@ var _waiting_seconds: float = 0
 var _is_awaiting_mutation: bool = false
 var _is_skipping_mutations: bool = false
 
+func _exit_tree() -> void:
+	# 退出时取消逐字播放，不发 finished_typing，以免唤醒已在销毁的对白。
+	_is_typing = false
+	_is_awaiting_mutation = false
+
 
 func _process(delta: float) -> void:
 	if _is_typing:
@@ -96,6 +101,7 @@ func _update_text() -> void:
 
 ## Start typing out the text
 func type_out() -> void:
+	if not is_inside_tree() or is_queued_for_deletion(): return
 	_update_text()
 	visible_characters = 0
 	visible_ratio = 0
@@ -108,7 +114,10 @@ func type_out() -> void:
 	started_typing.emit()
 
 	# Allow typing listeners a chance to connect
+	# started_typing 的监听者也可能关闭对话，必须在信号后再次检查。
+	if not is_inside_tree() or is_queued_for_deletion(): return
 	await get_tree().process_frame
+	if not is_inside_tree() or is_queued_for_deletion(): return
 
 	if get_total_character_count() == 0:
 		is_typing = false
@@ -185,6 +194,7 @@ func _mutate_inline_mutations(index: int) -> void:
 			else:
 				_is_awaiting_mutation = true
 				await Engine.get_singleton("DialogueManager")._mutate(inline_mutation[1], dialogue_line.extra_game_states, true)
+				if not is_inside_tree() or is_queued_for_deletion(): return
 				_is_awaiting_mutation = false
 
 	_already_mutated_indices.append(index)

@@ -1,0 +1,92 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Script/UI/MechSummonPopup.gd" id="1_root"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="skin"]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="theme"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowTitle.tscn" id="title"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowCloseButton.tscn" id="close"]
+[sub_resource type="StyleBoxTexture" id="frame"]
+texture = ExtResource("skin")
+region_rect = Rect2(0, 60, 1586, 932)
+texture_margin_left = 6.0
+texture_margin_right = 6.0
+texture_margin_top = 4.0
+texture_margin_bottom = 6.0
+[sub_resource type="StyleBoxTexture" id="header"]
+texture = ExtResource("skin")
+region_rect = Rect2(383, 0, 820, 57)
+[node name="MechSummonPopup" type="CanvasLayer"]
+layer = 5
+script = ExtResource("1_root")
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.03, 0.07, 0.15, 0.42)
+mouse_filter = 0
+[node name="Panel" type="Panel" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -180.0
+offset_right = 260.0
+offset_bottom = 180.0
+pivot_offset = Vector2(260, 180)
+theme = ExtResource("theme")
+theme_override_styles/panel = SubResource("frame")
+[node name="Header" type="Panel" parent="Panel"]
+offset_right = 520.0
+offset_bottom = 34.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("header")
+[node name="PageTitle" parent="Panel" instance=ExtResource("title")]
+offset_left = 100.0
+offset_top = -4.0
+offset_right = 420.0
+offset_bottom = 30.0
+text = "召唤铁甲兽"
+[node name="Close" parent="Panel" instance=ExtResource("close")]
+offset_left = 460.0
+offset_top = 5.0
+offset_right = 508.0
+offset_bottom = 33.0
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+offset_left = 24.0
+offset_top = 52.0
+offset_right = 496.0
+offset_bottom = 302.0
+theme_override_constants/separation = 12
+[node name="Title" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "选择一只铁甲兽加入战斗"
+[node name="Scroll" type="ScrollContainer" parent="Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+[node name="Grid" type="GridContainer" parent="Panel/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 1
+theme_override_constants/v_separation = 10
+[node name="Empty" type="Label" parent="Panel"]
+visible = false
+offset_left = 24.0
+offset_top = 128.0
+offset_right = 496.0
+offset_bottom = 222.0
+text = "暂无可召唤的铁甲兽"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 16
+[node name="Hint" type="Label" parent="Panel"]
+offset_left = 24.0
+offset_top = 320.0
+offset_right = 496.0
+offset_bottom = 346.0
+text = "↑ ↓ 选择 · Enter 召唤 · Esc 返回"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.30, 0.41, 0.58, 1)

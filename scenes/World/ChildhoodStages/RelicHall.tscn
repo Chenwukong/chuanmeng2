@@ -1,0 +1,46 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/World/StoryMapBackdrop.gd" id="map"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Bodhi-walk.png" id="Bodhi"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungXiaoyun.tscn" id="YoungXiaoyun"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungLingfeng.tscn" id="YoungLingfeng"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungZhiyao.tscn" id="YoungZhiyao"]
+[ext_resource type="PackedScene" path="res://scenes/World/Npc.tscn" id="npc"]
+
+[node name="RelicHall" type="Node2D"]
+position = Vector2(-790, -415)
+y_sort_enabled = true
+
+[node name="Background" type="Sprite2D" parent="."]
+z_index = -1
+centered = false
+offset = Vector2(-65, -198)
+script = ExtResource("map")
+map_path = "res://MAP/1137.map"
+shot_bounds = Rect2i(0, 0, 1500, 1120)
+
+[node name="菩提祖师" parent="." instance=ExtResource("npc")]
+position = Vector2(816, 383)
+direction = 1
+scale = Vector2(0.78, 0.78)
+npc_name = "菩提祖师"
+walk_sheet = ExtResource("Bodhi")
+walk_speed = 260.0
+auto_look_at_player = false
+
+[node name="Shadow(2)" parent="菩提祖师" index="2"]
+visible = false
+
+[node name="游霄云" parent="." instance=ExtResource("YoungXiaoyun")]
+position = Vector2(765, 443)
+direction = 3
+
+[node name="厉凌风" parent="." instance=ExtResource("YoungLingfeng")]
+position = Vector2(700, 390)
+direction = 0
+
+[node name="齐芷瑶" parent="." instance=ExtResource("YoungZhiyao")]
+position = Vector2(744, 386)
+direction = 1
+
+[editable path="菩提祖师"]

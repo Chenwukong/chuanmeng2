@@ -1,0 +1,17 @@
+[gd_scene format=3]
+[ext_resource type="Shader" path="res://Graphic/Shaders/pet_aptitude_aura.gdshader" id="1"]
+[sub_resource type="ShaderMaterial" id="AuraMaterial"]
+resource_local_to_scene = true
+shader = ExtResource("1")
+shader_parameter/aura_color = Color(0.3, 0.8, 0.3, 1)
+shader_parameter/strength = 0.0
+shader_parameter/grade = 0.0
+shader_parameter/breathing = 0.06
+
+[node name="AptitudeAura" type="ColorRect"]
+visible = false
+material = SubResource("AuraMaterial")
+offset_right = 64.0
+offset_bottom = 64.0
+mouse_filter = 2
+color = Color(1, 1, 1, 1)

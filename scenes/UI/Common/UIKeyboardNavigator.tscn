@@ -1,0 +1,51 @@
+[gd_scene format=3 uid="uid://buikx73w08s02"]
+
+[ext_resource type="Script" path="res://Script/UI/UIKeyboardNavigator.gd" id="1"]
+
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/KeyboardHint.tscn" id="keyboard_hint_skin"]
+
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="window_skin"]
+
+[sub_resource type="StyleBoxTexture" id="menu_panel"]
+texture = ExtResource("window_skin")
+region_rect = Rect2(0, 60, 1586, 932)
+texture_margin_left = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+content_margin_left = 8.0
+content_margin_right = 8.0
+content_margin_top = 6.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="menu_hover"]
+bg_color = Color(0.26, 0.43, 0.67, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[node name="UIKeyboardNavigator" type="Node" unique_id=763275539]
+script = ExtResource("1")
+world_hint = "Tab 菜单 · Esc 存档"
+popup_hint = "方向键/WASD 选择 · Enter 确认 · Tab 切换区域 · Q/E 翻页 · Esc 返回"
+menu_hint = "菜单：%s  ·  方向键选择 · Enter 打开 · Esc 返回"
+
+[node name="Overlay" type="CanvasLayer" parent="." unique_id=1464514513]
+layer = 120
+
+[node name="SelectionFrame" type="ReferenceRect" parent="Overlay" unique_id=1049068686]
+mouse_filter = 2
+border_color = Color(1, 0.894, 0.459, 1)
+border_width = 3.0
+editor_only = false
+
+[node name="Hint" parent="Overlay" unique_id=644826270 instance=ExtResource("keyboard_hint_skin")]
+
+[node name="Actions" type="PopupMenu" parent="." unique_id=538089828]
+min_size = Vector2i(92, 0)
+theme_override_styles/panel = SubResource("menu_panel")
+theme_override_styles/hover = SubResource("menu_hover")
+theme_override_colors/font_color = Color(0.14, 0.25, 0.43, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_constants/v_separation = 9
+theme_override_font_sizes/font_size = 15

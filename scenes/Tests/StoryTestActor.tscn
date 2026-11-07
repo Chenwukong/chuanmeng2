@@ -1,0 +1,9 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Script/Tests/StoryTestActor.gd" id="Actor"]
+[ext_resource type="Script" path="res://Script/Assets/WASAnimationPlayer.gd" id="Was"]
+[node name="Actor" type="Node2D"]
+script = ExtResource("Actor")
+[node name="Sprite2D" type="Sprite2D" parent="."]
+[node name="WASAnimationPlayer" type="Node" parent="."]
+script = ExtResource("Was")
+target_sprite = NodePath("../Sprite2D")

@@ -1,0 +1,40 @@
+[gd_resource type="Theme" format=3 uid="uid://dlnyggnbbl1oa"]
+
+[sub_resource type="StyleBoxFlat" id="focus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.98, 0.89, 0.54, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="input"]
+content_margin_left = 6.0
+content_margin_top = 1.0
+content_margin_right = 6.0
+content_margin_bottom = 1.0
+bg_color = Color(0.83, 0.9, 1, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.43, 0.59, 0.8, 0.8)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[resource]
+default_font_size = 15
+LineEdit/colors/caret_color = Color(0.14, 0.25, 0.43, 1)
+LineEdit/colors/font_color = Color(0.14, 0.25, 0.43, 1)
+LineEdit/colors/font_placeholder_color = Color(0.34, 0.44, 0.6, 1)
+LineEdit/colors/font_uneditable_color = Color(0.34, 0.44, 0.6, 1)
+LineEdit/colors/selection_color = Color(0.44, 0.64, 0.9, 0.6)
+LineEdit/styles/focus = SubResource("focus")
+LineEdit/styles/normal = SubResource("input")
+LineEdit/styles/read_only = SubResource("input")

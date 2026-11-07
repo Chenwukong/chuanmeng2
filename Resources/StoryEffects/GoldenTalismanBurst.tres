@@ -1,0 +1,14 @@
+[gd_resource type="Resource" format=3 uid="uid://cccuqjlox4e6x"]
+
+[ext_resource type="Script" uid="uid://cow0r1l53aeb2" path="res://Script/Effects/TalismanBurstConfig.gd" id="Config"]
+
+[resource]
+script = ExtResource("Config")
+count = 120
+charge_duration = 3.0
+rise_speed = 0.3
+batch_count = 40
+batch_interval = 0.05
+min_rune_length = 0.56
+max_rune_length = 1.56
+release_shake = 25.0

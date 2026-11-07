@@ -1,0 +1,13 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Script/UI/DebugCheatButton.gd" id="Script"]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="Theme"]
+
+[node name="DebugCheatButton" type="Button"]
+offset_left = 24.0
+offset_top = 145.0
+offset_right = 204.0
+offset_bottom = 183.0
+theme = ExtResource("Theme")
+text = "作弊（调试）"
+tooltip_text = "全部角色升至100级并学会全部技能；全部天赋满级；获得全部装备、饰品和材料；金币与材料不消耗。"
+script = ExtResource("Script")

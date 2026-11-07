@@ -1,0 +1,2125 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Script/UI/BuildPopup.gd" id="1_root"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="skin"]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="theme"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowTitle.tscn" id="title"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowCloseButton.tscn" id="close"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/CommerceLesson.tscn" id="commerce_lesson"]
+[ext_resource type="PackedScene" path="res://scenes/UI/CraftingCatalogPanel.tscn" id="catalog"]
+[sub_resource type="StyleBoxTexture" id="frame"]
+texture = ExtResource("skin")
+region_rect = Rect2(0, 60, 1586, 932)
+texture_margin_left = 6.0
+texture_margin_right = 6.0
+texture_margin_top = 4.0
+texture_margin_bottom = 6.0
+[sub_resource type="StyleBoxTexture" id="header"]
+texture = ExtResource("skin")
+region_rect = Rect2(383, 0, 820, 57)
+[sub_resource type="StyleBoxFlat" id="well"]
+bg_color = Color(0.28, 0.41, 0.64, 0.5)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.55, 0.69, 0.88, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+[sub_resource type="StyleBoxFlat" id="tooltip"]
+bg_color = Color(0.12, 0.20, 0.34, 0.97)
+content_margin_left = 12.0
+content_margin_right = 12.0
+content_margin_top = 10.0
+content_margin_bottom = 10.0
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.60, 0.75, 0.94, 1)
+[node name="BuildPopup" type="CanvasLayer"]
+layer = 5
+script = ExtResource("1_root")
+
+[node name="CommerceLesson" parent="." instance=ExtResource("commerce_lesson")]
+
+[node name="Background" type="ColorRect" parent="."]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.03, 0.07, 0.15, 0.3)
+
+[node name="Panel" type="Panel" parent="."]
+offset_left = -628.0
+offset_top = -310.0
+offset_right = 312.0
+offset_bottom = 310.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+theme = ExtResource("theme")
+theme_override_styles/panel = SubResource("frame")
+
+[node name="Header" type="Panel" parent="Panel"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 940.0
+offset_bottom = 38.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("header")
+
+[node name="Recipes" type="Button" parent="Panel"]
+offset_left = 26.0
+offset_top = 3.0
+offset_right = 158.0
+offset_bottom = 36.0
+text = "配方详情"
+
+[node name="Title" parent="Panel" instance=ExtResource("title")]
+offset_left = 310.0
+offset_top = -2.0
+offset_right = 630.0
+offset_bottom = 34.0
+text = "打造"
+theme_override_font_sizes/font_size = 24
+
+[node name="CloseBtn" parent="Panel" instance=ExtResource("close")]
+offset_left = 872.0
+offset_top = 5.0
+offset_right = 924.0
+offset_bottom = 33.0
+
+
+[node name="Workbench" type="Panel" parent="Panel"]
+offset_left = 24.0
+offset_top = 54.0
+offset_right = 916.0
+offset_bottom = 208.0
+mouse_filter = 2
+
+[node name="Prompt" type="Label" parent="Panel"]
+offset_left = 42.0
+offset_top = 62.0
+offset_right = 552.0
+offset_bottom = 88.0
+mouse_filter = 2
+text = "选择基底与材料，放入四格后打造"
+theme_override_font_sizes/font_size = 17
+vertical_alignment = 1
+
+
+[node name="Resource1" type="Panel" parent="Panel"]
+offset_left = 42.0
+offset_top = 96.0
+offset_right = 112.0
+offset_bottom = 166.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/Resource1"]
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 64.0
+offset_bottom = 64.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Index" type="Label" parent="Panel/Resource1"]
+offset_left = 3.0
+offset_top = 0.0
+offset_right = 21.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "1"
+theme_override_font_sizes/font_size = 12
+vertical_alignment = 1
+
+
+[node name="Resource2" type="Panel" parent="Panel"]
+offset_left = 126.0
+offset_top = 96.0
+offset_right = 196.0
+offset_bottom = 166.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/Resource2"]
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 64.0
+offset_bottom = 64.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Index" type="Label" parent="Panel/Resource2"]
+offset_left = 3.0
+offset_top = 0.0
+offset_right = 21.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "2"
+theme_override_font_sizes/font_size = 12
+vertical_alignment = 1
+
+
+[node name="Resource3" type="Panel" parent="Panel"]
+offset_left = 210.0
+offset_top = 96.0
+offset_right = 280.0
+offset_bottom = 166.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/Resource3"]
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 64.0
+offset_bottom = 64.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Index" type="Label" parent="Panel/Resource3"]
+offset_left = 3.0
+offset_top = 0.0
+offset_right = 21.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "3"
+theme_override_font_sizes/font_size = 12
+vertical_alignment = 1
+
+
+[node name="Resource4" type="Panel" parent="Panel"]
+offset_left = 294.0
+offset_top = 96.0
+offset_right = 364.0
+offset_bottom = 166.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/Resource4"]
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 64.0
+offset_bottom = 64.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Index" type="Label" parent="Panel/Resource4"]
+offset_left = 3.0
+offset_top = 0.0
+offset_right = 21.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "4"
+theme_override_font_sizes/font_size = 12
+vertical_alignment = 1
+
+
+[node name="ResourceHint" type="Label" parent="Panel"]
+offset_left = 42.0
+offset_top = 173.0
+offset_right = 402.0
+offset_bottom = 195.0
+mouse_filter = 2
+text = "点击放入 · 点击投入槽可取回"
+theme_override_font_sizes/font_size = 13
+vertical_alignment = 1
+
+
+[node name="CostTitle" type="Label" parent="Panel"]
+offset_left = 425.0
+offset_top = 92.0
+offset_right = 525.0
+offset_bottom = 120.0
+mouse_filter = 2
+text = "所需银两"
+theme_override_font_sizes/font_size = 15
+vertical_alignment = 1
+
+
+[node name="所需现金" type="Label" parent="Panel"]
+offset_left = 525.0
+offset_top = 92.0
+offset_right = 655.0
+offset_bottom = 120.0
+mouse_filter = 2
+text = "1"
+theme_override_font_sizes/font_size = 20
+vertical_alignment = 1
+
+
+[node name="CashTitle" type="Label" parent="Panel"]
+offset_left = 425.0
+offset_top = 129.0
+offset_right = 525.0
+offset_bottom = 157.0
+mouse_filter = 2
+text = "持有银两"
+theme_override_font_sizes/font_size = 15
+vertical_alignment = 1
+
+
+[node name="现有现金" type="Label" parent="Panel"]
+offset_left = 525.0
+offset_top = 129.0
+offset_right = 655.0
+offset_bottom = 157.0
+mouse_filter = 2
+text = "0"
+theme_override_font_sizes/font_size = 18
+vertical_alignment = 1
+
+
+[node name="BuildBtn" type="Button" parent="Panel"]
+offset_left = 706.0
+offset_top = 89.0
+offset_right = 884.0
+offset_bottom = 131.0
+text = "打造"
+theme_override_font_sizes/font_size = 20
+
+[node name="CancelBtn" type="Button" parent="Panel"]
+offset_left = 706.0
+offset_top = 142.0
+offset_right = 884.0
+offset_bottom = 178.0
+text = "取回材料"
+
+[node name="EquipmentTitle" type="Label" parent="Panel"]
+offset_left = 28.0
+offset_top = 216.0
+offset_right = 248.0
+offset_bottom = 246.0
+mouse_filter = 2
+text = "原料 · 武器 / 符纸"
+theme_override_font_sizes/font_size = 18
+vertical_alignment = 1
+
+
+[node name="材料" type="Control" parent="Panel"]
+offset_left = 480.0
+offset_top = 0.0
+offset_right = 480.0
+offset_bottom = 0.0
+mouse_filter = 2
+
+[node name="MaterialsTitle" type="Label" parent="Panel/材料"]
+offset_left = 0.0
+offset_top = 216.0
+offset_right = 200.0
+offset_bottom = 246.0
+mouse_filter = 2
+text = "强化 / 制符材料"
+theme_override_font_sizes/font_size = 18
+vertical_alignment = 1
+
+
+[node name="ItemSlot_00" type="Panel" parent="Panel"]
+offset_left = 28.0
+offset_top = 257.0
+offset_right = 108.0
+offset_bottom = 331.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_00"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_00"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_00"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_01" type="Panel" parent="Panel"]
+offset_left = 114.0
+offset_top = 257.0
+offset_right = 194.0
+offset_bottom = 331.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_01"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_01"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_01"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_02" type="Panel" parent="Panel"]
+offset_left = 200.0
+offset_top = 257.0
+offset_right = 280.0
+offset_bottom = 331.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_02"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_02"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_02"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_03" type="Panel" parent="Panel"]
+offset_left = 286.0
+offset_top = 257.0
+offset_right = 366.0
+offset_bottom = 331.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_03"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_03"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_03"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_04" type="Panel" parent="Panel"]
+offset_left = 372.0
+offset_top = 257.0
+offset_right = 452.0
+offset_bottom = 331.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_04"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_04"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_04"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_05" type="Panel" parent="Panel"]
+offset_left = 28.0
+offset_top = 337.0
+offset_right = 108.0
+offset_bottom = 411.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_05"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_05"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_05"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_06" type="Panel" parent="Panel"]
+offset_left = 114.0
+offset_top = 337.0
+offset_right = 194.0
+offset_bottom = 411.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_06"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_06"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_06"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_07" type="Panel" parent="Panel"]
+offset_left = 200.0
+offset_top = 337.0
+offset_right = 280.0
+offset_bottom = 411.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_07"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_07"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_07"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_08" type="Panel" parent="Panel"]
+offset_left = 286.0
+offset_top = 337.0
+offset_right = 366.0
+offset_bottom = 411.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_08"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_08"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_08"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_09" type="Panel" parent="Panel"]
+offset_left = 372.0
+offset_top = 337.0
+offset_right = 452.0
+offset_bottom = 411.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_09"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_09"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_09"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_10" type="Panel" parent="Panel"]
+offset_left = 28.0
+offset_top = 417.0
+offset_right = 108.0
+offset_bottom = 491.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_10"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_10"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_10"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_11" type="Panel" parent="Panel"]
+offset_left = 114.0
+offset_top = 417.0
+offset_right = 194.0
+offset_bottom = 491.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_11"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_11"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_11"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_12" type="Panel" parent="Panel"]
+offset_left = 200.0
+offset_top = 417.0
+offset_right = 280.0
+offset_bottom = 491.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_12"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_12"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_12"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_13" type="Panel" parent="Panel"]
+offset_left = 286.0
+offset_top = 417.0
+offset_right = 366.0
+offset_bottom = 491.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_13"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_13"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_13"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_14" type="Panel" parent="Panel"]
+offset_left = 372.0
+offset_top = 417.0
+offset_right = 452.0
+offset_bottom = 491.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_14"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_14"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_14"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_15" type="Panel" parent="Panel"]
+offset_left = 28.0
+offset_top = 497.0
+offset_right = 108.0
+offset_bottom = 571.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_15"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_15"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_15"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_16" type="Panel" parent="Panel"]
+offset_left = 114.0
+offset_top = 497.0
+offset_right = 194.0
+offset_bottom = 571.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_16"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_16"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_16"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_17" type="Panel" parent="Panel"]
+offset_left = 200.0
+offset_top = 497.0
+offset_right = 280.0
+offset_bottom = 571.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_17"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_17"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_17"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_18" type="Panel" parent="Panel"]
+offset_left = 286.0
+offset_top = 497.0
+offset_right = 366.0
+offset_bottom = 571.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_18"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_18"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_18"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_19" type="Panel" parent="Panel"]
+offset_left = 372.0
+offset_top = 497.0
+offset_right = 452.0
+offset_bottom = 571.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/ItemSlot_19"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/ItemSlot_19"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/ItemSlot_19"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_00" type="Panel" parent="Panel/材料"]
+offset_left = 0.0
+offset_top = 257.0
+offset_right = 80.0
+offset_bottom = 331.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_00"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_00"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_00"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_01" type="Panel" parent="Panel/材料"]
+offset_left = 86.0
+offset_top = 257.0
+offset_right = 166.0
+offset_bottom = 331.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_01"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_01"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_01"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_02" type="Panel" parent="Panel/材料"]
+offset_left = 172.0
+offset_top = 257.0
+offset_right = 252.0
+offset_bottom = 331.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_02"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_02"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_02"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_03" type="Panel" parent="Panel/材料"]
+offset_left = 258.0
+offset_top = 257.0
+offset_right = 338.0
+offset_bottom = 331.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_03"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_03"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_03"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_04" type="Panel" parent="Panel/材料"]
+offset_left = 344.0
+offset_top = 257.0
+offset_right = 424.0
+offset_bottom = 331.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_04"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_04"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_04"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_05" type="Panel" parent="Panel/材料"]
+offset_left = 0.0
+offset_top = 337.0
+offset_right = 80.0
+offset_bottom = 411.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_05"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_05"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_05"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_06" type="Panel" parent="Panel/材料"]
+offset_left = 86.0
+offset_top = 337.0
+offset_right = 166.0
+offset_bottom = 411.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_06"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_06"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_06"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_07" type="Panel" parent="Panel/材料"]
+offset_left = 172.0
+offset_top = 337.0
+offset_right = 252.0
+offset_bottom = 411.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_07"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_07"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_07"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_08" type="Panel" parent="Panel/材料"]
+offset_left = 258.0
+offset_top = 337.0
+offset_right = 338.0
+offset_bottom = 411.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_08"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_08"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_08"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_09" type="Panel" parent="Panel/材料"]
+offset_left = 344.0
+offset_top = 337.0
+offset_right = 424.0
+offset_bottom = 411.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_09"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_09"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_09"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_10" type="Panel" parent="Panel/材料"]
+offset_left = 0.0
+offset_top = 417.0
+offset_right = 80.0
+offset_bottom = 491.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_10"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_10"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_10"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_11" type="Panel" parent="Panel/材料"]
+offset_left = 86.0
+offset_top = 417.0
+offset_right = 166.0
+offset_bottom = 491.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_11"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_11"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_11"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_12" type="Panel" parent="Panel/材料"]
+offset_left = 172.0
+offset_top = 417.0
+offset_right = 252.0
+offset_bottom = 491.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_12"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_12"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_12"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_13" type="Panel" parent="Panel/材料"]
+offset_left = 258.0
+offset_top = 417.0
+offset_right = 338.0
+offset_bottom = 491.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_13"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_13"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_13"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_14" type="Panel" parent="Panel/材料"]
+offset_left = 344.0
+offset_top = 417.0
+offset_right = 424.0
+offset_bottom = 491.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_14"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_14"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_14"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_15" type="Panel" parent="Panel/材料"]
+offset_left = 0.0
+offset_top = 497.0
+offset_right = 80.0
+offset_bottom = 571.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_15"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_15"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_15"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_16" type="Panel" parent="Panel/材料"]
+offset_left = 86.0
+offset_top = 497.0
+offset_right = 166.0
+offset_bottom = 571.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_16"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_16"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_16"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_17" type="Panel" parent="Panel/材料"]
+offset_left = 172.0
+offset_top = 497.0
+offset_right = 252.0
+offset_bottom = 571.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_17"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_17"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_17"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_18" type="Panel" parent="Panel/材料"]
+offset_left = 258.0
+offset_top = 497.0
+offset_right = 338.0
+offset_bottom = 571.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_18"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_18"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_18"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="ItemSlot_19" type="Panel" parent="Panel/材料"]
+offset_left = 344.0
+offset_top = 497.0
+offset_right = 424.0
+offset_bottom = 571.0
+theme_override_styles/panel = SubResource("well")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="Panel/材料/ItemSlot_19"]
+offset_left = 7.0
+offset_top = 5.0
+offset_right = 73.0
+offset_bottom = 67.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Qty" type="Label" parent="Panel/材料/ItemSlot_19"]
+offset_left = 3.0
+offset_top = 48.0
+offset_right = 75.0
+offset_bottom = 71.0
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+vertical_alignment = 1
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0.1, 0.2, 0.35, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+
+[node name="WornLabel" type="Label" parent="Panel/材料/ItemSlot_19"]
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 76.0
+offset_bottom = 20.0
+mouse_filter = 2
+text = "已装备"
+theme_override_font_sizes/font_size = 11
+vertical_alignment = 1
+visible = false
+
+[node name="Hint" type="Label" parent="Panel"]
+offset_left = 28.0
+offset_top = 585.0
+offset_right = 912.0
+offset_bottom = 607.0
+mouse_filter = 2
+text = "选择材料查看说明 · 不同类型材料无法混用 · Esc 关闭"
+theme_override_font_sizes/font_size = 13
+vertical_alignment = 1
+horizontal_alignment = 1
+
+[node name="TooltipPopup" type="RichTextLabel" parent="."]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 240.0
+offset_bottom = 0.0
+visible = false
+z_index = 200
+mouse_filter = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+theme_override_colors/default_color = Color(0.91, 0.95, 1, 1)
+theme_override_styles/normal = SubResource("tooltip")
+
+[node name="PrevPage" type="Button" parent="Panel"]
+offset_left = 278.0
+offset_top = 218.0
+offset_right = 316.0
+offset_bottom = 246.0
+text = "‹"
+[node name="PageNumber" type="Label" parent="Panel"]
+offset_left = 318.0
+offset_top = 218.0
+offset_right = 400.0
+offset_bottom = 246.0
+text = "1 / 1"
+mouse_filter = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+[node name="NextPage" type="Button" parent="Panel"]
+offset_left = 402.0
+offset_top = 218.0
+offset_right = 440.0
+offset_bottom = 246.0
+text = "›"
+
+[node name="PrevPage" type="Button" parent="Panel/材料"]
+offset_left = 250.0
+offset_top = 218.0
+offset_right = 288.0
+offset_bottom = 246.0
+text = "‹"
+[node name="PageNumber" type="Label" parent="Panel/材料"]
+offset_left = 290.0
+offset_top = 218.0
+offset_right = 372.0
+offset_bottom = 246.0
+text = "1 / 1"
+mouse_filter = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+[node name="NextPage" type="Button" parent="Panel/材料"]
+offset_left = 374.0
+offset_top = 218.0
+offset_right = 412.0
+offset_bottom = 246.0
+text = "›"
+
+[node name="CraftingCatalog" parent="." instance=ExtResource("catalog")]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 328.0
+offset_top = -310.0
+offset_right = 628.0
+offset_bottom = 310.0

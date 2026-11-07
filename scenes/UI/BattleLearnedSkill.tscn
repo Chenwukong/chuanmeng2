@@ -1,0 +1,29 @@
+[gd_scene format=3]
+[ext_resource type="Texture2D" path="res://Graphic/UI/按钮底图.png" id="Ribbon"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="Font"]
+[sub_resource type="StyleBoxTexture" id="RibbonStyle"]
+texture = ExtResource("Ribbon")
+region_rect = Rect2(0, 30, 376, 22)
+modulate_color = Color(1, 1, 1, 0.72)
+texture_margin_left = 18.0
+texture_margin_right = 65.0
+texture_margin_top = 4.0
+texture_margin_bottom = 4.0
+content_margin_left = 26.0
+content_margin_right = 26.0
+content_margin_top = 5.0
+content_margin_bottom = 7.0
+[node name="LearnedSkill" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 40)
+mouse_filter = 2
+theme_override_styles/panel = SubResource("RibbonStyle")
+[node name="Name" type="Label" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("Font")
+theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(0.09, 0.25, 0.43, 1)
+horizontal_alignment = 1
+autowrap_mode = 2
+text = "新技能"
+

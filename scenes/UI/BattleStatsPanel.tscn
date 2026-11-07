@@ -1,0 +1,188 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/Battle/BattleStatsPanel.gd" id="PanelScript"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="TitleFont"]
+
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="WindowSkin"]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="WindowTheme"]
+
+[sub_resource type="StyleBoxTexture" id="Frame"]
+modulate_color = Color(1, 1, 1, 0.62)
+texture = ExtResource("WindowSkin")
+region_rect = Rect2(0, 60, 1586, 932)
+texture_margin_left = 3.0
+texture_margin_right = 3.0
+texture_margin_bottom = 3.0
+content_margin_left = 8.0
+content_margin_right = 8.0
+content_margin_top = 4.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="Header"]
+texture = ExtResource("WindowSkin")
+region_rect = Rect2(383, 0, 820, 57)
+content_margin_left = 0.0
+content_margin_right = 0.0
+content_margin_top = 0.0
+content_margin_bottom = 0.0
+
+[sub_resource type="StyleBoxEmpty" id="Clear"]
+
+[sub_resource type="ButtonGroup" id="Modes"]
+resource_local_to_scene = true
+
+[node name="StatsPanel" type="PanelContainer"]
+script = ExtResource("PanelScript")
+visible = false
+custom_minimum_size = Vector2(210, 0)
+offset_left = 10.0
+offset_top = 292.0
+offset_right = 220.0
+offset_bottom = 292.0
+mouse_filter = 2
+theme = ExtResource("WindowTheme")
+theme_override_styles/panel = SubResource("Frame")
+
+[node name="Body" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Heading" type="PanelContainer" parent="Body"]
+custom_minimum_size = Vector2(0, 23)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Header")
+
+[node name="FoldButton" type="Button" parent="Body/Heading"]
+unique_name_in_owner = true
+layout_mode = 2
+flat = true
+mouse_default_cursor_shape = 6
+theme_override_styles/normal = SubResource("Clear")
+theme_override_styles/hover = SubResource("Clear")
+theme_override_styles/pressed = SubResource("Clear")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("TitleFont")
+theme_override_font_sizes/font_size = 16
+tooltip_text = "收起战局统计 · 按住标题拖动"
+text = "战局统计"
+
+[node name="Indicator" type="Label" parent="Body/Heading/FoldButton"]
+unique_name_in_owner = true
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -22.0
+offset_right = -3.0
+mouse_filter = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "▴"
+
+[node name="Details" type="VBoxContainer" parent="Body"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Tabs" type="HBoxContainer" parent="Body/Details"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
+
+[node name="ThreatTab" type="Button" parent="Body/Details/Tabs"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 25)
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.89, 0.94, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
+toggle_mode = true
+button_group = SubResource("Modes")
+button_pressed = true
+text = "仇恨"
+
+[node name="DamageTab" type="Button" parent="Body/Details/Tabs"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 25)
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.89, 0.94, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
+toggle_mode = true
+button_group = SubResource("Modes")
+text = "伤害"
+
+[node name="HealTab" type="Button" parent="Body/Details/Tabs"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 25)
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.89, 0.94, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
+toggle_mode = true
+button_group = SubResource("Modes")
+text = "治疗"
+
+[node name="Columns" type="HBoxContainer" parent="Body/Details"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Member" type="Label" parent="Body/Details/Columns"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.23, 0.33, 0.52, 1)
+theme_override_font_sizes/font_size = 11
+size_flags_horizontal = 3
+text = "成员"
+
+[node name="Value" type="Label" parent="Body/Details/Columns"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.23, 0.33, 0.52, 1)
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+text = "数值"
+
+[node name="ListScroll" type="ScrollContainer" parent="Body/Details"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 27)
+layout_mode = 2
+horizontal_scroll_mode = 0
+mouse_filter = 1
+
+[node name="Content" type="VBoxContainer" parent="Body/Details/ListScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Rows" type="VBoxContainer" parent="Body/Details/ListScroll/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Empty" type="Label" parent="Body/Details/ListScroll/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.23, 0.33, 0.52, 1)
+theme_override_font_sizes/font_size = 12
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 27)
+horizontal_alignment = 1
+text = "暂无记录"
+

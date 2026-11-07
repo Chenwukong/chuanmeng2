@@ -1,7 +1,7 @@
 class_name XY2MapReader
 extends RefCounted
 
-const UjpegDecoderScript := preload("res://Script/Global/UjpegDecoder.gd")
+const UjpegDecoderScript := preload("res://Script/Assets/UjpegDecoder.gd")
 
 const MAP_FLAG_M10 := 0x4D312E30
 const MAP_FLAG_MAPX := 0x5850414D

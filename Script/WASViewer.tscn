@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cd6v276pgxuhv"]
 
-[ext_resource type="Script" uid="uid://b83kpj0b881o0" path="res://Script/WASViewer.gd" id="1_ef3ca"]
+[ext_resource type="Script" path="res://Script/Assets/WASViewer.gd" id="1_ef3ca"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_preview"]
 bg_color = Color(0.0980392, 0.0980392, 0.117647, 1)

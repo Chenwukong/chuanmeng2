@@ -1,0 +1,123 @@
+[gd_scene format=3]
+[ext_resource type="Texture2D" path="res://Graphic/UI/1 (2).png" id="Texture"]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="Theme"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="Font"]
+[sub_resource type="StyleBoxTexture" id="Frame"]
+texture = ExtResource("Texture")
+texture_margin_left = 14.0
+texture_margin_right = 14.0
+texture_margin_top = 14.0
+texture_margin_bottom = 14.0
+content_margin_left = 24.0
+content_margin_right = 24.0
+content_margin_top = 18.0
+content_margin_bottom = 18.0
+[sub_resource type="StyleBoxFlat" id="Card"]
+bg_color = Color(0.12, 0.23, 0.48, 0.55)
+content_margin_left = 14.0
+content_margin_right = 14.0
+content_margin_top = 12.0
+content_margin_bottom = 12.0
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+[node name="BattleSummary" type="PanelContainer"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -270.0
+offset_top = -190.0
+offset_right = 270.0
+offset_bottom = 190.0
+theme = ExtResource("Theme")
+theme_override_styles/panel = SubResource("Frame")
+[node name="Body" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 14
+[node name="Title" type="Label" parent="Body"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("Font")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 26
+text = "战斗统计"
+horizontal_alignment = 1
+[node name="Caption" type="Label" parent="Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.78, 0.88, 1, 1)
+text = "本场战斗 · 成员贡献"
+horizontal_alignment = 1
+[node name="Columns" type="HBoxContainer" parent="Body"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+[node name="Damage" type="PanelContainer" parent="Body/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("Card")
+[node name="Content" type="VBoxContainer" parent="Body/Columns/Damage"]
+layout_mode = 2
+theme_override_constants/separation = 9
+[node name="Heading" type="Label" parent="Body/Columns/Damage/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.96, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "伤害贡献"
+[node name="Total" type="Label" parent="Body/Columns/Damage/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.8, 0.9, 1, 1)
+text = "合计  0"
+[node name="Scroll" type="ScrollContainer" parent="Body/Columns/Damage/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+[node name="Rows" type="VBoxContainer" parent="Body/Columns/Damage/Content/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 9
+[node name="Empty" type="Label" parent="Body/Columns/Damage/Content/Scroll/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.76, 0.86, 1, 1)
+text = "暂无伤害记录"
+[node name="Healing" type="PanelContainer" parent="Body/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("Card")
+[node name="Content" type="VBoxContainer" parent="Body/Columns/Healing"]
+layout_mode = 2
+theme_override_constants/separation = 9
+[node name="Heading" type="Label" parent="Body/Columns/Healing/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.96, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "治疗贡献"
+[node name="Total" type="Label" parent="Body/Columns/Healing/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.8, 0.9, 1, 1)
+text = "合计  0"
+[node name="Scroll" type="ScrollContainer" parent="Body/Columns/Healing/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+[node name="Rows" type="VBoxContainer" parent="Body/Columns/Healing/Content/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 9
+[node name="Empty" type="Label" parent="Body/Columns/Healing/Content/Scroll/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.76, 0.86, 1, 1)
+text = "暂无治疗记录"
+[node name="Footer" type="CenterContainer" parent="Body"]
+layout_mode = 2
+[node name="Confirm" type="Button" parent="Body/Footer"]
+layout_mode = 2
+custom_minimum_size = Vector2(132, 36)
+theme_override_font_sizes/font_size = 16
+text = "确认"
+

@@ -1,0 +1,31 @@
+成就配置：Script/Data/AchievementDB.gd
+复制 ENTRIES 中一条字典即可新增。
+id：唯一且发布后不修改（存档用它防止重复领取）。
+name / description / category：名称、说明、分类文字。
+metric：统计名，目前移动自动累计 steps。其他事件调用 GameData.add_achievement_progress("统计名", 数量)。
+target：所需数量。
+rewards：奖励数组，可组合 [{"type": "talent_points", "amount": 1}, {"type": "gold", "amount": 1000}]。
+gold 金币奖励享受装备和背包被动加成；每项 amount 必须为正整数。
+PIXELS_PER_STEP：每步对应像素数，默认 20。只计算实际移动，骑乘计入，传送不计。
+完成后在成就页面手动领取，每个存档每项仅可领取一次。进度、剩余距离和领取记录随正常存档保存。
+旧存档从零开始累计，不会追溯历史步数。
+
+道具奖励：{"type": "item", "item_id": "treasure_basin", "amount": 1}。道具先在 GameData._register_items 注册。
+gold_peak 统计持有金币的历史最高值，达到后花费金币不影响领取。旧存档以载入时余额开始统计。
+ItemData.passive_gold_bonus：背包持有自动增加金币收入的百分比，同种道具不按数量叠加，与装备加成相加。
+
+百炼成才：repeat_per_character=true 的成就上限自动取 CharacterDB.CHARACTER_DB.size()；characters_lv100 统计曾达到100级的不同可选角色。
+奖励 {"type": "all_potential", "amount": 5} 直接增加 character_roster 全部可选角色的可分配属性点，未入队角色同时获得；每次点击领取一份，页面显示剩余可领次数。
+百级角色ID、已领次数及完整角色名册的属性数据均随存档保存。旧存档中已有的百级角色也可计入。
+
+character_roster 保存全部可选角色的永久实例，party_db 仅保存当前队员对名册的引用。入队/离队不重建角色、不补发奖励、不重置属性。
+
+等级成就配置：required_level=50 表示达到50级，required_level=100 表示达到100级。target=1 表示每1位不同角色达标可领取1次，请勿用0.5表示50级。
+每个等级成就使用独立 metric（如 characters_lv50、characters_lv100），ID也应唯一。description中的 {level} 自动替换为 required_level，不用手动改文案中的等级。
+
+神兵成就：metric="weapon_upgrade_peak" 表示任意武器曾达到的最高强化等级，target=10 表示+10满级。成功强化、打开成就页、保存和读取存档时都会统计背包及已穿戴武器。普通装备等级不计入。
+财富奖励 type="gold"、amount 为基础金币数；实际到账会享受装备及聚宝盆的金币加成。
+
+属性成就：stat_field 配置检查的永久属性字段，max_hp=体质、attack=力量、magic_attack=魔力、defense=耐力、speed=敏捷。target 为门槛，默认1000；rewards.amount 为奖励数量。
+检查任意可选角色的永久基础面板（包含已确认的加点与升级成长），不含装备和战斗临时加成；不是已分配点数alloc_*。description里的{target}自动显示门槛。
+不配置repeat_per_character即为一次性成就，整个存档只能领一次，洗点、换角色或重新达标不重复领取。

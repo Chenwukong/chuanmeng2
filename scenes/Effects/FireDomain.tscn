@@ -1,0 +1,66 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://Script/Battle/FireDomain.gd" id="1"]
+[ext_resource type="Shader" path="res://Shader/fire_domain.gdshader" id="2"]
+
+[sub_resource type="ShaderMaterial" id="Fire"]
+shader = ExtResource("2")
+
+[sub_resource type="Gradient" id="White"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="Quad"]
+gradient = SubResource("White")
+width = 220
+height = 160
+
+[sub_resource type="Gradient" id="SparkShape"]
+offsets = PackedFloat32Array(0, 0.4, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 0.7, 0.2, 0.8, 1, 0.2, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="Spark"]
+gradient = SubResource("SparkShape")
+width = 12
+height = 12
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
+
+[sub_resource type="Gradient" id="EmberColor"]
+offsets = PackedFloat32Array(0, 0.15, 0.7, 1)
+colors = PackedColorArray(1, 0.85, 0.3, 0, 1, 0.64, 0.12, 0.85, 1, 0.21, 0.02, 0.5, 0.7, 0.03, 0, 0)
+
+[sub_resource type="Curve" id="EmberSize"]
+_data = [Vector2(0, 0.2), 0.0, 0.0, 0, 0, Vector2(0.15, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.05), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[node name="FireDomain" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Ring" type="Sprite2D" parent="."]
+light_mask = 0
+position = Vector2(0, -42)
+texture = SubResource("Quad")
+material = SubResource("Fire")
+
+[node name="Embers" type="CPUParticles2D" parent="."]
+light_mask = 0
+position = Vector2(0, -5)
+amount = 32
+lifetime = 1.3
+preprocess = 1.3
+local_coords = true
+texture = SubResource("Spark")
+emission_shape = 3
+emission_rect_extents = Vector2(64, 15)
+direction = Vector2(0, -1)
+spread = 22.0
+gravity = Vector2(0, -9)
+initial_velocity_min = 22.0
+initial_velocity_max = 47.0
+angular_velocity_min = -20.0
+angular_velocity_max = 20.0
+scale_amount_min = 0.18
+scale_amount_max = 0.4
+scale_amount_curve = SubResource("EmberSize")
+color_ramp = SubResource("EmberColor")

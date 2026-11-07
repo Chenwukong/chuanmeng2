@@ -1,0 +1,116 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/UI/AchievementPopup.gd" id="1_ui0ll"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="2_tvhda"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowTitle.tscn" id="3_f488d"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="4_46hfi"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowCloseButton.tscn" id="5_57bdp"]
+
+[sub_resource type="StyleBoxFlat" id="normal"]
+bg_color = Color(0.45, 0.59, 0.79, 0.08)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="pressed"]
+bg_color = Color(0.4, 0.56, 0.77, 0.35)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="hover"]
+bg_color = Color(0.88, 0.94, 1, 0.75)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="focus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_bottom = 1
+border_color = Color(0.34, 0.47, 0.65, 0.8)
+
+[node name="AchievementPopup" type="CanvasLayer" unique_id=617632876]
+layer = 6
+script = ExtResource("1_ui0ll")
+
+[node name="Backdrop" type="ColorRect" parent="." unique_id=242227487]
+offset_right = 1300.0
+offset_bottom = 800.0
+color = Color(0.01, 0.025, 0.08, 0.65)
+
+[node name="Frame" type="TextureRect" parent="." unique_id=2011070302]
+offset_left = 24.0
+offset_top = 16.0
+offset_right = 1276.0
+offset_bottom = 784.0
+mouse_filter = 2
+texture = ExtResource("2_tvhda")
+expand_mode = 1
+
+[node name="PageTitle" type="Label" parent="." unique_id=15142635 instance=ExtResource("3_f488d")]
+offset_left = 440.0
+offset_top = 11.0
+offset_right = 860.0
+offset_bottom = 52.81
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("4_46hfi")
+theme_override_font_sizes/font_size = 26
+text = "成就页面"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Content" type="VBoxContainer" parent="." unique_id=2085079814]
+offset_left = 100.0
+offset_top = 84.0
+offset_right = 1200.0
+offset_bottom = 716.0
+theme_override_constants/separation = 14
+
+[node name="Header" type="HBoxContainer" parent="Content" unique_id=1283987463]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Content/Header" unique_id=2011357907]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.1, 0.23, 0.4, 1)
+theme_override_fonts/font = ExtResource("4_46hfi")
+theme_override_font_sizes/font_size = 24
+text = "山海足迹"
+
+[node name="Close" type="Button" parent="Content/Header" unique_id=212331396 instance=ExtResource("5_57bdp")]
+custom_minimum_size = Vector2(48, 28)
+layout_mode = 2
+tooltip_text = "关闭（Esc）"
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.23, 0.35, 0.53, 1)
+theme_override_colors/font_focus_color = Color(0.16, 0.29, 0.46, 1)
+theme_override_colors/font_pressed_color = Color(0.12, 0.26, 0.46, 1)
+theme_override_colors/font_hover_color = Color(0.08, 0.22, 0.42, 1)
+theme_override_fonts/font = ExtResource("4_46hfi")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/focus = SubResource("focus")
+text = "关闭"
+
+[node name="Summary" type="Label" parent="Content" unique_id=1032285893]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.12, 0.25, 0.42, 1)
+
+[node name="Filters" type="HBoxContainer" parent="Content" unique_id=1193155535]
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Content" unique_id=666487133]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="List" type="VBoxContainer" parent="Content/Scroll" unique_id=1093530079]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12

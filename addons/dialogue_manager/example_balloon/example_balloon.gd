@@ -40,6 +40,8 @@ var _locale: String = TranslationServer.get_locale()
 ## The current line
 var dialogue_line: DialogueLine:
 	set(value):
+		# 剧情动作可能在关闭窗口时结束，不再向已离树的对白填充新行。
+		if not is_inside_tree() or is_queued_for_deletion(): return
 		if value:
 			dialogue_line = value
 			apply_dialogue_line()
@@ -121,6 +123,7 @@ func start(with_dialogue_resource: DialogueResource = null, title: String = "", 
 	if not title.is_empty():
 		start_from_title = title
 	dialogue_line = await dialogue_resource.get_next_dialogue_line(start_from_title, temporary_game_states)
+	if not is_inside_tree() or is_queued_for_deletion(): return
 	show()
 
 
@@ -153,6 +156,7 @@ func apply_dialogue_line() -> void:
 	if not dialogue_line.text.is_empty():
 		dialogue_label.type_out()
 		await dialogue_label.finished_typing
+		if not is_inside_tree() or is_queued_for_deletion(): return
 
 	# Wait for next line
 	if dialogue_line.has_tag("voice"):
@@ -200,6 +204,10 @@ func _load_portrait(character_name: String) -> void:
 				was_path = row.get("was_base_path", "")
 				png_portrait = row.get("portrait_path", "")
 				break
+	var root_texture = preload("res://Script/Assets/AssetLoader.gd").root_portrait(was_path, png_portrait, character_name)
+	if root_texture != null:
+		portrait.texture = root_texture
+		return
 	# 3) 优先 PNG 头像：{portrait_path}/{角色名}.png
 	if not png_portrait.is_empty():
 		var png_path := png_portrait.trim_suffix("/") + "/" + character_name + ".png"

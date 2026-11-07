@@ -1,0 +1,143 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/UI/EquipmentTooltip.gd" id="icon_script"]
+
+[sub_resource type="StyleBoxFlat" id="frame"]
+bg_color = Color(0.76, 0.84, 0.97, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.40, 0.57, 0.78, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
+content_margin_left = 14.0
+content_margin_right = 14.0
+content_margin_top = 12.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="equipped"]
+bg_color = Color(0.76, 0.84, 0.97, 0.97)
+border_width_left = 1
+border_width_top = 4
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.48, 0.64, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
+content_margin_left = 14.0
+content_margin_right = 14.0
+content_margin_top = 12.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="candidate"]
+bg_color = Color(0.76, 0.84, 0.97, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.40, 0.57, 0.78, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
+content_margin_left = 14.0
+content_margin_right = 14.0
+content_margin_top = 12.0
+content_margin_bottom = 12.0
+
+[sub_resource type="Theme" id="status_theme"]
+RichTextLabel/styles/normal = SubResource("frame")
+EquippedTooltip/base_type = &"RichTextLabel"
+EquippedTooltip/styles/normal = SubResource("equipped")
+CandidateTooltip/base_type = &"RichTextLabel"
+CandidateTooltip/styles/normal = SubResource("candidate")
+
+[sub_resource type="StyleBoxFlat" id="icon_frame"]
+bg_color = Color(0.86, 0.91, 1, 0.8)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.78, 0.82, 0.88, 1)
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 5.0
+content_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxFlat" id="quality_badge"]
+bg_color = Color(0.86, 0.91, 1, 1)
+content_margin_left = 3.0
+content_margin_right = 3.0
+
+[node name="EquipmentTooltip" type="RichTextLabel"]
+script = ExtResource("icon_script")
+visible = false
+z_index = 20
+custom_minimum_size = Vector2(280, 0)
+mouse_filter = 2
+bbcode_enabled = true
+fit_content = true
+theme = SubResource("status_theme")
+theme_override_colors/default_color = Color(0.12, 0.22, 0.38, 1)
+theme_override_font_sizes/normal_font_size = 14
+theme_override_font_sizes/bold_font_size = 18
+theme_override_constants/line_separation = 4
+
+[node name="IconFrame" type="PanelContainer" parent="."]
+visible = false
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -32.0
+offset_top = 12.0
+offset_right = 32.0
+offset_bottom = 76.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("icon_frame")
+
+[node name="Icon" type="TextureRect" parent="IconFrame"]
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Fallback" type="Label" parent="IconFrame"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.32, 0.43, 0.58, 1)
+text = "暂无图标"
+theme_override_font_sizes/font_size = 10
+
+[node name="QualityLabel" type="Label" parent="."]
+visible = false
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 10.0
+offset_top = 54.0
+offset_right = 30.0
+offset_bottom = 74.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_styles/normal = SubResource("quality_badge")
+text = "丁"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+

@@ -1,0 +1,45 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="1"]
+[node name="ConfirmPopup" type="Control"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1")
+metadata/keyboard_modal = true
+[node name="Shade" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.04, 0.08, 0.16, 0.65)
+[node name="Card" type="Panel" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -95.0
+offset_right = 220.0
+offset_bottom = 95.0
+[node name="Message" type="Label" parent="Card"]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 416.0
+offset_bottom = 116.0
+text = "确认吞噬吗？"
+autowrap_mode = 2
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 16
+[node name="Yes" type="Button" parent="Card"]
+offset_left = 126.0
+offset_top = 138.0
+offset_right = 246.0
+offset_bottom = 170.0
+text = "确认吞噬"
+[node name="Cancel" type="Button" parent="Card"]
+offset_left = 262.0
+offset_top = 138.0
+offset_right = 382.0
+offset_bottom = 170.0
+text = "取消"
+metadata/keyboard_default = true

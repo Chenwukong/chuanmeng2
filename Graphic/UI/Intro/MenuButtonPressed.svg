@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="112" viewBox="0 0 300 56">
+ <defs>
+  <linearGradient id="surface" x2="0" y2="1"><stop stop-color="#143652"/><stop offset="1" stop-color="#0e263d"/></linearGradient>
+  <linearGradient id="gleam"><stop stop-color="#bbdef1" stop-opacity="0"/><stop offset=".5" stop-color="#bbdef1" stop-opacity=".7"/><stop offset="1" stop-color="#bbdef1" stop-opacity="0"/></linearGradient>
+  <path id="cloud" d="M6 28c11-1 15-8 22-8 5 0 8 5 5 8-2 2-5 1-5-1 0-1 2-2 3-1m-25 2c8 1 14 7 20 7 5 0 9-3 13-3m-24-6h8" fill="none"/>
+ </defs>
+ <path d="M20 5H280L298 29 280 55H20L2 29Z" fill="#091c30" opacity=".62"/>
+ <path d="M20 2H280L298 27 280 52H20L2 27Z" fill="url(#surface)" fill-opacity=".96" stroke="#7aaecb" stroke-width="1.2"/>
+ <path d="M23 6H277L292 27 277 48H23L8 27Z" fill="none" stroke="#bbdef1" stroke-opacity=".36" stroke-width=".8"/>
+ <path d="M48 3H252M67 51H233" stroke="url(#gleam)" stroke-width="1.2"/>
+ <use href="#cloud" x="12" y="-1" stroke="#bbdef1" stroke-opacity=".64" stroke-width="1.2"/>
+ <use href="#cloud" transform="translate(288 -1) scale(-1 1)" stroke="#bbdef1" stroke-opacity=".64" stroke-width="1.2"/>
+ <path d="m6 27 5-3 4 3-4 3zM294 27l-5-3-4 3 4 3z" fill="#bbdef1" opacity=".84"/>
+</svg>

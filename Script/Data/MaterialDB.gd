@@ -3,6 +3,11 @@ class_name MaterialDB
 extends RefCounted
 
 const MATERIAL_DB = {
+	"gear": {
+		"id": "gear", "name": "齿轮", "icon_path": "res://Graphic/UI/gear.svg",
+		"desc": "机关传动所需的精密零件，用于铁甲强化；强化等级越高，消耗越多。",
+		"price": 150, "material_type": "mech_upgrade",
+	},
 	"black_ore": {
 		"name": "黑曜石", "tcp_path": "res://TCP/矿石/黑曜石.tcp",
 		"desc": "能增加武器伤害的矿石", "price": 200,
@@ -192,32 +197,38 @@ const MATERIAL_DB = {
 const TALISMAN_RECIPES: Array[Dictionary] = [
 	{
 		"output": "talisman_haste",
+		"category": "辅助符咒", "unlocked_by_default": true,
 		"output_name": "加速符",
 		"materials": { "talisman_paper": 1, "cloud_herb": 3 }
 	},
 	{
 		"output": "talisman_fire",
+		"category": "攻击符咒", "unlocked_by_default": true,
 		"output_name": "星火篆",
-		"materials": { "talisman_paper": 1, "flame_herb": 2, "black_ore": 1 }
+		"materials": { "talisman_paper": 1, "flame_herb": 3 }
 	},
 	{
 		"output": "talisman_thunder",
+		"category": "攻击符咒", "unlocked_by_default": true,
 		"output_name": "五雷咒",
-		"materials": { "talisman_paper": 1, "thunder_wood": 2, "gold_ore": 1 }
+		"materials": { "talisman_paper": 1, "thunder_wood": 3 }
 	},
 	{
 		"output": "talisman_ice",
+		"category": "辅助符咒", "unlocked_by_default": true,
 		"output_name": "冰冻符咒",
-		"materials": { "talisman_paper": 1, "ice_crystal": 2, "moon_stone": 1 }
+		"materials": { "talisman_paper": 1, "ice_crystal": 3 }
 	},
 	{
 		"output": "talisman_ceasefire",
+		"category": "辅助符咒", "unlocked_by_default": true,
 		"output_name": "止战符咒",
-		"materials": { "talisman_paper": 1, "peace_moss": 2, "lake_heart": 1 }
+		"materials": { "talisman_paper": 1, "peace_moss": 3 }
 	},
 	{
 		"output": "talisman_revive",
+		"category": "恢复符咒", "unlocked_by_default": true,
 		"output_name": "借尸符",
-		"materials": { "talisman_paper": 1, "ice_crystal": 1, "moon_stone": 1, "lake_heart": 1 }
+		"materials": { "talisman_paper": 1, "ice_crystal": 1, "peace_moss": 2 }
 	},
 ]

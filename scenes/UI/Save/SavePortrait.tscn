@@ -1,0 +1,20 @@
+[gd_scene format=3]
+[ext_resource type="Texture2D" path="res://Graphic/UI/人物头像底图.png" id="frame"]
+[node name="SavePortrait" type="Control"]
+custom_minimum_size = Vector2(40, 44)
+mouse_filter = 2
+[node name="Frame" type="TextureRect" parent="."]
+offset_right = 40.0
+offset_bottom = 44.0
+texture = ExtResource("frame")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+[node name="Portrait" type="TextureRect" parent="."]
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 37.0
+offset_bottom = 40.0
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2

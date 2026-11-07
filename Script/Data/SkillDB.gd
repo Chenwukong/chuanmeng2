@@ -71,6 +71,11 @@ const SKILL_DB := {
 
 
 # ═══ 法术攻击 ═══
+	"金符齐射": {
+		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 30, "dmg": 3.2, "cd": 2, "magic": true,
+		"desc": "金符环绕蓄力，分四批轰击单个敌人，总计造成 320% 法术伤害",
+	},
 
 	"妖术": {
 		"type": SkillData.SkillType.MAGIC, "target": SkillData.TargetType.SINGLE_ENEMY,
@@ -396,6 +401,17 @@ const SKILL_DB := {
 		"sound":"res://Audio/SE/法术16.ogg",
 		"desc": "选定目标并随机护体 3 名队友，5 回合双抗提升 15%",
 	},
+	"三才阵": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.ALL_ALLIES,
+		"mp": 30, "cd": 4, "bturn": 4, "bvalue": 1.3, "mana_regen_pct": 0.1, "dmg": 1.0, "magic": true,
+		"sound": "res://Audio/SE/法术16.ogg",
+		"desc": "布下覆盖己方阵地的三才大阵，全体存活己方双抗提高30%，持续4回合；重施刷新、不叠加。习得三才回元后，各自回合恢复最大法力10%；习得三才诛邪后，敌人每次踏入阵地受到一次法术伤害，停留不重复。豆兵联动需习得豆兵阵",
+	},
+	"撒豆成兵": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
+		"mp": 30, "cd": 4, "bturn": 4, "dmg": 0.3, "magic": true,
+		"desc": "撒出金豆化为3名草甲豆兵，不占队伍或宠物位置。自身每次行动结束，豆兵依次造成自身法攻30%的法术伤害，习得豆兵阵后优先攻击三才阵内敌人，持续4轮齐攻（含召唤当次）。豆兵站在身后，受到攻击时主动替自身挡刀，消耗独立生命；被打散后下一名接替。重施补齐并刷新轮数，基础最多3名，可由兵多将广提升至6名；享受召唤物属性天赋加成",
+	},
 	"金刚护法": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
 		"mp": 20, "cd": 3, "buff": "atk_up", "buff2": "matk_up", "bturn": 5, "bvalue": 1.15, "extra": 4,
@@ -531,6 +547,45 @@ const SKILL_DB := {
 	},
 
 # ═══ 变身技能 ═══
+	"机甲合体": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
+		"mp": 30, "cd": 4,
+		"desc": "消耗场上存活机甲合体：攻击×130%，基础速度×80%；有机关兽则气血上限×150%，有机关鸟则速度×150%（类型倍率不叠加）。再加上所有消耗机甲各50%的实时攻防、机关兽100%的气血上限和机关鸟100%的速度。获得合体最大气血80%的耐久，耗尽或主动解除时恢复，不恢复气血。",
+	},
+	"解除合体": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF, "mp": 0,
+		"desc": "主动离开机甲，恢复叮咚原形、属性和技能；消耗的场上机甲不返还。",
+	},
+	"机甲重击": {
+		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.SINGLE_ENEMY,
+		"mp": 15, "cd": 1, "dmg": 2.0,
+		"desc": "合体中可用：挥动机甲重拳，对单个敌人造成200%物理伤害。",
+	},
+	"机甲炮击": {
+		"type": SkillData.SkillType.PHYSICAL, "target": SkillData.TargetType.ALL_ENEMIES,
+		"mp": 20, "cd": 3, "dmg": 1.2,
+		"desc": "合体中可用：向全体存活敌人逐个开炮，分别造成120%物理伤害。",
+	},
+	"火域": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
+		"mp": 30, "cd": 0, "dmg": 1.0, "magic": true, "contact_radius": 90.0,
+		"desc": "展开随身火圈，持续本场战斗。自身或敌人移动接触时，敌人受到一次法术灼烧；离开后再次接触可再次触发，停留圈内不重复扣血。死亡后火域消散，不能叠加",
+	},
+	"真身显现": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
+		"mp": 30, "cd": 0, "initial_wait_actions": 5,
+		"desc": "完成入场等待后显露真身，生命、法力、双攻、速度和运气的基础值提高50%，双防基础值提高30%，当前血蓝同比调整，保留技能，持续至本场结束；每场一次。等待按自身行动次数计算，可由道具缩短",
+	},
+	"千机变": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
+		"mp": 0,
+		"desc": "模仿一名队友本场最近施放的技能（不含普攻），以自身属性施放，沿用原技能消耗与冷却；优先沿用原目标，自身技能对自己施放。无可模仿技能时不消耗行动。",
+	},
+	"扔色子": {
+		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SELF,
+		"mp": 0, "cd": 0,
+		"desc": "投出1—6点：下次攻击伤害依次为÷3、÷2、不变、+50%、+100%、+200%。气运越高越容易出大点。普攻及伤害技能的全部目标与段数均生效；命中攻击后才能重掷，0伤害也算；落空保留结果",
+	},
 	"千变万化": {
 		"type": SkillData.SkillType.BUFF, "target": SkillData.TargetType.SINGLE_ALLY,
 		"mp": 30, "cd": 5,
@@ -604,8 +659,11 @@ const BOOK_SKILL_DB := {
 
 ## 技能学习表：{ member_id: [{ level: N, skills: ["id1","id2"] }] }
 const SKILL_LEARN_DB := {
+	"banshouren": [
+		{ "level": 1, "skills": ["普通攻击", "真身显现", "扔色子", "千机变"] },
+	],
 	"youxiaoyun": [
-		{ "level": 1,  "skills": ["寂静剑法","一苇渡江","金刚护体","起死回生",] },
+		{ "level": 1,  "skills": ["金符齐射","寂静剑法","一苇渡江","金刚护体","起死回生",] },
 		{ "level": 3,  "skills": ["横扫千军"] },
 		{ "level": 5,  "skills": ["达摩护体"] },
 		{ "level": 7,  "skills": ["如沐春风"] },
@@ -631,7 +689,7 @@ const SKILL_LEARN_DB := {
 		{ "level": 16, "skills": ["千幻术"] },
 	],
 	"dingdong": [
-		{ "level": 1,  "skills": ["召唤铁甲兽"] },
+		{ "level": 1,  "skills": ["召唤铁甲兽", "机甲合体"] },
 		{ "level": 4,  "skills": ["如来神掌"] },
 		{ "level": 7,  "skills": ["大悲咒"] },
 		{ "level": 10, "skills": ["金刚护法"] },

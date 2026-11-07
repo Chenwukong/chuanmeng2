@@ -1,0 +1,55 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Script/UI/CommerceLesson.gd" id="Script"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="Skin"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="Font"]
+[sub_resource type="StyleBoxTexture" id="Frame"]
+texture = ExtResource("Skin")
+region_rect = Rect2(0, 60, 1586, 932)
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+content_margin_left = 18.0
+content_margin_top = 4.0
+content_margin_right = 18.0
+content_margin_bottom = 4.0
+[node name="CommerceLesson" type="PanelContainer"]
+visible = false
+z_index = 100
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -560.0
+offset_top = 4.0
+offset_right = 560.0
+offset_bottom = 84.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("Script")
+theme_override_styles/panel = SubResource("Frame")
+shop_heading = "商店教学"
+shop_explanation = "左键增加数量，右键减少；每种材料选好后点购买。备齐后关闭商店，继续学习制符。"
+craft_heading = "制符教学"
+craft_explanation = "左侧符纸×1，右侧火焰花×3；放满四槽后点打造（110金币，产出3张星火篆）。"
+progress_template = "所需材料：%s"
+success_text = "制符成功！成品已放入道具；关闭结果和打造窗口，继续与商人交谈。"
+[node name="Body" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+[node name="Heading" type="Label" parent="Body"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("Font")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.14, 0.28, 0.48, 1)
+[node name="Explanation" type="Label" parent="Body"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(0.17, 0.29, 0.45, 1)
+autowrap_mode = 2
+[node name="Progress" type="Label" parent="Body"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(0.23, 0.38, 0.56, 1)

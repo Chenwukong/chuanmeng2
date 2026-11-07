@@ -1,0 +1,151 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/World/ChildhoodPrologue.gd" id="script"]
+[ext_resource type="Script" path="res://Script/World/StoryMapBackdrop.gd" id="map"]
+[ext_resource type="Script" path="res://Script/World/MapMaskLayer.gd" id="map_masks"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/UncleJian.tscn" id="jian"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungLingfeng.tscn" id="ling"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungXiaoyun.tscn" id="yun"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungZhiyao.tscn" id="yao"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/UncleJian-portrait.png" id="jian_face"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/YoungLingfeng-portrait.png" id="ling_face"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/YoungXiaoyun-portrait.png" id="yun_face"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/YoungZhiyao-portrait.png" id="yao_face"]
+[ext_resource type="PackedScene" path="res://addons/dialogue_manager/example_balloon/storyChat.tscn" id="chat"]
+[ext_resource type="SpriteFrames" path="res://Graphic/Story/Childhood/Cast.tres" id="cast"]
+[ext_resource type="SpriteFrames" path="res://Graphic/Story/Childhood/Thunder.tres" id="thunder"]
+[ext_resource type="AudioStream" path="res://Audio/SE/124-Thunder02.ogg" id="thunder_sound"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/aajiuzhongxiao.ttf" id="font"]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="continue_theme"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Bodhi-portrait.png" id="bodhi_face"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Maoshan-portrait.png" id="maoshan_face"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Wanyu-portrait.png" id="wanyu_face"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Yanji-portrait.png" id="yanji_face"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Possessed-portrait.png" id="possessed_face"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Wukong-portrait.png" id="wukong_face"]
+
+[sub_resource type="CanvasItemMaterial" id="glow"]
+blend_mode = 1
+
+[node name="ChildhoodPrologue" type="CanvasLayer"]
+process_mode = 3
+layer = 125
+script = ExtResource("script")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+z_index = -2
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.012, 0.025, 0.046, 1)
+
+[node name="Center" type="Control" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+mouse_filter = 2
+
+[node name="Set" type="Node2D" parent="Center"]
+position = Vector2(-1290, -2585)
+y_sort_enabled = true
+
+[node name="Foothills" type="Sprite2D" parent="Center/Set"]
+z_index = -1
+centered = false
+script = ExtResource("map")
+map_path = "res://MAP/1135.map"
+shot_bounds = Rect2i(290, 2090, 2000, 1000)
+
+[node name="MapMasks" type="Node2D" parent="Center/Set"]
+script = ExtResource("map_masks")
+
+[node name="坚叔" parent="Center/Set" instance=ExtResource("jian")]
+position = Vector2(1074, 2638)
+
+[node name="厉凌风" parent="Center/Set" instance=ExtResource("ling")]
+position = Vector2(1138, 2546)
+
+[node name="游霄云" parent="Center/Set" instance=ExtResource("yun")]
+position = Vector2(1170, 2578)
+
+[node name="齐芷瑶" parent="Center/Set" instance=ExtResource("yao")]
+position = Vector2(1170, 2640)
+
+[node name="Cast" type="AnimatedSprite2D" parent="Center/Set"]
+visible = false
+z_index = 3
+material = SubResource("glow")
+sprite_frames = ExtResource("cast")
+offset = Vector2(0, 80)
+scale = Vector2(0.65, 0.65)
+
+[node name="Thunder" type="AnimatedSprite2D" parent="Center/Set"]
+visible = false
+z_index = 3
+material = SubResource("glow")
+sprite_frames = ExtResource("thunder")
+offset = Vector2(12, -40)
+
+[node name="ThunderTarget" type="Marker2D" parent="Center/Set"]
+position = Vector2(1285, 2592)
+
+[node name="Sound" type="AudioStreamPlayer" parent="Center/Set/Thunder"]
+stream = ExtResource("thunder_sound")
+bus = &"SFX"
+
+[node name="FramedStages" type="Control" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+mouse_filter = 2
+
+[node name="StoryChat" parent="." instance=ExtResource("chat")]
+layer = 126
+portrait_overrides = Dictionary[String, Texture2D]({
+"坚叔": ExtResource("jian_face"),
+"厉凌风": ExtResource("ling_face"),
+"游霄云": ExtResource("yun_face"),
+"齐芷瑶": ExtResource("yao_face"),
+"菩提祖师": ExtResource("bodhi_face"),
+"茅山道士": ExtResource("maoshan_face"),
+"阎寂": ExtResource("yanji_face"),
+"魔神万狱": ExtResource("wanyu_face"),
+"魔神万狱怒": ExtResource("possessed_face"),
+"孙悟空": ExtResource("wukong_face")
+})
+
+[node name="Music" type="AudioStreamPlayer" parent="."]
+volume_db = -4.0
+bus = &"BGM"
+
+[node name="Fade" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[node name="TimeCard" type="Label" parent="Fade"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.86, 0.94, 1, 1)
+theme_override_fonts/font = ExtResource("font")
+theme_override_font_sizes/font_size = 72
+text = "多年以后"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Continue" type="Button" parent="."]
+visible = false
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -202.0
+offset_top = -84.0
+offset_right = -36.0
+offset_bottom = -35.0
+theme = ExtResource("continue_theme")
+theme_override_font_sizes/font_size = 22
+text = "继续"

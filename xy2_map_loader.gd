@@ -25,53 +25,113 @@ var _file_path: String = ""
 var _blocks: Dictionary = {}
 
 # ── 遮罩数据 ──
-var mask_num: int = 0               # M1.0 全局遮罩数量
-var _mask_offsets: PackedInt32Array = []  # M1.0 遮罩偏移列表
-var _mask_list: Dictionary = {}     # mask_id -> { offset, rect, size, image }
-var _mask_data_loaded: bool = false
+var mask_num: int = 0
+var _mask_list: Array[Dictionary] = []
+var _mask_images: Dictionary = {}
+var _mapx_ids: Dictionary = {}
+var _mapx_header := PackedByteArray()
 
-# ── 打开文件 ──
 func open(file_path: String) -> bool:
 	_file_path = file_path
+	mask_num = 0
+	_mask_list.clear()
+	_mask_images.clear()
+	_mapx_ids.clear()
+	_mapx_header.clear()
+	_blocks.clear()
+	_raw_data.clear()
 	var f := FileAccess.open(file_path, FileAccess.READ)
-	if f == null:
-		push_error("MapLoader: 无法打开 " + file_path)
+	if f == null or f.get_length() < 16:
 		return false
 
 	flag = f.get_32()
+	if flag == 0x4D415058:  # 'MAPX' written as a C multi-character constant
+		flag = MAP_FLAG_MAPX
 	map_width = f.get_32()
 	map_height = f.get_32()
-
 	if flag != MAP_FLAG_M10 and flag != MAP_FLAG_MAPX:
-		f.close(); return false
-
+		return false
 	colnum = ceili(float(map_width) / BLOCK_W)
 	rownum = ceili(float(map_height) / BLOCK_H)
 	mapnum = colnum * rownum
-
+	if mapnum <= 0 or mapnum > (f.get_length() - 16) / 4:
+		return false
 	_maplist = _read_u32s(f, mapnum)
+	for offset in _maplist:
+		if offset < 0 or offset > f.get_length() - 4:
+			return false
 
 	if flag == MAP_FLAG_M10:
-		var mask_off := f.get_32()
-		# 记录遮罩段位置，等需要时再读
-		_mask_section_offset = mask_off
-		# 提前读 mask 头部（数量）
-		var saved := f.get_position()
-		f.seek(mask_off)
-		mask_num = f.get_32()
-		if mask_num > 0:
-			_mask_offsets = _read_u32s(f, mask_num)
-		f.seek(saved)
+		if not _index_m10_masks(f, f.get_32()):
+			_mask_list.clear()
 	else:
-		# MAPX 遮罩在子块里，不在这里处理
-		var _fsize := f.get_32()
-		var bflag := f.get_32()
-		var bsize := f.get_32()
-
-	f.close()
+		if f.get_length() - f.get_position() < 12:
+			return false
+		f.get_32()  # file size
+		f.get_32()  # shared JPEG header tag
+		var header_size := f.get_32()
+		if header_size > f.get_length() - f.get_position():
+			return false
+		_mapx_header = f.get_buffer(header_size)
+		if not _index_mapx_masks(f):
+			_mapx_ids.clear()
+			_mask_list.clear()
+	mask_num = _mask_list.size()
 	return true
 
-var _mask_section_offset: int = 0
+func _index_m10_masks(f: FileAccess, section: int) -> bool:
+	if section < f.get_position() or section > f.get_length() - 4:
+		return false
+	f.seek(section)
+	var count := f.get_32()
+	if count > (f.get_length() - f.get_position()) / 4:
+		return false
+	var offsets := _read_u32s(f, count)
+	for offset in offsets:
+		if offset < 0 or offset > f.get_length() - 20:
+			return false
+		f.seek(offset)
+		var rect := _read_rect(f)
+		var size := f.get_32()
+		if not _add_mask(f, offset, rect, size):
+			return false
+	return true
+
+func _index_mapx_masks(f: FileAccess) -> bool:
+	for id in range(mapnum):
+		f.seek(_maplist[id])
+		var count := f.get_32()
+		var ids := PackedInt32Array()
+		while ids.size() < count:
+			if f.get_position() > f.get_length() - 8:
+				return false
+			var tag := f.get_32()
+			var size := f.get_32()
+			var payload := f.get_position()
+			if size > f.get_length() - payload or tag == 0:
+				return false
+			if tag == 0x4D41534B:  # MASK
+				if size < 16:
+					return false
+				var rect := _read_rect(f)
+				rect.position += Vector2i(id % colnum * BLOCK_W, id / colnum * BLOCK_H)
+				ids.append(_mask_list.size())
+				if not _add_mask(f, payload - 4, rect, size - 16):
+					return false
+			f.seek(payload + size)
+		_mapx_ids[id] = ids
+	return true
+
+func _read_rect(f: FileAccess) -> Rect2i:
+	var data := f.get_buffer(16)
+	return Rect2i(data.decode_s32(0), data.decode_s32(4), data.decode_s32(8), data.decode_s32(12))
+
+func _add_mask(f: FileAccess, offset: int, rect: Rect2i, size: int) -> bool:
+	# Bound allocations for malformed headers. Real masks may extend past a map edge.
+	if not rect.has_area() or rect.size.x * rect.size.y > 16777216 or size <= 0 or size > f.get_length() - f.get_position():
+		return false
+	_mask_list.append({"id": _mask_list.size(), "offset": offset, "rect": rect, "data_size": size})
+	return true
 
 func get_info() -> Dictionary:
 	return {
@@ -81,80 +141,165 @@ func get_info() -> Dictionary:
 		"mapnum": mapnum, "masknum": mask_num,
 	}
 
-# ── 批量加载遮罩图像 ──
 func load_masks() -> void:
-	if _mask_data_loaded:
-		return
-	if flag != MAP_FLAG_M10 or mask_num <= 0:
-		return
+	for id in range(mask_num):
+		get_mask_image(id)
 
-	var f := FileAccess.open(_file_path, FileAccess.READ)
-	if f == null:
-		return
-
-	for i in range(mask_num):
-		var off := _mask_offsets[i]
-		f.seek(off)
-
-		var rx := f.get_32(); var ry := f.get_32()
-		var rw := f.get_32(); var rh := f.get_32()
-		var data_size := f.get_32()
-
-		var img: Image = null
-		if data_size > 0:
-			var raw := f.get_buffer(data_size)
-			# 尝试解码为图像
-			img = Image.new()
-			if img.load_jpg_from_buffer(raw) == OK:
-				pass
-			elif raw.size() == 320 * 240 * 2:
-				img = Image.create_from_data(320, 240, false, Image.FORMAT_RGB565, raw)
-			elif raw.size() == 320 * 240:
-				img.set_data(320, 240, false, Image.FORMAT_L8, raw)
-			else:
-				img = null
-
-		_mask_list[i] = {
-			"id": i, "offset": off,
-			"rect": Rect2i(rx, ry, rw, rh),
-			"data_size": data_size, "image": img,
-		}
-
-	f.close()
-	_mask_data_loaded = true
-
-# ── 获取块的遮罩 ID 列表（M1.0 每个块关联的遮罩） ──
 func get_block_mask_ids(block_id: int) -> PackedInt32Array:
-	if block_id < 0 or block_id >= mapnum or flag != MAP_FLAG_M10:
+	if block_id < 0 or block_id >= mapnum:
 		return PackedInt32Array()
+	if flag == MAP_FLAG_MAPX:
+		return _mapx_ids.get(block_id, PackedInt32Array())
 	var f := FileAccess.open(_file_path, FileAccess.READ)
 	if f == null:
 		return PackedInt32Array()
 	f.seek(_maplist[block_id])
-	var cnt := f.get_32()
-	if cnt <= 0:
-		f.close(); return PackedInt32Array()
-	var ids := _read_u32s(f, cnt)
-	f.close()
-	return ids
+	var count := f.get_32()
+	if count > mask_num or count > (f.get_length() - f.get_position()) / 4:
+		return PackedInt32Array()
+	return _read_u32s(f, count)
 
-# ── 获取所有遮罩信息 ──
 func get_all_masks() -> Array:
-	if not _mask_data_loaded:
-		load_masks()
 	var result: Array = []
-	for i in range(mask_num):
-		if _mask_list.has(i):
-			result.append(_mask_list[i])
+	for id in range(mask_num):
+		var info := _mask_list[id].duplicate()
+		info["image"] = get_mask_image(id)
+		result.append(info)
 	return result
 
-# ── 获取遮罩图像 ──
+func get_mask_rect(mask_id: int) -> Rect2i:
+	if mask_id < 0 or mask_id >= mask_num:
+		return Rect2i()
+	return _mask_list[mask_id].rect
+
+func release_mask_image(mask_id: int) -> void:
+	_mask_images.erase(mask_id)
+
+
 func get_mask_image(mask_id: int) -> Image:
-	if not _mask_data_loaded:
-		load_masks()
-	if _mask_list.has(mask_id):
-		return _mask_list[mask_id].get("image")
-	return null
+	if mask_id < 0 or mask_id >= mask_num:
+		return null
+	if _mask_images.has(mask_id):
+		return _mask_images[mask_id]
+	var info := _mask_list[mask_id]
+	var rect: Rect2i = info.rect
+	var f := FileAccess.open(_file_path, FileAccess.READ)
+	if f == null:
+		return null
+	f.seek(info.offset + 20)
+	var stride := (rect.size.x + 3) >> 2
+	var packed := _unpack_lzo(f.get_buffer(info.data_size), stride * rect.size.y)
+	if packed.is_empty():
+		return null
+
+	# Gather the map pixels beneath the mask; one mask can straddle several tiles.
+	if _blocks.is_empty():
+		load_all()
+	var img := Image.create_empty(rect.size.x, rect.size.y, false, Image.FORMAT_RGBA8)
+	var visible := rect.intersection(Rect2i(0, 0, map_width, map_height))
+	if visible.has_area():
+		for row in range(visible.position.y / BLOCK_H, (visible.end.y - 1) / BLOCK_H + 1):
+			for col in range(visible.position.x / BLOCK_W, (visible.end.x - 1) / BLOCK_W + 1):
+				var block := decode_raw(row * colnum + col)
+				if block == null:
+					return null
+				var origin := Vector2i(col * BLOCK_W, row * BLOCK_H)
+				var part := visible.intersection(Rect2i(origin, block.get_size()))
+				if block.get_format() != Image.FORMAT_RGBA8:
+					block.convert(Image.FORMAT_RGBA8)
+				img.blit_rect(block, Rect2i(part.position - origin, part.size), part.position - rect.position)
+
+		var rgba := img.get_data()
+		var local_rect := Rect2i(visible.position - rect.position, visible.size)
+		for y in range(local_rect.position.y, local_rect.end.y):
+			var src := y * stride
+			var dst := (y * rect.size.x + local_rect.position.x) * 4 + 3
+			for x in range(local_rect.position.x, local_rect.end.x):
+				var level := (packed[src + (x >> 2)] >> ((x & 3) * 2)) & 3
+				rgba[dst] = 136 if level == 3 else 0  # 与现有场景遮罩 PNG 的透明度一致
+				dst += 4
+		img.set_data(rect.size.x, rect.size.y, false, Image.FORMAT_RGBA8, rgba)
+	_mask_images[mask_id] = img
+	return img
+
+# LZO1X stream used by map.c. The previous literal length determines what a
+# token below 16 means (a literal run, a two-byte match, or a far three-byte match).
+static func _unpack_lzo(data: PackedByteArray, expected: int) -> PackedByteArray:
+	var empty := PackedByteArray()
+	if data.size() < 3 or expected <= 0:
+		return empty
+	var out := PackedByteArray()
+	out.resize(expected)
+	var ip := 0
+	var op := 0
+	var literals := 0
+	if data[0] > 17:
+		literals = data[0] - 17
+		ip = 1
+	while ip < data.size():
+		if ip + literals >= data.size() or op + literals > expected:
+			return empty
+		for i in range(literals):
+			out[op + i] = data[ip + i]
+		ip += literals
+		op += literals
+		var token := int(data[ip])
+		ip += 1
+		var length := 0
+		var distance := 0
+		if token < 16 and literals == 0:
+			literals = token
+			if token == 0:
+				while ip < data.size() and data[ip] == 0:
+					literals += 255
+					ip += 1
+				if ip >= data.size():
+					return empty
+				literals += 15 + data[ip]
+				ip += 1
+			literals += 3
+			continue
+		if token < 16 or token >= 64:
+			if ip >= data.size():
+				return empty
+			if token >= 64:
+				length = (token >> 5) + 1
+				distance = 1 + ((token >> 2) & 7) + (data[ip] << 3)
+			else:
+				length = 3 if literals >= 4 else 2
+				distance = (2049 if literals >= 4 else 1) + (token >> 2) + (data[ip] << 2)
+			ip += 1
+			literals = token & 3
+		else:
+			var length_mask := 31 if token >= 32 else 7
+			length = token & length_mask
+			if length == 0:
+				while ip < data.size() and data[ip] == 0:
+					length += 255
+					ip += 1
+				if ip >= data.size():
+					return empty
+				length += length_mask + data[ip]
+				ip += 1
+			length += 2
+			if ip + 2 > data.size():
+				return empty
+			distance = data.decode_u16(ip) >> 2
+			literals = data[ip] & 3
+			ip += 2
+			if token >= 32:
+				distance += 1
+			else:
+				distance += (token & 8) << 11
+				if distance == 0:
+					return out if op == expected else empty
+				distance += 16384
+		if distance > op or op + length > expected:
+			return empty
+		for i in range(length):  # LZO allows the source and destination to overlap.
+			out[op] = out[op - distance]
+			op += 1
+	return empty
 
 # ── 一次性加载全部块 ──
 func load_all() -> void:
@@ -169,15 +314,17 @@ func load_all() -> void:
 		if flag == MAP_FLAG_M10 and maskcnt > 0:
 			f.seek(f.get_position() + maskcnt * 4)
 		var _img: Image = null
-		while true:
+		while f.get_position() <= f.get_length() - 8:
 			var iflag := f.get_32(); var isize := f.get_32()
-			if iflag == 0:
-				if isize > 0: f.seek(f.get_position() + isize); break
+			if iflag == 0 or isize > f.get_length() - f.get_position():
+				break
 			match iflag:
 				_JPG2, _PNG1, _WEBP, _0PNG:
 					_img = _decode(f.get_buffer(isize))
 				_JPEG:
 					var raw := f.get_buffer(isize)
+					if flag == MAP_FLAG_MAPX:
+						raw = _mapx_header + raw
 					if raw.size() >= 4 and (raw[2] | (raw[3] << 8)) == 0xA0FF:
 						_img = _decode_raw_jpeg(_fix_jpeg(raw))
 					else:
@@ -196,7 +343,7 @@ func get_block_image(block_id: int) -> Image:
 
 func get_map(block_id: int) -> Dictionary:
 	var img := get_block_image(block_id)
-	return { "block_id": block_id, "image": img, "masknum": 0 }
+	return { "block_id": block_id, "image": img, "masknum": get_block_mask_ids(block_id).size() }
 
 # ── 原始数据分帧加载 ──
 var _raw_data: Dictionary = {}
@@ -211,14 +358,15 @@ func preload_all_raw() -> void:
 		var maskcnt := f.get_32()
 		if flag == MAP_FLAG_M10 and maskcnt > 0:
 			f.seek(f.get_position() + maskcnt * 4)
-		while true:
+		while f.get_position() <= f.get_length() - 8:
 			var iflag := f.get_32(); var isize := f.get_32()
-			if iflag == 0:
-				if isize > 0: f.seek(f.get_position() + isize); break
+			if iflag == 0 or isize > f.get_length() - f.get_position():
+				break
 			var raw := f.get_buffer(isize)
 			match iflag:
 				_JPG2, _PNG1, _WEBP, _0PNG, _JPEG:
-					_raw_data[id] = raw; break
+					_raw_data[id] = _mapx_header + raw if iflag == _JPEG and flag == MAP_FLAG_MAPX else raw
+					break
 				_:
 					pass
 			if _raw_data.has(id): break
@@ -242,10 +390,18 @@ func decode_raw(block_id: int) -> Image:
 
 # ── 解码 ──
 func _decode(raw: PackedByteArray) -> Image:
+	if raw.size() < 4:
+		return null
 	var img := Image.new()
-	if img.load_jpg_from_buffer(raw) == OK: return img
-	if img.load_png_from_buffer(raw) == OK: return img
-	if img.load_webp_from_buffer(raw) == OK: return img
+	if raw[0] == 0xFF and raw[1] == 0xD8:
+		if raw[2] == 0xFF and raw[3] == 0xA0:
+			return _decode_raw_jpeg(_fix_jpeg(raw))
+		return img if img.load_jpg_from_buffer(raw) == OK else null
+	match raw.decode_u32(0):
+		0x474E5089:  # PNG
+			return img if img.load_png_from_buffer(raw) == OK else null
+		0x46464952:  # RIFF / WebP
+			return img if img.load_webp_from_buffer(raw) == OK else null
 	return null
 
 func _decode_raw_jpeg(raw: PackedByteArray) -> Image:
@@ -286,7 +442,7 @@ func _fix_jpeg(data: PackedByteArray) -> PackedByteArray:
 						out[op] = 0xFF; out[op + 1] = 0x00; op += 2; ip += 1
 					else:
 						out[op] = data[ip]; op += 1; ip += 1
-				out[op] = 0xD9; op += 1; ip = data.size()
+				out[op] = 0xFF; out[op + 1] = 0xD9; op += 2; ip = data.size()
 			0xD9: out[op] = 0xD9; op += 1; ip += 1
 			_: ip += 1
 	out.resize(op)

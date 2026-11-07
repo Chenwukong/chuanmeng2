@@ -1,0 +1,12 @@
+~ 菩提初见
+游霄云: 您就是菩提祖师？晚辈游霄云，特来拜见。
+菩提祖师: 山路险阻，你能走到这里，实属不易。
+游霄云: 晚辈心中有许多疑惑，还望祖师指点。
+菩提祖师: 我知道。你先静下心来。
+游霄云: 祖师，您这是……
+do StoryDirector.bodhi_bind_player()
+游霄云: 怎么回事……身体动不了了！
+do StoryDirector.bodhi_faint_player()
+菩提祖师: 对不起。
+do StoryDirector.finish_bodhi_scene()
+=> END

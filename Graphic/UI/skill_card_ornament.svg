@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="152" viewBox="0 0 440 152">
+<defs><linearGradient id="silk" x2="0" y2="1"><stop stop-color="#ffffff" stop-opacity=".20"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/><stop offset="1" stop-color="#213b60" stop-opacity=".12"/></linearGradient></defs>
+<rect x="3" y="3" width="434" height="146" rx="12" fill="url(#silk)"/>
+<g fill="none" stroke="#88accc" stroke-width="1.3">
+<path opacity=".65" d="M38 12H402L414 24V128L402 140H38L26 128V24Z"/>
+<path d="M8 42V22Q8 8 22 8H55M385 8H418Q432 8 432 22V42M432 110V130Q432 144 418 144H385M55 144H22Q8 144 8 130V110"/>
+<path d="M13 34L34 13M406 13L427 34M427 118L406 139M34 139L13 118"/>
+<path opacity=".85" d="M18 63Q40 44 46 59Q49 70 35 69Q25 69 30 61M422 89Q400 108 394 93Q391 82 405 83Q415 83 410 91"/>
+<path opacity=".55" d="M127 89H202M238 89H313"/>
+</g>
+<path d="M220 84L225 89L220 94L215 89Z" fill="#88accc"/>
+<g fill="#88accc"><path d="M20 17L24 21L20 25L16 21Z"/><path d="M420 127L424 131L420 135L416 131Z"/></g>
+</svg>

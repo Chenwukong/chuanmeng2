@@ -1,0 +1,288 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Script/Tests/StoryEffectPlayground.gd" id="Stage"]
+[ext_resource type="PackedScene" path="res://scenes/Tests/StoryTestActor.tscn" id="Actor"]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="Theme"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="Cloud"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="Font"]
+[sub_resource type="Shader" id="FloorShader"]
+code = "shader_type canvas_item; varying vec2 p; void vertex(){p=VERTEX;} void fragment(){vec2 g=abs(fract(p/64.0-0.5)-0.5)/fwidth(p/64.0); float line=1.0-min(min(g.x,g.y),1.0); vec3 base=mix(vec3(0.035,0.07,0.10),vec3(0.065,0.13,0.17),clamp(p.y/800.0,0.0,1.0)); COLOR=vec4(mix(base,vec3(0.16,0.26,0.30),line*0.25),1.0); }"
+[sub_resource type="ShaderMaterial" id="FloorMaterial"]
+shader = SubResource("FloorShader")
+[sub_resource type="StyleBoxTexture" id="PanelStyle"]
+texture = ExtResource("Cloud")
+region_rect = Rect2(0, 60, 1586, 932)
+texture_margin_left = 30.0
+texture_margin_right = 30.0
+texture_margin_top = 20.0
+texture_margin_bottom = 30.0
+content_margin_left = 20.0
+content_margin_right = 20.0
+content_margin_top = 20.0
+content_margin_bottom = 20.0
+[node name="演出测试场" type="Node2D"]
+script = ExtResource("Stage")
+[node name="Floor" type="ColorRect" parent="."]
+offset_left = -1000.0
+offset_top = -1000.0
+offset_right = 2500.0
+offset_bottom = 2000.0
+mouse_filter = 2
+material = SubResource("FloorMaterial")
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(650,400)
+[node name="DistanceLine" type="Line2D" parent="."]
+points = PackedVector2Array(380,556,760,556)
+width = 1.0
+default_color = Color(0.35,0.55,0.65,0.35)
+[node name="Player" parent="." instance=ExtResource("Actor")]
+position = Vector2(380,540)
+was_base_path = "res://WAS/游霄云"
+direction = 0
+[node name="Name" type="Label" parent="Player"]
+offset_left = -70.0
+offset_top = 25.0
+offset_right = 70.0
+theme_override_colors/font_color = Color(0.8,0.9,1,1)
+text = "施术者 · 主角"
+horizontal_alignment = 1
+[node name="Target" parent="." instance=ExtResource("Actor")]
+position = Vector2(760,540)
+was_base_path = "res://WAS/机关人"
+direction = 2
+[node name="Name" type="Label" parent="Target"]
+offset_left = -70.0
+offset_top = 25.0
+offset_right = 70.0
+theme_override_colors/font_color = Color(0.8,0.9,1,1)
+text = "目标 · 机关人"
+horizontal_alignment = 1
+[node name="Effects" type="Node2D" parent="."]
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 10
+[node name="Title" type="Label" parent="UI"]
+offset_left = 28.0
+offset_top = 20.0
+theme_override_fonts/font = ExtResource("Font")
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0.9,0.96,1,1)
+text = "剧情演出测试场"
+[node name="Subtitle" type="Label" parent="UI"]
+offset_left = 30.0
+offset_top = 65.0
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.62,0.76,0.85,1)
+text = "选择演出 · 独立预览 / 调好后点击保存参数"
+[node name="Hint" type="Label" parent="UI"]
+offset_left = 30.0
+offset_top = 745.0
+theme_override_colors/font_color = Color(0.65,0.78,0.86,1)
+text = "空格 / R 重播     Esc 停止     修改右侧参数后再次播放"
+[node name="Panel" type="PanelContainer" parent="UI"]
+offset_left = 965.0
+offset_top = 20.0
+offset_right = 1280.0
+offset_bottom = 775.0
+theme = ExtResource("Theme")
+theme_override_styles/panel = SubResource("PanelStyle")
+[node name="Body" type="VBoxContainer" parent="UI/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+[node name="Heading" type="Label" parent="UI/Panel/Body"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("Font")
+theme_override_font_sizes/font_size = 22
+text = "演出参数"
+[node name="Selector" type="OptionButton" parent="UI/Panel/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(0,32)
+[node name="Description" type="Label" parent="UI/Panel/Body"]
+layout_mode = 2
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "选择要测试的演出"
+[node name="ParameterScroll" type="ScrollContainer" parent="UI/Panel/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(0,280)
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+[node name="Fields" type="GridContainer" parent="UI/Panel/Body/ParameterScroll"]
+size_flags_horizontal = 3
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 7
+[node name="CountLabel" type="Label" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "符文数量"
+[node name="Count" type="SpinBox" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+custom_minimum_size = Vector2(120,28)
+min_value = 1
+max_value = 100
+step = 1
+value = 70
+allow_greater = true
+[node name="ChargeLabel" type="Label" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "蓄力时长"
+[node name="Charge" type="SpinBox" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+custom_minimum_size = Vector2(120,28)
+min_value = 0
+max_value = 10
+step = 0.1
+value = 2.8
+allow_greater = true
+[node name="HeightLabel" type="Label" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "符阵高度"
+[node name="Height" type="SpinBox" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+custom_minimum_size = Vector2(120,28)
+min_value = 0
+max_value = 600
+step = 10
+value = 300
+allow_greater = true
+[node name="RadiusLabel" type="Label" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "环绕半径"
+[node name="Radius" type="SpinBox" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+custom_minimum_size = Vector2(120,28)
+min_value = 0
+max_value = 180
+step = 5
+value = 115
+allow_greater = true
+[node name="SpeedLabel" type="Label" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "环绕速度"
+[node name="Speed" type="SpinBox" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+custom_minimum_size = Vector2(120,28)
+min_value = 0
+max_value = 5
+step = 0.1
+value = 2.4
+allow_greater = true
+allow_lesser = true
+[node name="BatchesLabel" type="Label" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "发射批数"
+[node name="Batches" type="SpinBox" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+custom_minimum_size = Vector2(120,28)
+min_value = 1
+max_value = 12
+step = 1
+value = 4
+allow_greater = true
+[node name="IntervalLabel" type="Label" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "批次间隔"
+[node name="Interval" type="SpinBox" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+custom_minimum_size = Vector2(120,28)
+min_value = 0
+max_value = 1
+step = 0.01
+value = 0.24
+allow_greater = true
+[node name="ShakeLabel" type="Label" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "发射震动"
+[node name="Shake" type="SpinBox" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+custom_minimum_size = Vector2(120,28)
+min_value = 0
+max_value = 25
+step = 0.5
+value = 14
+allow_greater = true
+[node name="ShortLabel" type="Label" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "最短符文"
+[node name="Short" type="SpinBox" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+custom_minimum_size = Vector2(120,28)
+min_value = 0.01
+max_value = 1
+step = 0.05
+value = 0.55
+allow_greater = true
+[node name="LongLabel" type="Label" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "最长符文"
+[node name="Long" type="SpinBox" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+custom_minimum_size = Vector2(120,28)
+min_value = 0.01
+max_value = 2.5
+step = 0.05
+value = 1.55
+allow_greater = true
+[node name="DistanceLabel" type="Label" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "目标距离"
+[node name="Distance" type="SpinBox" parent="UI/Panel/Body/ParameterScroll/Fields"]
+layout_mode = 2
+custom_minimum_size = Vector2(120,28)
+min_value = 0
+max_value = 500
+step = 10
+value = 380
+allow_greater = true
+[node name="Swap" type="CheckBox" parent="UI/Panel/Body"]
+layout_mode = 2
+text = "交换施术者与目标"
+[node name="Shaking" type="CheckBox" parent="UI/Panel/Body"]
+layout_mode = 2
+text = "启用镜头震动"
+button_pressed = true
+[node name="Loop" type="CheckBox" parent="UI/Panel/Body"]
+layout_mode = 2
+text = "循环播放"
+[node name="Buttons" type="HBoxContainer" parent="UI/Panel/Body"]
+layout_mode = 2
+theme_override_constants/separation = 8
+[node name="Play" type="Button" parent="UI/Panel/Body/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0,36)
+text = "播放 / 重播"
+[node name="Stop" type="Button" parent="UI/Panel/Body/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0,36)
+text = "停止"
+disabled = true
+[node name="Save" type="Button" parent="UI/Panel/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(0,32)
+text = "保存参数到资源"
+tooltip_text = "将演出参数写入当前 .tres，影响今后使用该资源的演出；同时保存测试距离与播放偏好。"
+[node name="Reset" type="Button" parent="UI/Panel/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(0,30)
+text = "恢复已保存参数"
+[node name="Status" type="Label" parent="UI/Panel/Body"]
+layout_mode = 2
+size_flags_vertical = 3
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "准备就绪"
+
+[node name="CasterStart" type="Marker2D" parent="."]
+position = Vector2(380,540)

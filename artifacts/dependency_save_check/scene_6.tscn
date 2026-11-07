@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://Shader/mountain_mist.gdshader" id="1_py0p6"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mist"]
+shader = ExtResource("1_py0p6")
+shader_parameter/mist_color = Color(0.88, 0.94, 1, 1)
+shader_parameter/density = 0.4750000225625
+shader_parameter/drift_speed = 6.0
+
+[node name="仙雾" type="Node2D" unique_id=1550785871]
+
+[node name="流雾" type="Polygon2D" parent="." unique_id=2146673838]
+light_mask = 0
+z_index = 5
+material = SubResource("ShaderMaterial_mist")
+polygon = PackedVector2Array(0, 0, 3840, 0, 3840, 3360, 0, 3360)
+uv = PackedVector2Array(0, 0, 1, 0, 1, 1, 0, 1)

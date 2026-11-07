@@ -5,6 +5,12 @@ extends RefCounted
 ## 怪物数据库：lv 支持固定值（如 5）或区间（如 "3-8"，每次生成随机取一个）；
 ## 未写的属性按 arch 分类模板 × 等级推导（见 ENEMY_ARCHETYPE）
 const ENEMY_DB := [
+	# 方寸山一次性守关怪，固定等级，不随队伍等级缩放。
+	{ id = "方寸山_守关20", name = "拦路黑熊", arch = "肉", lv = 20, rank = "boss", skills = ["普通攻击", "破防击"], was_base_path = "res://WAS/黑熊" },
+	{ id = "方寸山_守关60", name = "守山毒云龟", arch = "肉", lv = 60, rank = "boss", skills = ["普通攻击", "毒瘴", "护体真气"], was_base_path = "res://WAS/毒云龟" },
+	{ id = "方寸山_守关100", name = "镇山赤焰兽", arch = "法", lv = 100, rank = "boss", skills = ["普通攻击", "烈焰诀", "灼焰术"], was_base_path = "res://WAS/超级赤焰兽" },
+	# 序章试炼 Boss：每次生成时跟随主角等级，属性使用分类成长模板。
+	{ name = "机关人", arch = "肉", lv = 1, scale_to_player = true, rank = "boss", skills = ["普通攻击", "破防击", "三连击", "护体真气"], was_base_path = "res://WAS/机关人" },
 	{ name = "妖狐·赤尾", arch = "法", hp = 90,  mp = 40,  atk = 22, def = 8,  spd = 10, lv = 1, skills = ["普通攻击","妖术","妖气回复"] },
 	{ name = "山魈·獠牙", arch = "攻",  hp = 110, mp = 30,  atk = 28, def = 12, spd = 9,  lv = 1, skills = ["普通攻击","妖术"] },
 	{ name = "厉鬼·幽魂", arch = "法",  hp = 80,  mp = 60,  atk = 20, def = 5,  spd = 14, lv = 2, skills = ["普通攻击","妖术","蛊毒咒"], traits = {"_revive": 20} },

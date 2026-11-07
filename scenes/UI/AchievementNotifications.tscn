@@ -1,0 +1,74 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/UI/AchievementNotifications.gd" id="script"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="skin"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="font"]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="theme"]
+
+[sub_resource type="StyleBoxTexture" id="body"]
+texture = ExtResource("skin")
+region_rect = Rect2(0, 60, 1586, 932)
+texture_margin_left = 3.0
+texture_margin_right = 3.0
+texture_margin_bottom = 3.0
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxTexture" id="heading"]
+texture = ExtResource("skin")
+region_rect = Rect2(383, 0, 820, 57)
+content_margin_left = 0.0
+content_margin_right = 0.0
+content_margin_top = 0.0
+content_margin_bottom = 0.0
+
+[node name="AchievementNotifications" type="CanvasLayer"]
+layer = 100
+script = ExtResource("script")
+
+[node name="Panel" type="PanelContainer" parent="."]
+visible = false
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -240.0
+offset_right = 240.0
+offset_top = 64.0
+offset_bottom = 64.0
+custom_minimum_size = Vector2(480, 0)
+mouse_filter = 2
+theme = ExtResource("theme")
+theme_override_styles/panel = SubResource("body")
+
+[node name="Column" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="TitleBar" type="PanelContainer" parent="Panel/Column"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 29)
+mouse_filter = 2
+theme_override_styles/panel = SubResource("heading")
+
+[node name="NoticeTitle" type="Label" parent="Panel/Column/TitleBar"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("font")
+theme_override_font_sizes/font_size = 21
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NoticeMessage" type="Label" parent="Panel/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(436, 0)
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+theme_override_constants/line_spacing = 3
+autowrap_mode = 3
+horizontal_alignment = 1
+vertical_alignment = 1

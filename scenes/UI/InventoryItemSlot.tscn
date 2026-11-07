@@ -1,0 +1,15 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="theme"]
+[node name="InventoryItemSlot" type="Panel"]
+offset_right = 80.0
+offset_bottom = 80.0
+theme = ExtResource("theme")
+mouse_default_cursor_shape = 2
+[node name="Icon" type="TextureRect" parent="."]
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 76.0
+offset_bottom = 76.0
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2

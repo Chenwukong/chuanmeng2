@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://q20npqu1sl0e"
+path="res://.godot/imported/fangcun_merchant.dialogue-b563bcdc3fe9026d205f202b631861a5.tres"
+
+[deps]
+
+source_file="res://Dialogue/fangcun_merchant.dialogue"
+dest_files=["res://.godot/imported/fangcun_merchant.dialogue-b563bcdc3fe9026d205f202b631861a5.tres"]
+
+[params]
+
+defaults=true

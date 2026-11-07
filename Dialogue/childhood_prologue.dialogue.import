@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://dbmy6u1afwbfe"
+path="res://.godot/imported/childhood_prologue.dialogue-1c56f749dfc9fb805ab212b350bd2fc1.tres"
+
+[deps]
+
+source_file="res://Dialogue/childhood_prologue.dialogue"
+dest_files=["res://.godot/imported/childhood_prologue.dialogue-1c56f749dfc9fb805ab212b350bd2fc1.tres"]
+
+[params]
+
+defaults=true

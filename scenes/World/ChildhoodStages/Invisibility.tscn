@@ -1,0 +1,45 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/World/StoryMapBackdrop.gd" id="map"]
+[ext_resource type="Script" path="res://Script/World/MapMaskLayer.gd" id="map_masks"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungXiaoyun.tscn" id="YoungXiaoyun"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungLingfeng.tscn" id="YoungLingfeng"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungZhiyao.tscn" id="YoungZhiyao"]
+[ext_resource type="SpriteFrames" path="res://Graphic/Story/Childhood/Cast.tres" id="Cast"]
+
+[sub_resource type="CanvasItemMaterial" id="glow"]
+blend_mode = 1
+
+[node name="Invisibility" type="Node2D"]
+position = Vector2(-2538, -1120)
+y_sort_enabled = true
+
+[node name="Background" type="Sprite2D" parent="."]
+z_index = -1
+centered = false
+script = ExtResource("map")
+map_path = "res://MAP/1135.map"
+shot_bounds = Rect2i(1538, 620, 2000, 1000)
+
+[node name="MapMasks" type="Node2D" parent="."]
+script = ExtResource("map_masks")
+
+[node name="游霄云" parent="." instance=ExtResource("YoungXiaoyun")]
+position = Vector2(2560, 1120)
+direction = 2
+
+[node name="厉凌风" parent="." instance=ExtResource("YoungLingfeng")]
+position = Vector2(2552, 1070)
+direction = 0
+
+[node name="齐芷瑶" parent="." instance=ExtResource("YoungZhiyao")]
+position = Vector2(2520, 1038)
+direction = 0
+
+[node name="Cast" type="AnimatedSprite2D" parent="."]
+visible = false
+z_index = 3
+material = SubResource("glow")
+sprite_frames = ExtResource("Cast")
+offset = Vector2(0, 80)
+scale = Vector2(0.65, 0.65)

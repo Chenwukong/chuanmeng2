@@ -1,0 +1,241 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/UI/DifficultySelection.gd" id="Script"]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="Theme"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="Skin"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="Font"]
+
+[sub_resource type="StyleBoxTexture" id="Frame"]
+texture = ExtResource("Skin")
+region_rect = Rect2(0, 60, 1586, 932)
+texture_margin_left = 5.0
+texture_margin_top = 5.0
+texture_margin_right = 5.0
+texture_margin_bottom = 5.0
+content_margin_left = 30.0
+content_margin_top = 24.0
+content_margin_right = 30.0
+content_margin_bottom = 24.0
+
+[sub_resource type="StyleBoxFlat" id="Card"]
+bg_color = Color(0.86, 0.92, 1, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.42, 0.59, 0.83, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+
+[sub_resource type="StyleBoxFlat" id="SelectedCard"]
+bg_color = Color(0.86, 0.92, 1, 0.9)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.12, 0.43, 0.83, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+
+[sub_resource type="StyleBoxEmpty" id="Transparent"]
+
+[sub_resource type="StyleBoxFlat" id="Hover"]
+bg_color = Color(0.5, 0.7, 1, 0.08)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.6, 0.9, 0.6)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[node name="DifficultySelection" type="CanvasLayer"]
+process_mode = 3
+layer = 120
+script = ExtResource("Script")
+normal_card_style = SubResource("Card")
+selected_card_style = SubResource("SelectedCard")
+
+[node name="Screen" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Shade" type="ColorRect" parent="Screen"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.08, 0.16, 0.28, 0.55)
+
+[node name="Window" type="PanelContainer" parent="Screen"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -460.0
+offset_top = -300.0
+offset_right = 460.0
+offset_bottom = 300.0
+theme = ExtResource("Theme")
+theme_override_styles/panel = SubResource("Frame")
+theme_override_fonts/font = ExtResource("Font")
+theme_override_colors/font_color = Color(0.13, 0.27, 0.48, 1)
+
+[node name="Body" type="VBoxContainer" parent="Screen/Window"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Heading" type="Label" parent="Screen/Window/Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "选择本周目难度"
+horizontal_alignment = 1
+
+[node name="Notice" type="Label" parent="Screen/Window/Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "仅在周目开始时选择，确认后本周目内无法更改。"
+horizontal_alignment = 1
+
+[node name="Cards" type="HBoxContainer" parent="Screen/Window/Body"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 18
+[node name="Easy" type="PanelContainer" parent="Screen/Window/Body/Cards"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("Card")
+
+[node name="Body" type="VBoxContainer" parent="Screen/Window/Body/Cards/Easy"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Name" type="Label" parent="Screen/Window/Body/Cards/Easy/Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "简单"
+horizontal_alignment = 1
+
+[node name="Multiplier" type="Label" parent="Screen/Window/Body/Cards/Easy/Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "敌人属性"
+horizontal_alignment = 1
+
+[node name="Details" type="Label" parent="Screen/Window/Body/Cards/Easy/Body"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 18
+text = "敌人血蓝、双攻、双防、速度\n轻松探索，稳步成长。"
+horizontal_alignment = 1
+
+[node name="Select" type="Button" parent="Screen/Window/Body/Cards/Easy"]
+layout_mode = 2
+mouse_default_cursor_shape = 2
+toggle_mode = true
+theme_override_styles/normal = SubResource("Transparent")
+theme_override_styles/pressed = SubResource("Transparent")
+theme_override_styles/hover = SubResource("Hover")
+theme_override_styles/hover_pressed = SubResource("Hover")
+theme_override_styles/focus = SubResource("Hover")
+[node name="Normal" type="PanelContainer" parent="Screen/Window/Body/Cards"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("Card")
+
+[node name="Body" type="VBoxContainer" parent="Screen/Window/Body/Cards/Normal"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Name" type="Label" parent="Screen/Window/Body/Cards/Normal/Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "普通"
+horizontal_alignment = 1
+
+[node name="Multiplier" type="Label" parent="Screen/Window/Body/Cards/Normal/Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "敌人属性"
+horizontal_alignment = 1
+
+[node name="Details" type="Label" parent="Screen/Window/Body/Cards/Normal/Body"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 18
+text = "敌人血蓝、双攻、双防、速度\n标准属性，均衡挑战。"
+horizontal_alignment = 1
+
+[node name="Select" type="Button" parent="Screen/Window/Body/Cards/Normal"]
+layout_mode = 2
+mouse_default_cursor_shape = 2
+toggle_mode = true
+theme_override_styles/normal = SubResource("Transparent")
+theme_override_styles/pressed = SubResource("Transparent")
+theme_override_styles/hover = SubResource("Hover")
+theme_override_styles/hover_pressed = SubResource("Hover")
+theme_override_styles/focus = SubResource("Hover")
+[node name="Hard" type="PanelContainer" parent="Screen/Window/Body/Cards"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("Card")
+
+[node name="Body" type="VBoxContainer" parent="Screen/Window/Body/Cards/Hard"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Name" type="Label" parent="Screen/Window/Body/Cards/Hard/Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "困难"
+horizontal_alignment = 1
+
+[node name="Multiplier" type="Label" parent="Screen/Window/Body/Cards/Hard/Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "敌人属性"
+horizontal_alignment = 1
+
+[node name="Details" type="Label" parent="Screen/Window/Body/Cards/Hard/Body"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 18
+text = "敌人血蓝、双攻、双防、速度\n更强的敌人，更严峻的挑战。"
+horizontal_alignment = 1
+
+[node name="Select" type="Button" parent="Screen/Window/Body/Cards/Hard"]
+layout_mode = 2
+mouse_default_cursor_shape = 2
+toggle_mode = true
+theme_override_styles/normal = SubResource("Transparent")
+theme_override_styles/pressed = SubResource("Transparent")
+theme_override_styles/hover = SubResource("Hover")
+theme_override_styles/hover_pressed = SubResource("Hover")
+theme_override_styles/focus = SubResource("Hover")
+[node name="Footer" type="Label" parent="Screen/Window/Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "等级、经验奖励与宠物成长沿用原规则。"
+horizontal_alignment = 1
+
+[node name="Confirm" type="Button" parent="Screen/Window/Body"]
+custom_minimum_size = Vector2(250, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "确认并开始"

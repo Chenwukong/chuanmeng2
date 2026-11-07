@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/World/Npc.tscn" id="npc"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/YoungZhiyao-walk.png" id="walk"]
+
+[node name="齐芷瑶" instance=ExtResource("npc")]
+scale = Vector2(1.12, 1.12)
+event_id = "childhood_YoungZhiyao"
+npc_name = "齐芷瑶"
+walk_sheet = ExtResource("walk")
+direction = 2
+walk_speed = 320.0
+auto_look_at_player = false
+
+[node name="Shadow(2)" parent="." index="2"]
+visible = false

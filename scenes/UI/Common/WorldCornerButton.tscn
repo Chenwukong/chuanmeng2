@@ -1,0 +1,49 @@
+[gd_scene format=3]
+[ext_resource type="Texture2D" path="res://Graphic/UI/小号按钮.png" id="sheet"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="font"]
+[sub_resource type="StyleBoxTexture" id="normal"]
+texture = ExtResource("sheet")
+region_rect = Rect2(0, 0, 42, 21)
+texture_margin_left = 5.0
+texture_margin_right = 5.0
+texture_margin_top = 4.0
+texture_margin_bottom = 4.0
+content_margin_left = 8.0
+content_margin_right = 8.0
+[sub_resource type="StyleBoxTexture" id="hover"]
+texture = ExtResource("sheet")
+region_rect = Rect2(42.5, 0, 40.2, 21.7)
+texture_margin_left = 5.0
+texture_margin_right = 5.0
+texture_margin_top = 4.0
+texture_margin_bottom = 4.0
+content_margin_left = 8.0
+content_margin_right = 8.0
+[sub_resource type="StyleBoxTexture" id="pressed"]
+texture = ExtResource("sheet")
+region_rect = Rect2(84.6, 0, 41.3, 21.5)
+texture_margin_left = 5.0
+texture_margin_right = 5.0
+texture_margin_top = 4.0
+texture_margin_bottom = 4.0
+content_margin_left = 8.0
+content_margin_right = 8.0
+[node name="WorldCornerButton" type="Button"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -94.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 44.0
+grow_horizontal = 0
+theme_override_fonts/font = ExtResource("font")
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(1, 0.94, 0.67, 1)
+theme_override_colors/font_hover_color = Color(1, 0.95, 0.69, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.87, 0.39, 1)
+theme_override_colors/font_shadow_color = Color(0.15, 0.23, 0.38, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")

@@ -1,0 +1,294 @@
+[gd_scene format=3 uid="uid://der00hhnod11q"]
+
+[ext_resource type="Texture2D" uid="uid://cx3ww85muxjmc" path="res://Graphic/UI/系统设置.png" id="1_3keuf"]
+[ext_resource type="Script" path="res://Script/UI/SettingPopup.gd" id="1_root"]
+[ext_resource type="Texture2D" uid="uid://iipe1m6xiay1" path="res://Graphic/UI/坐标-音乐.png" id="2_2m7h3"]
+[ext_resource type="Texture2D" uid="uid://tg504w20f2d3" path="res://Graphic/UI/坐标-小地图.png" id="3_v2mpt"]
+[ext_resource type="Texture2D" uid="uid://c30n1i1qxt8gl" path="res://Graphic/UI/0f8ae6f7607bc5cf6c5ae138f160fe5e.png" id="4_bc8t1"]
+[ext_resource type="Texture2D" uid="uid://dwclpmn3cvceo" path="res://Graphic/UI/传.png" id="5_ledqc"]
+[ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="7_bc8t1"]
+
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowCloseButton.tscn" id="shared_close"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowTitle.tscn" id="shared_title"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5jtpk"]
+atlas = ExtResource("2_2m7h3")
+region = Rect2(48, 0, 24, 24)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_dc5ia"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5jtpk")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2m7h3"]
+atlas = ExtResource("2_2m7h3")
+region = Rect2(48, 0, 24, 24)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_v2mpt"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2m7h3")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rwo25"]
+atlas = ExtResource("3_v2mpt")
+region = Rect2(48, 0, 24, 24)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ctlmb"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rwo25")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ledqc"]
+atlas = ExtResource("7_bc8t1")
+region = Rect2(0, 0, 42.200043, 21.399994)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dc5ia"]
+atlas = ExtResource("7_bc8t1")
+region = Rect2(84.65245, 0, 41.34755, 21.511547)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ctlmb"]
+atlas = ExtResource("7_bc8t1")
+region = Rect2(42.56493, 0, 40.23701, 21.74393)
+
+[sub_resource type="StyleBoxFlat" id="Rail"]
+bg_color = Color(0.58, 0.67, 0.81, 1)
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+
+[sub_resource type="StyleBoxFlat" id="Fill"]
+bg_color = Color(0.27, 0.46, 0.73, 1)
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+
+[node name="CanvasLayer" type="CanvasLayer" unique_id=166140506]
+script = ExtResource("1_root")
+
+[node name="系统设置" type="Sprite2D" parent="." unique_id=53772227]
+position = Vector2(668, 320)
+texture = ExtResource("1_3keuf")
+
+[node name="TitleBacking" type="Sprite2D" parent="系统设置"]
+centered = false
+position = Vector2(-48, -116)
+scale = Vector2(24, 1)
+texture = ExtResource("1_3keuf")
+region_enabled = true
+region_rect = Rect2(182, 0, 4, 22)
+region_filter_clip_enabled = true
+
+[node name="Title" parent="系统设置" instance=ExtResource("shared_title")]
+offset_left = -74.0
+offset_top = -118.0
+offset_right = 70.0
+offset_bottom = -93.0
+theme_override_font_sizes/font_size = 17
+text = "系统设置"
+
+[node name="AudioHeading" type="Label" parent="系统设置"]
+offset_left = -222.0
+offset_top = -81.0
+offset_right = -30.0
+offset_bottom = -58.0
+theme_override_colors/font_color = Color(0.13, 0.26, 0.46, 1)
+theme_override_font_sizes/font_size = 16
+text = "声音与显示"
+
+[node name="ColumnRule" type="ColorRect" parent="系统设置"]
+offset_left = 67.0
+offset_top = -77.0
+offset_right = 68.0
+offset_bottom = 92.0
+mouse_filter = 2
+color = Color(0.36, 0.51, 0.73, 0.42)
+
+[node name="musicIcon" type="AnimatedSprite2D" parent="系统设置" unique_id=879563064]
+position = Vector2(-209, -4)
+sprite_frames = SubResource("SpriteFrames_dc5ia")
+
+[node name="HSlider" type="HSlider" parent="系统设置/musicIcon" unique_id=262165804]
+offset_left = 76.0
+offset_top = -6.0
+offset_right = 218.0
+offset_bottom = 10.0
+theme_override_styles/slider = SubResource("Rail")
+theme_override_styles/grabber_area = SubResource("Fill")
+theme_override_styles/grabber_area_highlight = SubResource("Fill")
+
+[node name="Label" type="Label" parent="系统设置/musicIcon" unique_id=2044314833]
+offset_left = 18.0
+offset_top = -11.0
+offset_right = 72.0
+offset_bottom = 12.0
+theme_override_colors/font_color = Color(0.14, 0.25, 0.43, 1)
+theme_override_font_sizes/font_size = 14
+text = "音乐"
+metadata/_edit_use_anchors_ = true
+
+[node name="Value" type="Label" parent="系统设置/musicIcon"]
+offset_left = 221.0
+offset_top = -11.0
+offset_right = 260.0
+offset_bottom = 11.0
+mouse_filter = 2
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.20, 0.34, 0.54, 1)
+theme_override_font_sizes/font_size = 12
+text = "100%"
+
+[node name="soundIcon" type="AnimatedSprite2D" parent="系统设置" unique_id=981527786]
+position = Vector2(-209, -36)
+sprite_frames = SubResource("SpriteFrames_dc5ia")
+
+[node name="HSlider" type="HSlider" parent="系统设置/soundIcon" unique_id=1381721935]
+offset_left = 76.0
+offset_top = -6.0
+offset_right = 218.0
+offset_bottom = 10.0
+theme_override_styles/slider = SubResource("Rail")
+theme_override_styles/grabber_area = SubResource("Fill")
+theme_override_styles/grabber_area_highlight = SubResource("Fill")
+
+[node name="Label" type="Label" parent="系统设置/soundIcon" unique_id=1585485758]
+offset_left = 18.0
+offset_top = -11.0
+offset_right = 72.0
+offset_bottom = 12.0
+theme_override_colors/font_color = Color(0.14, 0.25, 0.43, 1)
+theme_override_font_sizes/font_size = 14
+text = "总音量"
+metadata/_edit_use_anchors_ = true
+
+[node name="Value" type="Label" parent="系统设置/soundIcon"]
+offset_left = 221.0
+offset_top = -11.0
+offset_right = 260.0
+offset_bottom = 11.0
+mouse_filter = 2
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.20, 0.34, 0.54, 1)
+theme_override_font_sizes/font_size = 12
+text = "100%"
+
+[node name="soundEffectIcon" type="AnimatedSprite2D" parent="系统设置" unique_id=1615736319]
+position = Vector2(-209, 28)
+sprite_frames = SubResource("SpriteFrames_v2mpt")
+
+[node name="HSlider" type="HSlider" parent="系统设置/soundEffectIcon" unique_id=2046679556]
+offset_left = 76.0
+offset_top = -6.0
+offset_right = 218.0
+offset_bottom = 10.0
+theme_override_styles/slider = SubResource("Rail")
+theme_override_styles/grabber_area = SubResource("Fill")
+theme_override_styles/grabber_area_highlight = SubResource("Fill")
+
+[node name="Label" type="Label" parent="系统设置/soundEffectIcon" unique_id=319350793]
+offset_left = 18.0
+offset_top = -12.0
+offset_right = 72.0
+offset_bottom = 11.0
+theme_override_colors/font_color = Color(0.14, 0.25, 0.43, 1)
+theme_override_font_sizes/font_size = 14
+text = "音效"
+metadata/_edit_use_anchors_ = true
+
+[node name="Value" type="Label" parent="系统设置/soundEffectIcon"]
+offset_left = 221.0
+offset_top = -11.0
+offset_right = 260.0
+offset_bottom = 11.0
+mouse_filter = 2
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.20, 0.34, 0.54, 1)
+theme_override_font_sizes/font_size = 12
+text = "100%"
+
+[node name="fullScreenIcon" type="AnimatedSprite2D" parent="系统设置" unique_id=348818169]
+position = Vector2(-209, 67)
+sprite_frames = SubResource("SpriteFrames_ctlmb")
+
+[node name="CheckBox" type="CheckBox" parent="系统设置/fullScreenIcon" unique_id=1926016624]
+offset_left = 76.0
+offset_top = -13.0
+offset_right = 100.0
+offset_bottom = 11.0
+
+[node name="全屏" type="Label" parent="系统设置/fullScreenIcon" unique_id=1194819564]
+offset_left = 18.0
+offset_top = -12.0
+offset_right = 72.0
+offset_bottom = 11.0
+theme_override_colors/font_color = Color(0.14, 0.25, 0.43, 1)
+theme_override_font_sizes/font_size = 14
+text = "全屏"
+
+[node name="收款" type="Sprite2D" parent="." unique_id=168893773]
+position = Vector2(820, 336)
+scale = Vector2(0.46, 0.46)
+texture = ExtResource("4_bc8t1")
+
+[node name="ColorRect" type="ColorRect" parent="收款" unique_id=2005259281]
+offset_left = -37.396828
+offset_top = -37.39682
+offset_right = 35.42861
+offset_bottom = 33.460358
+
+[node name="传" type="Sprite2D" parent="收款" unique_id=512688441]
+position = Vector2(-9.84127, -3.9365845)
+scale = Vector2(0.6219683, 0.6219683)
+texture = ExtResource("5_ledqc")
+
+[node name="Label" type="Label" parent="收款" unique_id=1764339516]
+theme_override_colors/font_color = Color(0.13, 0.26, 0.46, 1)
+horizontal_alignment = 1
+offset_left = -123.0
+offset_top = -207.0
+offset_right = 123.0
+offset_bottom = -146.95245
+theme_override_font_sizes/font_size = 30
+text = "友情赞助"
+
+[node name="CloseBtn" parent="." unique_id=1008409488 instance=ExtResource("shared_close")]
+offset_left = 848
+offset_top = 205
+offset_right = 896
+offset_bottom = 233
+
+[connection signal="pressed" from="CloseBtn" to="." method="_on_close_btn_pressed"]
+
+[node name="AndroidMode" type="CheckBox" parent="系统设置"]
+offset_left = -100.0
+offset_top = 51.0
+offset_right = 60.0
+offset_bottom = 85.0
+theme_override_colors/font_color = Color(0.14, 0.25, 0.43, 1)
+theme_override_colors/font_pressed_color = Color(0.14, 0.25, 0.43, 1)
+theme_override_colors/font_hover_color = Color(0.14, 0.25, 0.43, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.14, 0.25, 0.43, 1)
+theme_override_font_sizes/font_size = 14
+text = "安卓版界面"

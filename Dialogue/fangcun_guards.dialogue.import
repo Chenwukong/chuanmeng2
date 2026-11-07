@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://dxf61d7q3qag4"
+path="res://.godot/imported/fangcun_guards.dialogue-418d713471a26500cd65e1912ebd866b.tres"
+
+[deps]
+
+source_file="res://Dialogue/fangcun_guards.dialogue"
+dest_files=["res://.godot/imported/fangcun_guards.dialogue-418d713471a26500cd65e1912ebd866b.tres"]
+
+[params]
+
+defaults=true

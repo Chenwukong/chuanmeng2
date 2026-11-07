@@ -1,0 +1,41 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/World/FixedEncounter.gd" id="Script"]
+[ext_resource type="Script" path="res://Script/Assets/WASAnimationPlayer.gd" id="Animation"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="Font"]
+
+[sub_resource type="CircleShape2D" id="InterceptShape"]
+radius = 240.0
+
+[node name="FixedEncounter" type="Node2D" groups=["npc"]]
+script = ExtResource("Script")
+auto_look_at_player = true
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="WASAnimationPlayer" type="Node" parent="."]
+script = ExtResource("Animation")
+target_sprite = NodePath("../Sprite2D")
+
+[node name="Level" type="Label" parent="."]
+offset_left = -120.0
+offset_top = -160.0
+offset_right = 120.0
+offset_bottom = -130.0
+theme_override_fonts/font = ExtResource("Font")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.92, 0.72, 1)
+theme_override_colors/font_outline_color = Color(0.13, 0.2, 0.32, 1)
+theme_override_constants/outline_size = 4
+text = "守关敌人 · 20级"
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="Intercept" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 0
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Intercept"]
+shape = SubResource("InterceptShape")

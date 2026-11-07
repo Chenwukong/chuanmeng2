@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="100" viewBox="0 0 80 100">
+<defs><linearGradient id="leaf" x2=".8" y2="1"><stop stop-color="#b6c77a"/><stop offset=".45" stop-color="#728b47"/><stop offset="1" stop-color="#344b2c"/></linearGradient><linearGradient id="straw" x2=".65" y2="1"><stop stop-color="#f1d78a"/><stop offset="1" stop-color="#8f6d33"/></linearGradient></defs>
+<ellipse cx="41" cy="95" rx="23" ry="4" fill="#0e1f1c" opacity=".38"/>
+<g stroke="#293627" stroke-width="2.1" stroke-linejoin="round">
+<!-- Facing upper-left: forward spear and left cheek, broad back and crossed ties toward viewer. -->
+<path d="M25 76 22 86 30 89 38 77M43 77 48 90 58 90 53 75" fill="#465733"/>
+<path d="M22 84 15 87 19 92 31 90 30 86M47 88 46 94 61 95 63 91 57 88" fill="#62502f"/>
+<path d="M23 68 15 16" stroke="#59432a" stroke-width="4"/><path d="M15 18 8 12 10 0 19 9Z" fill="#c4ded1"/><path d="M12 21 22 22 22 27 13 26" fill="#d5ac4b"/><path d="M17 26Q8 22 5 31L15 30 19 38" fill="#a64a2e" stroke-width="1"/>
+<path d="M28 44 18 50 20 62 30 61 36 49" fill="url(#leaf)"/><path d="M18 53 13 52 12 60 22 64 26 58" fill="#c19b5c"/>
+<path d="M31 39Q47 35 57 47L62 75Q45 88 27 76L25 51Z" fill="url(#leaf)"/>
+<path d="M52 48 64 51 67 68 59 74 52 65 48 55" fill="url(#leaf)"/>
+<path d="M60 66 58 73 65 76 69 71 66 65" fill="#c19b5c"/>
+<path d="M29 51 38 57 47 52 56 57M28 60 37 67 47 61 60 65M28 70 38 77 48 72 61 74" fill="none" stroke="#bbca86" stroke-width="1.4"/>
+<path d="M31 42 55 72M54 45 31 72" stroke="#beac6e" stroke-width="4"/>
+<path d="M31 42 55 72M54 45 31 72" stroke="#655334" stroke-width="1"/>
+<path d="M27 69 61 67 62 72 27 75Z" fill="#655337"/>
+<path d="M34 56 41 51 48 56 41 63Z" fill="#bca463"/><path d="M41 62 36 71M43 62 48 70" stroke="#bda66d" stroke-width="2"/>
+<!-- A sliver of the far cheek points toward the enemy; no front-facing pair of eyes. -->
+<path d="M24 25 18 31 14 34 20 36 23 43 35 43 37 29Z" fill="#c29b5c"/>
+<path d="M21 32 26 31" stroke="#30392b" stroke-width="2"/>
+<path d="M31 28Q48 23 53 36L50 45 35 45 28 37Z" fill="#425331"/>
+<!-- Large tilted hat crown seen from behind. -->
+<path d="M10 27 30 9 58 18 65 29Q37 40 10 27Z" fill="url(#straw)"/>
+<path d="M30 10 21 28M30 10 34 32M30 10 46 31M30 10 57 28" stroke="#ac8a48" stroke-width="1.2"/>
+<path d="M12 27Q38 37 63 28" fill="none" stroke="#dcc280" stroke-width="2.2"/>
+<path d="M28 12Q23 4 31 3L36 12M33 12Q39 4 47 7L38 15" fill="url(#leaf)"/>
+</g></svg>

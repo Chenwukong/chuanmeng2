@@ -1,0 +1,516 @@
+# BountyPopup.gd
+# 悬赏任务弹窗 — 与人物、天赋窗口一致的浅蓝云纹风格
+class_name BountyPopup
+extends CanvasLayer
+
+signal closed()
+
+# ── 节点引用 ──
+@onready var panel: Control = $Panel
+@onready var confirm_dialog: Control = $Panel/ConfirmDialog
+@onready var confirm_title: Label = $Panel/ConfirmDialog/ConfirmTitle
+@onready var confirm_desc: Label = $Panel/ConfirmDialog/Desc
+@onready var btn_confirm_yes: Button = $Panel/ConfirmDialog/BtnYes
+@onready var btn_confirm_no: Button = $Panel/ConfirmDialog/BtnNo
+@onready var bounty_grid: GridContainer = $Panel/ScrollContainer/BountyGrid
+@onready var close_btn: Button = $Panel/CloseBtn
+
+# ── 等级标识常量 ──
+const RANK_JIA := 3
+const RANK_YI  := 2
+const RANK_BING := 1
+const RANK_DING := 0
+
+## 水晶风格配色
+const RANK_COLORS := {
+	RANK_DING: Color(0.40, 0.55, 0.70, 1.0),  # 灰蓝水晶
+	RANK_BING: Color(0.45, 0.70, 0.90, 1.0),  # 亮蓝水晶
+	RANK_YI:   Color(0.55, 0.45, 0.95, 1.0),  # 紫水晶
+	RANK_JIA:  Color(0.90, 0.55, 0.20, 1.0),  # 橙金水晶
+}
+const RANK_LABELS := {
+	RANK_DING: "丁",
+	RANK_BING: "丙",
+	RANK_YI:   "乙",
+	RANK_JIA:  "甲",
+}
+const RANK_ORDER := [RANK_DING, RANK_BING, RANK_YI, RANK_JIA]
+
+# ── 状态 ──
+var _pending_bounty: Dictionary = {}   # 等待确认的任务数据
+var _bounty_slots: Dictionary = {}     # bounty_id → Control
+
+
+func open() -> void:
+	_refresh_bounties()
+	confirm_dialog.hide()
+	show()
+	_pop_in()
+
+
+func _refresh_bounties() -> void:
+	for c in bounty_grid.get_children():
+		bounty_grid.remove_child(c)
+		c.queue_free()
+	_bounty_slots.clear()
+
+	for rank in RANK_ORDER:
+		var col_vbox = VBoxContainer.new()
+		col_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		col_vbox.add_theme_constant_override("separation", 10)
+
+		# ── 栏标题 ──
+		var rank_color = RANK_COLORS.get(rank, Color.WHITE)
+		var header = PanelContainer.new()
+		var header_style = StyleBoxFlat.new()
+		header_style.bg_color = Color(0.28, 0.41, 0.65, 0.96)
+		header_style.border_color = rank_color
+		header_style.border_width_bottom = 1
+		header_style.set_corner_radius_all(4)
+		header.custom_minimum_size.y = 38
+		header_style.content_margin_left = 12
+		header_style.content_margin_top = 6
+		header_style.content_margin_bottom = 6
+		header.add_theme_stylebox_override("panel", header_style)
+
+		var title_hbox = HBoxContainer.new()
+		var gem = Label.new()
+		gem.text = "◆"
+		gem.add_theme_color_override("font_color", rank_color)
+		gem.add_theme_font_size_override("font_size", 14)
+		title_hbox.add_child(gem)
+
+		var rank_lbl = Label.new()
+		rank_lbl.text = " %s 级 " % RANK_LABELS[rank]
+		rank_lbl.add_theme_font_size_override("font_size", 22)
+		rank_lbl.add_theme_font_override("font", preload("res://Graphic/UI/Font/尔雅趣宋体.ttf"))
+		rank_lbl.add_theme_color_override("font_color", Color(1, 0.97, 0.88))
+		title_hbox.add_child(rank_lbl)
+
+		var gem2 = Label.new()
+		gem2.text = "◆"
+		gem2.add_theme_color_override("font_color", rank_color)
+		gem2.add_theme_font_size_override("font_size", 14)
+		title_hbox.add_child(gem2)
+
+		header.add_child(title_hbox)
+		col_vbox.add_child(header)
+
+		# ── 任务卡片 ──
+		var tasks = _pick_tasks(rank, 3)
+		for task in tasks:
+			var card = _create_task_card(task)
+			col_vbox.add_child(card)
+			_bounty_slots[task.id] = card
+
+		# 补齐空格
+		var extra = 3 - tasks.size()
+		for i in extra:
+			var spacer = Control.new()
+			spacer.custom_minimum_size = Vector2(220, 146)
+			col_vbox.add_child(spacer)
+
+		bounty_grid.add_child(col_vbox)
+
+	_update_all_card_states()
+
+
+## 从 BountyData 抽任务（运行时调用，避免编译期依赖）
+func _pick_tasks(rank_id: int, count: int) -> Array:
+	var pool_key = _rank_to_bounty_rank(rank_id)
+	var pool = BountyData.TASK_POOL.get(pool_key, [])
+	if pool.is_empty():
+		return []
+	var available = pool.duplicate()
+	available.shuffle()
+	var limit = mini(count, available.size())
+	var result: Array = []
+	for i in limit:
+		var entry = available[i].duplicate()  # 深拷贝字典
+		entry.rank = pool_key
+		result.append(entry)
+	return result
+
+
+func _rank_to_bounty_rank(r: int):
+	match r:
+		RANK_DING: return BountyData.Rank.DING
+		RANK_BING: return BountyData.Rank.BING
+		RANK_YI:   return BountyData.Rank.YI
+		RANK_JIA:  return BountyData.Rank.JIA
+		_:         return BountyData.Rank.DING
+
+
+func _bounty_rank_to_my(br):
+	match br:
+		BountyData.Rank.DING: return RANK_DING
+		BountyData.Rank.BING: return RANK_BING
+		BountyData.Rank.YI:   return RANK_YI
+		BountyData.Rank.JIA:  return RANK_JIA
+		_: return RANK_DING
+
+
+## 创建单个任务卡
+func _create_task_card(task_dict: Dictionary) -> PanelContainer:
+	var card = PanelContainer.new()
+	card.custom_minimum_size = Vector2(220, 146)
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+	var br = task_dict.get("rank", BountyData.Rank.DING)
+	var rank_id = _bounty_rank_to_my(br)
+	var rank_color = RANK_COLORS.get(rank_id, Color.WHITE)
+
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.86, 0.91, 1.0, 0.90)
+	style.border_color = rank_color
+	style.border_width_top = 1
+	style.border_width_bottom = 2
+	style.border_width_left = 1
+	style.border_width_right = 1
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
+	style.shadow_size = 0
+	style.shadow_color = Color(rank_color, 0.3)
+	card.add_theme_stylebox_override("panel", style)
+
+	var vbox = VBoxContainer.new()
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_theme_constant_override("separation", 6)
+
+	# 任务名称
+	var name_lbl = Label.new()
+	name_lbl.text = task_dict.get("name", "?")
+	name_lbl.add_theme_font_size_override("font_size", 18)
+	name_lbl.add_theme_color_override("font_color", Color(0.12, 0.23, 0.42))
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_lbl.max_lines_visible = 2
+	vbox.add_child(name_lbl)
+
+	# 需求
+	var item_id = task_dict.get("item_id", "")
+	var kill_target = task_dict.get("kill_target", "")
+	var req_lbl = Label.new()
+	if not kill_target.is_empty():
+		var kills = GameData.game_flags.get("bounty_kill_" + task_dict.get("id", ""), 0)
+		var req_kills = task_dict.get("kill_required", 1)
+		req_lbl.text = "击杀 %s %d/%d" % [kill_target, kills, req_kills]
+	else:
+		var item_data = GameData.item_db.get(item_id) if not item_id.is_empty() else null
+		var item_name = item_data.item_name if item_data else item_id
+		
+		var req_count = task_dict.get("count", 1)
+		req_lbl.text = "需求 · %s ×%d" % [item_name, req_count]
+	req_lbl.add_theme_font_size_override("font_size", 14)
+	req_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	req_lbl.add_theme_color_override("font_color", Color(0.29, 0.39, 0.55))
+	vbox.add_child(req_lbl)
+
+	# 奖励
+	var gold_lbl = Label.new()
+	var gold_val = task_dict.get("gold", 0)
+	var tp_val = task_dict.get("reward_talent_points", 0)
+	var reward_text = ""
+	if gold_val > 0: reward_text += "%d 金币" % gold_val
+	if tp_val > 0:
+		if not reward_text.is_empty(): reward_text += " + "
+		reward_text += "天赋点×%d" % tp_val
+	var mat_id_val = task_dict.get("reward_material", "")
+	if not mat_id_val.is_empty():
+		if not reward_text.is_empty(): reward_text += " + "
+		var mat_db = MaterialDB.MATERIAL_DB.get(mat_id_val, {})
+		reward_text += "%s×%d" % [mat_db.get("name", "材料"), task_dict.get("reward_mat_count", 1)]
+	if reward_text.is_empty(): reward_text = "0 金币"
+	gold_lbl.text = reward_text
+	gold_lbl.add_theme_font_size_override("font_size", 14)
+	gold_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	gold_lbl.add_theme_color_override("font_color", Color(0.48, 0.30, 0.08))
+	vbox.add_child(gold_lbl)
+
+	var spacer := Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(spacer)
+
+	# 状态标签
+	var state_lbl = Label.new()
+	state_lbl.name = "StateLabel"
+	state_lbl.add_theme_font_size_override("font_size", 13)
+	state_lbl.add_theme_color_override("font_color", Color(0.22, 0.36, 0.58))
+	state_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	vbox.add_child(state_lbl)
+
+	card.add_child(vbox)
+
+	# 点击
+	var tid = task_dict.get("id", "")
+	card.gui_input.connect(func(event):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_on_card_clicked(tid)
+	)
+
+	return card
+
+
+func _update_all_card_states() -> void:
+	for tid in _bounty_slots:
+		var card = _bounty_slots[tid]
+		var state_lbl = card.find_child("StateLabel", true, false) as Label
+		if not state_lbl: continue
+		state_lbl.add_theme_color_override("font_color", Color(0.22, 0.36, 0.58))
+
+		if GameData.is_bounty_completed(tid):
+			state_lbl.text = "已完成"
+			card.modulate = Color(1, 1, 1, 0.58)
+			state_lbl.add_theme_color_override("font_color", Color(0.4, 0.46, 0.55))
+		elif GameData.is_bounty_active(tid):
+			if _can_complete_bounty(tid):
+				state_lbl.text = "可提交 ›"
+				card.modulate = Color.WHITE
+				state_lbl.add_theme_color_override("font_color", Color(0.08, 0.42, 0.29))
+			else:
+				state_lbl.text = "进行中"
+				card.modulate = Color.WHITE
+		else:
+			state_lbl.text = "接取悬赏 ›"
+			card.modulate = Color.WHITE
+
+
+func _can_complete_bounty(tid: String) -> bool:
+	var entry = _find_bounty_data(tid)
+	if entry.is_empty(): return false
+	var kill_target = entry.get("kill_target", "")
+	if not kill_target.is_empty():
+		var kills = GameData.game_flags.get("bounty_kill_" + entry.get("id", ""), 0)
+		return kills >= entry.get("kill_required", 1)
+	return GameData.check_bounty_items(entry.get("item_id", ""), entry.get("count", 1))
+
+
+func _find_bounty_data(tid: String) -> Dictionary:
+	for rank in [BountyData.Rank.JIA, BountyData.Rank.YI, BountyData.Rank.BING, BountyData.Rank.DING]:
+		for entry in BountyData.TASK_POOL.get(rank, []):
+			if entry.get("id", "") == tid:
+				return entry
+	return {}
+
+
+func _on_card_clicked(tid: String) -> void:
+	if GameData.is_bounty_completed(tid):
+		return
+	var entry = _find_bounty_data(tid)
+	if entry.is_empty():
+		return
+
+	if GameData.is_bounty_active(tid):
+		if _can_complete_bounty(tid):
+			_submit_bounty(entry)
+		else:
+			if not entry.get("kill_target", "").is_empty():
+				_show_notification("击杀不足！请继续清理怪物。")
+			else:
+				_show_notification("道具不足！请收集足够的任务道具后再来提交。")
+		return
+
+	_pending_bounty = entry
+	_show_confirm_dialog(entry)
+
+
+func _submit_bounty(entry: Dictionary) -> void:
+	var item_id = entry.get("item_id", "")
+	var count = entry.get("count", 1)
+	var gold = entry.get("gold", 0)
+	var repeatable = entry.get("repeatable", false)
+	var tid = entry.get("id", "")
+	var kill_target = entry.get("kill_target", "")
+
+	if kill_target.is_empty():
+		# 物品型：消耗道具
+		if not GameData.consume_bounty_items(item_id, count):
+			_show_notification("道具不足！")
+			return
+	else:
+		# 击杀型：验证击杀数
+		var kills = GameData.game_flags.get("bounty_kill_" + tid, 0)
+		if kills < entry.get("kill_required", 1):
+			_show_notification("击杀不足！")
+			return
+		# 清空击杀计数
+		GameData.game_flags.erase("bounty_kill_" + tid)
+
+	GameData.give_bounty_reward(gold)
+	var tp = entry.get("reward_talent_points", 0)
+	if tp > 0:
+		GameData.talent_points += tp
+	var mid = entry.get("reward_material", "")
+	if not mid.is_empty():
+		var mat = MaterialDB.MATERIAL_DB.get(mid, {}).duplicate()
+		if not mat.is_empty():
+			var mat_count = entry.get("reward_mat_count", 1)
+			for _i in range(mat_count):
+				GameData.material_bag.append(mat.duplicate())
+
+	if repeatable:
+		GameData.active_bounties.erase(tid)
+		var msg = "✅ 任务完成！"
+		if gold > 0: msg += "获得 %d 金币！" % gold
+		if tp > 0: msg += "天赋点 +%d！" % tp
+		var mat_id = entry.get("reward_material", "")
+		if not mat_id.is_empty():
+			var mat_db = MaterialDB.MATERIAL_DB.get(mat_id, {})
+			msg += "获得 %s ×%d！" % [mat_db.get("name", "材料"), entry.get("reward_mat_count", 1)]
+		_show_notification(msg)
+	else:
+		GameData.complete_bounty(tid)
+		var msg = "🎉 任务完成！"
+		if gold > 0: msg += "获得 %d 金币！" % gold
+		if tp > 0: msg += "天赋点 +%d！" % tp
+		var mat_id = entry.get("reward_material", "")
+		if not mat_id.is_empty():
+			var mat_db = MaterialDB.MATERIAL_DB.get(mat_id, {})
+			msg += "获得 %s ×%d！" % [mat_db.get("name", "材料"), entry.get("reward_mat_count", 1)]
+		msg += "\n此任务不再出现。"
+		_show_notification(msg)
+
+	_refresh_bounties()
+
+
+func _show_confirm_dialog(entry: Dictionary) -> void:
+	var item_id = entry.get("item_id", "")
+	var item_data = GameData.item_db.get(item_id) if not item_id.is_empty() else null
+	var item_name = item_data.item_name if item_data else item_id
+	var count = entry.get("count", 1)
+	var gold = entry.get("gold", 0)
+	var repeatable = entry.get("repeatable", false)
+	var kill_target = entry.get("kill_target", "")
+
+	var rank_br = entry.get("rank", BountyData.Rank.DING)
+	var rank_lbl = "?"
+	match rank_br:
+		BountyData.Rank.JIA:  rank_lbl = "甲"
+		BountyData.Rank.YI:   rank_lbl = "乙"
+		BountyData.Rank.BING: rank_lbl = "丙"
+		BountyData.Rank.DING: rank_lbl = "丁"
+
+	confirm_title.text = "接取悬赏"
+	var reward_str = ""
+	if gold > 0: reward_str += "%d 金币" % gold
+	var tp = entry.get("reward_talent_points", 0)
+	if tp > 0:
+		if not reward_str.is_empty(): reward_str += " + "
+		reward_str += "天赋点 ×%d" % tp
+	var mat_id = entry.get("reward_material", "")
+	if not mat_id.is_empty():
+		if not reward_str.is_empty(): reward_str += " + "
+		var mat_db = MaterialDB.MATERIAL_DB.get(mat_id, {})
+		var mat_name = mat_db.get("name", "材料")
+		reward_str += "%s ×%d" % [mat_name, entry.get("reward_mat_count", 1)]
+	if reward_str.is_empty(): reward_str = "0 金币"
+	if not kill_target.is_empty():
+		var req_kills = entry.get("kill_required", 1)
+		confirm_desc.text = "%s\n\n需求：击杀 %s ×%d\n奖励：%s\n%s" % [
+			entry.get("desc", ""),
+			kill_target, req_kills, reward_str,
+			"⚠ 此任务不可重复" if not repeatable else "🔄 可重复领取"
+		]
+	else:
+		var reward_str2 = ""
+		if gold > 0: reward_str2 += "%d 金币" % gold
+		var tp2 = entry.get("reward_talent_points", 0)
+		if tp2 > 0:
+			if not reward_str2.is_empty(): reward_str2 += " + "
+			reward_str2 += "天赋点 ×%d" % tp2
+		var mat_id2 = entry.get("reward_material", "")
+		if not mat_id2.is_empty():
+			if not reward_str2.is_empty(): reward_str2 += " + "
+			var mat_db2 = MaterialDB.MATERIAL_DB.get(mat_id2, {})
+			reward_str2 += "%s ×%d" % [mat_db2.get("name", "材料"), entry.get("reward_mat_count", 1)]
+		if reward_str2.is_empty(): reward_str2 = "0 金币"
+		confirm_desc.text = "%s\n\n需求：%s ×%d\n奖励：%s\n%s" % [
+			entry.get("desc", ""),
+			item_name, count, reward_str2,
+			"⚠ 此任务不可重复" if not repeatable else "🔄 可重复领取"
+		]
+	confirm_desc.text = "%s · %s级\n\n%s" % [entry.get("name", "?"), rank_lbl, confirm_desc.text]
+	confirm_dialog.show()
+
+
+func _show_notification(msg: String) -> void:
+	confirm_title.text = "提示"
+	confirm_desc.text = msg
+	btn_confirm_yes.text = "确定"
+	btn_confirm_no.hide()
+	confirm_dialog.show()
+	await get_tree().create_timer(2.0).timeout
+	confirm_dialog.hide()
+	btn_confirm_no.show()
+	btn_confirm_yes.text = "接受"
+
+
+func _on_confirm_accept() -> void:
+	if _pending_bounty.is_empty():
+		confirm_dialog.hide()
+		return
+
+	var entry = _pending_bounty
+	_pending_bounty = {}
+	confirm_dialog.hide()
+
+	var tid = entry.get("id", "")
+	if GameData.is_bounty_completed(tid):
+		_show_notification("此任务已完成，无法重复领取。")
+		return
+	if GameData.is_bounty_active(tid):
+		_show_notification("此任务已接受！")
+		return
+
+	GameData.accept_bounty(tid)
+	_show_notification("✅ 已接受任务：%s" % entry.get("name", ""))
+	_refresh_bounties()
+
+
+func _on_confirm_cancel() -> void:
+	_pending_bounty = {}
+	confirm_dialog.hide()
+
+
+func _on_close() -> void:
+	# 关闭音效
+	var snd = AudioStreamPlayer.new()
+	snd.stream = load("res://Audio/SE/003-System03.ogg")
+	snd.bus = "SFX"
+	get_tree().root.add_child(snd)
+	snd.play()
+	snd.finished.connect(snd.queue_free)
+	_pop_out()
+	closed.emit()
+
+
+func _ready() -> void:
+	confirm_dialog.set_meta("keyboard_modal", true)
+	confirm_dialog.set_meta("keyboard_cancel", _on_confirm_cancel)
+	close_btn.pressed.connect(_on_close)
+	btn_confirm_yes.pressed.connect(_on_confirm_accept)
+	btn_confirm_no.pressed.connect(_on_confirm_cancel)
+	confirm_dialog.hide()
+	hide()
+	open()
+
+
+func _pop_in() -> void:
+	panel.modulate = Color(1, 1, 1, 0); panel.scale = Vector2(0.85, 0.85)
+	var t = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	t.tween_property(panel, "modulate:a", 1.0, 0.25)
+	t.parallel().tween_property(panel, "scale", Vector2(1, 1), 0.25)
+
+
+func _pop_out() -> void:
+	var t = create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUINT)
+	t.tween_property(panel, "modulate:a", 0.0, 0.12)
+	t.tween_property(panel, "scale", Vector2(0.9, 0.9), 0.12)
+	t.tween_callback(hide)

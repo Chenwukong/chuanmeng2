@@ -1,0 +1,140 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/菩提房间.jpg" id="map"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Bodhi-walk.png" id="Bodhi"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungXiaoyun.tscn" id="YoungXiaoyun"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Wanyu-walk.png" id="Wanyu"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Yanji-walk.png" id="Yanji"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Possessed-walk.png" id="Possessed"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Wukong-walk.png" id="Wukong"]
+[ext_resource type="PackedScene" path="res://scenes/World/Npc.tscn" id="npc"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/舍利珠.png" id="relic"]
+[ext_resource type="AudioStream" path="res://Audio/SE/124-Thunder02.ogg" id="thunder"]
+[ext_resource type="SpriteFrames" path="res://scenes/World/ChildhoodStages/Expel.tres" id="Expel"]
+[ext_resource type="SpriteFrames" path="res://scenes/World/ChildhoodStages/Possess.tres" id="Possess"]
+[ext_resource type="SpriteFrames" path="res://Graphic/Story/Childhood/Cast.tres" id="Cast"]
+
+[sub_resource type="CanvasItemMaterial" id="glow"]
+blend_mode = 1
+
+[node name="BodhiRoom" type="Node2D"]
+position = Vector2(-320, -240)
+y_sort_enabled = true
+
+[node name="Background" type="Sprite2D" parent="."]
+z_index = -1
+centered = false
+texture = ExtResource("map")
+
+[node name="菩提祖师" parent="." instance=ExtResource("npc")]
+position = Vector2(272, 256)
+direction = 0
+scale = Vector2(0.78, 0.78)
+npc_name = "菩提祖师"
+walk_sheet = ExtResource("Bodhi")
+walk_speed = 260.0
+auto_look_at_player = false
+
+[node name="Relic" type="Sprite2D" parent="菩提祖师"]
+position = Vector2(42, -43)
+scale = Vector2(0.27, 0.27)
+texture = ExtResource("relic")
+z_index = 2
+
+[node name="Shadow(2)" parent="菩提祖师" index="2"]
+visible = false
+
+[node name="游霄云" parent="." instance=ExtResource("YoungXiaoyun")]
+position = Vector2(240, 288)
+direction = 3
+modulate = Color(1, 1, 1, 0.24)
+
+[node name="魔神万狱" parent="." instance=ExtResource("npc")]
+position = Vector2(310, 283)
+direction = 2
+scale = Vector2(0.62, 0.62)
+modulate = Color(1, 1, 1, 0)
+npc_name = "魔神万狱"
+walk_sheet = ExtResource("Wanyu")
+walk_speed = 260.0
+auto_look_at_player = false
+
+[node name="Shadow(2)" parent="魔神万狱" index="2"]
+visible = false
+
+[node name="阎寂" parent="." instance=ExtResource("npc")]
+position = Vector2(432, 384)
+direction = 2
+scale = Vector2(0.85, 0.85)
+visible = false
+npc_name = "阎寂"
+walk_sheet = ExtResource("Yanji")
+walk_speed = 260.0
+auto_look_at_player = false
+
+[node name="Shadow(2)" parent="阎寂" index="2"]
+visible = false
+
+[node name="附身万狱" parent="." instance=ExtResource("npc")]
+position = Vector2(366, 314)
+direction = 2
+scale = Vector2(0.62, 0.62)
+modulate = Color(1, 1, 1, 0)
+npc_name = "附身万狱"
+walk_sheet = ExtResource("Possessed")
+walk_speed = 260.0
+auto_look_at_player = false
+
+[node name="Shadow(2)" parent="附身万狱" index="2"]
+visible = false
+
+[node name="孙悟空" parent="." instance=ExtResource("npc")]
+position = Vector2(432, 384)
+direction = 2
+scale = Vector2(0.52, 0.52)
+visible = false
+npc_name = "孙悟空"
+walk_sheet = ExtResource("Wukong")
+walk_speed = 260.0
+auto_look_at_player = false
+
+[node name="Shadow(2)" parent="孙悟空" index="2"]
+visible = false
+
+[node name="Expel" type="AnimatedSprite2D" parent="."]
+visible = false
+z_index = 3
+material = SubResource("glow")
+sprite_frames = ExtResource("Expel")
+offset = Vector2(0, -123)
+scale = Vector2(0.72, 0.72)
+
+[node name="Possess" type="AnimatedSprite2D" parent="."]
+visible = false
+z_index = 3
+material = SubResource("glow")
+sprite_frames = ExtResource("Possess")
+offset = Vector2(-20, 69)
+scale = Vector2(0.8, 0.8)
+
+[node name="Sound" type="AudioStreamPlayer" parent="Possess"]
+stream = ExtResource("thunder")
+bus = &"SFX"
+
+[node name="Cast" type="AnimatedSprite2D" parent="."]
+visible = false
+z_index = 3
+material = SubResource("glow")
+sprite_frames = ExtResource("Cast")
+offset = Vector2(0, 80)
+scale = Vector2(0.65, 0.65)
+
+[editable path="菩提祖师"]
+
+[editable path="魔神万狱"]
+
+[editable path="阎寂"]
+
+[editable path="附身万狱"]
+
+[editable path="孙悟空"]

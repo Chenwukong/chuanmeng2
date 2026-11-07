@@ -1,0 +1,168 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Script/UI/HelpUI.gd" id="script"]
+[ext_resource type="Theme" path="res://scenes/UI/Dialogue/ChatTheme.tres" id="theme"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowCloseButton.tscn" id="close"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="font"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WorldCornerButton.tscn" id="corner_button"]
+[sub_resource type="StyleBoxFlat" id="reading"]
+bg_color = Color(0.84, 0.90, 1, 0.7)
+content_margin_left = 22.0
+content_margin_right = 22.0
+content_margin_top = 18.0
+content_margin_bottom = 18.0
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+[node name="HelpUI" type="CanvasLayer"]
+layer = 110
+script = ExtResource("script")
+[node name="HelpButton" parent="." instance=ExtResource("corner_button")]
+text = "指南"
+tooltip_text = "游戏指南（F3）"
+[node name="Overlay" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+[node name="Dim" type="ColorRect" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.04, 0.10, 0.20, 0.35)
+[node name="Panel" type="Panel" parent="Overlay"]
+layout_mode = 1
+anchor_left = 0.12
+anchor_top = 0.1
+anchor_right = 0.88
+anchor_bottom = 0.9
+theme = ExtResource("theme")
+[node name="Layout" type="VBoxContainer" parent="Overlay/Panel"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 18.0
+offset_right = -24.0
+offset_bottom = -16.0
+theme_override_constants/separation = 14
+[node name="Header" type="HBoxContainer" parent="Overlay/Panel/Layout"]
+layout_mode = 2
+[node name="Title" type="Label" parent="Overlay/Panel/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+text = "游戏指南"
+[node name="Close" parent="Overlay/Panel/Layout/Header" instance=ExtResource("close")]
+layout_mode = 2
+[node name="Body" type="HBoxContainer" parent="Overlay/Panel/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+[node name="Categories" type="VBoxContainer" parent="Overlay/Panel/Layout/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(132, 0)
+theme_override_constants/separation = 8
+[node name="Category0" type="Button" parent="Overlay/Panel/Layout/Body/Categories"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+toggle_mode = true
+text = "初入传梦"
+[node name="Category1" type="Button" parent="Overlay/Panel/Layout/Body/Categories"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+toggle_mode = true
+text = "按键操作"
+[node name="Category2" type="Button" parent="Overlay/Panel/Layout/Body/Categories"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+toggle_mode = true
+text = "天赋"
+[node name="Category3" type="Button" parent="Overlay/Panel/Layout/Body/Categories"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+toggle_mode = true
+text = "打造"
+[node name="Category4" type="Button" parent="Overlay/Panel/Layout/Body/Categories"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+toggle_mode = true
+text = "机甲"
+[node name="Category5" type="Button" parent="Overlay/Panel/Layout/Body/Categories"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+toggle_mode = true
+text = "符咒"
+[node name="Category6" type="Button" parent="Overlay/Panel/Layout/Body/Categories"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+toggle_mode = true
+text = "宠物"
+[node name="Pages" type="TabContainer" parent="Overlay/Panel/Layout/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+tabs_visible = false
+theme_override_styles/panel = SubResource("reading")
+[node name="Page0" type="RichTextLabel" parent="Overlay/Panel/Layout/Body/Pages"]
+layout_mode = 2
+bbcode_enabled = true
+theme_override_fonts/normal_font = ExtResource("font")
+theme_override_fonts/bold_font = ExtResource("font")
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 22
+text = "[font_size=28][b]游戏介绍[/b][/font_size]\n\n在各地探索，与人物交谈，推进剧情，组建自己的队伍。战斗、悬赏和探索能带来经验、银两与材料。\n\n[b]成长路线[/b]\n人物升级 → 分配潜力、学习技能 → 选择天赋 → 强化装备与符咒 → 培养宠物、升级机甲。\n\n[b]出发前[/b]\n检查队伍与装备，准备药品和符咒。通过菜单查看剧情提示与悬赏，重要选择前记得存档。"
+[node name="Page1" type="RichTextLabel" parent="Overlay/Panel/Layout/Body/Pages"]
+layout_mode = 2
+bbcode_enabled = true
+theme_override_fonts/normal_font = ExtResource("font")
+theme_override_fonts/bold_font = ExtResource("font")
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 22
+text = "[font_size=28][b]操作速查[/b][/font_size]\n\n[b]探索[/b]\n鼠标左键：点击地面寻路、点击人物互动\nW / A / S / D 或方向键：移动\nEnter：确认或交互\nTab：菜单 / 界面区域切换\nEsc：关闭当前界面；探索中打开存档\n\n[b]界面与对话[/b]\n方向键 / W A S D：选择\nEnter：确认；对话中显示完整文字或继续\nQ / E：在支持的列表中翻页\n鼠标滚轮：滚动长列表和说明\n\n[b]快捷键[/b]\nF3：打开 / 关闭游戏指南\nF1：战斗二倍速\n\n[b]手柄（Xbox按键布局）[/b]\n左摇杆 / 十字键：移动、选择\nA：确认、交互、继续对话；B：返回\nStart：探索菜单；X：切换界面区域\nLB / RB：翻页，战斗中切换符咒\nY：探索时骑乘，战斗时打开技能\nLT：战斗道具；RT：快速攻击\nBack：探索中打开游戏指南\n\n具体界面以底部按键提示为准。"
+[node name="Page2" type="RichTextLabel" parent="Overlay/Panel/Layout/Body/Pages"]
+layout_mode = 2
+bbcode_enabled = true
+theme_override_fonts/normal_font = ExtResource("font")
+theme_override_fonts/bold_font = ExtResource("font")
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 22
+text = "[font_size=28][b]选择你的成长方向[/b][/font_size]\n\n天赋页面包含主、召、辅、护、安等分支。先查看节点说明与前置条件，再消耗天赋点提升等级。\n\n[b]如何选择[/b]\n围绕常用的战斗方式投入：人物输出、召唤协同、辅助或生存。节点等级、所需前置和具体效果以悬停说明为准。\n\n[b]查看收益[/b]\n人物详细属性会合并装备与天赋带来的同类属性；不能只看基础面板判断天赋是否生效。"
+[node name="Page3" type="RichTextLabel" parent="Overlay/Panel/Layout/Body/Pages"]
+layout_mode = 2
+bbcode_enabled = true
+theme_override_fonts/normal_font = ExtResource("font")
+theme_override_fonts/bold_font = ExtResource("font")
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 22
+text = "[font_size=28][b]强化装备与制作符咒[/b][/font_size]\n\n左侧选择武器或符纸作为基底，右侧选择对应材料。上方材料槽展示本次投入，确认费用后点击打造。\n\n[b]武器强化[/b]\n一次只能投入一件武器作为基底。材料的属性决定强化方向；成功窗口会显示本次属性变化。\n\n[b]符咒制作[/b]\n符纸作为基底，搭配制符材料制作符咒。不同材料用途不同，请查看物品说明。\n\n[b]注意[/b]\n打造会消耗银两和有效材料。取消或移除材料可重新搭配；原料和材料列表可分别翻页。"
+[node name="Page4" type="RichTextLabel" parent="Overlay/Panel/Layout/Body/Pages"]
+layout_mode = 2
+bbcode_enabled = true
+theme_override_fonts/normal_font = ExtResource("font")
+theme_override_fonts/bold_font = ExtResource("font")
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 22
+text = "[font_size=28][b]机关与铁甲兽[/b][/font_size]\n\n在机甲界面选择已解锁的机关，查看等级、属性、预览和升级需求。升级需要银两与齿轮，具体消耗以界面显示为准。\n\n[b]战斗召唤[/b]\n使用战斗中的召唤入口选择可用铁甲兽。召唤与普通行动一样，需要考虑当前战局。\n\n[b]培养建议[/b]\n先确认常用机关，再投入升级材料。召唤相关天赋也可能影响机甲能力，请结合节点说明搭配。"
+[node name="Page5" type="RichTextLabel" parent="Overlay/Panel/Layout/Body/Pages"]
+layout_mode = 2
+bbcode_enabled = true
+theme_override_fonts/normal_font = ExtResource("font")
+theme_override_fonts/bold_font = ExtResource("font")
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 22
+text = "[font_size=28][b]随身携带的战术选择[/b][/font_size]\n\n符咒可通过打造制作，在战斗中选择符咒与目标使用。不同符咒可能造成伤害、治疗、复活或提供辅助效果。\n\n[b]使用前[/b]\n查看目标类型、效果与数量。攻击符咒和辅助符咒的目标不同，请以选择提示为准。\n\n[b]搭配思路[/b]\n用攻击符咒补充输出，用恢复和辅助符咒应对危急回合。符咒会被消耗，出发前检查背包。"
+[node name="Page6" type="RichTextLabel" parent="Overlay/Panel/Layout/Body/Pages"]
+layout_mode = 2
+bbcode_enabled = true
+theme_override_fonts/normal_font = ExtResource("font")
+theme_override_fonts/bold_font = ExtResource("font")
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 22
+text = "[font_size=28][b]上阵、吞噬与打书[/b][/font_size]\n\n在宠物养成页面查看上场阵容和仓库。最多上场六只，点击已上场宠物可召回。\n\n[b]资质与成长[/b]\n不同资质对应不同光芒，最低资质没有光效。查看详情中的等级、属性与吞噬成长进度判断培养方向。\n\n[b]吞噬[/b]\n选择要培养的宠物，再选择符合条件的饲料宠物。确认后饲料宠物会永久消失；成长达到要求后可提升资质。\n\n[b]打书与放生[/b]\n打书用于学习宠物技能，请先阅读技能说明。放生会失去宠物，重要宠物操作前仔细确认。"
+[node name="Hint" type="Label" parent="Overlay/Panel/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "F3 / Esc 返回 · 左侧选择分类 · 滚轮阅读"
+horizontal_alignment = 1

@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://b1s1nhne8hry4"]
 
-[ext_resource type="Script" uid="uid://c6hm4r3g4lm37" path="res://Script/Only/talent_tree.gd" id="1_kssm0"]
+[ext_resource type="Script" path="res://Script/UI/Talents/talent_tree.gd" id="1_kssm0"]
 [ext_resource type="Texture2D" uid="uid://cwuyacc2kpacn" path="res://Graphic/UI/天赋background.png" id="2_k0k6f"]
 [ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="3_ipkfc"]
 [ext_resource type="FontFile" uid="uid://dgudp2duoeeta" path="res://Graphic/UI/Font/aajiuzhongxiao.ttf" id="4_mim2g"]
-[ext_resource type="Script" uid="uid://dny03uato8wr3" path="res://Script/Only/talent_page.gd" id="5_5iswv"]
-[ext_resource type="Script" uid="uid://dsnwvygwgfbg1" path="res://Script/Only/talent_node.gd" id="6_3j5ib"]
-[ext_resource type="Script" uid="uid://ctbocupnxj8ny" path="res://Script/Only/talent_requirement.gd" id="7_q7bq8"]
+[ext_resource type="Script" path="res://Script/UI/Talents/talent_page.gd" id="5_5iswv"]
+[ext_resource type="Script" path="res://Script/UI/Talents/talent_node.gd" id="6_3j5ib"]
+[ext_resource type="Script" path="res://Script/UI/Talents/talent_requirement.gd" id="7_q7bq8"]
 [ext_resource type="FontFile" uid="uid://cfe8vm3np4ttx" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="8_bv670"]
 [ext_resource type="PackedScene" uid="uid://dno5u7h0tr5vo" path="res://scenes/tcp_sprite.tscn" id="9_8t4oy"]
 

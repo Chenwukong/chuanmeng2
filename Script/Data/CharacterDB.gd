@@ -11,18 +11,22 @@ extends RefCounted
 
 const CHARACTER_DB := {
 	"youxiaoyun": {
-		"name": "游霄云", "class": "战神", "elem": "无", "role": "主", "lv": 100,
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
+		"innate_skills": ["三才阵", "撒豆成兵"],
+		#"innate_skills": ["金符齐射"],
+		"name": "游霄云", "class": "战神", "elem": "无", "role": "主", "lv": 10,
 		"weapons": ["符咒"],
 		"en_name": "YouXiaoYun",
 		"hp": 150, "mp": 80,  "atk": 30, "matk": 70, "def": 14, "mdef": 10, "spd": 10, "luck": 0.1,
 		"crit": 0.18, "crit_mult": 1.7,
 		"hp_g": 25, "mp_g": 15, "atk_g": 5, "def_g": 4, "spd_g": 2, "matk_g": 5, "mdef_g": 4,
 		"was_base_path": "res://WAS/游霄云/",
-		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴","神行步"],
+		"skills": ["寂静剑法","一苇渡江","金刚护体","金刚护法","横扫千军","达摩护体","如沐春风","虚沉冰封","失魂符","毒瘴","神行步","金符齐射"],
 		"attack_sound": "res://Audio/SE/男-法术-呀.ogg", "cast_sound": "res://Audio/SE/男-法术-呀.ogg",
 		"ranged": true,
 	},
 	"aobai": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "敖白", "class": "战神", "elem": "水", "role": "攻", "lv": 1,
 		"weapons": ["剑"],
 		"portrait_offset": Vector2(-20, -45),
@@ -39,6 +43,7 @@ const CHARACTER_DB := {
 		"ranged": true,
 	},
 	"erlang": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "二郎神", "class": "战神", "elem": "金", "role": "攻", "lv": 1,
 		"weapons": ["刀"],
 		"en_name": "ErLang",
@@ -51,6 +56,7 @@ const CHARACTER_DB := {
 		"traits": {"愈战愈勇": {"dmg_pct": 0.05, "spd_pct": 0.05}},
 	},
 	"duoshiyi": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "堕十一", "class": "灵师", "elem": "金", "role": "攻", "lv": 1,
 		"weapons": ["枪"],
 		"en_name": "DuoShiYi",
@@ -63,6 +69,7 @@ const CHARACTER_DB := {
 		"traits": {"愈战愈勇": {"dmg_pct": 0.05, "spd_pct": 0.05}},
 	},
 	"qianmian": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "千面", "class": "灵师", "elem": "水", "role": "召", "lv": 1,
 		"weapons": ["扇"],
 		"en_name": "QianMian",
@@ -74,6 +81,7 @@ const CHARACTER_DB := {
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
 	},
 	"dingdong": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "叮咚", "class": "灵师", "elem": "土", "role": "召", "lv": 1,
 		"weapons": ["灯"],
 		"en_name": "DingDong",
@@ -81,11 +89,12 @@ const CHARACTER_DB := {
 		"crit": 0.12, "crit_mult": 1.5,
 		"hp_g": 18, "mp_g": 6, "atk_g": 3, "def_g": 5, "spd_g": 3, "matk_g": 3, "mdef_g": 5,
 		"was_base_path": "res://WAS/叮咚",
-		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂"],
+		"skills": ["普通攻击","召唤铁甲兽","机甲合体","铁甲出击","金刚护法","金刚护魂"],
 		"attack_sound": "res://Audio/SE/137-Light03.ogg",
 		"ranged": true,
 	},
 	"lingfeng": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "凌风", "class": "灵师", "elem": "水", "role": "攻辅", "lv": 1,
 		"weapons": ["刀"],
 		"en_name": "LingFeng",
@@ -98,6 +107,7 @@ const CHARACTER_DB := {
 		"traits": {"横扫不休": {"chance": 0.3}, "双动": {}},
 	},
 	"hutouguai": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "虎头怪", "class": "灵师", "elem": "木", "role": "召", "lv": 1,
 		"weapons": ["斧"],
 		"en_name": "Hutou",
@@ -110,6 +120,7 @@ const CHARACTER_DB := {
 		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
 	},
 	"shentianbing": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "神天兵", "class": "灵师", "elem": "火", "role": "护", "lv": 1,
 		"weapons": ["锤"],
 		"en_name": "ShenTianBing",
@@ -122,6 +133,7 @@ const CHARACTER_DB := {
 		"traits": {"神佑世人": {"share_pct": 0.3}},
 	},
 	"xiaoyaosheng": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "逍遥生", "class": "灵师", "elem": "水", "role": "辅", "lv": 1,
 		"weapons": ["扇"],
 		"en_name": "XiaoYao",
@@ -132,8 +144,9 @@ const CHARACTER_DB := {
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
 		"traits": {"舍己为妹": {"spd_pct": 0.15, "hp_pct": -0.02, "sisters": ["taoyaoyao", "yingjingling"]}},
-	},	
+	},
 	"jumowang": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "巨魔王", "class": "灵师", "elem": "火", "role": "攻", "lv": 1,
 		"weapons": ["斧"],
 		"en_name": "Jumowang",
@@ -144,8 +157,9 @@ const CHARACTER_DB := {
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
 		"attack_sound":"res://Audio/SE/猛男-唔哈。气势.ogg",
 		"traits": { "烈焰灼魂": {"burn_chance": 0.3, "burn_dmg": 0.05}},
-	},		
+	},
 	"taoyaoyao": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "桃夭夭", "class": "灵师", "elem": "木", "role": "辅", "lv": 1,
 		"weapons": ["灯"],
 		"en_name": "Taoyaoyao",
@@ -157,8 +171,9 @@ const CHARACTER_DB := {
 		"attack_sound": "res://Audio/SE/",
 		 "cast_sound": "res://Audio/SE/女-法术X.ogg",
 		"traits": {"点天灯": {"heal_pct": 0.2}},
-	},				
+	},
 	"yanwushi": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "偃无师", "class": "灵师", "elem": "金", "role": "护", "lv": 1,
 		"weapons": ["巨剑"],
 		"en_name": "Yanwushi",
@@ -169,8 +184,9 @@ const CHARACTER_DB := {
 		"skills": ["普通攻击","召唤铁甲兽","铁甲出击","金刚护法","金刚护魂","横扫千军"],
 		"attack_sound": "res://Audio/SE/男-枪.ogg",
 		"traits": {"兽王血脉": {"hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
-	},			
+	},
 	"yingnvxia": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "英女侠", "class": "灵师", "elem": "金", "role": "辅", "lv": 1,
 		"weapons": ["双刀"],
 		"en_name": "Yingnvxia",
@@ -183,6 +199,7 @@ const CHARACTER_DB := {
 		"traits": {"弱点击破": {"mult": 2.0}},
 	},
 	"yingjingling": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "影精灵", "class": "灵师", "elem": "金", "role": "护", "lv": 1,
 		"weapons": ["爪"],
 		"en_name": "Yingjingling",
@@ -194,8 +211,9 @@ const CHARACTER_DB := {
 		"attack_sound": "res://Audio/SE/兵器-入肉.ogg",
 		#"cast_sound": "res://Audio/SE/女-叉.ogg",
 		"traits": {"暗影汲取": {"drain_pct": 0.1}},
-	},	
+	},
 	"gujingling": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "骨精灵", "class": "灵师", "elem": "土", "role": "攻", "lv": 1,
 		"weapons": ["棍"],
 		"en_name": "Yingjingling",
@@ -207,8 +225,9 @@ const CHARACTER_DB := {
 		"attack_sound": "res://Audio/SE/女-叉.ogg",
 		"cast_sound": "res://Audio/SE/女-叉.ogg",
 		"traits": { "复生": 50, "驭鬼术": {"dmg_pct": 0.3}},
-	},		
+	},
 	"dajiangjun": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "大将军", "class": "灵师", "elem": "金", "role": "攻", "lv": 1,
 		"weapons": ["刀"],
 		"en_name": "Dajiangjun",
@@ -221,6 +240,7 @@ const CHARACTER_DB := {
 		"traits": {"横扫不休": {"chance": 1.0, "hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
 	},
 	"tunshishou": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "吞噬兽", "class": "灵师", "elem": "木", "role": "护", "lv": 1,
 		"weapons": ["爪"],
 		"en_name": "Tunshishou",
@@ -239,6 +259,7 @@ const CHARACTER_DB := {
 		#"traits": {"晓之以理": {"dmg_reduce": 0.10}},
 	#},
 	"lingti": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
 		"name": "灵体", "class": "灵师", "elem": "土", "role": "攻", "lv": 1,
 		"weapons": ["杖"],
 		"en_name": "spirit",
@@ -250,5 +271,54 @@ const CHARACTER_DB := {
 		"traits": {"废物": {"break_lv": 80, "hp_mul": 8, "atk_mul": 8, "def_mul": 6, "spd_mul": 5,
 			"awaken_skills": ["雷霆诀", "寂静剑法", "横扫千军", "一苇渡江", "如沐春风"]}},
 	},
-					
+	"xiaoer": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
+		"selectable": false, # 剧情人物，不加入默认可选名册
+		"name": "小二", "class": "灵师", "elem": "土", "role": "攻", "lv": 1,
+		"weapons": ["棍"],
+		"en_name": "spirit",
+		"hp": 30, "mp": 20000, "atk": 25, "matk": 25, "def": 14, "mdef": 14, "spd": 5000,
+		"hp_g": 10, "mp_g": 5, "atk_g": 3, "def_g": 1, "spd_g": 5, "matk_g": 3, "mdef_g": 1,
+		"was_base_path": "res://WAS/小二",
+		"attack_sound": "res://Audio/SE/杀.ogg",
+		"skills": ["普通攻击", "真身显现"],
+		"innate_skills": ["真身显现"],
+		"traits": {"废物": {"break_lv": 80, "hp_mul": 8, "atk_mul": 8, "def_mul": 6, "spd_mul": 5,
+			"awaken_skills": ["雷霆诀", "寂静剑法", "横扫千军", "一苇渡江", "如沐春风"]}},
+	},
+	# 独立队友，共用小二的形象和技能。
+	"banshouren": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
+		"name": "半兽人", "class": "灵师", "elem": "土", "role": "攻", "lv": 1,
+		"weapons": ["棍"],
+		"en_name": "spirit",
+		"hp": 30, "mp": 20000, "atk": 25, "matk": 25, "def": 14, "mdef": 14, "spd": 5000,
+		"hp_g": 10, "mp_g": 5, "atk_g": 3, "def_g": 1, "spd_g": 5, "matk_g": 3, "mdef_g": 1,
+		"was_base_path": "res://WAS/小二",
+		"attack_sound": "res://Audio/SE/杀.ogg",
+		"skills": ["普通攻击", "真身显现", "扔色子", "千机变", "火域"],
+		"innate_skills": ["真身显现", "扔色子", "火域"],
+		"traits": {"废物": {"break_lv": 80, "hp_mul": 8, "atk_mul": 8, "def_mul": 6, "spd_mul": 5,
+			"awaken_skills": ["雷霆诀", "寂静剑法", "横扫千军", "一苇渡江", "如沐春风"]}},
+	},
+	"lingruozhao": {
+		"locked": false, # true：约定之地不显示，剧情解锁后出现。
+		"name": "凌若昭", "class": "灵师", "elem": "金", "role": "攻", "lv": 100,
+		"weapons": ["刀"],
+		"en_name": "Dajiangjun",
+		"hp": 120, "mp": 100, "atk": 20, "matk": 30, "def": 10, "mdef": 12, "spd": 205,
+		"crit": 0.12, "crit_mult": 1.5,
+		"hp_g": 22, "mp_g": 12, "atk_g": 5, "def_g": 5, "spd_g": 2, "matk_g": 5, "mdef_g": 5,
+		"was_base_path": "res://WAS/凌若昭",
+		"skills": ["普通攻击","战神诀","横扫千军","破釜沉舟","力劈华山"],
+		"attack_sound": "res://Audio/SE/猛男-刀2.ogg",
+		"traits": {"横扫不休": {"chance": 1.0, "hp_pct": 0.3, "atk_pct": 0.3, "def_pct": 0.2, "spd_pct": 0.2}},
+	},
 }
+
+
+static func selectable_ids() -> Array[String]:
+	var result: Array[String] = []
+	for mid in CHARACTER_DB:
+		if CHARACTER_DB[mid].get("selectable", true): result.append(mid)
+	return result

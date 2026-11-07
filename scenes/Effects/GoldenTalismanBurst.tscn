@@ -1,0 +1,18 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Script/Effects/GoldenTalismanBurst.gd" id="Effect"]
+[ext_resource type="AudioStream" path="res://Audio/SE/法术5.ogg" id="Sound"]
+[node name="GoldenTalismanBurst" type="Node2D"]
+z_index = 100
+script = ExtResource("Effect")
+[node name="ReleaseSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("Sound")
+bus = &"SFX"
+volume_db = -8.0
+
+[node name="CasterOcclusion" type="Sprite2D" parent="."]
+visible = false
+z_index = 2
+
+[node name="WeaponOcclusion" type="Sprite2D" parent="."]
+visible = false
+z_index = 2

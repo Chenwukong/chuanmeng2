@@ -1,0 +1,49 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/World/StoryMapBackdrop.gd" id="map"]
+[ext_resource type="Script" path="res://Script/World/MapMaskLayer.gd" id="map_masks"]
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/Wanyu/Maoshan-walk.png" id="Maoshan"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungXiaoyun.tscn" id="YoungXiaoyun"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungLingfeng.tscn" id="YoungLingfeng"]
+[ext_resource type="PackedScene" path="res://scenes/World/NPCs/YoungZhiyao.tscn" id="YoungZhiyao"]
+[ext_resource type="PackedScene" path="res://scenes/World/Npc.tscn" id="npc"]
+
+[node name="BorrowTalisman" type="Node2D"]
+position = Vector2(-2445, -1200)
+y_sort_enabled = true
+
+[node name="Background" type="Sprite2D" parent="."]
+z_index = -1
+centered = false
+script = ExtResource("map")
+map_path = "res://MAP/1135.map"
+shot_bounds = Rect2i(1445, 700, 2000, 1000)
+
+[node name="MapMasks" type="Node2D" parent="."]
+script = ExtResource("map_masks")
+
+[node name="茅山道士" parent="." instance=ExtResource("npc")]
+position = Vector2(2504, 1138)
+direction = 1
+scale = Vector2(0.8, 0.8)
+npc_name = "茅山道士"
+walk_sheet = ExtResource("Maoshan")
+walk_speed = 260.0
+auto_look_at_player = false
+
+[node name="Shadow(2)" parent="茅山道士" index="2"]
+visible = false
+
+[node name="游霄云" parent="." instance=ExtResource("YoungXiaoyun")]
+position = Vector2(2456, 1170)
+direction = 3
+
+[node name="厉凌风" parent="." instance=ExtResource("YoungLingfeng")]
+position = Vector2(2410, 1128)
+direction = 0
+
+[node name="齐芷瑶" parent="." instance=ExtResource("YoungZhiyao")]
+position = Vector2(2400, 1175)
+direction = 3
+
+[editable path="茅山道士"]

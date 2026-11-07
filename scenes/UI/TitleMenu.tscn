@@ -1,0 +1,198 @@
+[gd_scene format=3 uid="uid://ctsl5kox6f5rb"]
+
+[ext_resource type="Texture2D" uid="uid://vl1qg2vgbg6j" path="res://Graphic/UI/Intro/ZiqiTitle.jpg" id="chapter_two"]
+[ext_resource type="Shader" uid="uid://dr0baweg2dyc0" path="res://Graphic/UI/Intro/TitleClouds.gdshader" id="cloud_shader"]
+[ext_resource type="Texture2D" uid="uid://da7b7q0g0dtt6" path="res://Graphic/UI/Intro/FangcunTitle.jpg" id="landscape"]
+[ext_resource type="Script" uid="uid://cfbl4vf3ygtkp" path="res://Script/UI/TitleMenu.gd" id="script"]
+[ext_resource type="Theme" uid="uid://cwouo6j0upmjj" path="res://Component/PetUITheme.tres" id="theme"]
+[ext_resource type="FontFile" uid="uid://cfe8vm3np4ttx" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="ui_font"]
+
+[ext_resource type="Texture2D" path="res://Graphic/UI/Intro/MenuWordmark.svg" id="wordmark"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/Intro/MenuButtonNormal.svg" id="button_normal"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/Intro/MenuButtonHover.svg" id="button_hover"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/Intro/MenuButtonPressed.svg" id="button_pressed"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/Intro/MenuButtonFocus.svg" id="button_focus"]
+[sub_resource type="FastNoiseLite" id="cloud_noise"]
+seed = 97
+frequency = 0.012
+fractal_octaves = 3
+
+[sub_resource type="NoiseTexture2D" id="cloud_texture"]
+noise = SubResource("cloud_noise")
+seamless = true
+
+[sub_resource type="ShaderMaterial" id="cloud_material"]
+shader = ExtResource("cloud_shader")
+shader_parameter/cloud_noise = SubResource("cloud_texture")
+
+[sub_resource type="Gradient" id="shade_gradient"]
+offsets = PackedFloat32Array(0, 0.44, 0.76, 1)
+colors = PackedColorArray(0.055, 0.14, 0.24, 0.91, 0.08, 0.2, 0.33, 0.75, 0.14, 0.28, 0.4, 0.2, 0.14, 0.28, 0.4, 0.02)
+
+[sub_resource type="GradientTexture2D" id="shade_texture"]
+gradient = SubResource("shade_gradient")
+width = 512
+height = 2
+
+[sub_resource type="StyleBoxTexture" id="normal"]
+texture = ExtResource("button_normal")
+
+[sub_resource type="StyleBoxTexture" id="hover"]
+texture = ExtResource("button_hover")
+
+[sub_resource type="StyleBoxTexture" id="pressed"]
+texture = ExtResource("button_pressed")
+
+[sub_resource type="StyleBoxTexture" id="focus"]
+texture = ExtResource("button_focus")
+
+[sub_resource type="Theme" id="menu_buttons"]
+default_font = ExtResource("ui_font")
+default_font_size = 24
+Button/colors/font_color = Color(0.87, 0.95, 1, 1)
+Button/colors/font_focus_color = Color(1, 1, 1, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/colors/font_pressed_color = Color(0.77, 0.9, 0.98, 1)
+Button/colors/font_outline_color = Color(0.05, 0.13, 0.23, 1)
+Button/constants/outline_size = 2
+Button/styles/normal = SubResource("normal")
+Button/styles/hover = SubResource("hover")
+Button/styles/pressed = SubResource("pressed")
+Button/styles/focus = SubResource("focus")
+
+[node name="TitleMenu" type="Control" unique_id=997635131]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("theme")
+script = ExtResource("script")
+chapter_backgrounds = Dictionary[int, Texture2D]({
+1: ExtResource("landscape"),
+2: ExtResource("chapter_two")
+})
+
+[node name="Landscape" type="TextureRect" parent="." unique_id=633232363]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("landscape")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Clouds" type="ColorRect" parent="." unique_id=859057220]
+material = SubResource("cloud_material")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Shade" type="TextureRect" parent="." unique_id=901939056]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("shade_texture")
+expand_mode = 1
+
+[node name="Layout" type="Control" parent="." unique_id=554477682]
+layout_mode = 1
+anchor_left = 0.29
+anchor_top = 0.5
+anchor_right = 0.29
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -286.0
+offset_right = 280.0
+offset_bottom = 268.0
+mouse_filter = 2
+
+[node name="Logo" type="TextureRect" parent="Layout" unique_id=492577556]
+layout_mode = 0
+offset_right = 560.0
+offset_bottom = 188.0
+mouse_filter = 2
+texture = ExtResource("wordmark")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Buttons" type="VBoxContainer" parent="Layout" unique_id=940645794]
+layout_mode = 0
+offset_left = 130.0
+offset_top = 215.0
+offset_right = 430.0
+offset_bottom = 481.0
+theme = SubResource("menu_buttons")
+theme_override_constants/separation = 14
+
+[node name="NewGame" type="Button" parent="Layout/Buttons" unique_id=1336763749]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+focus_neighbor_top = NodePath("../Quit")
+focus_neighbor_bottom = NodePath("../LoadGame")
+mouse_default_cursor_shape = 2
+text = "新游戏"
+
+[node name="LoadGame" type="Button" parent="Layout/Buttons" unique_id=702530212]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+focus_neighbor_top = NodePath("../NewGame")
+focus_neighbor_bottom = NodePath("../Settings")
+mouse_default_cursor_shape = 2
+text = "加载游戏"
+
+[node name="Settings" type="Button" parent="Layout/Buttons" unique_id=566108975]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+focus_neighbor_top = NodePath("../LoadGame")
+focus_neighbor_bottom = NodePath("../Quit")
+mouse_default_cursor_shape = 2
+text = "设置"
+
+[node name="Quit" type="Button" parent="Layout/Buttons" unique_id=822910064]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+focus_neighbor_top = NodePath("../Settings")
+focus_neighbor_bottom = NodePath("../NewGame")
+mouse_default_cursor_shape = 2
+text = "退出游戏"
+
+[node name="Status" type="Label" parent="." unique_id=1127127089]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.29
+anchor_top = 0.5
+anchor_right = 0.29
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = 238.0
+offset_right = 230.0
+offset_bottom = 270.0
+theme_override_colors/font_color = Color(0.87, 0.95, 1, 1)
+theme_override_fonts/font = ExtResource("ui_font")
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="StartFade" type="ColorRect" parent="." unique_id=348100726]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1860743881]

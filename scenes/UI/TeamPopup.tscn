@@ -1,0 +1,303 @@
+[gd_scene format=3 uid="uid://do2pxlayimldt"]
+[ext_resource type="Script" path="res://Script/UI/TeamPopup.gd" id="script"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="bg"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="font"]
+[ext_resource type="PackedScene" path="res://scenes/UI/TeamMemberCard.tscn" id="card"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/小号按钮.png" id="buttons"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowCloseButton.tscn" id="shared_close"]
+
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowTitle.tscn" id="shared_title"]
+
+[sub_resource type="StyleBoxFlat" id="pill"]
+bg_color = Color(0.79, 0.87, 0.99, 0.82)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.47, 0.63, 0.85, 0.7)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="resonance"]
+bg_color = Color(0.36, 0.50, 0.73, 0.20)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.58, 0.71, 0.90, 0.8)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="AtlasTexture" id="normal"]
+atlas = ExtResource("buttons")
+region = Rect2(0, 0, 42, 21)
+
+[sub_resource type="AtlasTexture" id="hover"]
+atlas = ExtResource("buttons")
+region = Rect2(42.5, 0, 40.2, 21.7)
+
+[sub_resource type="AtlasTexture" id="pressed"]
+atlas = ExtResource("buttons")
+region = Rect2(84.6, 0, 41.3, 21.5)
+
+[node name="TeamPopUp" type="Node2D"]
+script = ExtResource("script")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 1300.0
+offset_bottom = 800.0
+color = Color(0.03, 0.07, 0.15, 0.35)
+mouse_filter = 2
+
+[node name="Frame" type="TextureRect" parent="."]
+offset_left = 140.0
+offset_top = 130.0
+offset_right = 1160.0
+offset_bottom = 670.0
+texture = ExtResource("bg")
+expand_mode = 1
+mouse_filter = 2
+
+[node name="Title" parent="." instance=ExtResource("shared_title")]
+offset_left = 440.0
+offset_right = 860.0
+text = "队伍列表"
+offset_top = 125.00
+offset_bottom = 154.40
+theme_override_font_sizes/font_size = 21
+
+[node name="Subtitle" type="Label" parent="."]
+offset_left = 168.0
+offset_top = 176.0
+offset_right = 688.0
+offset_bottom = 202.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.27, 0.44, 1)
+theme_override_font_sizes/font_size = 16
+text = "并肩同行 · 五行共鸣"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="MemberCount" type="Label" parent="."]
+offset_left = 900.0
+offset_top = 176.0
+offset_right = 1132.0
+offset_bottom = 202.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.3, 0.42, 0.60, 1)
+theme_override_font_sizes/font_size = 14
+text = "伙伴 0 / 5"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="ElementsTitle" type="Label" parent="."]
+offset_left = 168.0
+offset_top = 217.0
+offset_right = 268.0
+offset_bottom = 259.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.28, 0.40, 0.58, 1)
+theme_override_font_sizes/font_size = 14
+text = "五行人数"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="金" type="Label" parent="."]
+offset_left = 280.0
+offset_top = 217.0
+offset_right = 406.0
+offset_bottom = 259.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.17, 0.29, 0.48, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("pill")
+text = "金    "
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="label" type="Label" parent="金"]
+offset_left = 83.0
+offset_top = 0.0
+offset_right = 111.0
+offset_bottom = 42.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.15, 0.27, 0.46, 1)
+theme_override_font_sizes/font_size = 17
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="木" type="Label" parent="."]
+offset_left = 422.0
+offset_top = 217.0
+offset_right = 548.0
+offset_bottom = 259.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.17, 0.29, 0.48, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("pill")
+text = "木    "
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="label" type="Label" parent="木"]
+offset_left = 83.0
+offset_top = 0.0
+offset_right = 111.0
+offset_bottom = 42.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.15, 0.27, 0.46, 1)
+theme_override_font_sizes/font_size = 17
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="水" type="Label" parent="."]
+offset_left = 564.0
+offset_top = 217.0
+offset_right = 690.0
+offset_bottom = 259.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.17, 0.29, 0.48, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("pill")
+text = "水    "
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="label" type="Label" parent="水"]
+offset_left = 83.0
+offset_top = 0.0
+offset_right = 111.0
+offset_bottom = 42.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.15, 0.27, 0.46, 1)
+theme_override_font_sizes/font_size = 17
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="火" type="Label" parent="."]
+offset_left = 706.0
+offset_top = 217.0
+offset_right = 832.0
+offset_bottom = 259.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.17, 0.29, 0.48, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("pill")
+text = "火    "
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="label" type="Label" parent="火"]
+offset_left = 83.0
+offset_top = 0.0
+offset_right = 111.0
+offset_bottom = 42.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.15, 0.27, 0.46, 1)
+theme_override_font_sizes/font_size = 17
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="土" type="Label" parent="."]
+offset_left = 848.0
+offset_top = 217.0
+offset_right = 974.0
+offset_bottom = 259.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.17, 0.29, 0.48, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("pill")
+text = "土    "
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="label" type="Label" parent="土"]
+offset_left = 83.0
+offset_top = 0.0
+offset_right = 111.0
+offset_bottom = 42.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.15, 0.27, 0.46, 1)
+theme_override_font_sizes/font_size = 17
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="队伍列表" type="Node2D" parent="."]
+
+[node name="Player1" parent="队伍列表" instance=ExtResource("card")]
+position = Vector2(168, 280)
+
+[node name="Player2" parent="队伍列表" instance=ExtResource("card")]
+position = Vector2(364, 280)
+
+[node name="Player3" parent="队伍列表" instance=ExtResource("card")]
+position = Vector2(560, 280)
+
+[node name="Player4" parent="队伍列表" instance=ExtResource("card")]
+position = Vector2(756, 280)
+
+[node name="Player5" parent="队伍列表" instance=ExtResource("card")]
+position = Vector2(952, 280)
+
+[node name="ResonanceBg" type="Panel" parent="."]
+offset_left = 168.0
+offset_top = 586.0
+offset_right = 1132.0
+offset_bottom = 628.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("resonance")
+
+[node name="ResonanceTitle" type="Label" parent="."]
+offset_left = 182.0
+offset_top = 586.0
+offset_right = 282.0
+offset_bottom = 628.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.27, 0.44, 1)
+theme_override_font_sizes/font_size = 15
+text = "五行共鸣"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="ResonanceSummary" type="Label" parent="."]
+offset_left = 294.0
+offset_top = 586.0
+offset_right = 1116.0
+offset_bottom = 628.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.27, 0.40, 0.57, 1)
+theme_override_font_sizes/font_size = 14
+text = "暂无共鸣 · 同五行达到2人可激活"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="Hint" type="Label" parent="."]
+offset_left = 168.0
+offset_top = 638.0
+offset_right = 1132.0
+offset_bottom = 660.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.32, 0.43, 0.58, 1)
+theme_override_font_sizes/font_size = 12
+text = "五行统计仅含伙伴 · Esc 或点击界面关闭"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CloseButton" parent="." instance=ExtResource("shared_close")]
+offset_left = 1094
+offset_top = 140
+offset_right = 1142
+offset_bottom = 168
+
+[connection signal="pressed" from="CloseButton" to="." method="_on_close_button_pressed"]

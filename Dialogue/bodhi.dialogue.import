@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://d11i0hvjk4cc7"
+path="res://.godot/imported/bodhi.dialogue-c066799f665219ce335f84bcd2230a89.tres"
+
+[deps]
+
+source_file="res://Dialogue/bodhi.dialogue"
+dest_files=["res://.godot/imported/bodhi.dialogue-c066799f665219ce335f84bcd2230a89.tres"]
+
+[params]
+
+defaults=true

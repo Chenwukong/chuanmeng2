@@ -1,0 +1,102 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="theme"]
+[node name="SaveSlotCard" type="Panel"]
+offset_right = 812.0
+offset_bottom = 104.0
+theme = ExtResource("theme")
+mouse_filter = 2
+[node name="Title" type="Label" parent="."]
+offset_left = 14.0
+offset_top = 7.0
+offset_right = 150.0
+offset_bottom = 33.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(0.12, 0.25, 0.46, 1)
+text = "手动存档 01"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="ChVal" type="Label" parent="."]
+offset_left = 158.0
+offset_top = 9.0
+offset_right = 252.0
+offset_bottom = 33.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.18, 0.29, 0.47, 1)
+text = ""
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="TimeCaption" type="Label" parent="."]
+offset_left = 280.0
+offset_top = 9.0
+offset_right = 346.0
+offset_bottom = 33.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.37, 0.47, 0.61, 1)
+text = "游玩时长"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="TimeVal" type="Label" parent="."]
+offset_left = 354.0
+offset_top = 9.0
+offset_right = 494.0
+offset_bottom = 33.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.18, 0.29, 0.47, 1)
+text = "尚无存档"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="GoldVal" type="Label" parent="."]
+offset_left = 310.0
+offset_top = 46.0
+offset_right = 532.0
+offset_bottom = 86.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.48, 0.34, 0.13, 1)
+text = ""
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="Portraits" type="HBoxContainer" parent="."]
+offset_left = 14.0
+offset_top = 42.0
+offset_right = 294.0
+offset_bottom = 90.0
+theme_override_constants/separation = 6
+mouse_filter = 2
+
+[node name="LoadBtn" type="Button" parent="."]
+offset_left = 548.0
+offset_top = 42.0
+offset_right = 626.0
+offset_bottom = 76.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 14
+text = "读取"
+
+[node name="SaveBtn" type="Button" parent="."]
+offset_left = 634.0
+offset_top = 42.0
+offset_right = 712.0
+offset_bottom = 76.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 14
+text = "保存"
+
+[node name="DelBtn" type="Button" parent="."]
+offset_left = 720.0
+offset_top = 42.0
+offset_right = 798.0
+offset_bottom = 76.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 14
+text = "删除"
+

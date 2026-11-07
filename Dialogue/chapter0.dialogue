@@ -1,19 +1,37 @@
 ~ start
-Nathan: [[Hi|Hello|Howdy]], this is some dialogue.
-Nathan: Here are some choices.
-- First one
-	Nathan: You picked the first one.
-- Second one
-	Nathan: You picked the second one.
-- Start again => start
-- End the conversation => END
-Nathan: For more information see the online documentation.
+do StoryDirector.notice("主角", "机关人")
+游霄云: 嗯？这里怎么站着一个机关人？
+机关人: 前面的对手可不好挑战。不妨先拿我练练手，如何？
+游霄云: 求之不得！接我一道符！
+do StoryDirector.cast("主角", "机关人")
+=> 开战
+
+~ 机关人_挑战询问
+机关人: 要开始试炼吗？我会以与你相同的等级应战。
+- 挑战机关人 => 开战
+- 稍后再来 => END
+
+~ 试炼完成
+机关人: 你已经通过试炼。若想继续磨炼，我随时奉陪。
+=> 机关人_挑战询问
+
+~ 开战
+do StoryDirector.start_story_battle("机关人")
+if StoryDirector.last_story_battle_result == "won":
+	do GameData.unlock_npc_dialogue("机关人")
+	机关人: 试炼通过，你的实力已得到证明。
+elif StoryDirector.last_story_battle_result == "lost":
+	机关人: 调整好状态，再来挑战吧。
+else:
+	机关人: 试炼暂未开始，准备好后再来找我。
 => END
+
+
 
 ~ 剑侠客
 #set get_tree().current_scene.open_shop("镖头")
 set GameData.story_hint = "新的剧情提示"
-set GameData.bossFight("赤焰兽")
+do StoryDirector.start_story_battle("赤焰兽")
 凌风: 你们听说了吗？
 二郎神: 什么？
 剑侠客: 传梦2国庆出
@@ -26,3 +44,4 @@ set GameData.bossFight("赤焰兽")
 - 再看看
 
 => END
+

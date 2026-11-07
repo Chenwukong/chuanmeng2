@@ -1,10 +1,27 @@
-[gd_scene format=3 uid="uid://bhwomruyunx4g"]
+[gd_scene format=3 uid="uid://0t28aracb22m"]
 
-[ext_resource type="Script" uid="uid://bel6jgbo5b861" path="res://Script/Only/map_container.gd" id="1_ey548"]
+[ext_resource type="Script" path="res://Script/World/map_container.gd" id="1_ey548"]
 [ext_resource type="Texture2D" uid="uid://ccurghj63acmd" path="res://Graphic/UI/ChatGPT Image 2026年7月1日 23_45_34.png" id="2_g324h"]
-[ext_resource type="Script" uid="uid://foiahoesyehg" path="res://Script/Only/text_map_content.gd" id="2_qm5gk"]
-[ext_resource type="Script" uid="uid://cb0m5sb236tus" path="res://Script/Only/map_connection.gd" id="3_03t57"]
+[ext_resource type="Script" path="res://Script/World/text_map_content.gd" id="2_qm5gk"]
+[ext_resource type="Script" path="res://Script/World/map_connection.gd" id="3_03t57"]
 [ext_resource type="Texture2D" uid="uid://icqsrnrwiqhd" path="res://Graphic/UI/小号按钮.png" id="5_n6ytx"]
+[ext_resource type="Script" path="res://Script/World/map_panel.gd" id="6_panel"]
+[ext_resource type="Texture2D" uid="uid://cwuyacc2kpacn" path="res://Graphic/UI/天赋background.png" id="7_frame"]
+[ext_resource type="FontFile" uid="uid://cfe8vm3np4ttx" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="8_font"]
+[ext_resource type="Script" path="res://Script/World/minimap_overlay.gd" id="9_overlay"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowCloseButton.tscn" id="shared_close"]
+
+[sub_resource type="StyleBoxFlat" id="InsetStyle"]
+bg_color = Color(0.608, 0.706, 0.863, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.345, 0.482, 0.686, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [sub_resource type="Resource" id="Connection_Changan_Jianye"]
 script = ExtResource("3_03t57")
@@ -21,31 +38,127 @@ script = ExtResource("3_03t57")
 from_place = NodePath("东海湾")
 to_place = NodePath("龙宫")
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_g324h"]
+[sub_resource type="AtlasTexture" id="ButtonAtlas1"]
 atlas = ExtResource("5_n6ytx")
-region = Rect2(0, 0, 42.200043, 21.399994)
+region = Rect2(42, 0, 42, 22)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_xro14"]
-atlas = ExtResource("5_n6ytx")
-region = Rect2(84.65245, 0, 41.34755, 21.511547)
+[sub_resource type="StyleBoxTexture" id="ButtonStyle1"]
+texture = SubResource("ButtonAtlas1")
+texture_margin_left = 8.0
+texture_margin_top = 5.0
+texture_margin_right = 12.0
+texture_margin_bottom = 5.0
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_posft"]
+[sub_resource type="AtlasTexture" id="ButtonAtlas2"]
 atlas = ExtResource("5_n6ytx")
-region = Rect2(42.56493, 0, 40.23701, 21.74393)
+region = Rect2(84, 0, 42, 22)
+
+[sub_resource type="StyleBoxTexture" id="ButtonStyle2"]
+texture = SubResource("ButtonAtlas2")
+texture_margin_left = 8.0
+texture_margin_top = 5.0
+texture_margin_right = 12.0
+texture_margin_bottom = 5.0
+
+[sub_resource type="AtlasTexture" id="ButtonAtlas0"]
+atlas = ExtResource("5_n6ytx")
+region = Rect2(0, 0, 42, 22)
+
+[sub_resource type="StyleBoxTexture" id="ButtonStyle0"]
+texture = SubResource("ButtonAtlas0")
+texture_margin_left = 8.0
+texture_margin_top = 5.0
+texture_margin_right = 12.0
+texture_margin_bottom = 5.0
+
+[sub_resource type="Theme" id="ButtonTheme"]
+Button/colors/font_color = Color(1, 1, 1, 1)
+Button/colors/font_hover_color = Color(1, 0.969, 0.741, 1)
+Button/colors/font_outline_color = Color(0.212, 0.322, 0.486, 1)
+Button/colors/font_pressed_color = Color(1, 0.945, 0.522, 1)
+Button/constants/outline_size = 3
+Button/font_sizes/font_size = 18
+Button/styles/hover = SubResource("ButtonStyle1")
+Button/styles/hover_pressed = SubResource("ButtonStyle2")
+Button/styles/normal = SubResource("ButtonStyle0")
+Button/styles/pressed = SubResource("ButtonStyle2")
 
 [node name="MapPanel" type="CanvasLayer" unique_id=343698034]
+layer = 10
+script = ExtResource("6_panel")
 metadata/_edit_horizontal_guides_ = [187.0]
 
+[node name="Shade" type="ColorRect" parent="." unique_id=349671842]
+offset_right = 1300.0
+offset_bottom = 800.0
+color = Color(0, 0, 0, 0.32)
+
+[node name="Frame" type="NinePatchRect" parent="." unique_id=165527065]
+offset_left = 200.0
+offset_top = 36.0
+offset_right = 1700.0
+offset_bottom = 1249.0
+scale = Vector2(0.6, 0.6)
+texture = ExtResource("7_frame")
+patch_margin_left = 220
+patch_margin_top = 64
+patch_margin_right = 220
+patch_margin_bottom = 100
+
+[node name="Title" type="Label" parent="." unique_id=1168106523]
+offset_left = 535.0
+offset_top = 32.0
+offset_right = 765.0
+offset_bottom = 70.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0.227, 0.337, 0.506, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("8_font")
+theme_override_font_sizes/font_size = 24
+text = "地图"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Location" type="Label" parent="." unique_id=466809782]
+offset_left = 238.0
+offset_top = 92.0
+offset_right = 478.0
+offset_bottom = 126.0
+theme_override_colors/font_color = Color(0.125, 0.224, 0.345, 1)
+theme_override_font_sizes/font_size = 20
+vertical_alignment = 1
+
+[node name="Inset" type="Panel" parent="." unique_id=580441053]
+offset_left = 235.0
+offset_top = 137.0
+offset_right = 1065.0
+offset_bottom = 703.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("InsetStyle")
+
+[node name="Status" type="Label" parent="." unique_id=1443376422]
+offset_left = 240.0
+offset_top = 714.0
+offset_right = 1060.0
+offset_bottom = 742.0
+theme_override_colors/font_color = Color(0.125, 0.224, 0.345, 1)
+theme_override_font_sizes/font_size = 18
+text = "点击寻路 · 拖动 / 滚轮缩放"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="MapContainer" type="SubViewportContainer" parent="." unique_id=559140743]
-offset_left = 11.0
-offset_top = -3.0
-offset_right = 1299.0
-offset_bottom = 797.0
+offset_left = 240.0
+offset_top = 142.0
+offset_right = 1060.0
+offset_bottom = 698.0
+stretch = true
 script = ExtResource("1_ey548")
 
 [node name="MapViewport" type="SubViewport" parent="MapContainer" unique_id=79077987]
+transparent_bg = true
 handle_input_locally = false
-size = Vector2i(1100, 800)
+size = Vector2i(820, 556)
 render_target_update_mode = 4
 
 [node name="MapContent" type="Node2D" parent="MapContainer/MapViewport" unique_id=1554904066]
@@ -103,32 +216,40 @@ scale = Vector2(0.5919065, 0.5919065)
 theme_override_font_sizes/font_size = 50
 text = "龙宫"
 
-[node name="CloseButton" type="TextureButton" parent="." unique_id=391123954]
-offset_left = 1211.0
-offset_right = 1253.0
-offset_bottom = 21.0
-scale = Vector2(2, 2)
-texture_normal = SubResource("AtlasTexture_g324h")
-texture_pressed = SubResource("AtlasTexture_xro14")
-texture_hover = SubResource("AtlasTexture_posft")
+[node name="MinimapOverlay" type="Control" parent="." unique_id=383155508]
+visible = false
+clip_contents = true
+layout_mode = 3
+anchors_preset = 0
+offset_left = 240.0
+offset_top = 142.0
+offset_right = 1060.0
+offset_bottom = 698.0
+mouse_default_cursor_shape = 2
+script = ExtResource("9_overlay")
 
-[node name="Label" type="Label" parent="CloseButton" unique_id=108836703]
-layout_mode = 0
-offset_left = 1.4285713
-offset_top = -1.4285713
-offset_right = 41.42857
-offset_bottom = 21.571428
-text = "X"
-horizontal_alignment = 1
-vertical_alignment = 1
+[node name="CloseButton" parent="." unique_id=1461095989 instance=ExtResource("shared_close")]
+offset_left = 1090.0
+offset_top = 36.0
+offset_right = 1138.0
+offset_bottom = 64.0
 
-[node name="当前地图" type="Button" parent="." unique_id=1810419663]
-offset_right = 8.0
-offset_bottom = 8.0
+[node name="当前地图" type="Button" parent="." unique_id=2107661693]
+offset_left = 760.0
+offset_top = 92.0
+offset_right = 892.0
+offset_bottom = 126.0
+focus_mode = 0
+theme = SubResource("ButtonTheme")
+toggle_mode = true
 text = "当前地图"
 
-[node name="世界地图" type="Button" parent="." unique_id=1803580885]
-offset_left = 73.0
-offset_right = 145.0
-offset_bottom = 31.0
+[node name="世界地图" type="Button" parent="." unique_id=145800291]
+offset_left = 906.0
+offset_top = 92.0
+offset_right = 1038.0
+offset_bottom = 126.0
+focus_mode = 0
+theme = SubResource("ButtonTheme")
+toggle_mode = true
 text = "世界地图"

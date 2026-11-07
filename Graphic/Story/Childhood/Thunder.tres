@@ -1,0 +1,87 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://Graphic/Story/Childhood/法术-天雷.png" id="sheet"]
+
+[sub_resource type="AtlasTexture" id="Frame0"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 0, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame1"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 384, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame2"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 768, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame3"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 1152, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame4"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 1536, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame5"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 1920, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame6"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 2304, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame7"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 2688, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame8"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 3072, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame9"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 3456, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame10"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 3840, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame11"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 4224, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame12"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 4608, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame13"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 4992, 213, 384)
+
+[sub_resource type="AtlasTexture" id="Frame14"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 5376, 213, 384)
+
+[resource]
+animations = [{
+"frames": [
+{"duration": 1.0, "texture": SubResource("Frame0")},
+{"duration": 1.0, "texture": SubResource("Frame1")},
+{"duration": 1.0, "texture": SubResource("Frame2")},
+{"duration": 1.0, "texture": SubResource("Frame3")},
+{"duration": 1.0, "texture": SubResource("Frame4")},
+{"duration": 1.0, "texture": SubResource("Frame5")},
+{"duration": 1.0, "texture": SubResource("Frame6")},
+{"duration": 1.0, "texture": SubResource("Frame7")},
+{"duration": 1.0, "texture": SubResource("Frame8")},
+{"duration": 1.0, "texture": SubResource("Frame9")},
+{"duration": 1.0, "texture": SubResource("Frame10")},
+{"duration": 1.0, "texture": SubResource("Frame11")},
+{"duration": 1.0, "texture": SubResource("Frame12")},
+{"duration": 1.0, "texture": SubResource("Frame13")},
+{"duration": 1.0, "texture": SubResource("Frame14")}
+],
+"loop": false,
+"name": &"default",
+"speed": 20.0
+}]

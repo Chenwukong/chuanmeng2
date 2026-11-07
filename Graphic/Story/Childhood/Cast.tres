@@ -1,0 +1,81 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://db7tsp66c80rw"]
+
+[ext_resource type="Texture2D" uid="uid://dxd733x0if4wl" path="res://Graphic/Story/Childhood/法术-符咒.png" id="sheet"]
+
+[sub_resource type="AtlasTexture" id="Frame0"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 0, 179, 384)
+
+[sub_resource type="AtlasTexture" id="Frame1"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 384, 179, 384)
+
+[sub_resource type="AtlasTexture" id="Frame2"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 768, 179, 384)
+
+[sub_resource type="AtlasTexture" id="Frame3"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 1152, 179, 384)
+
+[sub_resource type="AtlasTexture" id="Frame4"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 1536, 179, 384)
+
+[sub_resource type="AtlasTexture" id="Frame5"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 1920, 179, 384)
+
+[sub_resource type="AtlasTexture" id="Frame6"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 2304, 179, 384)
+
+[sub_resource type="AtlasTexture" id="Frame7"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 2688, 179, 384)
+
+[sub_resource type="AtlasTexture" id="Frame8"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 3072, 179, 384)
+
+[sub_resource type="AtlasTexture" id="Frame9"]
+atlas = ExtResource("sheet")
+region = Rect2(0, 3456, 179, 384)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Frame0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame3")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame4")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame5")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame6")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame7")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame8")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame9")
+}],
+"loop": 0,
+"name": &"default",
+"speed": 23.0
+}]

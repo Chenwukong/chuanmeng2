@@ -1,0 +1,49 @@
+~ 黑熊拦路
+游霄云: 一头黑熊堵在木阶上……看来得先过它这关。
+黑熊: 吼！想上山，先胜过我！
+- 挑战黑熊（20级） => 黑熊开战
+- 暂且退下 => END
+
+~ 黑熊开战
+do StoryDirector.start_story_battle("方寸山_守关20", "方寸山/守关20/已击败")
+if StoryDirector.last_story_battle_result == "won":
+	游霄云: 黑熊退去了，上山的路通了。
+elif StoryDirector.last_story_battle_result == "lost":
+	游霄云: 还得再磨炼一番，调整好状态再来。
+else:
+	游霄云: 先退一步，准备妥当再来挑战。
+=> END
+
+~ 毒云龟拦路
+游霄云: 吊桥上伏着一只毒云龟，四周尽是毒雾。
+毒云龟: 想从这里过去？先让我看看你的本事！
+- 挑战毒云龟（60级） => 毒云龟开战
+- 暂且退下 => END
+
+~ 毒云龟开战
+do StoryDirector.start_story_battle("方寸山_守关60", "方寸山/守关60/已击败")
+if StoryDirector.last_story_battle_result == "won":
+	游霄云: 毒云龟退去了，毒雾也散了。继续前进。
+elif StoryDirector.last_story_battle_result == "lost":
+	游霄云: 这毒雾不好对付，先休整再来。
+else:
+	游霄云: 先退一步，准备妥当再来挑战。
+=> END
+
+~ 赤焰兽拦路
+游霄云: 山门已近，却还有一头浑身烈焰的异兽！
+超级赤焰兽: 能走到这里，也算有些本事。想过山门，就接下我的烈焰！
+- 挑战赤焰兽（100级） => 赤焰兽开战
+- 暂且退下 => END
+
+~ 赤焰兽开战
+do StoryDirector.start_story_battle("方寸山_守关100", "方寸山/守关100/已击败")
+if StoryDirector.last_story_battle_result == "won":
+	do StoryDirector.roar("方寸山_守关100")
+	do StoryDirector.rush_and_seal("方寸山_守关100", "主角")
+	游霄云: （心想）还好我谨慎，早备了一道定身符。
+elif StoryDirector.last_story_battle_result == "lost":
+	游霄云: 不能硬拼，回去准备充分再来！
+else:
+	游霄云: 先退一步，准备妥当再来挑战。
+=> END

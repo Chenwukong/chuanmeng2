@@ -50,6 +50,6 @@ func _ready() -> void:
 			c.position = Vector2(loader.map_width / 2.0, loader.map_height / 2.0)
 			var ws := DisplayServer.window_get_size()
 			if ws.x > 0 and ws.y > 0:
-				var z := min(ws.x / float(loader.map_width), ws.y / float(loader.map_height)) * 0.9
+				var z: float = minf(ws.x / float(loader.map_width), ws.y / float(loader.map_height)) * 0.9
 				c.zoom = Vector2(z, z)
 			break

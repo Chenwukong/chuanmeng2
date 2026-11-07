@@ -1,0 +1,76 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Script/UI/VirtualJoystick.gd" id="joystick"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/joystick_base.svg" id="base"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/joystick_knob.svg" id="knob"]
+[node name="MobileControls" type="Control"]
+z_index = 30
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+[node name="MessageArea" type="Control" parent="."]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -390.0
+offset_right = 442.0
+offset_bottom = -264.0
+mouse_filter = 2
+[node name="Joystick" type="Control" parent="."]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = -246.0
+offset_right = 248.0
+offset_bottom = -26.0
+mouse_filter = 2
+script = ExtResource("joystick")
+[node name="Base" type="TextureRect" parent="Joystick"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("base")
+expand_mode = 1
+stretch_mode = 5
+[node name="Knob" type="TextureRect" parent="Joystick"]
+offset_left = 72.0
+offset_top = 72.0
+offset_right = 148.0
+offset_bottom = 148.0
+mouse_filter = 2
+texture = ExtResource("knob")
+expand_mode = 1
+stretch_mode = 5
+[node name="MenuPositions" type="Control" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+[node name="人物" type="Marker2D" parent="MenuPositions"]
+position = Vector2(-458, -130)
+[node name="道具" type="Marker2D" parent="MenuPositions"]
+position = Vector2(-374, -130)
+[node name="宠物" type="Marker2D" parent="MenuPositions"]
+position = Vector2(-290, -130)
+[node name="天赋" type="Marker2D" parent="MenuPositions"]
+position = Vector2(-206, -130)
+[node name="打造" type="Marker2D" parent="MenuPositions"]
+position = Vector2(-122, -130)
+[node name="队伍" type="Marker2D" parent="MenuPositions"]
+position = Vector2(-38, -130)
+[node name="悬赏" type="Marker2D" parent="MenuPositions"]
+position = Vector2(-458, -48)
+[node name="剧情" type="Marker2D" parent="MenuPositions"]
+position = Vector2(-374, -48)
+[node name="地图" type="Marker2D" parent="MenuPositions"]
+position = Vector2(-290, -48)
+[node name="系统" type="Marker2D" parent="MenuPositions"]
+position = Vector2(-206, -48)
+[node name="存档" type="Marker2D" parent="MenuPositions"]
+position = Vector2(-122, -48)
+[node name="成就" type="Marker2D" parent="MenuPositions"]
+position = Vector2(-38, -48)

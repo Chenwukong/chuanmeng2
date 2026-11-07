@@ -1,0 +1,797 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/UI/StatusPopup.gd" id="1_script"]
+
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="skin_bg"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/小号按钮.png" id="skin_buttons"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="skin_font"]
+
+[ext_resource type="PackedScene" path="res://scenes/UI/Pets/PetConfirmDialog.tscn" id="confirm_dialog"]
+
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowCloseButton.tscn" id="shared_close"]
+
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowTitle.tscn" id="shared_title"]
+
+[sub_resource type="StyleBoxFlat" id="panel"]
+bg_color = Color(0.075, 0.11, 0.17, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.32, 0.4, 0.49, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+content_margin_left = 12.0
+content_margin_right = 12.0
+content_margin_top = 6.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="field"]
+bg_color = Color(0.39, 0.52, 0.72, 0.78)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.69, 0.79, 0.94, 0.95)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+content_margin_left = 12.0
+content_margin_right = 12.0
+content_margin_top = 6.0
+content_margin_bottom = 6.0
+
+[sub_resource type="AtlasTexture" id="atlas_button"]
+atlas = ExtResource("skin_buttons")
+region = Rect2(0, 0, 42, 21)
+
+[sub_resource type="StyleBoxTexture" id="button"]
+texture = SubResource("atlas_button")
+texture_margin_left = 5.0
+texture_margin_right = 5.0
+texture_margin_top = 4.0
+texture_margin_bottom = 4.0
+content_margin_left = 6.0
+content_margin_right = 6.0
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+
+[sub_resource type="AtlasTexture" id="atlas_hover"]
+atlas = ExtResource("skin_buttons")
+region = Rect2(42.5, 0, 40.2, 21.7)
+
+[sub_resource type="StyleBoxTexture" id="hover"]
+texture = SubResource("atlas_hover")
+texture_margin_left = 5.0
+texture_margin_right = 5.0
+texture_margin_top = 4.0
+texture_margin_bottom = 4.0
+content_margin_left = 6.0
+content_margin_right = 6.0
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+
+[sub_resource type="AtlasTexture" id="atlas_pressed"]
+atlas = ExtResource("skin_buttons")
+region = Rect2(84.6, 0, 41.3, 21.5)
+
+[sub_resource type="StyleBoxTexture" id="pressed"]
+texture = SubResource("atlas_pressed")
+texture_margin_left = 5.0
+texture_margin_right = 5.0
+texture_margin_top = 4.0
+texture_margin_bottom = 4.0
+content_margin_left = 6.0
+content_margin_right = 6.0
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="counter"]
+bg_color = Color(0.78, 0.85, 0.96, 0.78)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.4, 0.55, 0.76, 0.5)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[node name="StatusPopup" type="CanvasLayer"]
+script = ExtResource("1_script")
+
+[node name="MainPanel" type="TextureRect" parent="."]
+offset_left = 218.0
+offset_top = 120.0
+offset_right = 638.0
+offset_bottom = 680.0
+mouse_filter = 2
+texture = ExtResource("skin_bg")
+expand_mode = 1
+
+[node name="Title" parent="." instance=ExtResource("shared_title")]
+offset_left = 368.0
+offset_right = 488.0
+text = "人物状态"
+offset_top = 115.00
+offset_bottom = 145.48
+theme_override_font_sizes/font_size = 20
+
+[node name="CloseButton" parent="." instance=ExtResource("shared_close")]
+unique_name_in_owner = true
+offset_left = 1020
+offset_top = 128
+offset_right = 1068
+offset_bottom = 156
+
+[node name="PortraitFrame" type="Panel" parent="."]
+offset_left = 242.0
+offset_top = 188.0
+offset_right = 410.0
+offset_bottom = 372.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("field")
+
+[node name="Portrait" type="TextureRect" parent="."]
+unique_name_in_owner = true
+offset_left = 248.0
+offset_top = 194.0
+offset_right = 404.0
+offset_bottom = 366.0
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Caption0" type="Label" parent="."]
+offset_left = 430.0
+offset_top = 188.0
+offset_right = 480.0
+offset_bottom = 218.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.25, 0.42, 1)
+theme_override_font_sizes/font_size = 16
+text = "体质"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="ValueBack0" type="Panel" parent="."]
+offset_left = 482.0
+offset_top = 188.0
+offset_right = 562.0
+offset_bottom = 218.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("field")
+
+[node name="体质" type="Label" parent="."]
+offset_left = 482.0
+offset_top = 188.0
+offset_right = 562.0
+offset_bottom = 218.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.94, 0.95, 1)
+theme_override_font_sizes/font_size = 17
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HpAddButton" type="Button" parent="."]
+unique_name_in_owner = true
+offset_left = 574.0
+offset_top = 188.0
+offset_right = 610.0
+offset_bottom = 218.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("button")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+toggle_mode = false
+
+[node name="Label" type="Label" parent="HpAddButton"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 36.0
+offset_bottom = 30.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Caption1" type="Label" parent="."]
+offset_left = 430.0
+offset_top = 226.0
+offset_right = 480.0
+offset_bottom = 256.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.25, 0.42, 1)
+theme_override_font_sizes/font_size = 16
+text = "魔力"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="ValueBack1" type="Panel" parent="."]
+offset_left = 482.0
+offset_top = 226.0
+offset_right = 562.0
+offset_bottom = 256.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("field")
+
+[node name="魔力" type="Label" parent="."]
+offset_left = 482.0
+offset_top = 226.0
+offset_right = 562.0
+offset_bottom = 256.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.94, 0.95, 1)
+theme_override_font_sizes/font_size = 17
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MagicAddButton" type="Button" parent="."]
+unique_name_in_owner = true
+offset_left = 574.0
+offset_top = 226.0
+offset_right = 610.0
+offset_bottom = 256.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("button")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+toggle_mode = false
+
+[node name="Label" type="Label" parent="MagicAddButton"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 36.0
+offset_bottom = 30.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Caption2" type="Label" parent="."]
+offset_left = 430.0
+offset_top = 264.0
+offset_right = 480.0
+offset_bottom = 294.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.25, 0.42, 1)
+theme_override_font_sizes/font_size = 16
+text = "力量"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="ValueBack2" type="Panel" parent="."]
+offset_left = 482.0
+offset_top = 264.0
+offset_right = 562.0
+offset_bottom = 294.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("field")
+
+[node name="力量" type="Label" parent="."]
+offset_left = 482.0
+offset_top = 264.0
+offset_right = 562.0
+offset_bottom = 294.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.94, 0.95, 1)
+theme_override_font_sizes/font_size = 17
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StrengthAddButton" type="Button" parent="."]
+unique_name_in_owner = true
+offset_left = 574.0
+offset_top = 264.0
+offset_right = 610.0
+offset_bottom = 294.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("button")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+toggle_mode = false
+
+[node name="Label" type="Label" parent="StrengthAddButton"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 36.0
+offset_bottom = 30.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Caption3" type="Label" parent="."]
+offset_left = 430.0
+offset_top = 302.0
+offset_right = 480.0
+offset_bottom = 332.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.25, 0.42, 1)
+theme_override_font_sizes/font_size = 16
+text = "耐力"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="ValueBack3" type="Panel" parent="."]
+offset_left = 482.0
+offset_top = 302.0
+offset_right = 562.0
+offset_bottom = 332.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("field")
+
+[node name="耐力" type="Label" parent="."]
+offset_left = 482.0
+offset_top = 302.0
+offset_right = 562.0
+offset_bottom = 332.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.94, 0.95, 1)
+theme_override_font_sizes/font_size = 17
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DefenseAddButton" type="Button" parent="."]
+unique_name_in_owner = true
+offset_left = 574.0
+offset_top = 302.0
+offset_right = 610.0
+offset_bottom = 332.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("button")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+toggle_mode = false
+
+[node name="Label" type="Label" parent="DefenseAddButton"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 36.0
+offset_bottom = 30.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Caption4" type="Label" parent="."]
+offset_left = 430.0
+offset_top = 340.0
+offset_right = 480.0
+offset_bottom = 370.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.25, 0.42, 1)
+theme_override_font_sizes/font_size = 16
+text = "敏捷"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="ValueBack4" type="Panel" parent="."]
+offset_left = 482.0
+offset_top = 340.0
+offset_right = 562.0
+offset_bottom = 370.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("field")
+
+[node name="敏捷" type="Label" parent="."]
+offset_left = 482.0
+offset_top = 340.0
+offset_right = 562.0
+offset_bottom = 370.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.94, 0.95, 1)
+theme_override_font_sizes/font_size = 17
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SpeedAddButton" type="Button" parent="."]
+unique_name_in_owner = true
+offset_left = 574.0
+offset_top = 340.0
+offset_right = 610.0
+offset_bottom = 370.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("button")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+toggle_mode = false
+
+[node name="Label" type="Label" parent="SpeedAddButton"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 36.0
+offset_bottom = 30.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="名称" type="Label" parent="."]
+offset_left = 242.0
+offset_top = 382.0
+offset_right = 410.0
+offset_bottom = 412.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.28, 0.49, 1)
+theme_override_font_sizes/font_size = 21
+text = "角色"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LevelBadge" type="Panel" parent="."]
+offset_left = 276.0
+offset_top = 416.0
+offset_right = 376.0
+offset_bottom = 444.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("counter")
+
+[node name="LevelCaption" type="Label" parent="."]
+offset_left = 286.0
+offset_top = 416.0
+offset_right = 322.0
+offset_bottom = 444.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.25, 0.42, 1)
+theme_override_font_sizes/font_size = 14
+text = "等级"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="等级" type="Label" parent="."]
+offset_left = 322.0
+offset_top = 416.0
+offset_right = 366.0
+offset_bottom = 444.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.28, 0.49, 1)
+theme_override_font_sizes/font_size = 16
+text = "1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PotentialBadge" type="Panel" parent="."]
+offset_left = 430.0
+offset_top = 386.0
+offset_right = 610.0
+offset_bottom = 420.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("counter")
+
+[node name="PotentialCaption" type="Label" parent="."]
+offset_left = 440.0
+offset_top = 389.0
+offset_right = 548.0
+offset_bottom = 417.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.25, 0.42, 1)
+theme_override_font_sizes/font_size = 14
+text = "可分配潜力"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="潜力" type="Label" parent="."]
+offset_left = 550.0
+offset_top = 389.0
+offset_right = 600.0
+offset_bottom = 417.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.28, 0.49, 1)
+theme_override_font_sizes/font_size = 18
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StepButton" type="Button" parent="."]
+unique_name_in_owner = true
+offset_left = 430.0
+offset_top = 426.0
+offset_right = 482.0
+offset_bottom = 458.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("button")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+toggle_mode = true
+
+[node name="Label" type="Label" parent="StepButton"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 52.0
+offset_bottom = 32.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "+1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ConfirmButton" type="Button" parent="."]
+unique_name_in_owner = true
+offset_left = 490.0
+offset_top = 426.0
+offset_right = 546.0
+offset_bottom = 458.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("button")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+toggle_mode = false
+
+[node name="Label" type="Label" parent="ConfirmButton"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 56.0
+offset_bottom = 32.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "确认"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CancelButton" type="Button" parent="."]
+unique_name_in_owner = true
+offset_left = 554.0
+offset_top = 426.0
+offset_right = 610.0
+offset_bottom = 458.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("button")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+toggle_mode = false
+
+[node name="Label" type="Label" parent="CancelButton"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 56.0
+offset_bottom = 32.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "重置"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="气血Caption" type="Label" parent="."]
+offset_left = 242.0
+offset_top = 474.0
+offset_right = 334.0
+offset_bottom = 504.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.25, 0.42, 1)
+theme_override_font_sizes/font_size = 15
+text = "气血"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="气血Back" type="Panel" parent="."]
+offset_left = 342.0
+offset_top = 474.0
+offset_right = 610.0
+offset_bottom = 504.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("field")
+
+[node name="气血" type="Label" parent="."]
+offset_left = 342.0
+offset_top = 474.0
+offset_right = 610.0
+offset_bottom = 504.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.94, 0.95, 1)
+theme_override_font_sizes/font_size = 16
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="蓝量Caption" type="Label" parent="."]
+offset_left = 242.0
+offset_top = 512.0
+offset_right = 334.0
+offset_bottom = 542.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.25, 0.42, 1)
+theme_override_font_sizes/font_size = 15
+text = "灵力"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="蓝量Back" type="Panel" parent="."]
+offset_left = 342.0
+offset_top = 512.0
+offset_right = 610.0
+offset_bottom = 542.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("field")
+
+[node name="蓝量" type="Label" parent="."]
+offset_left = 342.0
+offset_top = 512.0
+offset_right = 610.0
+offset_bottom = 542.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.94, 0.95, 1)
+theme_override_font_sizes/font_size = 16
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="所需经验Caption" type="Label" parent="."]
+offset_left = 242.0
+offset_top = 550.0
+offset_right = 334.0
+offset_bottom = 580.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.25, 0.42, 1)
+theme_override_font_sizes/font_size = 15
+text = "升级所需"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="所需经验Back" type="Panel" parent="."]
+offset_left = 342.0
+offset_top = 550.0
+offset_right = 610.0
+offset_bottom = 580.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("field")
+
+[node name="所需经验" type="Label" parent="."]
+offset_left = 342.0
+offset_top = 550.0
+offset_right = 610.0
+offset_bottom = 580.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.94, 0.95, 1)
+theme_override_font_sizes/font_size = 16
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="升级经验Caption" type="Label" parent="."]
+offset_left = 242.0
+offset_top = 588.0
+offset_right = 334.0
+offset_bottom = 618.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.25, 0.42, 1)
+theme_override_font_sizes/font_size = 15
+text = "当前经验"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="升级经验Back" type="Panel" parent="."]
+offset_left = 342.0
+offset_top = 588.0
+offset_right = 610.0
+offset_bottom = 618.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("field")
+
+[node name="升级经验" type="Label" parent="."]
+offset_left = 342.0
+offset_top = 588.0
+offset_right = 610.0
+offset_bottom = 618.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.94, 0.95, 1)
+theme_override_font_sizes/font_size = 16
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PrevButton" type="Button" parent="."]
+unique_name_in_owner = true
+offset_left = 242.0
+offset_top = 632.0
+offset_right = 342.0
+offset_bottom = 664.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("button")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+toggle_mode = false
+
+[node name="Label" type="Label" parent="PrevButton"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 100.0
+offset_bottom = 32.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "‹ 上一位"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NextButton" type="Button" parent="."]
+unique_name_in_owner = true
+offset_left = 350.0
+offset_top = 632.0
+offset_right = 450.0
+offset_bottom = 664.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("button")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+toggle_mode = false
+
+[node name="Label" type="Label" parent="NextButton"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 100.0
+offset_bottom = 32.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "下一位 ›"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Hint" type="Label" parent="."]
+offset_left = 460.0
+offset_top = 632.0
+offset_right = 610.0
+offset_bottom = 664.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.27, 0.37, 0.54, 1)
+theme_override_font_sizes/font_size = 12
+text = "Shift + 点击：加 5 点"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="XisuidanButton" type="Button" parent="."]
+offset_left = 654.0
+offset_top = 692.0
+offset_right = 1082.0
+offset_bottom = 728.0
+mouse_default_cursor_shape = 2
+expand_icon = true
+theme_override_font_sizes/font_size = 16
+theme_override_constants/icon_max_width = 24
+theme_override_styles/normal = SubResource("button")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+text = "使用洗髓丹（返还能力点）"
+tooltip_text = "使用1颗洗髓丹，返还当前角色已分配的能力点。"
+
+[node name="ConfirmPopup" parent="." instance=ExtResource("confirm_dialog")]
+
+[node name="Yes" parent="ConfirmPopup/Card" index="1"]
+text = "确认使用"
+
+[connection signal="pressed" from="CloseButton" to="." method="_on_close_button_pressed"]
+
+[editable path="ConfirmPopup"]

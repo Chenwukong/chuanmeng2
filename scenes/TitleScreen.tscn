@@ -1,87 +1,121 @@
 [gd_scene format=3 uid="uid://cspn6t6hyg07t"]
-
-[ext_resource type="Script" uid="uid://1g5ppeygsdbg" path="res://Script/Class/TitleScreen.gd" id="1_scr"]
-
-[node name="TitleScreen" type="CanvasLayer" unique_id=100000]
-layer = 99
-script = ExtResource("1_scr")
-
-[node name="ClickArea" type="ColorRect" parent="." unique_id=100001]
+[ext_resource type="Script" path="res://Script/UI/TitleScreen.gd" id="script"]
+[ext_resource type="Texture2D" path="res://Graphic/UI/Intro/ImmortalSword.svg" id="sword"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/aajiuzhongxiao.ttf" id="font"]
+[ext_resource type="Shader" path="res://Graphic/UI/Intro/Mist.gdshader" id="mist"]
+[ext_resource type="Shader" path="res://Graphic/UI/Intro/Halo.gdshader" id="halo"]
+[ext_resource type="Shader" path="res://Graphic/UI/Intro/SwordPerspective.gdshader" id="perspective"]
+[ext_resource type="AudioStream" path="res://Audio/SE/064-Swing03.ogg" id="whoosh"]
+[ext_resource type="AudioStream" path="res://Audio/SE/124-Thunder02.ogg" id="impact"]
+[ext_resource type="AudioStream" path="res://Audio/SE/137-Light03.ogg" id="chime"]
+[ext_resource type="AudioStream" path="res://Audio/SE/136-Light02.ogg" id="wind"]
+[sub_resource type="ShaderMaterial" id="mist_mat"]
+resource_local_to_scene = true
+shader = ExtResource("mist")
+[sub_resource type="ShaderMaterial" id="halo_mat"]
+shader = ExtResource("halo")
+[sub_resource type="Gradient" id="trail_gradient"]
+colors = PackedColorArray(0.6,0.85,1,0, 0.85,0.97,1,0.55)
+[sub_resource type="ShaderMaterial" id="sword_material"]
+resource_local_to_scene = true
+shader = ExtResource("perspective")
+[node name="TitleScreen" type="CanvasLayer"]
+process_mode = 3
+layer = 120
+script = ExtResource("script")
+[node name="InputShield" type="Control" parent="."]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-mouse_filter = 1
-color = Color(0, 0, 0, 0)
-
-[node name="Slashes" type="Node2D" parent="." unique_id=100002]
-position = Vector2(2000, 300)
-
-[node name="SlashMain" type="ColorRect" parent="Slashes" unique_id=100003]
-offset_left = -600.0
-offset_top = -4.0
-offset_right = 400.0
-offset_bottom = 4.0
-rotation = -0.15
-mouse_filter = 2
-color = Color(1, 0.95, 0.7, 0.9)
-
-[node name="SlashUp" type="ColorRect" parent="Slashes" unique_id=100004]
-offset_left = -500.0
-offset_top = -40.0
-offset_right = 300.0
-offset_bottom = -36.0
-rotation = -0.12
-mouse_filter = 2
-color = Color(1, 0.9, 0.5, 0.35)
-
-[node name="SlashDown" type="ColorRect" parent="Slashes" unique_id=100005]
-offset_left = -450.0
-offset_top = 36.0
-offset_right = 350.0
-offset_bottom = 40.0
-rotation = -0.18
-mouse_filter = 2
-color = Color(1, 0.9, 0.4, 0.3)
-
-[node name="Glow" type="ColorRect" parent="Slashes" unique_id=100006]
-offset_left = -700.0
-offset_top = -50.0
-offset_right = 500.0
-offset_bottom = 50.0
-rotation = -0.15
-mouse_filter = 2
-color = Color(0.8, 0.7, 1, 0.12)
-
-[node name="TitleLabel" type="Label" parent="." unique_id=100007]
-modulate = Color(1, 1, 1, 0)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -320.0
+mouse_filter = 0
+[node name="Composition" type="Node2D" parent="."]
+position = Vector2(650,400)
+[node name="Halo" type="ColorRect" parent="Composition"]
+position = Vector2(0,230)
+material = SubResource("halo_mat")
+offset_left = -300.0
 offset_top = -70.0
-offset_right = 320.0
-offset_bottom = 10.0
-theme_override_colors/font_color = Color(1, 0.95, 0.7, 1)
-theme_override_font_sizes/font_size = 80
+offset_right = 300.0
+offset_bottom = 530.0
+pivot_offset = Vector2(300,300)
+mouse_filter = 2
+[node name="SwordTrail" type="Line2D" parent="Composition"]
+width = 12.0
+gradient = SubResource("trail_gradient")
+antialiased = true
+begin_cap_mode = 2
+end_cap_mode = 2
+[node name="Sword" type="Sprite2D" parent="Composition"]
+material = SubResource("sword_material")
+texture = ExtResource("sword")
+offset = Vector2(0,-320)
+position = Vector2(-140,185)
+rotation = 0.75049
+scale = Vector2(0.95,0.95)
+[node name="Logo" type="Node2D" parent="Composition"]
+modulate = Color(1,1,1,0)
+[node name="Title" type="Label" parent="Composition/Logo"]
+offset_left = -465.0
+offset_top = -85.0
+offset_right = 375.0
+offset_bottom = 75.0
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("font")
+theme_override_font_sizes/font_size = 136
+theme_override_colors/font_color = Color(0.91,0.98,1,1)
+theme_override_colors/font_outline_color = Color(0.12,0.28,0.46,0.95)
+theme_override_constants/outline_size = 5
+theme_override_colors/font_shadow_color = Color(0.16,0.44,0.65,0.65)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 5
 text = "传梦之路"
 horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="SubtitleLabel" type="Label" parent="." unique_id=100008]
-modulate = Color(1, 1, 1, 0)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = 30.0
-offset_right = 300.0
-offset_bottom = 60.0
-theme_override_colors/font_color = Color(1, 1, 1, 0.5)
-theme_override_font_sizes/font_size = 18
-text = "— 点击任意位置继续 —"
+[node name="Sequel" type="Label" parent="Composition/Logo"]
+offset_left = 220.0
+offset_top = -96.0
+offset_right = 365.0
+offset_bottom = 76.0
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("font")
+theme_override_font_sizes/font_size = 156
+theme_override_colors/font_color = Color(0.72,0.91,1,1)
+theme_override_colors/font_outline_color = Color(0.12,0.28,0.46,1)
+theme_override_constants/outline_size = 5
+text = "2"
+horizontal_alignment = 1
+[node name="Mist" type="ColorRect" parent="."]
+material = SubResource("mist_mat")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+[node name="LoadError" type="Label" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "主场景加载失败，请重新启动游戏。"
 horizontal_alignment = 1
 vertical_alignment = 1
+theme_override_colors/font_color = Color(0.16,0.28,0.42,1)
+[node name="Whoosh" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("whoosh")
+pitch_scale = 1.4
+volume_db = -8.0
+bus = &"SFX"
+[node name="Impact" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("impact")
+volume_db = -12.0
+pitch_scale = 0.82
+bus = &"SFX"
+[node name="Chime" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("chime")
+volume_db = -14.0
+bus = &"SFX"
+[node name="Wind" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("wind")
+volume_db = -19.0
+pitch_scale = 0.7
+bus = &"SFX"
+
+

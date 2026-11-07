@@ -174,7 +174,21 @@ static func register_all() -> void:
 	EquipData.register_named("辟尘分光履", EquipData.SlotType.SHOES,
 		"辟尘分光履", {}, "res://TCP/鞋子/辟尘分光履.tcp", 1, [], 0, "上古秘宝，着此履者可于星尘间穿梭，与霞光相竞逐。")
 	# 饰品（EquipData.SlotType.NECKLACE）
+	EquipData.register_named("余春瓶", EquipData.SlotType.NECKLACE,
+		"余春瓶", {}, "res://TCP/饰品/2803.tcp", 1, [], 1600, "余春不散，化生为护。佩戴者主动治疗的溢出量有50%转为目标护盾，最多积累至目标最大气血的20%；已有更高护盾不会被覆盖。")
+	EquipData.register_named("藏锋坠", EquipData.SlotType.NECKLACE,
+		"藏锋坠", {}, "res://TCP/饰品/2858.tcp", 1, [], 1600, "藏锋于鞘，蓄势待发。自身回合结束时若未造成伤害，下回合首次主动攻击伤害提高25%；整次攻击生效，触发后消耗，不可叠加。")
+	EquipData.register_named("御灵佩", EquipData.SlotType.NECKLACE,
+		"御灵佩", {}, "res://TCP/饰品/2854.tcp", 1, [], 1200, "灵玉护生，御灵固本。佩戴者召唤的宠物、铁甲和豆兵气血上限提高20%，召出时当前气血同步增加；仅在本场战斗生效。")
+	EquipData.register_named("回春玉佩", EquipData.SlotType.NECKLACE,
+		"回春玉佩", {}, "res://TCP/饰品/2853.tcp", 1, [], 1200, "温玉生辉，春意回流。佩戴者造成的治疗量提高30%，包含单体、群体、道具及复活治疗；不提高气血上限。")
+	EquipData.register_named("节灵佩", EquipData.SlotType.NECKLACE,
+		"节灵佩", {}, "res://TCP/饰品/2852.tcp", 1, [], 0, "凝气归元，节用灵力。佩戴后全部技能耗蓝减少30%；总减免上限80%。")
+	EquipData.register_named("还魂珠", EquipData.SlotType.NECKLACE,
+		"还魂珠", {}, "res://TCP/饰品/2805.tcp", 1, [], 0, "魂归珠中，三转还生。死亡3个自身回合后以50%气血复活；无法逆转已判定的战斗失败。")
 	# ═══════════════════════════════════
+	EquipData.register_named("双鱼百年结", EquipData.SlotType.NECKLACE,
+		"双鱼百年结", {}, "res://TCP/饰品/2855.tcp", 1, [], 0, "双鱼相依，百年同心。两人佩戴结对，每场共享两次保命；同一次群伤同时致命时无法保命。")
 	EquipData.register_named("护身符", EquipData.SlotType.NECKLACE,
 		"护身符", {}, "res://TCP/饰品/2801.tcp", 1, [], 0, "一块护身符，佩带在身上有一定法力作用")
 	EquipData.register_named("五色飞石", EquipData.SlotType.NECKLACE,

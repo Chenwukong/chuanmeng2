@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="76" height="76" viewBox="0 0 76 76">
+  <defs>
+    <radialGradient id="jade" cx="36%" cy="24%" r="85%">
+      <stop stop-color="#f0f7ff"/>
+      <stop offset=".42" stop-color="#c3dcfb"/>
+      <stop offset=".78" stop-color="#8fb2e1"/>
+      <stop offset="1" stop-color="#6088bc"/>
+    </radialGradient>
+    <linearGradient id="rim" x2="0" y2="1">
+      <stop stop-color="#f5faff"/><stop offset="1" stop-color="#a5c5ec"/>
+    </linearGradient>
+  </defs>
+  <circle cx="38" cy="40" r="35" fill="#142e51" opacity=".35"/>
+  <circle cx="38" cy="37" r="34" fill="url(#jade)" stroke="url(#rim)" stroke-width="2"/>
+  <circle cx="38" cy="37" r="29" fill="none" stroke="#f2f8ff" stroke-opacity=".5"/>
+  <path d="M16 25a26 26 0 0 1 39-8" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/>
+  <g fill="none" stroke="#557dac" stroke-opacity=".62" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 40h21c9 0 12-10 5-14-5-3-11 1-10 6 1 5 8 6 10 1"/>
+    <path d="M54 35H33c-9 0-12 10-5 14 5 3 11-1 10-6-1-5-8-6-10-1"/>
+  </g>
+</svg>

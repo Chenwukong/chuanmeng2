@@ -1,0 +1,6 @@
+[gd_scene format=3]
+[node name="BookChoice" type="Button"]
+custom_minimum_size = Vector2(360, 58)
+size_flags_horizontal = 3
+text = "技能书"
+autowrap_mode = 2

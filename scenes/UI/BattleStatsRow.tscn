@@ -1,0 +1,57 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Script/Battle/BattleStatsRow.gd" id="RowScript"]
+
+[sub_resource type="StyleBoxFlat" id="Track"]
+bg_color = Color(0.75, 0.83, 0.98, 0.32)
+corner_radius_top_left = 1
+corner_radius_top_right = 1
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 1
+
+[sub_resource type="StyleBoxFlat" id="Fill"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 1
+corner_radius_top_right = 1
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 1
+
+[node name="BattleStatsRow" type="Control"]
+custom_minimum_size = Vector2(0, 27)
+mouse_filter = 2
+script = ExtResource("RowScript")
+
+[node name="Fields" type="HBoxContainer" parent="."]
+anchor_right = 1.0
+offset_bottom = 20.0
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="Fields"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.12, 0.22, 0.39, 1)
+theme_override_font_sizes/font_size = 13
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text_overrun_behavior = 3
+text = "成员"
+
+[node name="ValueLabel" type="Label" parent="Fields"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 13
+unique_name_in_owner = true
+horizontal_alignment = 2
+text = "0"
+
+[node name="Meter" type="ProgressBar" parent="."]
+unique_name_in_owner = true
+anchor_right = 1.0
+offset_top = 21.0
+offset_bottom = 23.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("Track")
+theme_override_styles/fill = SubResource("Fill")
+show_percentage = false

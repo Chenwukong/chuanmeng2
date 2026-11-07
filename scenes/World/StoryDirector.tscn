@@ -1,0 +1,28 @@
+[gd_scene format=3 uid="uid://dx1gin10xwcd7"]
+
+[ext_resource type="Script" uid="uid://dxjmlfon6vue" path="res://Script/World/StoryDirector.gd" id="1"]
+[ext_resource type="AudioStream" uid="uid://dl0ombxhqmgl0" path="res://Audio/SE/法术5.ogg" id="2"]
+[ext_resource type="AudioStream" path="res://Audio/SE/怪叫-1.ogg" id="3_roar"]
+
+[node name="StoryDirector" type="Node2D" unique_id=1811737500]
+script = ExtResource("1")
+
+[node name="Notice" type="Label" parent="." unique_id=2074295400]
+visible = false
+z_index = 100
+theme_override_colors/font_color = Color(1, 0.93, 0.55, 1)
+theme_override_colors/font_outline_color = Color(0.12, 0.2, 0.32, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 32
+text = "！"
+
+[node name="Talisman" type="Sprite2D" parent="." unique_id=1291847271]
+visible = false
+z_index = 100
+scale = Vector2(0.4, 0.4)
+
+[node name="HitSound" type="AudioStreamPlayer" parent="." unique_id=44865032]
+stream = ExtResource("2")
+
+[node name="RoarSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_roar")

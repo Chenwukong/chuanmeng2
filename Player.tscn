@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cy17bv76hqnbf"]
 
-[ext_resource type="Script" uid="uid://dky546bmxibry" path="res://Script/Class/MapWalker.gd" id="1_walker"]
-[ext_resource type="Script" uid="uid://copiyksv066os" path="res://Script/Class/WASAnimationPlayer.gd" id="2_wasp"]
+[ext_resource type="Script" path="res://Script/World/MapWalker.gd" id="1_walker"]
+[ext_resource type="Script" path="res://Script/Assets/WASAnimationPlayer.gd" id="2_wasp"]
 [ext_resource type="Texture2D" uid="uid://ci1e7r1d47pma" path="res://Graphic/RANDOM/shadow (2).png" id="3_kne1u"]
 
 [sub_resource type="Image" id="Image_kne1u"]

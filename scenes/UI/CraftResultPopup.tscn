@@ -1,0 +1,99 @@
+[gd_scene format=3]
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="skin"]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="theme"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowTitle.tscn" id="title"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Common/WindowCloseButton.tscn" id="close"]
+[sub_resource type="StyleBoxTexture" id="frame"]
+texture = ExtResource("skin")
+region_rect = Rect2(0, 60, 1586, 932)
+texture_margin_left = 6.0
+texture_margin_right = 6.0
+texture_margin_top = 4.0
+texture_margin_bottom = 6.0
+[sub_resource type="StyleBoxTexture" id="header"]
+texture = ExtResource("skin")
+region_rect = Rect2(383, 0, 820, 57)
+
+[node name="CraftResultPopup" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("theme")
+[node name="Shade" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.04, 0.09, 0.18, 0.24)
+[node name="Panel" type="Panel" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -180.0
+offset_right = 210.0
+offset_bottom = 180.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("frame")
+[node name="Header" type="Panel" parent="Panel"]
+offset_right = 420.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("header")
+[node name="Title" parent="Panel" instance=ExtResource("title")]
+offset_left = 80.0
+offset_top = -2.0
+offset_right = 340.0
+offset_bottom = 34.0
+text = "打造成功"
+[node name="ItemName" type="Label" parent="Panel"]
+offset_left = 28.0
+offset_top = 49.0
+offset_right = 392.0
+offset_bottom = 93.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(0.14, 0.25, 0.43, 1)
+text = "黄金剑 +1"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+[node name="Description" type="Label" parent="Panel"]
+offset_left = 28.0
+offset_top = 96.0
+offset_right = 392.0
+offset_bottom = 124.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.32, 0.42, 0.58, 1)
+text = "强化完成，装备属性已提升"
+horizontal_alignment = 1
+vertical_alignment = 1
+[node name="Changes" type="RichTextLabel" parent="Panel"]
+offset_left = 36.0
+offset_top = 141.0
+offset_right = 384.0
+offset_bottom = 249.0
+mouse_filter = 1
+bbcode_enabled = true
+scroll_active = true
+theme_override_font_sizes/normal_font_size = 17
+theme_override_colors/default_color = Color(0.14, 0.25, 0.43, 1)
+theme_override_constants/line_separation = 12
+[node name="Confirm" type="Button" parent="Panel"]
+offset_left = 140.0
+offset_top = 269.0
+offset_right = 280.0
+offset_bottom = 307.0
+text = "收下"
+theme_override_font_sizes/font_size = 18
+[node name="Hint" type="Label" parent="Panel"]
+offset_left = 24.0
+offset_top = 319.0
+offset_right = 396.0
+offset_bottom = 345.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.36, 0.46, 0.62, 1)
+text = "点击空白处关闭 · Enter 确认 · Esc 返回"
+horizontal_alignment = 1
+vertical_alignment = 1

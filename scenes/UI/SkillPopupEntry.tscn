@@ -1,0 +1,41 @@
+[gd_scene format=3]
+[ext_resource type="Texture2D" path="res://Graphic/UI/skill_card_ornament.svg" id="ornament"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="font"]
+[node name="SkillEntry" type="Button"]
+custom_minimum_size = Vector2(220, 80)
+focus_mode = 0
+mouse_default_cursor_shape = 2
+clip_text = true
+[node name="Ornament" type="TextureRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("ornament")
+expand_mode = 1
+stretch_mode = 0
+[node name="Name" type="Label" parent="."]
+anchor_right = 1.0
+offset_left = 25.0
+offset_right = -25.0
+offset_top = 12.0
+offset_bottom = 42.0
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("font")
+theme_override_font_sizes/font_size = 19
+text = "仙术"
+horizontal_alignment = 1
+vertical_alignment = 1
+clip_text = true
+[node name="Cost" type="Label" parent="."]
+anchor_right = 1.0
+offset_left = 25.0
+offset_right = -25.0
+offset_top = 49.0
+offset_bottom = 70.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "灵力 30"
+horizontal_alignment = 1
+vertical_alignment = 1
+clip_text = true

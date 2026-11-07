@@ -1,0 +1,144 @@
+[gd_scene format=3]
+[ext_resource type="Texture2D" path="res://Graphic/UI/天赋background.png" id="Texture"]
+[ext_resource type="Theme" path="res://Component/PetUITheme.tres" id="Theme"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="Font"]
+[sub_resource type="StyleBoxTexture" id="Frame"]
+texture = ExtResource("Texture")
+region_rect = Rect2(0, 58, 1586, 934)
+texture_margin_left = 40.0
+texture_margin_right = 40.0
+texture_margin_top = 20.0
+texture_margin_bottom = 40.0
+content_margin_left = 32.0
+content_margin_right = 32.0
+content_margin_top = 18.0
+content_margin_bottom = 22.0
+[sub_resource type="StyleBoxTexture" id="Header"]
+texture = ExtResource("Texture")
+region_rect = Rect2(510, 0, 566, 58)
+texture_margin_left = 38.0
+texture_margin_right = 38.0
+content_margin_top = 4.0
+content_margin_bottom = 7.0
+[sub_resource type="StyleBoxEmpty" id="Card"]
+[sub_resource type="StyleBoxEmpty" id="SkillHighlight"]
+[sub_resource type="StyleBoxLine" id="Rule"]
+color = Color(0.25, 0.4, 0.65, 0.24)
+thickness = 1
+[node name="BattleResult" type="PanelContainer"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -170.0
+offset_right = 240.0
+offset_bottom = 170.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("Theme")
+theme_override_styles/panel = SubResource("Frame")
+[node name="Body" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 14
+[node name="Title" type="Label" parent="Body"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("Font")
+theme_override_styles/normal = SubResource("Header")
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+horizontal_alignment = 1
+text = "战斗胜利"
+[node name="Caption" type="Label" parent="Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.28, 0.4, 0.59, 1)
+horizontal_alignment = 1
+text = "本场所得"
+[node name="TopRule" type="HSeparator" parent="Body"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("Rule")
+[node name="Card" type="PanelContainer" parent="Body"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("Card")
+[node name="Content" type="VBoxContainer" parent="Body/Card"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 14
+[node name="Rewards" type="HBoxContainer" parent="Body/Card/Content"]
+layout_mode = 2
+theme_override_constants/separation = 32
+[node name="Experience" type="VBoxContainer" parent="Body/Card/Content/Rewards"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+[node name="Label" type="Label" parent="Body/Card/Content/Rewards/Experience"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.035, 0.36, 0.53, 1)
+text = "经验"
+horizontal_alignment = 1
+[node name="Value" type="Label" parent="Body/Card/Content/Rewards/Experience"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(0.035, 0.36, 0.53, 1)
+text = "+0"
+horizontal_alignment = 1
+[node name="Gold" type="VBoxContainer" parent="Body/Card/Content/Rewards"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+[node name="Label" type="Label" parent="Body/Card/Content/Rewards/Gold"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.56, 0.32, 0.055, 1)
+text = "金币"
+horizontal_alignment = 1
+[node name="Value" type="Label" parent="Body/Card/Content/Rewards/Gold"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.56, 0.32, 0.055, 1)
+text = "+0"
+horizontal_alignment = 1
+[node name="Level" type="Label" parent="Body/Card/Content"]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0.12, 0.24, 0.44, 1)
+horizontal_alignment = 1
+text = "1 级  →  2 级"
+[node name="SkillSection" type="PanelContainer" parent="Body/Card/Content"]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("SkillHighlight")
+[node name="Body" type="VBoxContainer" parent="Body/Card/Content/SkillSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+[node name="Heading" type="Label" parent="Body/Card/Content/SkillSection/Body"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.28, 0.4, 0.59, 1)
+text = "习得新技能"
+horizontal_alignment = 1
+[node name="Scroll" type="ScrollContainer" parent="Body/Card/Content/SkillSection/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 146)
+horizontal_scroll_mode = 0
+[node name="Skills" type="VBoxContainer" parent="Body/Card/Content/SkillSection/Body/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 7
+[node name="BottomRule" type="HSeparator" parent="Body"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("Rule")
+[node name="Footer" type="CenterContainer" parent="Body"]
+layout_mode = 2
+[node name="Confirm" type="Button" parent="Body/Footer"]
+layout_mode = 2
+custom_minimum_size = Vector2(132, 36)
+theme_override_font_sizes/font_size = 16
+text = "确认"
+

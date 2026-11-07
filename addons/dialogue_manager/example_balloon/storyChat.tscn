@@ -1,278 +1,175 @@
 [gd_scene format=3 uid="uid://c8pseg2oy2fc7"]
-
-[ext_resource type="Script" uid="uid://d1wt4ma6055l8" path="res://addons/dialogue_manager/example_balloon/example_balloon.gd" id="1_8fo0a"]
-[ext_resource type="PackedScene" uid="uid://ckvgyvclnwggo" path="res://addons/dialogue_manager/dialogue_label.tscn" id="2_oaell"]
-[ext_resource type="Script" uid="uid://bb52rsfwhkxbn" path="res://addons/dialogue_manager/dialogue_responses_menu.gd" id="3_pc582"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_spyqn"]
-bg_color = Color(0, 0, 0, 0)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.329412, 0.329412, 0.329412, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ri4m3"]
-bg_color = Color(0, 0, 0, 0)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e0njw"]
-bg_color = Color(0, 0, 0, 0)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.6, 0.6, 0.6, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qkmqt"]
-bg_color = Color(0, 0, 0, 0)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="Theme" id="Theme_qq3yp"]
-default_font_size = 20
-Button/styles/disabled = SubResource("StyleBoxFlat_spyqn")
-Button/styles/focus = SubResource("StyleBoxFlat_ri4m3")
-Button/styles/hover = SubResource("StyleBoxFlat_e0njw")
-Button/styles/normal = SubResource("StyleBoxFlat_e0njw")
-MarginContainer/constants/margin_bottom = 15
-MarginContainer/constants/margin_left = 30
-MarginContainer/constants/margin_right = 30
-MarginContainer/constants/margin_top = 15
-PanelContainer/styles/panel = SubResource("StyleBoxFlat_qkmqt")
-
-[sub_resource type="Animation" id="Animation_nlsx6"]
-length = 0.001
-tracks/0/type = "bezier"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Progress:position:y")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"handle_modes": PackedInt32Array(0),
-"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
-"times": PackedFloat32Array(0)
-}
-
-[sub_resource type="Animation" id="Animation_qkmqt"]
-resource_name = "progress"
-loop_mode = 1
-step = 0.1
-tracks/0/type = "bezier"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Progress:position:y")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"handle_modes": PackedInt32Array(0, 0, 0, 0, 0),
-"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0, 0, -0.25, 0, 0.2, -0.0157438, -4, -0.2, 0.0112069, 0.25, 0, -4, -0.25, 0, 0.25, 0, 0, -0.2, 0.00299701, 0.25, 0),
-"times": PackedFloat32Array(0, 0.1, 0.5, 0.6, 1)
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_1337t"]
-_data = {
-&"RESET": SubResource("Animation_nlsx6"),
-&"progress": SubResource("Animation_qkmqt")
-}
-
-[sub_resource type="Animation" id="Animation_oaell"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("ColorRect:position")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector2(-87, -74)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("ColorRect2:position")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector2(-93, 679)]
-}
-
-[sub_resource type="Animation" id="Animation_pc582"]
-resource_name = "blackshow"
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("ColorRect:position")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.33333334),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Vector2(-87, -147), Vector2(-88, 0)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("ColorRect2:position")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.36),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Vector2(-90, 828), Vector2(-73, 707)]
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_jjw4j"]
-_data = {
-&"RESET": SubResource("Animation_oaell"),
-&"blackshow": SubResource("Animation_pc582")
-}
-
-[node name="ExampleBalloon" type="CanvasLayer" unique_id=1434168376 groups=["ballon"]]
+[ext_resource type="Script" path="res://Script/UI/Dialogue/ChatBalloon.gd" id="script"]
+[ext_resource type="Theme" path="res://scenes/UI/Dialogue/ChatTheme.tres" id="theme"]
+[ext_resource type="PackedScene" path="res://addons/dialogue_manager/dialogue_label.tscn" id="label"]
+[ext_resource type="Script" path="res://addons/dialogue_manager/dialogue_responses_menu.gd" id="responses"]
+[ext_resource type="FontFile" path="res://Graphic/UI/Font/尔雅趣宋体.ttf" id="title_font"]
+[node name="storyChat" type="CanvasLayer" groups=["ballon"]]
 layer = 100
-script = ExtResource("1_8fo0a")
-
-[node name="ColorRect" type="ColorRect" parent="." unique_id=1660299479]
-offset_left = -87.0
-offset_top = -74.0
-offset_right = 1372.0
-offset_bottom = 76.0
-color = Color(0, 0, 0, 1)
-
-[node name="ColorRect2" type="ColorRect" parent="." unique_id=2079714807]
-offset_left = -93.0
-offset_top = 679.0
-offset_right = 1366.0
-offset_bottom = 809.0
-color = Color(0, 0, 0, 1)
-
-[node name="Balloon" type="Control" parent="." unique_id=359403728]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = 15
+script = ExtResource("script")
+[node name="InputShield" type="ColorRect" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 54.0
-offset_top = 106.0
-offset_right = 54.0
-offset_bottom = 106.0
-grow_horizontal = 2
-grow_vertical = 2
-theme = SubResource("Theme_qq3yp")
-
-[node name="CharacterLabel" type="RichTextLabel" parent="Balloon" unique_id=507199029]
+color = Color(0.02, 0.05, 0.12, 0.12)
+[node name="LetterboxTop" type="ColorRect" parent="."]
+visible = true
+anchor_right = 1.0
+offset_bottom = 30.0
+mouse_filter = 2
+color = Color(0.02, 0.04, 0.08, 0.65)
+[node name="LetterboxBottom" type="ColorRect" parent="."]
+visible = true
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -22.0
+mouse_filter = 2
+color = Color(0.02, 0.04, 0.08, 0.65)
+[node name="Balloon" type="Panel" parent="."]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 185.0
-offset_top = 564.0
-offset_right = 311.0
-offset_bottom = 603.0
-mouse_filter = 1
-theme_override_font_sizes/normal_font_size = 30
-bbcode_enabled = true
-text = "传梦"
-fit_content = true
-scroll_active = false
-
-[node name="DialogueLabel" parent="Balloon" unique_id=1225160028 instance=ExtResource("2_oaell")]
+anchor_left = 0.065
+anchor_right = 0.935
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -252.0
+offset_bottom = -32.0
+theme = ExtResource("theme")
+focus_mode = 2
+[node name="PortraitWell" type="Panel" parent="Balloon"]
+offset_left = 22.0
+offset_top = 20.0
+offset_right = 174.0
+offset_bottom = 183.0
+mouse_filter = 2
+theme_type_variation = &"PortraitWell"
+[node name="portrait" type="TextureRect" parent="Balloon/PortraitWell"]
 unique_name_in_owner = true
-layout_mode = 0
-anchors_preset = 0
-anchor_right = 0.0
-offset_left = 83.0
-offset_top = 606.0
-offset_right = 658.0
-offset_bottom = 693.0
-grow_horizontal = 1
-size_flags_vertical = 3
-text = "Dialogue..."
-
-[node name="Control" type="Control" parent="Balloon" unique_id=1162966119]
-custom_minimum_size = Vector2(20, 10)
-anchors_preset = 0
-offset_left = 83.0
-offset_top = 633.2
-offset_right = 1109.0
-offset_bottom = 643.2
-size_flags_vertical = 8
-
-[node name="Progress" type="Polygon2D" parent="Balloon/Control" unique_id=821575988]
-unique_name_in_owner = true
-polygon = PackedVector2Array(0, 0, 10, 10, 20, 0)
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="Balloon/Control" unique_id=452325722]
-libraries/ = SubResource("AnimationLibrary_1337t")
-autoplay = &"progress"
-
-[node name="ResponsesMenu" type="VBoxContainer" parent="Balloon" unique_id=966297223 node_paths=PackedStringArray("response_template")]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = 8.0
-offset_top = 206.0
-offset_right = 589.0
-offset_bottom = 276.0
-grow_horizontal = 2
-grow_vertical = 2
-size_flags_vertical = 8
-theme_override_constants/separation = 2
-alignment = 1
-script = ExtResource("3_pc582")
-response_template = NodePath("ResponseExample")
-
-[node name="ResponseExample" type="Button" parent="Balloon/ResponsesMenu" unique_id=914537232]
-layout_mode = 2
-text = "Response example"
-
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1116280512]
-unique_name_in_owner = true
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1974050070]
-libraries/ = SubResource("AnimationLibrary_jjw4j")
-autoplay = &"blackshow"
-
-[node name="portrait" type="TextureRect" parent="." unique_id=1921133231]
-unique_name_in_owner = true
-offset_left = 54.0
-offset_top = 479.0
-offset_right = 280.0
-offset_bottom = 705.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 7.0
+offset_top = 7.0
+offset_right = -7.0
+offset_bottom = -7.0
+mouse_filter = 2
+expand_mode = 1
 stretch_mode = 5
-
+[node name="PortraitFallback" type="Label" parent="Balloon/PortraitWell"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+text = "叙"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_fonts/font = ExtResource("title_font")
+theme_override_font_sizes/font_size = 56
+theme_override_colors/font_color = Color(0.87, 0.93, 1, 0.8)
+[node name="NamePlate" type="Panel" parent="Balloon"]
+offset_left = 192.0
+offset_top = 14.0
+offset_right = 462.0
+offset_bottom = 54.0
+mouse_filter = 2
+theme_type_variation = &"SpeakerPlate"
+[node name="CharacterLabel" type="RichTextLabel" parent="Balloon/NamePlate"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 25.0
+offset_top = 5.0
+offset_right = -25.0
+mouse_filter = 2
+bbcode_enabled = true
+scroll_active = false
+text = "游霄云"
+horizontal_alignment = 1
+theme_override_fonts/normal_font = ExtResource("title_font")
+theme_override_font_sizes/normal_font_size = 24
+theme_override_colors/default_color = Color(1, 1, 1, 1)
+[node name="Kind" type="Label" parent="Balloon"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -170.0
+offset_top = 21.0
+offset_right = -28.0
+offset_bottom = 48.0
+mouse_filter = 2
+text = "剧情对话"
+horizontal_alignment = 2
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.34, 0.46, 0.63, 1)
+[node name="DialogueLabel" parent="Balloon" instance=ExtResource("label")]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 200.0
+offset_top = 68.0
+offset_right = -32.0
+offset_bottom = -53.0
+fit_content = false
+scroll_active = true
+scroll_following = true
+selection_enabled = false
+theme_override_font_sizes/normal_font_size = 21
+theme_override_constants/line_separation = 9
+text = "山门已近，前方云深之处便是方寸山。"
+[node name="HintLabel" type="Label" parent="Balloon"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 200.0
+offset_top = -40.0
+offset_right = -54.0
+offset_bottom = -14.0
+mouse_filter = 2
+text = "左键 / Enter 继续"
+horizontal_alignment = 2
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.33, 0.45, 0.63, 1)
+[node name="ProgressAnchor" type="Control" parent="Balloon"]
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -40.0
+offset_top = -31.0
+offset_right = -24.0
+offset_bottom = -15.0
+mouse_filter = 2
+[node name="Progress" type="Polygon2D" parent="Balloon/ProgressAnchor"]
+unique_name_in_owner = true
+color = Color(0.33, 0.48, 0.70, 1)
+polygon = PackedVector2Array(0, 0, 6, 6, 12, 0)
+[node name="ResponseFrame" type="PanelContainer" parent="Balloon"]
+unique_name_in_owner = true
+visible = false
+anchor_left = 0.45
+anchor_right = 1.0
+offset_left = 0.0
+offset_top = -210.0
+offset_right = -14.0
+offset_bottom = -12.0
+[node name="Scroll" type="ScrollContainer" parent="Balloon/ResponseFrame"]
+layout_mode = 2
+follow_focus = true
+horizontal_scroll_mode = 0
+[node name="ResponsesMenu" type="VBoxContainer" parent="Balloon/ResponseFrame/Scroll" node_paths=PackedStringArray("response_template")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+script = ExtResource("responses")
+response_template = NodePath("ResponseExample")
+[node name="ResponseExample" type="Button" parent="Balloon/ResponseFrame/Scroll/ResponsesMenu"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "继续询问山门的消息"
+alignment = 0
+autowrap_mode = 3
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+bus = &"SFX"
 [connection signal="gui_input" from="Balloon" to="." method="_on_balloon_gui_input"]
-[connection signal="response_selected" from="Balloon/ResponsesMenu" to="." method="_on_responses_menu_response_selected"]
+[connection signal="gui_input" from="InputShield" to="." method="_on_balloon_gui_input"]
+[connection signal="response_selected" from="Balloon/ResponseFrame/Scroll/ResponsesMenu" to="." method="_on_responses_menu_response_selected"]
